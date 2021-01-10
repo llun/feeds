@@ -1,5 +1,10 @@
 name: 'TestAction'
 description: 'Test action experiment'
+inputs:
+  token:
+    description: >
+      Github token for pulling repository information
+    default: ${{ github.token }}
 runs:
   using: 'node12'
   main: 'index.js'

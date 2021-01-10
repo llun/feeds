@@ -11,24 +11,21 @@ async function setup() {
   }
 
   if (process.env['GITHUB_WORKSPACE']) {
+    const workSpace = process.env['GITHUB_WORKSPACE']
+    const core = require('@actions/core')
     const github = require('@actions/github')
 
-    const githubWorkspacePath = path.resolve(process.env['GITHUB_WORKSPACE'])
-    const qualifiedRepository = `${github.context.repo.owner}/${github.context.repo.repo}`
-    const splitRepository = qualifiedRepository.split('/')
-    const sourceSettings = {
-      repositoryOwner: splitRepository[0],
-      repositoryName: splitRepository[1],
-      repositoryPath: githubWorkspacePath,
-      ref: github.context.ref,
-      commit: github.context.sha,
-      clean: false,
-      fetchDepth: 1,
-      lfs: false,
-      submodules: false,
-      nestedSubmodules: false
-    }
-    console.log(sourceSettings)
+    const user = process.env['GITHUB_ACTOR']
+    const token = core.getInput('token', { required: true })
+
+    const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
+    spawnSync(
+      'git',
+      ['clone', '-b', github.context.ref, '--depth', '1', cloneUrl, workSpace],
+      {
+        stdio: 'inherit'
+      }
+    )
   }
 
   console.log(`List ${process.env['GITHUB_WORKSPACE']}`)
