@@ -56,7 +56,7 @@ async function publish() {
     run(['git', 'config', '--global', 'user.name', '"Feed bots"'])
     run(['git', 'add', '-f', '--all'])
     run(['git', 'commit', '-m', '"update feeds contents"'])
-    run(['git', 'push', '-f', `"${cloneUrl}"`, `HEAD:${branch}`])
+    run(['git', 'push', '-f', cloneUrl, `HEAD:${branch}`])
   }
 }
 exports.publish = publish
