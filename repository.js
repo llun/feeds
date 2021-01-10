@@ -28,11 +28,7 @@ async function setup() {
     const token = core.getInput('token', { required: true })
 
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
-    run(
-      `git clone -b ${github.context.ref.substring(
-        'refs/heads/'.length
-      )} --depth 1 ${cloneUrl} ${workSpace}`
-    )
+    run(`git clone ${cloneUrl} ${workSpace}`)
 
     const branch = core.getInput('branch', { required: true })
     console.log(`Switch to ${branch}`)
