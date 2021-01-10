@@ -51,7 +51,7 @@ async function publish() {
     run('git config --global user.email bot@llun.dev')
     run('git config --global user.name "Feed bots"')
     run('ls -la')
-    console.log(contentDirectory)
+    run('git add -f --all')
     run('git status')
     // run(`git add -f ${contentDirectory}`)
     // run('git commit -m "update feeds contents"')
