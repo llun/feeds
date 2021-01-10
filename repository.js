@@ -42,6 +42,20 @@ async function setup() {
     const branch = core.getInput('branch', { required: true })
     console.log(`Switch to ${branch}`)
     runCommand(['git', 'checkout', '-B', branch])
+  }
+}
+exports.setup = setup
+
+async function publish() {
+  const workSpace = process.env['GITHUB_WORKSPACE']
+  if (workSpace) {
+    const core = require('@actions/core')
+    const github = require('@actions/github')
+    const branch = core.getInput('branch', { required: true })
+    const token = core.getInput('token', { required: true })
+    const user = process.env['GITHUB_ACTOR']
+    const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
+
     runCommand([
       'rm',
       '-rf',
@@ -58,20 +72,6 @@ async function setup() {
       '.github',
       'pages'
     ])
-  }
-}
-exports.setup = setup
-
-async function publish() {
-  const workSpace = process.env['GITHUB_WORKSPACE']
-  if (workSpace) {
-    const core = require('@actions/core')
-    const github = require('@actions/github')
-    const branch = core.getInput('branch', { required: true })
-    const token = core.getInput('token', { required: true })
-    const user = process.env['GITHUB_ACTOR']
-    const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
-
     runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
     runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
     runCommand(['git', 'add', '-f', '--all'])
