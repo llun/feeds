@@ -1,12 +1,22 @@
 // @ts-check
 const { spawnSync } = require('child_process')
 
+/**
+ *
+ * @param {string} command
+ * @param {string} [cwd]
+ */
+function run(command, cwd) {
+  const inputs = command.split(' ')
+  spawnSync(inputs[0], inputs.slice(1), {
+    stdio: 'inherit',
+    cwd
+  })
+}
+
 async function setup() {
   if (process.env['GITHUB_ACTION'] === 'lluntest-action') {
-    spawnSync('npm', ['install'], {
-      cwd: '/home/runner/work/_actions/llun/test-action/main',
-      stdio: 'inherit'
-    })
+    run('npm install', '/home/runner/work/_actions/llun/test-action/main')
   }
 
   const workSpace = process.env['GITHUB_WORKSPACE']
@@ -18,27 +28,15 @@ async function setup() {
     const token = core.getInput('token', { required: true })
 
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
-    spawnSync(
-      'git',
-      [
-        'clone',
-        '-b',
-        github.context.ref.substring('refs/heads/'.length),
-        '--depth',
-        '1',
-        cloneUrl,
-        workSpace
-      ],
-      {
-        stdio: 'inherit'
-      }
+    run(
+      `git clone -b ${github.context.ref.substring(
+        'refs/heads/'.length
+      )} --depth 1 ${cloneUrl} ${workSpace}`
     )
 
     const branch = core.getInput('branch', { required: true })
     console.log(`Switch to ${branch}`)
-    spawnSync('git', ['checkout', '-B', branch], {
-      stdio: 'inherit'
-    })
+    run(`git checkout -B ${branch}`)
   }
 }
 exports.setup = setup
@@ -47,17 +45,11 @@ async function publish() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
     const core = require('@actions/core')
-    spawnSync('git', ['add', 'content'], {
-      stdio: 'inherit'
-    })
-
-    spawnSync('git', ['commit', '-m', 'Update contents'], {
-      stdio: 'inherit'
-    })
-
-    spawnSync('git', ['logs'], {
-      stdio: 'inherit'
-    })
+    run('git config --global user.email bot@llun.dev')
+    run('git config --global user.name "Feed bots"')
+    run('git add contents')
+    run('git commit -m "update feeds contents"')
+    run('git logs')
   }
 }
 exports.publish = publish
