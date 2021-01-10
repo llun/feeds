@@ -73,9 +73,9 @@ function parseAtom(xml) {
   if (!xml.feed) return null
   const { title, subtitle, link, updated, generator, entry } = xml.feed
   const siteLink = link && link.find((item) => item.$.rel === 'alternate')
-
+  console.log(title, link)
   const feed = {
-    title: joinValuesOrEmptyString(title),
+    title: joinValuesOrEmptyString(title).trim(),
     description: joinValuesOrEmptyString(subtitle),
     link: siteLink && siteLink.$.href,
     updatedAt: joinValuesOrEmptyString(updated),
