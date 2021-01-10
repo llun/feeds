@@ -8,8 +8,14 @@ async function setup() {
       stdio: 'inherit'
     })
   }
+  console.log('List ENV')
+  spawnSync('env', [], {
+    cwd: process.env['GITHUB_WORKSPACE'],
+    stdio: 'inherit'
+  })
 
-  spawnSync('ls', [], {
+  console.log(`List ${process.env['GITHUB_WORKSPACE']}`)
+  spawnSync('ls -a', [], {
     cwd: process.env['GITHUB_WORKSPACE'],
     stdio: 'inherit'
   })
