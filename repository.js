@@ -53,9 +53,8 @@ async function publish() {
     run('ls -la')
     run('git add -f --all')
     run('git status')
-    // run(`git add -f ${contentDirectory}`)
-    // run('git commit -m "update feeds contents"')
-    // run('git log')
+    run('git commit -m "update feeds contents"')
+    run('git log')
   }
 }
 exports.publish = publish
