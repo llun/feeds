@@ -7,8 +7,8 @@
   "repository": "github:llun/test-action",
   "license": "ISC",
   "scripts": {
-    "serve": "npx eleventy --serve",
-    "build": "npx eleventy --output=.",
+    "serve": "eleventy --serve",
+    "build": "eleventy --output=.",
     "load": "INPUT_OUTPUTDIRECTORY='contents' INPUT_OPMLFILE='feeds.opml' node index.js"
   },
   "devDependencies": {
