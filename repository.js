@@ -38,6 +38,7 @@ async function setup() {
     const branch = core.getInput('branch', { required: true })
     console.log(`Switch to ${branch}`)
     run(['git', 'checkout', '-B', branch])
+    run(['rm', '-rf', '*'])
   }
 }
 exports.setup = setup
