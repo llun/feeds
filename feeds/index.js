@@ -1,4 +1,5 @@
 // @ts-check
+const crypto = require('crypto')
 const core = require('@actions/core')
 const fs = require('fs')
 const path = require('path')
@@ -100,12 +101,11 @@ async function writeFeedsContent() {
           continue
         }
         console.log(`Load ${feedData.title}`)
+        const sha256 = crypto.createHash('sha256')
+        sha256.update(feedData.title)
+        const hexTitle = sha256.digest('hex')
         fs.writeFileSync(
-          path.join(
-            contentDirectory,
-            title,
-            `${feedData.title.toLowerCase()}.json`
-          ),
+          path.join(contentDirectory, title, `${hexTitle}.json`),
           JSON.stringify(feedData)
         )
       }
