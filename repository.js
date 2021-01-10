@@ -45,10 +45,13 @@ async function publish() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
     const core = require('@actions/core')
+    const contentDirectory = core.getInput('outputDirectory', {
+      required: true
+    })
     run('git config --global user.email bot@llun.dev')
     run('git config --global user.name "Feed bots"')
     run('ls -la')
-    run('git add -f contents')
+    run(`git add -f ${contentDirectory}`)
     run('git commit -m "update feeds contents"')
     run('git log')
   }
