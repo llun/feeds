@@ -10,8 +10,8 @@ async function setup() {
     })
   }
 
-  if (process.env['GITHUB_WORKSPACE']) {
-    const workSpace = process.env['GITHUB_WORKSPACE']
+  const workSpace = process.env['GITHUB_WORKSPACE']
+  if (workSpace) {
     const core = require('@actions/core')
     const github = require('@actions/github')
 
@@ -36,11 +36,9 @@ async function setup() {
     )
   }
 
-  console.log(`List ${process.env['GITHUB_WORKSPACE']}`)
-  spawnSync('ls -a', [], {
-    cwd: process.env['GITHUB_WORKSPACE'],
-    stdio: 'inherit'
-  })
+  console.log(`List ${workSpace}`)
+  spawnSync('pwd')
+  spawnSync('ls -la')
 }
 
 async function run() {
