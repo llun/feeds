@@ -1,0 +1,5 @@
+name: 'TestAction'
+description: 'Test action experiment'
+runs:
+  using: 'node12'
+  main: 'index.js'
