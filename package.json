@@ -3,14 +3,20 @@
   "version": "1.0.0",
   "description": "Test Github Action",
   "main": "index.js",
-  "author": "",
+  "author": "Maythee Anegboonlap <null@llun.dev>",
   "repository": "github:llun/test-action",
   "license": "ISC",
+  "scripts": {
+    "serve": "npx eleventy --serve",
+    "build": "npx eleventy --output=.",
+    "load": "INPUT_OUTPUTDIRECTORY='contents' INPUT_OPMLFILE='feeds.opml' node index.js"
+  },
   "devDependencies": {
     "@types/node": "^14.14.20",
     "typescript": "^4.1.3"
   },
   "dependencies": {
+    "@11ty/eleventy": "^0.11.1",
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
     "xml2js": "^0.4.23"

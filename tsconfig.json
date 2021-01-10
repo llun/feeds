@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "target": "ESNext",
+    "moduleResolution": "node",
+    "preserveSymlinks": false,
+    "strictNullChecks": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

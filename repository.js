@@ -6,16 +6,20 @@ const { spawnSync } = require('child_process')
  * @param {string[]} commands
  * @param {string} [cwd]
  */
-function run(commands, cwd) {
+function runCommand(commands, cwd) {
   spawnSync(commands[0], commands.slice(1), {
     stdio: 'inherit',
     cwd
   })
 }
+exports.runCommand = runCommand
 
 async function setup() {
   if (process.env['GITHUB_ACTION'] === 'lluntest-action') {
-    run(['npm', 'install'], '/home/runner/work/_actions/llun/test-action/main')
+    runCommand(
+      ['npm', 'install'],
+      '/home/runner/work/_actions/llun/test-action/main'
+    )
   }
 
   const workSpace = process.env['GITHUB_WORKSPACE']
@@ -25,7 +29,7 @@ async function setup() {
     const user = process.env['GITHUB_ACTOR']
     const token = core.getInput('token', { required: true })
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
-    run([
+    runCommand([
       'git',
       'clone',
       '-b',
@@ -37,8 +41,8 @@ async function setup() {
     ])
     const branch = core.getInput('branch', { required: true })
     console.log(`Switch to ${branch}`)
-    run(['git', 'checkout', '-B', branch])
-    run([
+    runCommand(['git', 'checkout', '-B', branch])
+    runCommand([
       'rm',
       '-rf',
       'action.yml',
@@ -46,10 +50,13 @@ async function setup() {
       'repository.js',
       'package-lock.json',
       'package.json',
+      '.gitignore',
+      '.prettierrc.yml',
+      'tsconfig.json',
+      '.eleventy.js',
       'feeds',
       '.github',
-      '.gitignore',
-      '.prettierrc.yml'
+      'pages'
     ])
   }
 }
@@ -65,11 +72,11 @@ async function publish() {
     const user = process.env['GITHUB_ACTOR']
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
 
-    run(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
-    run(['git', 'config', '--global', 'user.name', '"Feed bots"'])
-    run(['git', 'add', '-f', '--all'])
-    run(['git', 'commit', '-m', '"update feeds contents"'])
-    run(['git', 'push', '-f', cloneUrl, `HEAD:${branch}`])
+    runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
+    runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
+    runCommand(['git', 'add', '-f', '--all'])
+    runCommand(['git', 'commit', '-m', '"update feeds contents"'])
+    runCommand(['git', 'push', '-f', cloneUrl, `HEAD:${branch}`])
   }
 }
 exports.publish = publish
