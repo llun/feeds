@@ -33,6 +33,12 @@ async function setup() {
         stdio: 'inherit'
       }
     )
+
+    const branch = core.getInput('branch', { required: true })
+    console.log(`Switch to ${branch}`)
+    spawnSync('git', ['checkout', '-B', branch], {
+      stdio: 'inherit'
+    })
   }
 }
 exports.setup = setup
@@ -40,11 +46,16 @@ exports.setup = setup
 async function publish() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
-    spawnSync('ls', ['-la', 'contents'], {
+    const core = require('@actions/core')
+    spawnSync('git', ['add', 'content'], {
       stdio: 'inherit'
     })
 
-    spawnSync('git', ['status'], {
+    spawnSync('git', ['commit', '-m', 'Update contents'], {
+      stdio: 'inherit'
+    })
+
+    spawnSync('git', ['logs'], {
       stdio: 'inherit'
     })
   }

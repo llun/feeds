@@ -9,6 +9,10 @@ inputs:
     description: >
       Static feeds output directory
     default: 'contents'
+  branch:
+    description: >
+      Output branch
+    default: 'contents'
   token:
     description: >
       Github token for pulling repository information
