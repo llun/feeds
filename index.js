@@ -5,7 +5,7 @@ async function run() {
   await setup()
   const { writeFeedsContent } = require('./feeds')
   await writeFeedsContent()
-  await runCommand(['npm', 'run', 'build'])
+  await runCommand(['ls', 'node_modules/.bin'])
   await publish()
 }
 
