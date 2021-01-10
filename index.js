@@ -6,6 +6,10 @@ async function run() {
     cwd: '/home/runner/work/_actions/llun/test-action/main',
     stdio: 'inherit'
   })
+  spawnSync('env', [], {
+    cwd: '/home/runner/work/_actions/llun/test-action/main',
+    stdio: 'inherit'
+  })
 }
 
 run()
