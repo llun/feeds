@@ -46,8 +46,10 @@ async function publish() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
     const core = require('@actions/core')
+    const github = require('@actions/github')
     const branch = core.getInput('branch', { required: true })
     const token = core.getInput('token', { required: true })
+    const user = process.env['GITHUB_ACTOR']
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
 
     run(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
