@@ -79,10 +79,10 @@ function createCategoryDirectory(rootDirectory, category) {
 
 async function writeFeedsContent() {
   try {
-    const contentDirectory =
-      core.getInput('outputDirectory', { required: true }) || 'contents'
-    const feedsFile =
-      core.getInput('opmlFile', { required: true }) || 'feeds.opml'
+    const contentDirectory = core.getInput('outputDirectory', {
+      required: true
+    })
+    const feedsFile = core.getInput('opmlFile', { required: true })
     const opml = await readOpml(feedsFile)
     for (const category of opml) {
       const { category: title, items } = category

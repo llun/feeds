@@ -19,10 +19,13 @@
 
 /**
  *
- * @param {string[] | null} values
+ * @param {string[] | { _: string, $: { type: 'text' }}[] | null} values
  * @returns {string}
  */
 function joinValuesOrEmptyString(values) {
+  if (values && values.length > 0 && typeof values[0] !== 'string') {
+    return values[0]._
+  }
   return (values && values.join('')) || ''
 }
 
@@ -43,7 +46,7 @@ function parseRss(xml) {
   } = channels[0]
 
   const feed = {
-    title: joinValuesOrEmptyString(title),
+    title: joinValuesOrEmptyString(title).trim(),
     link: joinValuesOrEmptyString(link),
     description: joinValuesOrEmptyString(description),
     updatedAt: joinValuesOrEmptyString(lastBuildDate),
@@ -51,7 +54,7 @@ function parseRss(xml) {
     entries: items.map((item) => {
       const { title, link, pubDate, description } = item
       return {
-        title: joinValuesOrEmptyString(title),
+        title: joinValuesOrEmptyString(title).trim(),
         link: joinValuesOrEmptyString(link),
         date: joinValuesOrEmptyString(pubDate),
         content: joinValuesOrEmptyString(description),
@@ -73,7 +76,6 @@ function parseAtom(xml) {
   if (!xml.feed) return null
   const { title, subtitle, link, updated, generator, entry } = xml.feed
   const siteLink = link && link.find((item) => item.$.rel === 'alternate')
-  console.log(title, link)
   const feed = {
     title: joinValuesOrEmptyString(title).trim(),
     description: joinValuesOrEmptyString(subtitle),
@@ -86,7 +88,7 @@ function parseAtom(xml) {
         link && (link.find((item) => item.$.rel === 'alternate') || link[0])
       const feedContent = content ? content[0]._ : summary ? summary[0]._ : ''
       return {
-        title: joinValuesOrEmptyString(title),
+        title: joinValuesOrEmptyString(title).trim(),
         link: itemLink.$.href,
         date: joinValuesOrEmptyString(published),
         content: feedContent,
