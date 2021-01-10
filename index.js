@@ -3,7 +3,8 @@ const { spawnSync } = require('child_process')
 
 async function run() {
   spawnSync('npm', ['install'], {
-    cwd: '/home/runner/work/_actions/llun/test-action/main'
+    cwd: '/home/runner/work/_actions/llun/test-action/main',
+    stdio: 'inherit'
   })
 }
 
