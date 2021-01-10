@@ -8,7 +8,7 @@
   "license": "ISC",
   "scripts": {
     "serve": "eleventy --serve",
-    "build": "eleventy --output=.",
+    "build": "eleventy",
     "load": "INPUT_OUTPUTDIRECTORY='contents' INPUT_OPMLFILE='feeds.opml' node index.js"
   },
   "devDependencies": {

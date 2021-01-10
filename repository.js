@@ -14,6 +14,17 @@ function runCommand(commands, cwd) {
 }
 exports.runCommand = runCommand
 
+function buildSite() {
+  const workSpace = process.env['GITHUB_WORKSPACE']
+  if (workSpace) {
+    runCommand(
+      ['npm', 'run', 'build', `--output=${workSpace}`],
+      '/home/runner/work/_actions/llun/test-action/main'
+    )
+  }
+}
+exports.buildSite = buildSite
+
 async function setup() {
   if (process.env['GITHUB_ACTION'] === 'lluntest-action') {
     runCommand(
