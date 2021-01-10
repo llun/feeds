@@ -37,8 +37,8 @@ async function setup() {
   }
 
   console.log(`List ${workSpace}`)
-  spawnSync('pwd')
-  spawnSync('ls -la')
+  spawnSync('pwd', { stdio: 'inherit' })
+  spawnSync('ls', ['-la'], { stdio: 'inherit' })
 }
 
 async function run() {
