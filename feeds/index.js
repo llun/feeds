@@ -78,30 +78,34 @@ function createCategoryDirectory(rootDirectory, category) {
 }
 
 async function writeFeedsContent() {
-  const contentDirectory =
-    core.getInput('outputDirectory', { required: true }) || 'contents'
-  const feedsFile =
-    core.getInput('opmlFile', { required: true }) || 'feeds.opml'
-  const opml = await readOpml(feedsFile)
-  for (const category of opml) {
-    const { category: title, items } = category
-    createCategoryDirectory(contentDirectory, title)
-    console.log(`Load category ${title}`)
-    for (const item of items) {
-      const feedData = await loadFeed(item.xmlUrl)
-      if (!feedData) {
-        continue
+  try {
+    const contentDirectory =
+      core.getInput('outputDirectory', { required: true }) || 'contents'
+    const feedsFile =
+      core.getInput('opmlFile', { required: true }) || 'feeds.opml'
+    const opml = await readOpml(feedsFile)
+    for (const category of opml) {
+      const { category: title, items } = category
+      createCategoryDirectory(contentDirectory, title)
+      console.log(`Load category ${title}`)
+      for (const item of items) {
+        const feedData = await loadFeed(item.xmlUrl)
+        if (!feedData) {
+          continue
+        }
+        console.log(`Load ${feedData.title}`)
+        fs.writeFileSync(
+          path.join(
+            contentDirectory,
+            title,
+            `${feedData.title.toLowerCase()}.json`
+          ),
+          JSON.stringify(feedData)
+        )
       }
-      console.log(`Load ${feedData.title}`)
-      fs.writeFileSync(
-        path.join(
-          contentDirectory,
-          title,
-          `${feedData.title.toLowerCase()}.json`
-        ),
-        JSON.stringify(feedData)
-      )
     }
+  } catch (error) {
+    core.setFailed(error)
   }
 }
 exports.writeFeedsContent = writeFeedsContent
