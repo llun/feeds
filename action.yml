@@ -1,6 +1,14 @@
 name: 'TestAction'
 description: 'Test action experiment'
 inputs:
+  opmlFile:
+    description: >
+      OPML file with list of feeds and category
+    default: 'feeds.opml'
+  outputDirectory:
+    description: >
+      Static feeds output directory
+    default: 'contents'
   token:
     description: >
       Github token for pulling repository information
