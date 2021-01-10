@@ -47,9 +47,10 @@ async function publish() {
     const core = require('@actions/core')
     run('git config --global user.email bot@llun.dev')
     run('git config --global user.name "Feed bots"')
-    run('git add -f contents')
-    run('git commit -m "update feeds contents"')
-    run('git log')
+    run('git status')
+    // run('git add -f contents')
+    // run('git commit -m "update feeds contents"')
+    // run('git log')
   }
 }
 exports.publish = publish
