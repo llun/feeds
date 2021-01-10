@@ -51,9 +51,10 @@ async function publish() {
     run('git config --global user.email bot@llun.dev')
     run('git config --global user.name "Feed bots"')
     run('ls -la')
-    run(`git add -f ${contentDirectory}`)
-    run('git commit -m "update feeds contents"')
-    run('git log')
+    console.log(contentDirectory)
+    // run(`git add -f ${contentDirectory}`)
+    // run('git commit -m "update feeds contents"')
+    // run('git log')
   }
 }
 exports.publish = publish
