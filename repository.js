@@ -40,7 +40,11 @@ exports.setup = setup
 async function publish() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
-    spawnSync('ls', ['-la'], {
+    spawnSync('ls', ['-la', 'contents'], {
+      stdio: 'inherit'
+    })
+
+    spawnSync('git', ['status'], {
       stdio: 'inherit'
     })
   }
