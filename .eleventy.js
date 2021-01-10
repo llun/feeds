@@ -34,7 +34,8 @@ module.exports = function (eleventyConfig) {
     dir: {
       input: 'pages',
       includes: '_includes',
-      data: '_data'
+      data: '_data',
+      output: process.env['GITHUB_WORKSPACE'] || '_site'
     }
   }
 }
