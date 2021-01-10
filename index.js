@@ -21,7 +21,15 @@ async function setup() {
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
     spawnSync(
       'git',
-      ['clone', '-b', github.context.ref, '--depth', '1', cloneUrl, workSpace],
+      [
+        'clone',
+        '-b',
+        github.context.ref.substring('refs/heads/'.length),
+        '--depth',
+        '1',
+        cloneUrl,
+        workSpace
+      ],
       {
         stdio: 'inherit'
       }
