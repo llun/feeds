@@ -22,10 +22,8 @@ async function setup() {
   if (workSpace) {
     const core = require('@actions/core')
     const github = require('@actions/github')
-
     const user = process.env['GITHUB_ACTOR']
     const token = core.getInput('token', { required: true })
-
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
     run([
       'git',
@@ -37,7 +35,6 @@ async function setup() {
       cloneUrl,
       workSpace
     ])
-
     const branch = core.getInput('branch', { required: true })
     console.log(`Switch to ${branch}`)
     run(['git', 'checkout', '-B', branch])
@@ -49,16 +46,15 @@ async function publish() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
     const core = require('@actions/core')
-    const contentDirectory = core.getInput('outputDirectory', {
-      required: true
-    })
+    const branch = core.getInput('branch', { required: true })
+    const token = core.getInput('token', { required: true })
+    const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
+
     run(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
     run(['git', 'config', '--global', 'user.name', '"Feed bots"'])
-    run(['ls', '-la'])
     run(['git', 'add', '-f', '--all'])
-    run(['git', 'status'])
     run(['git', 'commit', '-m', '"update feeds contents"'])
-    run(['git', 'log'])
+    run(['git', 'push', '-f', `"${cloneUrl}"`, `HEAD:${branch}`])
   }
 }
 exports.publish = publish
