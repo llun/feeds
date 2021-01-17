@@ -21,6 +21,10 @@ function buildSite() {
       ['npm', 'run', 'build', `--output=${workSpace}`],
       '/home/runner/work/_actions/llun/test-action/main'
     )
+    runCommand(
+      ['git', 'add', '-f', '_site'],
+      '/home/runner/work/_actions/llun/test-action/main'
+    )
   }
 }
 exports.buildSite = buildSite
@@ -79,6 +83,7 @@ async function publish() {
       '.prettierrc.yml',
       'tsconfig.json',
       '.eleventy.js',
+      'tailwind.config.js',
       'feeds',
       '.github',
       'pages'
