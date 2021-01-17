@@ -3,7 +3,7 @@
  * @typedef {{
  *  title: string
  *  link: string
- *  date: string
+ *  date: number
  *  content: string
  *  author: string
  * }} Entry
@@ -11,7 +11,7 @@
  *  title: string
  *  link: string
  *  description: string
- *  updatedAt: string
+ *  updatedAt: number
  *  generator: string,
  *  entries: Entry[]
  * }} Site
@@ -48,14 +48,18 @@ function parseRss(xml) {
     title: joinValuesOrEmptyString(title).trim(),
     link: joinValuesOrEmptyString(link),
     description: joinValuesOrEmptyString(description),
-    updatedAt: joinValuesOrEmptyString(lastBuildDate || channels[0]['dc:date']),
+    updatedAt: new Date(
+      joinValuesOrEmptyString(lastBuildDate || channels[0]['dc:date'])
+    ).getTime(),
     generator: joinValuesOrEmptyString(generator || channels[0]['dc:creator']),
     entries: items.map((item) => {
       const { title, link, pubDate, description } = item
       return {
         title: joinValuesOrEmptyString(title).trim(),
         link: joinValuesOrEmptyString(link),
-        date: joinValuesOrEmptyString(pubDate || item['dc:date']),
+        date: new Date(
+          joinValuesOrEmptyString(pubDate || item['dc:date'])
+        ).getTime(),
         content: joinValuesOrEmptyString(description),
         author: joinValuesOrEmptyString(item['dc:creator'])
       }
@@ -79,7 +83,7 @@ function parseAtom(xml) {
     title: joinValuesOrEmptyString(title).trim(),
     description: joinValuesOrEmptyString(subtitle),
     link: siteLink && siteLink.$.href,
-    updatedAt: joinValuesOrEmptyString(updated),
+    updatedAt: new Date(joinValuesOrEmptyString(updated)).getTime(),
     generator: joinValuesOrEmptyString(generator),
     entries: entry.map((item) => {
       const { title, link, published, updated, content, author, summary } = item
@@ -89,7 +93,7 @@ function parseAtom(xml) {
       return {
         title: joinValuesOrEmptyString(title).trim(),
         link: itemLink.$.href,
-        date: joinValuesOrEmptyString(published || updated),
+        date: new Date(joinValuesOrEmptyString(published || updated)).getTime(),
         content: feedContent,
         author: (author && joinValuesOrEmptyString(author[0].name)) || ''
       }

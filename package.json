@@ -21,6 +21,7 @@
     "@11ty/eleventy": "^0.11.1",
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
+    "date-fns": "^2.16.1",
     "tailwindcss-cli": "^0.1.2",
     "xml2js": "^0.4.23"
   }

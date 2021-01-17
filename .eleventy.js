@@ -2,6 +2,7 @@
 const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
+const { formatDistance } = require('date-fns')
 
 /**
  *
@@ -11,6 +12,13 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.setDataDeepMerge(true)
   eleventyConfig.addPassthroughCopy('pages/css')
   eleventyConfig.addPassthroughCopy('pages/img')
+  eleventyConfig.addFilter('distanceDate', function (value) {
+    try {
+      return formatDistance(new Date(value), new Date())
+    } catch (error) {
+      return ''
+    }
+  })
 
   eleventyConfig.setBrowserSyncConfig({
     callbacks: {
@@ -53,11 +61,13 @@ module.exports = function (eleventyConfig) {
     )
     fs.statSync(FEEDS_CONTENT_PATH)
     const categories = fs.readdirSync(FEEDS_CONTENT_PATH)
+    const allEntries = []
 
     // Feed categories formatting
     const feeds = categories.map((category) => {
       const items = fs.readdirSync(path.join(FEEDS_CONTENT_PATH, category))
-      return {
+      const categoryEntries = []
+      const value = {
         name: category,
         items: items.map((item) => {
           // Feed site formatting
@@ -87,18 +97,22 @@ module.exports = function (eleventyConfig) {
               category
             }
           })
+          categoryEntries.push(...entries)
+          allEntries.push(...entries)
 
           fs.writeFileSync(
             path.join(SITE_DATA_PATH, item),
             JSON.stringify({
               ...site,
-              entries: entries.map((entry) => ({
-                title: entry.title,
-                link: entry.link,
-                date: entry.date,
-                author: entry.author,
-                hash: entry.hash
-              }))
+              entries: entries.map((entry) => {
+                return {
+                  title: entry.title,
+                  link: entry.link,
+                  date: entry.date,
+                  author: entry.author,
+                  hash: entry.hash
+                }
+              })
             })
           )
 
@@ -111,8 +125,19 @@ module.exports = function (eleventyConfig) {
           return site
         })
       }
+      value.entries = categoryEntries
+        .sort((a, b) => b.date - a.date)
+        .map((entry) => entry.hash)
+      return value
     })
     fs.writeFileSync(path.join(DATA_PATH, 'feeds.json'), JSON.stringify(feeds))
+
+    fs.writeFileSync(
+      path.join(DATA_PATH, 'allEntries.json'),
+      JSON.stringify(
+        allEntries.sort((a, b) => b.date - a.date).map((entry) => entry.hash)
+      )
+    )
   } catch (error) {
     if (error !== 'ENOENT') throw error
   }

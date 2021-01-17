@@ -8,6 +8,7 @@ permalink: "sites/{{ site | slug }}/"
 {% extends 'layouts/feeds.njk' %}
 
 {% block categories %}
+  <h2><a href="{{github.repository}}/sites/all">All sites</a></h2>
   {% for category in feeds %}
   <h2>
     <a href="{{github.repository}}/categories/{{ category.name | lower }}">{{ category.name }}</a>
@@ -25,10 +26,14 @@ permalink: "sites/{{ site | slug }}/"
 {% block sites %}
   {% set siteEntries = sites[site].entries %}
   {% for entry in siteEntries %}
-    <div>
-      <h3>
-        <a href="{{github.repository}}/entries/{{ entry.hash | lower }}">{{ entry.title }}</a>
-      </h3>
-    </div>
+  <div>
+    <h3>
+      <a href="{{github.repository}}/entries/{{ entry.hash | lower }}">{{ entry.title }}</a>
+    </h3>
+    <small>
+      <a href="{{github.repository}}/sites/{{entry.site}}">{{ sites[site].title }}</a>,
+      {{ entry.date | distanceDate }}
+    </small>
+  </div>
   {% endfor %}
 {% endblock %}

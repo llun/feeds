@@ -13,11 +13,16 @@ permalink: "sites/all/"
 {% endblock %}
 
 {% block sites %}
-  {% for entry, item in entries %}
-    <div>
-      <h3>
-        <a href="{{github.repository}}/entries/{{ entry | lower }}">{{ item.title }}</a>
-      </h3>
-    </div>
+  {% for entryHash in allEntries %}
+  {% set entry = entries[entryHash] %}
+  <div>
+    <h3>
+      <a href="{{github.repository}}/entries/{{ entry.hash | lower }}">{{ entry.title }}</a>
+    </h3>
+    <small>
+      <a href="{{github.repository}}/sites/{{entry.site}}">{{ sites[entry.site].title }}</a>,
+      {{ entry.date | distanceDate }}
+    </small>
+  </div>
   {% endfor %}
 {% endblock %}
