@@ -37,7 +37,7 @@ sites: sites
 {% endblock %}
 
 {% block article %}
-  <h3>{{ entryItem.title }}</h3>
+  <h3><a href="{{entryItem.link}}" target="_blank">{{ entryItem.title }}</a></h3>
   <div>
     {{ entryItem.content | safe }}
   </div>
