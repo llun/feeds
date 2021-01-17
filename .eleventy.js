@@ -25,15 +25,27 @@ module.exports = function (eleventyConfig) {
     }
   })
 
+  const DATA_PATH = path.join('pages', '_data')
+  const SITE_DATA_PATH = path.join(DATA_PATH, 'sites')
+  fs.mkdirSync(SITE_DATA_PATH, { recursive: true })
+
+  const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
+  fs.writeFileSync(
+    path.join(DATA_PATH, 'github.json'),
+    JSON.stringify({
+      repository:
+        (githubRootName.split('/').length > 1 &&
+          `/${githubRootName.split('/')[1]}`) ||
+        ''
+    })
+  )
+
   try {
     const FEEDS_CONTENT_PATH = path.join(
       process.env['GITHUB_WORKSPACE'] || '',
       'contents'
     )
-    const DATA_PATH = path.join('pages', '_data')
-    const SITE_DATA_PATH = path.join(DATA_PATH, 'sites')
     fs.statSync(FEEDS_CONTENT_PATH)
-    fs.mkdirSync(SITE_DATA_PATH, { recursive: true })
     const categories = fs.readdirSync(FEEDS_CONTENT_PATH)
     const feeds = categories.reduce((output, category) => {
       const items = fs.readdirSync(path.join(FEEDS_CONTENT_PATH, category))

@@ -8,7 +8,7 @@ layout: layouts/base.njk
 
     {% for category in feeds %}
       <h2>
-        <a href="/categories/{{category.name}}">{{ category.name }}</a>
+        <a href="{{github.repository}}/categories/{{category.name}}">{{ category.name }}</a>
       </h2>
     {% endfor %}
   </aside>

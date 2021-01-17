@@ -13,10 +13,10 @@ permalink: "sites/{{ site | slug }}/"
 
     {% for category in feeds %}
       <h2>
-        <a href="/categories/{{category.name}}">{{ category.name }}</a>
+        <a href="{{github.repository}}/categories/{{category.name}}">{{ category.name }}</a>
       </h2>
       {% for item in category.items %}
-        <h3><a href="/sites/{{item.site}}">{{ item.title }}</a></h3>
+        <h3><a href="{{github.repository}}/sites/{{item.site}}">{{ item.title }}</a></h3>
       {% endfor %}
     {% endfor %}
   </aside>
