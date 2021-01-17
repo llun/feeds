@@ -10,6 +10,7 @@ sites: sites
 {% extends 'layouts/feeds.njk' %}
 {% set entryItem = entries[entry] %}
 {% block categories %}
+  <h2><a href="{{github.repository}}/sites/all">All sites</a></h2>
   {% for category in feeds %}
   <h2>
     <a href="{{github.repository}}/categories/{{ category.name | lower }}">{{ category.name }}</a>
