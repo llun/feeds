@@ -82,14 +82,14 @@ function parseAtom(xml) {
     updatedAt: joinValuesOrEmptyString(updated),
     generator: joinValuesOrEmptyString(generator),
     entries: entry.map((item) => {
-      const { title, link, published, content, author, summary } = item
+      const { title, link, published, updated, content, author, summary } = item
       const itemLink =
         link && (link.find((item) => item.$.rel === 'alternate') || link[0])
       const feedContent = content ? content[0]._ : summary ? summary[0]._ : ''
       return {
         title: joinValuesOrEmptyString(title).trim(),
         link: itemLink.$.href,
-        date: joinValuesOrEmptyString(published),
+        date: joinValuesOrEmptyString(published || updated),
         content: feedContent,
         author: (author && joinValuesOrEmptyString(author[0].name)) || ''
       }
