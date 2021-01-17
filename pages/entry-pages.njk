@@ -1,18 +1,20 @@
 ---
 pagination:
-    data: sites
+    data: entries
     size: 1
-    alias: site
-permalink: "sites/{{ site | slug }}/"
+    alias: entry
+permalink: "entries/{{ entry | slug }}/"
+sites: sites
 ---
-{% extends 'layouts/feeds.njk' %}
 
+{% extends 'layouts/feeds.njk' %}
+{% set entryItem = entries[entry] %}
 {% block categories %}
   {% for category in feeds %}
   <h2>
     <a href="{{github.repository}}/categories/{{ category.name | lower }}">{{ category.name }}</a>
   </h2>
-  {% if category.name == sites[site].category %}
+  {% if category.name == entryItem.category %}
   <ul>
     {% for item in category.items %}
       <li><a href="{{github.repository}}/sites/{{ item.site | lower }}">{{ item.title }}</a></li>
@@ -23,7 +25,7 @@ permalink: "sites/{{ site | slug }}/"
 {% endblock %}
 
 {% block sites %}
-  {% set siteEntries = sites[site].entries %}
+  {% set siteEntries = sites[entryItem.site].entries %}
   {% for entry in siteEntries %}
     <div>
       <h3>
@@ -31,4 +33,11 @@ permalink: "sites/{{ site | slug }}/"
       </h3>
     </div>
   {% endfor %}
+{% endblock %}
+
+{% block article %}
+  <h3>{{ entryItem.title }}</h3>
+  <div>
+    {{ entryItem.content | safe }}
+  </div>
 {% endblock %}

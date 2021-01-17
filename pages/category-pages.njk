@@ -1,27 +1,22 @@
 ---
-layout: layouts/base.njk
 pagination:
     data: feeds
     size: 1
     alias: feed
 permalink: "categories/{{ feed.name | slug }}/"
 ---
-
-<div class="container mx-auto">
-  <aside class="prose">
-    <h1>Feeds</h1>
-
-    {% for category in feeds %}
-      <h2>
-        <a href="{{github.repository}}/categories/{{ category.name | lower }}">{{ category.name }}</a>
-      </h2>
-      <ul>
-        {% for item in category.items %}
-          <li><a href="{{github.repository}}/sites/{{ item.site | lower }}">{{ item.title }}</a></li>
-        {% endfor %}
-      </ul>
+{% extends 'layouts/feeds.njk' %}
+{% block categories %}
+  {% for category in feeds %}
+  <h2>
+    <a href="{{github.repository}}/categories/{{ category.name | lower }}">{{ category.name }}</a>
+  </h2>
+  {% if category == feed %}
+  <ul>
+    {% for item in category.items %}
+      <li><a href="{{github.repository}}/sites/{{ item.site | lower }}">{{ item.title }}</a></li>
     {% endfor %}
-  </aside>
-  <article>
-  </article>
-</div>
+  </ul>
+  {% endif %}
+  {% endfor %}
+{% endblock %}

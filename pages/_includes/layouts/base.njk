@@ -10,5 +10,7 @@
   <link rel="stylesheet" href="{{github.repository}}{{ '/css/tailwind.css' | url }}">
   <link rel="stylesheet" href="{{github.repository}}{{ '/css/index.css' | url }}">
 
-  {{ content | safe }}
+  {% block content %}
+    {{ content | safe }}
+  {% endblock %}
 </html>

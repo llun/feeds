@@ -1,6 +1,7 @@
 // @ts-check
 const fs = require('fs')
 const path = require('path')
+const crypto = require('crypto')
 
 /**
  *
@@ -25,10 +26,14 @@ module.exports = function (eleventyConfig) {
     }
   })
 
+  // Prepare data directories
   const DATA_PATH = path.join('pages', '_data')
   const SITE_DATA_PATH = path.join(DATA_PATH, 'sites')
+  const ENTRY_DATA_PATH = path.join(DATA_PATH, 'entries')
   fs.mkdirSync(SITE_DATA_PATH, { recursive: true })
+  fs.mkdirSync(ENTRY_DATA_PATH, { recursive: true })
 
+  // Setup github repository template variables
   const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
   fs.writeFileSync(
     path.join(DATA_PATH, 'github.json'),
@@ -40,6 +45,7 @@ module.exports = function (eleventyConfig) {
     })
   )
 
+  // Convert feed data into eleventy data
   try {
     const FEEDS_CONTENT_PATH = path.join(
       process.env['GITHUB_WORKSPACE'] || '',
@@ -47,26 +53,65 @@ module.exports = function (eleventyConfig) {
     )
     fs.statSync(FEEDS_CONTENT_PATH)
     const categories = fs.readdirSync(FEEDS_CONTENT_PATH)
-    const feeds = categories.reduce((output, category) => {
+
+    // Feed categories formatting
+    const feeds = categories.map((category) => {
       const items = fs.readdirSync(path.join(FEEDS_CONTENT_PATH, category))
-      output.push({
+      return {
         name: category,
         items: items.map((item) => {
-          const rawBuffer = fs.readFileSync(
-            path.join(FEEDS_CONTENT_PATH, category, item)
+          // Feed site formatting
+          const siteItem = JSON.parse(
+            fs
+              .readFileSync(path.join(FEEDS_CONTENT_PATH, category, item))
+              .toString('utf8')
           )
-          const parsedItem = JSON.parse(rawBuffer.toString('utf8'))
-          fs.writeFileSync(path.join(SITE_DATA_PATH, item), rawBuffer)
-          return {
-            title: parsedItem.title,
-            link: parsedItem.link,
-            updatedAt: parsedItem.updatedAt,
-            site: item.substring(0, item.length - '.json'.length)
+          const siteHash = item.substring(0, item.length - '.json'.length)
+          const site = {
+            title: siteItem.title,
+            link: siteItem.link,
+            updatedAt: siteItem.updatedAt,
+            site: siteHash,
+            category
           }
+
+          // Feed entry formatting
+          const entries = siteItem.entries.map((entry) => {
+            const hash = crypto.createHash('sha256')
+            hash.update(entry.link)
+            const linkHash = hash.digest('hex')
+            return {
+              ...entry,
+              site: siteHash,
+              hash: linkHash,
+              category
+            }
+          })
+
+          fs.writeFileSync(
+            path.join(SITE_DATA_PATH, item),
+            JSON.stringify({
+              ...site,
+              entries: entries.map((entry) => ({
+                title: entry.title,
+                link: entry.link,
+                date: entry.date,
+                author: entry.author,
+                hash: entry.hash
+              }))
+            })
+          )
+
+          entries.forEach((entry) => {
+            fs.writeFileSync(
+              path.join(ENTRY_DATA_PATH, `${entry.hash}.json`),
+              JSON.stringify(entry)
+            )
+          })
+          return site
         })
-      })
-      return output
-    }, [])
+      }
+    })
     fs.writeFileSync(path.join(DATA_PATH, 'feeds.json'), JSON.stringify(feeds))
   } catch (error) {
     if (error !== 'ENOENT') throw error

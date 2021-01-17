@@ -1,0 +1,22 @@
+{% extends 'layouts/base.njk' %}
+{% block content %}
+<div class="container flex flex-row">
+  <aside class="prose">
+    <h1>Feeds</h1>
+
+    {% block categories %}
+      <h2>No contents</h2>
+    {% endblock %}
+  </aside>
+  <section class="prose">
+    {% block sites %}
+      <h3>No contents</h3>
+    {% endblock %}
+  </section>
+  <article class="prose">
+    {% block article %}
+    No contents
+    {% endblock %}
+  </article>
+</div>
+{% endblock %}
