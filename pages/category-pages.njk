@@ -8,16 +8,16 @@ permalink: "categories/{{ feed.name | slug }}/"
 ---
 
 <div class="container mx-auto">
-  <aside>
+  <aside class="prose">
     <h1>Feeds</h1>
 
     {% for category in feeds %}
       <h2>
-        <a href="{{github.repository}}/categories/{{category.name}}">{{ category.name }}</a>
+        <a href="{{github.repository}}/categories/{{ category.name | lower }}">{{ category.name }}</a>
       </h2>
       <ul>
         {% for item in category.items %}
-          <li><a href="{{github.repository}}/sites/{{item.site}}">{{ item.title }}</a></li>
+          <li><a href="{{github.repository}}/sites/{{ item.site | lower }}">{{ item.title }}</a></li>
         {% endfor %}
       </ul>
     {% endfor %}
