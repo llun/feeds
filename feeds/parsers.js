@@ -26,7 +26,7 @@ function joinValuesOrEmptyString(values) {
   if (values && values.length > 0 && typeof values[0] !== 'string') {
     return values[0]._
   }
-  return (values && values.join('')) || ''
+  return (values && values.join('').trim()) || ''
 }
 
 /**
@@ -44,19 +44,18 @@ function parseRss(xml) {
     generator,
     item: items
   } = channels[0]
-
   const feed = {
     title: joinValuesOrEmptyString(title).trim(),
     link: joinValuesOrEmptyString(link),
     description: joinValuesOrEmptyString(description),
-    updatedAt: joinValuesOrEmptyString(lastBuildDate),
-    generator: joinValuesOrEmptyString(generator),
+    updatedAt: joinValuesOrEmptyString(lastBuildDate || channels[0]['dc:date']),
+    generator: joinValuesOrEmptyString(generator || channels[0]['dc:creator']),
     entries: items.map((item) => {
       const { title, link, pubDate, description } = item
       return {
         title: joinValuesOrEmptyString(title).trim(),
         link: joinValuesOrEmptyString(link),
-        date: joinValuesOrEmptyString(pubDate),
+        date: joinValuesOrEmptyString(pubDate || item['dc:date']),
         content: joinValuesOrEmptyString(description),
         author: joinValuesOrEmptyString(item['dc:creator'])
       }
