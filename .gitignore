@@ -3,3 +3,4 @@ node_modules
 contents
 _site
 pages/_data
+pages/tailwind.css

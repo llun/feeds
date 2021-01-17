@@ -7,9 +7,9 @@
   "repository": "github:llun/test-action",
   "license": "ISC",
   "scripts": {
-    "css": "tailwindcss-cli build -c tailwind.config.js -o pages/css/tailwind.css && cp -r pages/css _site",
+    "css": "tailwindcss-cli build -c tailwind.config.js -o pages/css/tailwind.css",
     "serve": "eleventy --serve",
-    "build": "NODE_ENV=production npm run css && eleventy && cp -r pages/css _site",
+    "build": "NODE_ENV=production npm run css && eleventy",
     "load": "INPUT_OUTPUTDIRECTORY='contents' INPUT_OPMLFILE='feeds.opml' node index.js"
   },
   "devDependencies": {

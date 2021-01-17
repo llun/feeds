@@ -8,8 +8,8 @@ const path = require('path')
  */
 module.exports = function (eleventyConfig) {
   eleventyConfig.setDataDeepMerge(true)
-  eleventyConfig.addPassthroughCopy('css')
-  eleventyConfig.addPassthroughCopy('img')
+  eleventyConfig.addPassthroughCopy('pages/css')
+  eleventyConfig.addPassthroughCopy('pages/img')
 
   eleventyConfig.setBrowserSyncConfig({
     callbacks: {
