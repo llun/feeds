@@ -26,7 +26,10 @@ module.exports = function (eleventyConfig) {
   })
 
   try {
-    const FEEDS_CONTENT_PATH = 'contents'
+    const FEEDS_CONTENT_PATH = path.join(
+      process.env['GITHUB_WORKSPACE'],
+      'contents'
+    )
     const DATA_PATH = path.join('pages', '_data')
     const SITE_DATA_PATH = path.join(DATA_PATH, 'sites')
     fs.statSync(FEEDS_CONTENT_PATH)
