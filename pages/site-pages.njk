@@ -1,0 +1,29 @@
+---
+layout: layouts/base.njk
+pagination:
+    data: sites
+    size: 1
+    alias: site
+permalink: "sites/{{ site | slug }}/"
+---
+
+<div class="container flex flex-row">
+  <aside class="prose">
+    <h1>Feeds</h1>
+
+    {% for category in feeds %}
+      <h2>
+        <a href="/categories/{{category.name}}">{{ category.name }}</a>
+      </h2>
+      {% for item in category.items %}
+        <h3><a href="/sites/{{item.site}}">{{ item.title }}</a></h3>
+      {% endfor %}
+    {% endfor %}
+  </aside>
+  <article class="prose">
+    {% set entries = sites[site].entries %}
+    {% for entry in entries %}
+      {{ entry.title }}
+    {% endfor %}
+  </article>
+</div>

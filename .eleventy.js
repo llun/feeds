@@ -1,5 +1,11 @@
+// @ts-check
 const fs = require('fs')
+const path = require('path')
 
+/**
+ *
+ * @param {import('@11ty/eleventy/src/UserConfig')} eleventyConfig
+ */
 module.exports = function (eleventyConfig) {
   eleventyConfig.setDataDeepMerge(true)
   eleventyConfig.addPassthroughCopy('css')
@@ -18,6 +24,38 @@ module.exports = function (eleventyConfig) {
       }
     }
   })
+
+  try {
+    const FEEDS_CONTENT_PATH = 'contents'
+    const DATA_PATH = path.join('pages', '_data')
+    const SITE_DATA_PATH = path.join(DATA_PATH, 'sites')
+    fs.statSync(FEEDS_CONTENT_PATH)
+    fs.mkdirSync(SITE_DATA_PATH, { recursive: true })
+    const categories = fs.readdirSync(FEEDS_CONTENT_PATH)
+    const feeds = categories.reduce((output, category) => {
+      const items = fs.readdirSync(path.join(FEEDS_CONTENT_PATH, category))
+      output.push({
+        name: category,
+        items: items.map((item) => {
+          const rawBuffer = fs.readFileSync(
+            path.join(FEEDS_CONTENT_PATH, category, item)
+          )
+          const parsedItem = JSON.parse(rawBuffer.toString('utf8'))
+          fs.writeFileSync(path.join(SITE_DATA_PATH, item), rawBuffer)
+          return {
+            title: parsedItem.title,
+            link: parsedItem.link,
+            updatedAt: parsedItem.updatedAt,
+            site: item.substring(0, item.length - '.json'.length)
+          }
+        })
+      })
+      return output
+    }, [])
+    fs.writeFileSync(path.join(DATA_PATH, 'feeds.json'), JSON.stringify(feeds))
+  } catch (error) {
+    if (error !== 'ENOENT') throw error
+  }
 
   return {
     templateFormats: ['njk', 'html', 'png', 'jpg'],

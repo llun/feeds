@@ -1,5 +1,10 @@
 ---
 layout: layouts/base.njk
+pagination:
+    data: feeds
+    size: 1
+    alias: feed
+permalink: "categories/{{ feed.name | slug }}/"
 ---
 
 <div class="container mx-auto">
@@ -10,10 +15,13 @@ layout: layouts/base.njk
       <h2>
         <a href="/categories/{{category.name}}">{{ category.name }}</a>
       </h2>
+      <ul>
+        {% for item in category.items %}
+          <li><a href="/sites/{{item.site}}">{{ item.title }}</a></li>
+        {% endfor %}
+      </ul>
     {% endfor %}
   </aside>
-  <section>
-  </section>
   <article>
   </article>
 </div>
