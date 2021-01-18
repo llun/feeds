@@ -9,3 +9,5 @@ jobs:
     steps:
       - name: Run Action
         uses: llun/test-action@main
+        with:
+          isCustomSiteEnabled: true

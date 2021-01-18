@@ -17,6 +17,10 @@ inputs:
     description: >
       Github token for pulling repository information
     default: ${{ github.token }}
+  customSiteEnabled:
+    description: >
+      When this is true, github repo prefix will remove from the path
+    default: false
 runs:
   using: 'node12'
   main: 'index.js'
