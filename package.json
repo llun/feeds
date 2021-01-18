@@ -1,7 +1,7 @@
 {
-  "name": "test-action",
+  "name": "feeds-fetcher",
   "version": "1.0.0",
-  "description": "Test Github Action",
+  "description": "Websites feed fetcher and static feeds aggregator",
   "main": "index.js",
   "author": "Maythee Anegboonlap <null@llun.dev>",
   "repository": "github:llun/test-action",
