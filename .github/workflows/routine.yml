@@ -2,7 +2,7 @@ name: Feeds fetcher
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '0,15,30,45 * * * *'
 
 jobs:
   playground:
