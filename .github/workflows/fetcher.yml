@@ -2,7 +2,7 @@ name: Schedule
 
 on:
   schedule:
-    - cron: '0,15,30,45 * * * *'
+    - cron: '*/5 * * * *'
 
 jobs:
   playground:
