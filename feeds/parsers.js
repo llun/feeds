@@ -60,7 +60,9 @@ function parseRss(xml) {
         date: new Date(
           joinValuesOrEmptyString(pubDate || item['dc:date'])
         ).getTime(),
-        content: joinValuesOrEmptyString(description),
+        content: joinValuesOrEmptyString(
+          item['content:encoded'] || description
+        ),
         author: joinValuesOrEmptyString(item['dc:creator'])
       }
     })

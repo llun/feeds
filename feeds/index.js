@@ -53,11 +53,13 @@ async function readOpml(fileName) {
       const items = outline.outline
       out.push({
         category,
-        items: items.map((item) => item.$)
+        items: items && items.map((item) => item.$)
       })
       return out
     }, [])
   } catch (error) {
+    console.error(error.message)
+    console.error(error.stack)
     throw new Error(`${fileName} is not found in repository`)
   }
 }
@@ -94,6 +96,7 @@ async function writeFeedsContent() {
     for (const category of opml) {
       const { category: title, items } = category
       createCategoryDirectory(contentDirectory, title)
+      if (!items) continue
       console.log(`Load category ${title}`)
       for (const item of items) {
         const feedData = await loadFeed(item.xmlUrl)
@@ -111,6 +114,8 @@ async function writeFeedsContent() {
       }
     }
   } catch (error) {
+    console.error(error.message)
+    console.error(error.stack)
     core.setFailed(error)
   }
 }
