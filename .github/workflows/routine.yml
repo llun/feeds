@@ -1,3 +1,5 @@
+name: Feeds fetcher
+
 on:
   schedule:
     - cron: '*/5 * * * *'

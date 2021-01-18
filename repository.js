@@ -100,8 +100,8 @@ async function publish() {
     runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
     runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
     runCommand(['git', 'add', '-f', '--all'])
-    runCommand(['git', 'commit', '-m', '"update feeds contents"'])
-    runCommand(['git', 'push', '-f', cloneUrl, `HEAD:${branch}`])
+    runCommand(['git', 'commit', '-m', 'Update feeds contents'])
+    runCommand(['git', 'push', '-f'])
   }
 }
 exports.publish = publish
