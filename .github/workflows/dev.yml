@@ -8,6 +8,6 @@ jobs:
     name: Test
     steps:
       - name: Run Action
-        uses: llun/test-action@main
+        uses: llun/feeds@main
         with:
           customDomain: feeds.llun.dev
