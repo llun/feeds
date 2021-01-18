@@ -12,4 +12,4 @@ jobs:
       - name: Run Action
         uses: llun/test-action@main
         with:
-          customSiteEnabled: true
+          customDomain: feeds.llun.dev

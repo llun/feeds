@@ -47,13 +47,13 @@ module.exports = function (eleventyConfig) {
   fs.mkdirSync(ENTRY_DATA_PATH, { recursive: true })
 
   // Setup github repository template variables
-  const isCustomSiteEnabled = core.getInput('customSiteEnabled')
+  const isCustomDomainEnabled = !!core.getInput('customDomain')
   const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
   fs.writeFileSync(
     path.join(DATA_PATH, 'github.json'),
     JSON.stringify({
       repository:
-        (!isCustomSiteEnabled &&
+        (!isCustomDomainEnabled &&
           githubRootName.split('/').length > 1 &&
           `/${githubRootName.split('/')[1]}`) ||
         ''

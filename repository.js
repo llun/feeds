@@ -1,5 +1,6 @@
 // @ts-check
 const { spawnSync } = require('child_process')
+const fs = require('fs')
 
 /**
  *
@@ -80,6 +81,12 @@ async function publish() {
     const user = process.env['GITHUB_ACTOR']
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
 
+    // Fix custom domain getting disable after run
+    const customDomain = core.getInput('customDomain')
+    if (customDomain) {
+      fs.writeFileSync('CNAME', customDomain)
+    }
+
     runCommand([
       'rm',
       '-rf',
@@ -101,7 +108,7 @@ async function publish() {
     runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
     runCommand(['git', 'add', '-f', '--all'])
     runCommand(['git', 'commit', '-m', 'Update feeds contents'])
-    runCommand(['git', 'push', '-f'])
+    runCommand(['git', 'push', '-f', cloneUrl, `HEAD:${branch}`])
   }
 }
 exports.publish = publish
