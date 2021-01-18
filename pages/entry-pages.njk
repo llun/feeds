@@ -43,6 +43,6 @@ sites: sites
 {% block article %}
   <h3><a href="{{entryItem.link}}" target="_blank">{{ entryItem.title }}</a></h3>
   <div>
-    {{ entryItem.content | safe }}
+    {{ entryItem.content | decodeBase64 | safe }}
   </div>
 {% endblock %}

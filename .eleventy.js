@@ -20,6 +20,10 @@ module.exports = function (eleventyConfig) {
     }
   })
 
+  eleventyConfig.addFilter('decodeBase64', function (value) {
+    return Buffer.from(value, 'base64').toString('utf8')
+  })
+
   eleventyConfig.setBrowserSyncConfig({
     callbacks: {
       ready: function (err, browserSync) {
