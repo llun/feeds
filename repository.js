@@ -20,7 +20,7 @@ function buildSite() {
   if (workSpace) {
     const result = runCommand(
       ['npm', 'run', 'build', `--output=${workSpace}`],
-      '/home/runner/work/_actions/llun/test-action/main'
+      '/home/runner/work/_actions/llun/feeds/main'
     )
     if (result.error) {
       throw new Error('Fail to build site')
@@ -30,10 +30,11 @@ function buildSite() {
 exports.buildSite = buildSite
 
 async function setup() {
-  if (process.env['GITHUB_ACTION'] === 'lluntest-action') {
+  console.log('Action: ', process.env['GITHUB_ACTION'])
+  if (process.env['GITHUB_ACTION'] === 'llunfeeds') {
     const result = runCommand(
       ['npm', 'install'],
-      '/home/runner/work/_actions/llun/test-action/main'
+      '/home/runner/work/_actions/llun/feeds/main'
     )
     if (result.error) {
       throw new Error('Fail to run setup')
