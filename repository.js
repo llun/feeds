@@ -7,7 +7,7 @@ const { spawnSync } = require('child_process')
  * @param {string} [cwd]
  */
 function runCommand(commands, cwd) {
-  spawnSync(commands[0], commands.slice(1), {
+  return spawnSync(commands[0], commands.slice(1), {
     stdio: 'inherit',
     cwd
   })
@@ -17,20 +17,26 @@ exports.runCommand = runCommand
 function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
-    runCommand(
+    const result = runCommand(
       ['npm', 'run', 'build', `--output=${workSpace}`],
       '/home/runner/work/_actions/llun/test-action/main'
     )
+    if (result.error) {
+      throw new Error('Fail to build site')
+    }
   }
 }
 exports.buildSite = buildSite
 
 async function setup() {
   if (process.env['GITHUB_ACTION'] === 'lluntest-action') {
-    runCommand(
+    const result = runCommand(
       ['npm', 'install'],
       '/home/runner/work/_actions/llun/test-action/main'
     )
+    if (result.error) {
+      throw new Error('Fail to run setup')
+    }
   }
 
   const workSpace = process.env['GITHUB_WORKSPACE']
@@ -40,7 +46,7 @@ async function setup() {
     const user = process.env['GITHUB_ACTOR']
     const token = core.getInput('token', { required: true })
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
-    runCommand([
+    const cloneResult = runCommand([
       'git',
       'clone',
       '-b',
@@ -50,9 +56,16 @@ async function setup() {
       cloneUrl,
       workSpace
     ])
+    if (cloneResult.error) {
+      throw new Error('Fail to clone repository')
+    }
+
     const branch = core.getInput('branch', { required: true })
     console.log(`Switch to ${branch}`)
-    runCommand(['git', 'checkout', '-B', branch])
+    const branchResult = runCommand(['git', 'checkout', '-B', branch])
+    if (branchResult.error) {
+      throw new Error('Fail to switch branch')
+    }
   }
 }
 exports.setup = setup
