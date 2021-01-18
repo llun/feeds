@@ -1,5 +1,5 @@
-name: 'TestAction'
-description: 'Test action experiment'
+name: 'FeedsFetcher'
+description: 'Fetch websites feed and build static feeds aggregator'
 inputs:
   opmlFile:
     description: >
