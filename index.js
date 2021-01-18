@@ -14,8 +14,6 @@ run()
     console.log('Done')
   })
   .catch((error) => {
-    const core = require('@actions/core')
     console.error(error.message)
     console.error(error.stack)
-    core.setFailed(error)
   })
