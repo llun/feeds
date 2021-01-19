@@ -1,48 +1,15 @@
 ---
+layout: 'layouts/base.njk'
 pagination:
     data: entries
     size: 1
     alias: entry
 permalink: "entries/{{ entry | slug }}/"
-sites: sites
 ---
+{% from 'components.njk' import categoryList, entryList, content %}
 
-{% extends 'layouts/feeds.njk' %}
 {% set entryItem = entries[entry] %}
-{% block categories %}
-  <h2><a href="{{github.repository}}/sites/all">All sites</a></h2>
-  {% for category in feeds %}
-  <h2>
-    <a href="{{github.repository}}/categories/{{ category.name | lower }}">{{ category.name }}</a>
-  </h2>
-  {% if category.name == entryItem.category %}
-  <ul>
-    {% for item in category.items %}
-      <li><a href="{{github.repository}}/sites/{{ item.site | lower }}">{{ item.title }}</a></li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-  {% endfor %}
-{% endblock %}
-
-{% block sites %}
-  {% set site = sites[entryItem.site] %}
-  {% for entry in site.entries %}
-  <div>
-    <h3>
-      <a href="{{github.repository}}/entries/{{ entry.hash | lower }}">{{ entry.title }}</a>
-    </h3>
-    <small>
-      <a href="{{github.repository}}/sites/{{entry.site}}">{{ site.title }}</a>,
-      {{ entry.date | distanceDate }}
-    </small>
-  </div>
-  {% endfor %}
-{% endblock %}
-
-{% block article %}
-  <h3><a href="{{entryItem.link}}" target="_blank">{{ entryItem.title }}</a></h3>
-  <div>
-    {{ entryItem.content | decodeBase64 | safe }}
-  </div>
-{% endblock %}
+{% set siteItem = sites[entryItem.site] %}
+{{ categoryList(root = github.repository, categories = feeds, currentCategory = entryItem.category) }}
+{{ entryList(root = github.repository, entries = siteItem.entries, sites = sites) }}
+{{ content(item = entryItem) }}

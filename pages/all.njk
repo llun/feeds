@@ -1,28 +1,9 @@
 ---
+layout: 'layouts/base.njk'
 permalink: "sites/all/"
 ---
-{% extends 'layouts/feeds.njk' %}
+{% from 'components.njk' import categoryList, entryList, content %}
 
-{% block categories %}
-  <h2><a href="{{github.repository}}/sites/all">All sites</a></h2>
-  {% for category in feeds %}
-  <h2>
-    <a href="{{github.repository}}/categories/{{ category.name | lower }}">{{ category.name }}</a>
-  </h2>
-  {% endfor %}
-{% endblock %}
-
-{% block sites %}
-  {% for entryHash in allEntries %}
-  {% set entry = entries[entryHash] %}
-  <div>
-    <h3>
-      <a href="{{github.repository}}/entries/{{ entry.hash | lower }}">{{ entry.title }}</a>
-    </h3>
-    <small>
-      <a href="{{github.repository}}/sites/{{entry.site}}">{{ sites[entry.site].title }}</a>,
-      {{ entry.date | distanceDate }}
-    </small>
-  </div>
-  {% endfor %}
-{% endblock %}
+{{ categoryList(root = github.repository, categories = feeds) }}
+{{ entryList(root = github.repository, entries = allEntries, sites = sites) }}
+{{ content() }}

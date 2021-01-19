@@ -117,7 +117,8 @@ module.exports = function (eleventyConfig) {
                   link: entry.link,
                   date: entry.date,
                   author: entry.author,
-                  hash: entry.hash
+                  hash: entry.hash,
+                  site: siteHash
                 }
               })
             })
@@ -132,18 +133,14 @@ module.exports = function (eleventyConfig) {
           return site
         })
       }
-      value.entries = categoryEntries
-        .sort((a, b) => b.date - a.date)
-        .map((entry) => entry.hash)
+      value.entries = categoryEntries.sort((a, b) => b.date - a.date)
       return value
     })
     fs.writeFileSync(path.join(DATA_PATH, 'feeds.json'), JSON.stringify(feeds))
 
     fs.writeFileSync(
       path.join(DATA_PATH, 'allEntries.json'),
-      JSON.stringify(
-        allEntries.sort((a, b) => b.date - a.date).map((entry) => entry.hash)
-      )
+      JSON.stringify(allEntries.sort((a, b) => b.date - a.date))
     )
   } catch (error) {
     if (error !== 'ENOENT') throw error

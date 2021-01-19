@@ -1,0 +1,52 @@
+{% macro categoryList(root = '', categories = [], currentCategory = '') %}
+<aside class="prose w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto">
+  <h1>Feeds</h1>
+
+  <h2><a href="{{root}}/sites/all">All sites</a></h2>
+  {% for category in categories %}
+  <h2>
+    <a href="{{root}}/categories/{{ category.name | lower }}">{{ category.name }}</a>
+  </h2>
+  {% if category.name == currentCategory %}
+  <ul>
+    {% for item in category.items %}
+      <li><a href="{{root}}/sites/{{ item.site | lower }}">{{ item.title }}</a></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% endfor %}
+</aside>
+{% endmacro %}
+
+{% macro entryList(root = '', entries = [], sites = {}) %}
+<section class="prose w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto">
+{% for entry in entries %}
+  <div>
+    <h3>
+      <a href="{{root}}/entries/{{ entry.hash | lower }}">{{ entry.title }}</a>
+    </h3>
+    <small>
+      <a href="{{root}}/sites/{{ entry.site }}">{{ sites[entry.site].title }}</a>,
+      {{ entry.date | distanceDate }}
+    </small>
+  </div>
+{% else %}
+  <div>
+    <h3>No contents</h3>
+  </div>
+{% endfor %}
+</section>
+{% endmacro %}
+
+{% macro content(item = null) %}
+<article class="prose flex-grow p-6 max-h-screen overflow-y-auto">
+{% if item %}
+  <h3>
+    <a href="{{item.link}}" target="_blank">{{ item.title }}</a>
+  </h3>
+  <div>
+    {{ item.content | decodeBase64 | safe }}
+  </div>
+{% endif %}
+</article>
+{% endmacro %}

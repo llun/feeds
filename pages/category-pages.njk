@@ -1,38 +1,12 @@
 ---
+layout: 'layouts/base.njk'
 pagination:
     data: feeds
     size: 1
     alias: feed
 permalink: "categories/{{ feed.name | slug }}/"
 ---
-{% extends 'layouts/feeds.njk' %}
-{% block categories %}
-  <h2><a href="{{github.repository}}/sites/all">All sites</a></h2>
-  {% for category in feeds %}
-  <h2>
-    <a href="{{github.repository}}/categories/{{ category.name | lower }}">{{ category.name }}</a>
-  </h2>
-  {% if category == feed %}
-  <ul>
-    {% for item in category.items %}
-      <li><a href="{{github.repository}}/sites/{{ item.site | lower }}">{{ item.title }}</a></li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-  {% endfor %}
-{% endblock %}
-
-{% block sites %}
-  {% for entryHash in feed.entries %}
-  {% set entry = entries[entryHash] %}
-  <div>
-    <h3>
-      <a href="{{github.repository}}/entries/{{ entry.hash | lower }}">{{ entry.title }}</a>
-    </h3>
-    <small>
-      <a href="{{github.repository}}/sites/{{entry.site}}">{{ sites[entry.site].title }}</a>,
-      {{ entry.date | distanceDate }}
-    </small>
-  </div>
-  {% endfor %}
-{% endblock %}
+{% from 'components.njk' import categoryList, entryList, content %}
+{{ categoryList(root = github.repository, categories = feeds, currentCategory = feed.name) }}
+{{ entryList(root = github.repository, entries = feed.entries, sites = sites) }}
+{{ content() }}
