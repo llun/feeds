@@ -216,6 +216,7 @@ function createCategoryData() {
 
 function prepareEleventyData() {
   try {
+    console.log('Preparing eleventy data')
     const customDomainName = core.getInput('customDomain')
     prepareDirectories()
     createRepositoryData(customDomainName)
