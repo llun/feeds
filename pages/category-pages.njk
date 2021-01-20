@@ -1,12 +1,12 @@
 ---
 layout: 'layouts/base.njk'
 pagination:
-    data: feeds
+    data: categories
     size: 1
-    alias: feed
-permalink: "categories/{{ feed.name | slug }}/"
+    alias: category
+permalink: "categories/{{ category.name | slug }}/"
 ---
 {% from 'components.njk' import categoryList, entryList, content %}
-{{ categoryList(root = github.repository, categories = feeds, currentCategory = feed.name) }}
-{{ entryList(root = github.repository, entries = feed.entries, sites = sites) }}
+{{ categoryList(root = github.repository, categories = categories, currentCategory = category.name) }}
+{{ entryList(root = github.repository, entries = category.entries, sites = sites) }}
 {{ content() }}

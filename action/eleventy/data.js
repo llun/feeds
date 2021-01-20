@@ -152,7 +152,10 @@ function createSitesData(category, sites) {
         }
       })
     }
-    fs.writeFileSync(path.join(SITES_DATA_PATH, site), JSON.stringify(data))
+    fs.writeFileSync(
+      path.join(SITES_DATA_PATH, `${siteHash}.json`),
+      JSON.stringify(data)
+    )
     result.push(data)
   }
   return result
@@ -181,7 +184,7 @@ function createAllEntriesData() {
     })
     .sort((a, b) => b.date - a.date)
   fs.writeFileSync(
-    path.join(DATA_PATH, 'entries.json'),
+    path.join(DATA_PATH, 'all.json'),
     JSON.stringify(entriesData)
   )
 }

@@ -9,6 +9,6 @@ permalink: "sites/{{ site | slug }}/"
 {% from 'components.njk' import categoryList, entryList, content %}
 
 {% set siteItem = sites[site] %}
-{{ categoryList(root = github.repository, categories = feeds, currentCategory = siteItem.category) }}
+{{ categoryList(root = github.repository, categories = categories, currentCategory = siteItem.category) }}
 {{ entryList(root = github.repository, entries = siteItem.entries, sites = sites) }}
 {{ content() }}

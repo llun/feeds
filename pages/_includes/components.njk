@@ -9,8 +9,8 @@
   </h2>
   {% if category.name == currentCategory %}
   <ul>
-    {% for item in category.items %}
-      <li><a href="{{root}}/sites/{{ item.site | lower }}">{{ item.title }}</a></li>
+    {% for site in category.sites %}
+      <li><a href="{{root}}/sites/{{ site.siteHash | lower }}">{{ site.title }}</a></li>
     {% endfor %}
   </ul>
   {% endif %}
@@ -23,10 +23,10 @@
 {% for entry in entries %}
   <div>
     <h3>
-      <a href="{{root}}/entries/{{ entry.hash | lower }}">{{ entry.title }}</a>
+      <a href="{{root}}/entries/{{ entry.entryHash | lower }}">{{ entry.title }}</a>
     </h3>
     <small>
-      <a href="{{root}}/sites/{{ entry.site }}">{{ sites[entry.site].title }}</a>,
+      <a href="{{root}}/sites/{{ entry.siteHash }}">{{ sites[entry.siteHash].title }}</a>,
       {{ entry.date | distanceDate }}
     </small>
   </div>
