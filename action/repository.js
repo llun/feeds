@@ -101,8 +101,7 @@ async function publish() {
       '.eleventy.js',
       'tailwind.config.js',
       '.github',
-      'action',
-      'contents'
+      'action'
     ])
     runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
     runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
