@@ -183,17 +183,13 @@ async function createAllEntriesData() {
       return data
     })
     .sort((a, b) => b.date - a.date)
-  console.log(`Total entries: ${entriesData.length}`)
+  const text = JSON.stringify(entriesData)
+  console.log(`Total entries: ${text.length}`)
   await new Promise((resolve, reject) => {
-    fs.writeFile(
-      path.join(DATA_PATH, 'all.json'),
-      JSON.stringify(entriesData),
-      'utf8',
-      (error) => {
-        if (error) return reject(error)
-        resolve(undefined)
-      }
-    )
+    fs.writeFile(path.join(DATA_PATH, 'all.json'), text, 'utf8', (error) => {
+      if (error) return reject(error)
+      resolve(undefined)
+    })
   })
 }
 
@@ -216,11 +212,12 @@ async function createCategoryData() {
     }
     categoriesData.push(categoryData)
   }
-  console.log(`Total categories: ${categoriesData.length}`)
+  const text = JSON.stringify(categoriesData)
+  console.log(`Total categories: ${text.length}`)
   await new Promise((resolve, reject) => {
     fs.writeFile(
       path.join(DATA_PATH, 'categories.json'),
-      JSON.stringify(createCategoryData),
+      text,
       'utf8',
       (error) => {
         if (error) return reject(error)
