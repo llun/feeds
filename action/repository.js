@@ -101,7 +101,6 @@ async function publish() {
       '.eleventy.js',
       'tailwind.config.js',
       '.github',
-      'pages',
       'action',
       'contents'
     ])
