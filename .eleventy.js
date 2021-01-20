@@ -40,7 +40,12 @@ module.exports = function (eleventyConfig) {
   })
 
   // Copy data over
+  const path = require('path')
   runCommand(['cp', '-r', 'data', 'pages/_data'])
+  const checkedText = fs
+    .readFileSync(path.join('pages', '_data', 'allCategories.json'))
+    .toString('utf8')
+  console.log(checkedText)
 
   return {
     templateFormats: ['njk', 'html', 'png', 'jpg'],

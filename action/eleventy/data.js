@@ -181,7 +181,6 @@ async function createAllEntriesData() {
     .sort((a, b) => b.date - a.date)
   const text = JSON.stringify(entriesData)
   console.log(`Total entries: ${text.length}`)
-  console.log(text)
   await new Promise((resolve, reject) => {
     fs.writeFile(
       path.join(DATA_PATH, 'allEntries.json'),
@@ -222,7 +221,6 @@ async function createCategoryData() {
   }
   const text = JSON.stringify(categoriesData)
   console.log(`Total categories: ${text.length}`)
-  console.log(text)
   await new Promise((resolve, reject) => {
     fs.writeFile(
       path.join(DATA_PATH, 'allCategories.json'),
@@ -237,6 +235,7 @@ async function createCategoryData() {
   const checkedText = fs
     .readFileSync(path.join(DATA_PATH, 'allCategories.json'))
     .toString('utf8')
+  console.log(checkedText)
   if (checkedText !== text) {
     throw new Error('Fail to write categories file')
   }
