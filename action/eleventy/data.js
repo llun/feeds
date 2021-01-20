@@ -36,11 +36,16 @@ const fs = require('fs')
 const core = require('@actions/core')
 const crypto = require('crypto')
 
+const GITHUB_ACTION_PATH = '/home/runner/work/_actions/llun/feeds/main'
 const FEEDS_CONTENT_PATH = path.join(
   process.env['GITHUB_WORKSPACE'] || '',
   'contents'
 )
-const DATA_PATH = path.join(process.env['GITHUB_WORKSPACE'] || '', 'data')
+const DATA_PATH = path.join(
+  (process.env['GITHUB_WORKSPACE'] && GITHUB_ACTION_PATH) || '',
+  'pages',
+  '_data'
+)
 const SITES_DATA_PATH = path.join(DATA_PATH, 'sites')
 const ENTRIES_DATA_PATH = path.join(DATA_PATH, 'entries')
 const REPOSITORY_DATA_PATH = path.join(DATA_PATH, 'github.json')
@@ -192,12 +197,6 @@ async function createAllEntriesData() {
       }
     )
   })
-  const checkedText = fs
-    .readFileSync(path.join(DATA_PATH, 'allEntries.json'))
-    .toString('utf8')
-  if (checkedText !== text) {
-    throw new Error('Fail to write all entries file')
-  }
 }
 
 async function createCategoryData() {
@@ -232,13 +231,6 @@ async function createCategoryData() {
       }
     )
   })
-  const checkedText = fs
-    .readFileSync(path.join(DATA_PATH, 'allCategories.json'))
-    .toString('utf8')
-  console.log(checkedText)
-  if (checkedText !== text) {
-    throw new Error('Fail to write categories file')
-  }
 }
 
 async function prepareEleventyData() {
