@@ -1,10 +1,12 @@
 // @ts-check
-const { setup, publish, buildSite } = require('./repository')
+const { setup, publish, buildSite } = require('./action/repository')
 
 async function run() {
   await setup()
-  const { writeFeedsContent } = require('./feeds')
+  const { writeFeedsContent } = require('./action/feeds')
+  const { prepareEleventyData } = require('./action/eleventy/data')
   await writeFeedsContent()
+  prepareEleventyData()
   buildSite()
   await publish()
 }

@@ -93,7 +93,6 @@ async function publish() {
       '-rf',
       'action.yml',
       'index.js',
-      'repository.js',
       'package-lock.json',
       'package.json',
       '.gitignore',
@@ -101,9 +100,10 @@ async function publish() {
       'tsconfig.json',
       '.eleventy.js',
       'tailwind.config.js',
-      'feeds',
       '.github',
-      'pages'
+      'pages',
+      'action',
+      'contents'
     ])
     runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
     runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
