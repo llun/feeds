@@ -161,7 +161,7 @@ function createSitesData(category, sites) {
   return result
 }
 
-function createAllEntriesData() {
+async function createAllEntriesData() {
   const entries = fs.readdirSync(ENTRIES_DATA_PATH)
   const entriesData = entries
     .map((entryHashFile) => {
@@ -183,13 +183,21 @@ function createAllEntriesData() {
       return data
     })
     .sort((a, b) => b.date - a.date)
-  fs.writeFileSync(
-    path.join(DATA_PATH, 'all.json'),
-    JSON.stringify(entriesData)
-  )
+  console.log(`Total entries: ${entriesData.length}`)
+  await new Promise((resolve, reject) => {
+    fs.writeFile(
+      path.join(DATA_PATH, 'all.json'),
+      JSON.stringify(entriesData),
+      'utf8',
+      (error) => {
+        if (error) return reject(error)
+        resolve(undefined)
+      }
+    )
+  })
 }
 
-function createCategoryData() {
+async function createCategoryData() {
   const categories = fs.readdirSync(FEEDS_CONTENT_PATH)
   /** @type {CategoryData[]} */
   const categoriesData = []
@@ -208,20 +216,28 @@ function createCategoryData() {
     }
     categoriesData.push(categoryData)
   }
-  fs.writeFileSync(
-    path.join(DATA_PATH, 'categories.json'),
-    JSON.stringify(categoriesData)
-  )
+  console.log(`Total categories: ${categoriesData.length}`)
+  await new Promise((resolve, reject) => {
+    fs.writeFile(
+      path.join(DATA_PATH, 'categories.json'),
+      JSON.stringify(createCategoryData),
+      'utf8',
+      (error) => {
+        if (error) return reject(error)
+        resolve(undefined)
+      }
+    )
+  })
 }
 
-function prepareEleventyData() {
+async function prepareEleventyData() {
   try {
     console.log('Preparing eleventy data')
     const customDomainName = core.getInput('customDomain')
     prepareDirectories()
     createRepositoryData(customDomainName)
-    createCategoryData()
-    createAllEntriesData()
+    await createCategoryData()
+    await createAllEntriesData()
   } catch (error) {
     if (error !== 'ENOENT') {
       core.setFailed(error)

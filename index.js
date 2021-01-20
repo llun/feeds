@@ -6,7 +6,7 @@ async function run() {
   const { writeFeedsContent } = require('./action/feeds')
   const { prepareEleventyData } = require('./action/eleventy/data')
   await writeFeedsContent()
-  prepareEleventyData()
+  await prepareEleventyData()
   buildSite()
   await publish()
 }
