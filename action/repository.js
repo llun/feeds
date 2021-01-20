@@ -25,6 +25,11 @@ function buildSite() {
     if (result.error) {
       throw new Error('Fail to build site')
     }
+  } else {
+    const result = runCommand(['npm', 'run', 'build'])
+    if (result.error) {
+      throw new Error('Fail to build site')
+    }
   }
 }
 exports.buildSite = buildSite
