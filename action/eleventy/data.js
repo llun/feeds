@@ -186,11 +186,22 @@ async function createAllEntriesData() {
   const text = JSON.stringify(entriesData)
   console.log(`Total entries: ${text.length}`)
   await new Promise((resolve, reject) => {
-    fs.writeFile(path.join(DATA_PATH, 'all.json'), text, 'utf8', (error) => {
-      if (error) return reject(error)
-      resolve(undefined)
-    })
+    fs.writeFile(
+      path.join(DATA_PATH, 'allEntries.json'),
+      text,
+      'utf8',
+      (error) => {
+        if (error) return reject(error)
+        resolve(undefined)
+      }
+    )
   })
+  const checkedText = fs
+    .readFileSync(path.join(DATA_PATH, 'allEntries.json'))
+    .toString('utf8')
+  if (checkedText !== text) {
+    throw new Error('Fail to write all entries file')
+  }
 }
 
 async function createCategoryData() {
@@ -216,7 +227,7 @@ async function createCategoryData() {
   console.log(`Total categories: ${text.length}`)
   await new Promise((resolve, reject) => {
     fs.writeFile(
-      path.join(DATA_PATH, 'categories.json'),
+      path.join(DATA_PATH, 'allCategories.json'),
       text,
       'utf8',
       (error) => {
@@ -225,6 +236,12 @@ async function createCategoryData() {
       }
     )
   })
+  const checkedText = fs
+    .readFileSync(path.join(DATA_PATH, 'allCategories.json'))
+    .toString('utf8')
+  if (checkedText !== text) {
+    throw new Error('Fail to write categories file')
+  }
 }
 
 async function prepareEleventyData() {

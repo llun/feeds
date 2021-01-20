@@ -10,6 +10,6 @@ permalink: "entries/{{ entry | slug }}/"
 
 {% set entryItem = entries[entry] %}
 {% set siteItem = sites[entryItem.siteHash] %}
-{{ categoryList(root = github.repository, categories = categories, currentCategory = entryItem.category) }}
+{{ categoryList(root = github.repository, categories = allCategories, currentCategory = entryItem.category) }}
 {{ entryList(root = github.repository, entries = siteItem.entries, sites = sites) }}
 {{ content(item = entryItem) }}

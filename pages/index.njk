@@ -3,6 +3,6 @@ layout: 'layouts/base.njk'
 ---
 {% from 'components.njk' import categoryList, entryList, content %}
 
-{{ categoryList(root = github.repository, categories = categories) }}
+{{ categoryList(root = github.repository, categories = allCategories) }}
 {{ entryList(root = github.repository, sites = sites) }}
 {{ content(item = entryItem) }}

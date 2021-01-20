@@ -1,12 +1,12 @@
 ---
 layout: 'layouts/base.njk'
 pagination:
-    data: categories
+    data: allCategories
     size: 1
     alias: category
 permalink: "categories/{{ category.name | slug }}/"
 ---
 {% from 'components.njk' import categoryList, entryList, content %}
-{{ categoryList(root = github.repository, categories = categories, currentCategory = category.name) }}
+{{ categoryList(root = github.repository, categories = allCategories, currentCategory = category.name) }}
 {{ entryList(root = github.repository, entries = category.entries, sites = sites) }}
 {{ content() }}

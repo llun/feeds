@@ -4,6 +4,6 @@ permalink: "sites/all/"
 ---
 {% from 'components.njk' import categoryList, entryList, content %}
 
-{{ categoryList(root = github.repository, categories = categories) }}
-{{ entryList(root = github.repository, entries = all, sites = sites) }}
+{{ categoryList(root = github.repository, categories = allCategories) }}
+{{ entryList(root = github.repository, entries = allEntries, sites = sites) }}
 {{ content() }}
