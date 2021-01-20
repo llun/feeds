@@ -1,9 +1,7 @@
 // @ts-check
-const core = require('@actions/core')
 const fs = require('fs')
-const path = require('path')
-const crypto = require('crypto')
 const { formatDistance } = require('date-fns')
+const { runCommand } = require('./action/repository')
 
 /**
  *
@@ -40,6 +38,9 @@ module.exports = function (eleventyConfig) {
       }
     }
   })
+
+  // Copy data over
+  runCommand(['cp', '-r', 'data', 'pages/_data'])
 
   return {
     templateFormats: ['njk', 'html', 'png', 'jpg'],

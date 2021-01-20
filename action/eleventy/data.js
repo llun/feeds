@@ -40,11 +40,7 @@ const FEEDS_CONTENT_PATH = path.join(
   process.env['GITHUB_WORKSPACE'] || '',
   'contents'
 )
-const DATA_PATH = path.join(
-  process.env['GITHUB_WORKSPACE'] || '',
-  'pages',
-  '_data'
-)
+const DATA_PATH = path.join(process.env['GITHUB_WORKSPACE'] || '', 'data')
 const SITES_DATA_PATH = path.join(DATA_PATH, 'sites')
 const ENTRIES_DATA_PATH = path.join(DATA_PATH, 'entries')
 const REPOSITORY_DATA_PATH = path.join(DATA_PATH, 'github.json')
