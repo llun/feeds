@@ -5,40 +5,41 @@
   </head>
   <body>
     <outline title="Apple" text="Apple">
-      <outline htmlUrl="https://www.macworld.com" text="Macworld" type="rss" xmlUrl="http://www.macworld.com/index.rss" title="Macworld" />
-      <outline type="rss" title="MacRumors: Mac News and Rumors - All Stories" text="MacRumors: Mac News and Rumors - All Stories" htmlUrl="https://www.macrumors.com" xmlUrl="http://feeds.macrumors.com/MacRumors-All" />
+      <outline title="Macworld" htmlUrl="https://www.macworld.com" type="rss" text="Macworld" xmlUrl="http://www.macworld.com/index.rss" />
+      <outline type="rss" htmlUrl="https://www.macrumors.com" text="MacRumors: Mac News and Rumors - All Stories" xmlUrl="http://feeds.macrumors.com/MacRumors-All" title="MacRumors: Mac News and Rumors - All Stories" />
     </outline>
-    <outline text="Cycling" title="Cycling">
-      <outline xmlUrl="https://bikerumor.com/feed/" title="Bikerumor" text="Bikerumor" type="rss" htmlUrl="https://bikerumor.com" />
-      <outline text="The Radavist" title="The Radavist" htmlUrl="https://theradavist.com" type="rss" xmlUrl="https://theradavist.com/feed/" />
-      <outline type="rss" title="Moots" htmlUrl="https://moots.com" xmlUrl="https://moots.com/feed/" text="Moots" />
-      <outline title="BikeRadar" htmlUrl="https://www.bikeradar.com" type="rss" text="BikeRadar" xmlUrl="https://www.bikeradar.com/feed/" />
-      <outline htmlUrl="https://cyclingtips.com" text="CyclingTips" xmlUrl="https://cyclingtips.com/feed  " title="CyclingTips" type="rss" />
-      <outline text="Hambini Engineering" title="Hambini Engineering" htmlUrl="https://www.hambini.com" xmlUrl="https://www.hambini.com/feed/" type="rss" />
-      <outline type="rss" htmlUrl="https://blog.strava.com" title="Strava" xmlUrl="https://blog.strava.com/feed/" text="Strava" />
-      <outline title="Cyclist.co.uk" text="Cyclist.co.uk" xmlUrl="https://www.cyclist.co.uk/feeds/all" htmlUrl="https://www.cyclist.co.uk/feeds/all" type="rss" />
-      <outline type="rss" title="Rouleur - Rouleur: Inside the peloton" htmlUrl="https://www.rouleur.cc/blogs/the-rouleur-journal" xmlUrl="https://www.rouleur.cc/blogs/the-rouleur-journal.atom" text="Rouleur - Rouleur: Inside the peloton" />
-      <outline text="DC Rainmaker" title="DC Rainmaker" type="rss" htmlUrl="https://www.dcrainmaker.com" xmlUrl="https://www.dcrainmaker.com/feed" />
+    <outline title="Cycling" text="Cycling">
+      <outline htmlUrl="https://bikerumor.com" title="Bikerumor" type="rss" xmlUrl="https://bikerumor.com/feed/" text="Bikerumor" />
+      <outline title="The Radavist" htmlUrl="https://theradavist.com" xmlUrl="https://theradavist.com/feed/" type="rss" text="The Radavist" />
+      <outline xmlUrl="https://moots.com/feed/" htmlUrl="https://moots.com" type="rss" text="Moots" title="Moots" />
+      <outline type="rss" text="BikeRadar" htmlUrl="https://www.bikeradar.com" title="BikeRadar" xmlUrl="https://www.bikeradar.com/feed/" />
+      <outline title="CyclingTips" htmlUrl="https://cyclingtips.com" type="rss" xmlUrl="https://cyclingtips.com/feed  " text="CyclingTips" />
+      <outline title="Hambini Engineering" htmlUrl="https://www.hambini.com" type="rss" xmlUrl="https://www.hambini.com/feed/" text="Hambini Engineering" />
+      <outline title="Strava" xmlUrl="https://blog.strava.com/feed/" type="rss" text="Strava" htmlUrl="https://blog.strava.com" />
+      <outline text="Cyclist.co.uk" type="rss" xmlUrl="https://www.cyclist.co.uk/feeds/all" htmlUrl="https://www.cyclist.co.uk/feeds/all" title="Cyclist.co.uk" />
+      <outline xmlUrl="https://www.rouleur.cc/blogs/the-rouleur-journal.atom" type="rss" htmlUrl="https://www.rouleur.cc/blogs/the-rouleur-journal" title="Rouleur - Rouleur: Inside the peloton" text="Rouleur - Rouleur: Inside the peloton" />
+      <outline text="DC Rainmaker" title="DC Rainmaker" htmlUrl="https://www.dcrainmaker.com" type="rss" xmlUrl="https://www.dcrainmaker.com/feed" />
     </outline>
     <outline title="Me" text="Me">
-      <outline xmlUrl="https://www.llun.me/feeds/main" type="rss" htmlUrl="https://www.llun.me/" title="@llun story" text="@llun story" />
+      <outline htmlUrl="https://www.llun.me/" text="@llun story" title="@llun story" xmlUrl="https://www.llun.me/feeds/main" type="rss" />
     </outline>
     <outline text="Tech" title="Tech">
-      <outline text="Blognone" title="Blognone" type="rss" htmlUrl="https://www.blognone.com" xmlUrl="https://www.blognone.com/node/feed" />
-      <outline xmlUrl="https://aws.amazon.com/blogs/aws/feed/" title="AWS News Blog" type="rss" htmlUrl="https://aws.amazon.com/blogs/aws/" text="AWS News Blog" />
-      <outline type="rss" xmlUrl="https://www.hashicorp.com/blog/feed.xml" text="HashiCorp Blog" title="HashiCorp Blog" htmlUrl="https://hashicorp.com/blog" />
-      <outline type="rss" htmlUrl="https://cheeaun.com/blog" xmlUrl="https://cheeaun.com/blog/feed.xml" text="cheeaunblog" title="cheeaunblog" />
-      <outline text="A List Apart: The Full Feed" htmlUrl="https://alistapart.com" xmlUrl="https://alistapart.com/main/feed/" title="A List Apart: The Full Feed" type="rss" />
+      <outline text="AWS News Blog" htmlUrl="https://aws.amazon.com/blogs/aws/" type="rss" xmlUrl="https://aws.amazon.com/blogs/aws/feed/" title="AWS News Blog" />
+      <outline type="rss" text="HashiCorp Blog" title="HashiCorp Blog" htmlUrl="https://hashicorp.com/blog" xmlUrl="https://www.hashicorp.com/blog/feed.xml" />
+      <outline htmlUrl="https://cheeaun.com/blog" text="cheeaunblog" xmlUrl="https://cheeaun.com/blog/feed.xml" title="cheeaunblog" type="rss" />
+      <outline text="A List Apart: The Full Feed" title="A List Apart: The Full Feed" htmlUrl="https://alistapart.com" type="rss" xmlUrl="https://alistapart.com/main/feed/" />
       <outline htmlUrl="https://daringfireball.net/" xmlUrl="https://daringfireball.net/feeds/main" title="Daring Fireball" type="rss" text="Daring Fireball" />
-      <outline htmlUrl="http://visibletrap.blogspot.com/" type="rss" title="tAp's blog" text="tAp's blog" xmlUrl="http://visibletrap.blogspot.com/feeds/posts/default" />
-      <outline title="Articles on Smashing Magazine — For Web Designers And Developers" htmlUrl="https://www.smashingmagazine.com/" text="Articles on Smashing Magazine — For Web Designers And Developers" type="rss" xmlUrl="https://www.smashingmagazine.com/feed/" />
-      <outline htmlUrl="https://informationisbeautiful.net" xmlUrl="https://www.informationisbeautiful.net/feed" text="Information is Beautiful" title="Information is Beautiful" type="rss" />
-      <outline htmlUrl="https://webkit.org" xmlUrl="https://webkit.org/blog/feed/" title="Blog – WebKit" type="rss" text="Blog – WebKit" />
-      <outline htmlUrl="https://arstechnica.com" type="rss" text="Ars Technica" title="Ars Technica" xmlUrl="http://feeds.arstechnica.com/arstechnica/BAaf" />
-      <outline text="LewCPE's Blog" type="rss" htmlUrl="https://lewcpe.com/blog" xmlUrl="http://lewcpe.com/blog/feed" title="LewCPE's Blog" />
+      <outline xmlUrl="http://visibletrap.blogspot.com/feeds/posts/default" type="rss" title="tAp's blog" htmlUrl="http://visibletrap.blogspot.com/" text="tAp's blog" />
+      <outline text="Articles on Smashing Magazine — For Web Designers And Developers" type="rss" xmlUrl="https://www.smashingmagazine.com/feed/" htmlUrl="https://www.smashingmagazine.com/" title="Articles on Smashing Magazine — For Web Designers And Developers" />
+      <outline type="rss" xmlUrl="https://www.informationisbeautiful.net/feed" htmlUrl="https://informationisbeautiful.net" text="Information is Beautiful" title="Information is Beautiful" />
+      <outline htmlUrl="https://webkit.org" type="rss" title="Blog – WebKit" xmlUrl="https://webkit.org/blog/feed/" text="Blog – WebKit" />
+      <outline text="Ars Technica" type="rss" title="Ars Technica" htmlUrl="https://arstechnica.com" xmlUrl="http://feeds.arstechnica.com/arstechnica/BAaf" />
     </outline>
     <outline title="Thai" text="Thai">
-      <outline xmlUrl="https://iannnnn.com/feed" text="iannnnn.com" title="iannnnn.com" type="rss" htmlUrl="https://iannnnn.com" />
+      <outline text="iannnnn.com" title="iannnnn.com" htmlUrl="https://iannnnn.com" type="rss" xmlUrl="https://iannnnn.com/feed" />
+      <outline type="rss" title="markpeak.net" htmlUrl="https://markpeak.net" xmlUrl="https://markpeak.net/feed/" text="markpeak.net" />
+      <outline text="LewCPE's Blog" htmlUrl="https://lewcpe.com/blog" title="LewCPE's Blog" xmlUrl="http://lewcpe.com/blog/feed" type="rss" />
+      <outline title="Blognone" text="Blognone" type="rss" xmlUrl="https://www.blognone.com/node/feed" htmlUrl="https://www.blognone.com" />
     </outline>
   </body>
 </opml>
