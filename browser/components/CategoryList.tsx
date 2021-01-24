@@ -13,7 +13,7 @@ const CategoryList = ({
   const [currentCategory, setCurrentCategory] = useState<string | undefined>()
 
   return (
-    <aside className="prose w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto">
+    <aside className="prose w-48 xl:w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto">
       <h1>Feeds</h1>
       <h2 className="cursor-pointer">
         <a onClick={() => selectSite('all')}>All sites</a>

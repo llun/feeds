@@ -1,5 +1,9 @@
 module.exports = {
-  purge: ['./pages/**/*.njk', './_site/**/*.html'],
+  purge: [
+    './browser/**/*.{js,jsx,ts,tsx}',
+    './pages/**/*.njk',
+    './_site/**/*.html'
+  ],
   darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {}
