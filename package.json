@@ -10,7 +10,7 @@
     "js": "webpack",
     "css": "tailwindcss-cli build -c tailwind.config.js -o pages/css/tailwind.css",
     "serve": "eleventy --serve",
-    "build": "NODE_ENV=production npm run css && eleventy",
+    "build": "NODE_ENV=production npm run css && npm run js && eleventy",
     "load": "INPUT_OUTPUTDIRECTORY='contents' INPUT_OPMLFILE='feeds.opml' node index.js"
   },
   "devDependencies": {
