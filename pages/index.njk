@@ -1,8 +1,15 @@
----
-layout: 'layouts/base.njk'
----
+{% extends 'layouts/base.njk' %}
 {% from 'components.njk' import categoryList, entryList, content %}
 
+{% block content %}
 {{ categoryList(root = github.repository, categories = allCategories) }}
 {{ entryList(root = github.repository, sites = sites) }}
 {{ content(item = entryItem) }}
+{% endblock %}
+{% block scripts %}
+<script>
+  const root = {{ github.repository | dump | safe }}
+  const categories = {{ categories | dump(2) | safe }}
+</script>
+<script src="{{github.repository}}{{ '/js/index.js' | url }}"></script>
+{% endblock %}

@@ -100,11 +100,13 @@ async function publish() {
       'tsconfig.json',
       '.eleventy.js',
       'tailwind.config.js',
+      'webpack.config.js',
       '.github',
       'action',
       'readme.md',
       'pages',
-      'contents'
+      'contents',
+      'browser'
     ])
     runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
     runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])

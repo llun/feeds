@@ -8,7 +8,8 @@
     "preserveSymlinks": false,
     "strictNullChecks": true,
     "strictBindCallApply": true,
-    "strictFunctionTypes": true
+    "strictFunctionTypes": true,
+    "jsx": "react"
   },
   "exclude": [
     "node_modules"

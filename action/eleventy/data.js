@@ -5,8 +5,7 @@
  * }} RepositoryData
  * @typedef {{
  *  name: string
- *  sites: SiteData[],
- *  entries: SiteEntryData[]
+ *  sites: SiteData[]
  * }} CategoryData
  * @typedef {{
  *  title: string
@@ -16,16 +15,19 @@
  *  category: string
  *  entryHash: string
  *  siteHash: string
+ *  siteTitle: string
  * }} SiteEntryData
  * @typedef {{
  *  title: string
  *  link: string
  *  updatedAt: number
  *  siteHash: string
- *  category: string,
- *  entries: SiteEntryData[]
  * }} SiteData
+ * @typedef {SiteData & {
+ *  entries: SiteEntryData[]
+ * }} SiteDataWithEntries
  * @typedef {import('../feeds/parsers').Entry & {
+ *  siteTitle: string
  *  siteHash: string
  *  entryHash: string
  *  category: string
@@ -41,14 +43,19 @@ const FEEDS_CONTENT_PATH = path.join(
   process.env['GITHUB_WORKSPACE'] || '',
   'contents'
 )
-const DATA_PATH = path.join(
+const EMBEDDED_DATA_PATH = path.join(
   (process.env['GITHUB_WORKSPACE'] && GITHUB_ACTION_PATH) || '',
   'pages',
   '_data'
 )
+const DATA_PATH = path.join(
+  (process.env['GITHUB_WORKSPACE'] && GITHUB_ACTION_PATH) || '',
+  'pages',
+  'data'
+)
 const SITES_DATA_PATH = path.join(DATA_PATH, 'sites')
 const ENTRIES_DATA_PATH = path.join(DATA_PATH, 'entries')
-const REPOSITORY_DATA_PATH = path.join(DATA_PATH, 'github.json')
+const REPOSITORY_DATA_PATH = path.join(EMBEDDED_DATA_PATH, 'github.json')
 
 function prepareDirectories() {
   fs.statSync(FEEDS_CONTENT_PATH)
@@ -91,17 +98,19 @@ function createRepositoryData(customDomainName) {
 /**
  *
  * @param {string} category
+ * @param {string} siteTitle
  * @param {string} siteHash
  * @param {import('../feeds/parsers').Entry} entry
  * @returns {EntryData}
  */
-function createEntryData(category, siteHash, entry) {
+function createEntryData(category, siteTitle, siteHash, entry) {
   const entryHash = createHash(entry.link)
   /**
    * @type {EntryData}
    */
   const data = {
     ...entry,
+    siteTitle,
     siteHash,
     entryHash,
     category
@@ -117,10 +126,10 @@ function createEntryData(category, siteHash, entry) {
  *
  * @param {string} category
  * @param {string[]} sites
- * @returns {SiteData[]}
+ * @returns {SiteDataWithEntries[]}
  */
 function createSitesData(category, sites) {
-  /** @type {SiteData[]} */
+  /** @type {SiteDataWithEntries[]} */
   const result = []
   for (const site of sites) {
     const content = fs
@@ -132,22 +141,22 @@ function createSitesData(category, sites) {
     const json = JSON.parse(content)
     const siteHash = createHash(site.substring(0, site.length - '.json'.length))
     /**
-     * @type {SiteData}
+     * @type {SiteDataWithEntries}
      */
     const data = {
       title: json.title,
       link: json.link,
       updatedAt: json.updatedAt,
       siteHash,
-      category,
       entries: json.entries.map((entry) => {
-        const entryData = createEntryData(category, siteHash, entry)
+        const entryData = createEntryData(category, json.title, siteHash, entry)
         return {
           title: entryData.title,
           link: entryData.link,
           date: entryData.date,
           author: entryData.author,
           category,
+          siteTitle: json.title,
           siteHash,
           entryHash: entryData.entryHash
         }
@@ -177,6 +186,7 @@ async function createAllEntriesData() {
         link: json.link,
         date: json.date,
         author: json.author,
+        siteTitle: json.siteTitle,
         siteHash: json.siteHash,
         entryHash: json.entryHash,
         category: json.category
@@ -186,15 +196,10 @@ async function createAllEntriesData() {
     .sort((a, b) => b.date - a.date)
   const text = JSON.stringify(entriesData)
   await new Promise((resolve, reject) => {
-    fs.writeFile(
-      path.join(DATA_PATH, 'allEntries.json'),
-      text,
-      'utf8',
-      (error) => {
-        if (error) return reject(error)
-        resolve(undefined)
-      }
-    )
+    fs.writeFile(path.join(DATA_PATH, 'all.json'), text, 'utf8', (error) => {
+      if (error) return reject(error)
+      resolve(undefined)
+    })
   })
 }
 
@@ -208,19 +213,19 @@ async function createCategoryData() {
     /** @type {CategoryData} */
     const categoryData = {
       name: category,
-      sites: sitesData,
-      entries: sitesData.reduce((list, siteData) => {
-        list.push(...siteData.entries)
-        list.sort((a, b) => b.date - a.date)
-        return list
-      }, /** @type {SiteEntryData[]} */ ([]))
+      sites: sitesData.map((data) => ({
+        title: data.title,
+        link: data.link,
+        updatedAt: data.updatedAt,
+        siteHash: data.siteHash
+      }))
     }
     categoriesData.push(categoryData)
   }
   const text = JSON.stringify(categoriesData)
   await new Promise((resolve, reject) => {
     fs.writeFile(
-      path.join(DATA_PATH, 'allCategories.json'),
+      path.join(EMBEDDED_DATA_PATH, 'categories.json'),
       text,
       'utf8',
       (error) => {

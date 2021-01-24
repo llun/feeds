@@ -1,7 +1,6 @@
 // @ts-check
 const fs = require('fs')
 const { formatDistance } = require('date-fns')
-const { runCommand } = require('./action/repository')
 
 /**
  *

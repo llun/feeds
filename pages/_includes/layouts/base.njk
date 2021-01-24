@@ -1,18 +1,23 @@
 <!doctype html>
 <html lang="{{ lang or 'en' }}">
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>
-    Feeds
-  </title>
-  <meta name="description" content="Feeds Aggregator">
-  <link rel="stylesheet" href="{{github.repository}}{{ '/css/tailwind.css' | url }}">
-  <link rel="stylesheet" href="{{github.repository}}{{ '/css/index.css' | url }}">
-
-  {% block content %}
-    <div class="container mx-auto flex flex-row w-screen">
-    {{ content | safe }}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>
+      Feeds
+    </title>
+    <meta name="description" content="Feeds Aggregator">
+    <link rel="stylesheet" href="{{github.repository}}{{ '/css/tailwind.css' | url }}">
+    <link rel="stylesheet" href="{{github.repository}}{{ '/css/index.css' | url }}">
+  </head>
+  <body>
+    <div id="root" class="container mx-auto flex flex-row w-screen">
+    {% block content %}
+      {{ content | safe }}
+    {% endblock %}
     </div>
-  {% endblock %}
+    {% block scripts %}
+    {% endblock %}
+  </body>
 </html>

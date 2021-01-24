@@ -1,9 +1,0 @@
----
-layout: 'layouts/base.njk'
-permalink: "sites/all/"
----
-{% from 'components.njk' import categoryList, entryList, content %}
-
-{{ categoryList(root = github.repository, categories = allCategories) }}
-{{ entryList(root = github.repository, entries = allEntries, sites = sites) }}
-{{ content() }}
