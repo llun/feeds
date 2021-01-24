@@ -16,9 +16,9 @@ const EntryList = ({
   selectBack?: () => void
 }) => (
   <section
-    className={`prose w-72 xl:w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto ${className}`}
+    className={`prose w-full sm:w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto ${className}`}
   >
-    <a className="cursor-pointer lg:hidden" onClick={selectBack}>
+    <a className="cursor-pointer sm:hidden" onClick={selectBack}>
       ← Back
     </a>
     {entries.map((entry) => (

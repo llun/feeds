@@ -70,6 +70,7 @@ const Page = () => {
       const json: SiteEntryData[] = await response.json()
       setEntries(json)
       setPageState('entries')
+      return
     }
 
     const response = await fetch(`${root}/data/sites/${siteHash}.json`)

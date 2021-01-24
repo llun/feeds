@@ -16,7 +16,7 @@ const CategoryList = ({
 
   return (
     <aside
-      className={`prose w-48 xl:w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto ${className}`}
+      className={`prose w-full sm:w-48 xl:w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto ${className}`}
     >
       <h1>Feeds</h1>
       <h2 className="cursor-pointer">
@@ -25,17 +25,20 @@ const CategoryList = ({
       {categories.map((category) => (
         <Fragment key={category.name}>
           <h2 className="cursor-pointer">
-            <a
-              onClick={() => {
-                selectCategory(category.name)
-                setCurrentCategory(category.name)
-              }}
-            >
+            <a onClick={() => setCurrentCategory(category.name)}>
               {category.name}
             </a>
           </h2>
           {category.name === currentCategory && (
             <ul>
+              <li>
+                <a
+                  className="cursor-pointer"
+                  onClick={() => selectCategory(currentCategory)}
+                >
+                  All sites in this category
+                </a>
+              </li>
               {category.sites.map((site) => (
                 <li key={site.siteHash} className="cursor-pointer">
                   <a onClick={() => selectSite(site.siteHash)}>{site.title}</a>
