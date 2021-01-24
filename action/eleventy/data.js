@@ -151,19 +151,26 @@ function createSitesData(category, sites) {
       link: json.link,
       updatedAt: json.updatedAt,
       siteHash,
-      entries: json.entries.map((entry) => {
-        const entryData = createEntryData(category, json.title, siteHash, entry)
-        return {
-          title: entryData.title,
-          link: entryData.link,
-          date: entryData.date,
-          author: entryData.author,
-          category,
-          siteTitle: json.title,
-          siteHash,
-          entryHash: entryData.entryHash
-        }
-      })
+      entries: json.entries
+        .map((entry) => {
+          const entryData = createEntryData(
+            category,
+            json.title,
+            siteHash,
+            entry
+          )
+          return {
+            title: entryData.title,
+            link: entryData.link,
+            date: entryData.date,
+            author: entryData.author,
+            category,
+            siteTitle: json.title,
+            siteHash,
+            entryHash: entryData.entryHash
+          }
+        })
+        .sort((a, b) => b.date - a.date)
     }
     fs.writeFileSync(
       path.join(SITES_DATA_PATH, `${siteHash}.json`),
