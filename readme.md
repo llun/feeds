@@ -1,4 +1,4 @@
-# Github Action for build static feed aggregator site github page
+# Github Action for building static feed aggregator site
 
 Use this action to fetch feeds from OPML file and build static site
 with all feeds information
