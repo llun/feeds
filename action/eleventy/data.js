@@ -59,6 +59,7 @@ const REPOSITORY_DATA_PATH = path.join(EMBEDDED_DATA_PATH, 'github.json')
 
 function prepareDirectories() {
   fs.statSync(FEEDS_CONTENT_PATH)
+  fs.mkdirSync(EMBEDDED_DATA_PATH, { recursive: true })
   fs.mkdirSync(SITES_DATA_PATH, { recursive: true })
   fs.mkdirSync(ENTRIES_DATA_PATH, { recursive: true })
 }

@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom'
 import type {
   CategoryData,
   SiteEntryData,
+  SiteDataWithEntries,
   EntryData
 } from '../action/eleventy/data'
 import CategoryList from './components/CategoryList'
@@ -21,17 +22,25 @@ const Page = () => {
 
   const selectCategory = async (category: string) => {}
   const selectSite = async (siteHash: string) => {
-    const response = await fetch(`${root}/data/all.json`)
+    if (siteHash === 'all') {
+      const response = await fetch(`${root}/data/all.json`)
+      if (!response.ok) return
+
+      const json: SiteEntryData[] = await response.json()
+      setEntries(json)
+    }
+
+    const response = await fetch(`${root}/data/sites/${siteHash}.json`)
     if (!response.ok) return
 
-    const json = /** @type {import('../action/eleventy/data').SiteEntryData[]} */ await response.json()
-    setEntries(json)
+    const json: SiteDataWithEntries = await response.json()
+    setEntries(json.entries)
   }
   const selectEntry = async (entryHash: string) => {
     const response = await fetch(`${root}/data/entries/${entryHash}.json`)
     if (!response.ok) return
 
-    const json = /** @type {import('../action/eleventy/data').EntryData} */ await response.json()
+    const json: EntryData = await response.json()
     setEntry(json)
   }
 
