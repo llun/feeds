@@ -9,5 +9,3 @@ jobs:
     steps:
       - name: Run Action
         uses: llun/feeds@main
-        with:
-          customDomain: feeds.llun.dev
