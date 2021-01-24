@@ -107,7 +107,7 @@ function createRepositoryData(customDomainName) {
  * @returns {EntryData}
  */
 function createEntryData(category, siteTitle, siteHash, entry) {
-  const entryHash = createHash(entry.link)
+  const entryHash = createHash(`${entry.title},${entry.link}`)
   /**
    * @type {EntryData}
    */

@@ -1,7 +1,7 @@
 import React, { Fragment, useState } from 'react'
 import { CategoryData } from '../../action/eleventy/data'
 
-export default ({
+const CategoryList = ({
   categories,
   selectCategory,
   selectSite
@@ -15,16 +15,13 @@ export default ({
   return (
     <aside className="prose w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto">
       <h1>Feeds</h1>
-      <h2>
-        <a className="cursor-pointer" onClick={() => selectSite('all')}>
-          All sites
-        </a>
+      <h2 className="cursor-pointer">
+        <a onClick={() => selectSite('all')}>All sites</a>
       </h2>
       {categories.map((category) => (
         <Fragment key={category.name}>
-          <h2>
+          <h2 className="cursor-pointer">
             <a
-              className="cursor-pointer"
               onClick={() => {
                 selectCategory(category.name)
                 setCurrentCategory(category.name)
@@ -36,13 +33,8 @@ export default ({
           {category.name === currentCategory && (
             <ul>
               {category.sites.map((site) => (
-                <li key={site.siteHash}>
-                  <a
-                    className="cursor-pointer"
-                    onClick={() => selectSite(site.siteHash)}
-                  >
-                    {site.title}
-                  </a>
+                <li key={site.siteHash} className="cursor-pointer">
+                  <a onClick={() => selectSite(site.siteHash)}>{site.title}</a>
                 </li>
               ))}
             </ul>
@@ -52,3 +44,4 @@ export default ({
     </aside>
   )
 }
+export default CategoryList
