@@ -11,12 +11,46 @@ import CategoryList from './components/CategoryList'
 import Entry from './components/Entry'
 import EntryList from './components/EntryList'
 
+type PageState = 'categories' | 'entries' | 'article'
+
 declare global {
   const root: string
   const categories: CategoryData[]
 }
 
+function articleClassName(pageState: PageState): string {
+  switch (pageState) {
+    case 'article':
+      return 'block'
+    default:
+      return 'hidden lg:block'
+  }
+}
+
+function entriesClassName(pageState: PageState): string {
+  switch (pageState) {
+    case 'article':
+      return 'hidden lg:block'
+    case 'entries':
+      return 'block'
+    default:
+      return 'hidden sm:block'
+  }
+}
+
+function categoriesClassName(pageState: PageState): string {
+  switch (pageState) {
+    case 'article':
+      return 'hidden lg:block'
+    case 'entries':
+      return 'hidden sm:block'
+    default:
+      return 'block'
+  }
+}
+
 const Page = () => {
+  const [pageState, setPageState] = useState<PageState>('categories')
   const [entries, setEntries] = useState<SiteEntryData[]>([])
   const [entry, setEntry] = useState<EntryData | undefined>()
 
@@ -26,6 +60,7 @@ const Page = () => {
 
     const json: SiteEntryData[] = await response.json()
     setEntries(json)
+    setPageState('entries')
   }
   const selectSite = async (siteHash: string) => {
     if (siteHash === 'all') {
@@ -34,6 +69,7 @@ const Page = () => {
 
       const json: SiteEntryData[] = await response.json()
       setEntries(json)
+      setPageState('entries')
     }
 
     const response = await fetch(`${root}/data/sites/${siteHash}.json`)
@@ -41,6 +77,7 @@ const Page = () => {
 
     const json: SiteDataWithEntries = await response.json()
     setEntries(json.entries)
+    setPageState('entries')
   }
   const selectEntry = async (entryHash: string) => {
     const response = await fetch(`${root}/data/entries/${entryHash}.json`)
@@ -48,21 +85,29 @@ const Page = () => {
 
     const json: EntryData = await response.json()
     setEntry(json)
+    setPageState('article')
   }
 
   return (
     <>
       <CategoryList
+        className={categoriesClassName(pageState)}
         categories={categories}
         selectCategory={(category: string) => selectCategory(category)}
         selectSite={(siteHash: string) => selectSite(siteHash)}
       />
       <EntryList
+        className={entriesClassName(pageState)}
         entries={entries}
         selectSite={(siteHash: string) => selectSite(siteHash)}
         selectEntry={(entryHash: string) => selectEntry(entryHash)}
+        selectBack={() => setPageState('categories')}
       />
-      <Entry entry={entry} />
+      <Entry
+        className={articleClassName(pageState)}
+        entry={entry}
+        selectBack={() => setPageState('entries')}
+      />
     </>
   )
 }

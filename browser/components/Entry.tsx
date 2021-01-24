@@ -1,8 +1,21 @@
 import React from 'react'
 import { EntryData } from '../../action/eleventy/data'
 
-const Entry = ({ entry }: { entry?: EntryData }) => (
-  <article className="prose flex-grow p-6 max-h-screen overflow-y-auto">
+const Entry = ({
+  className,
+  entry,
+  selectBack
+}: {
+  className?: string
+  entry?: EntryData
+  selectBack?: () => void
+}) => (
+  <article
+    className={`prose flex-grow p-6 max-h-screen overflow-y-auto ${className}`}
+  >
+    <a className="cursor-pointer lg:hidden" onClick={selectBack}>
+      ← Back
+    </a>
     {entry && (
       <div>
         <h3>

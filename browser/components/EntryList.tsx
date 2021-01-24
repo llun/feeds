@@ -3,15 +3,24 @@ import formatDistance from 'date-fns/formatDistance'
 import { SiteEntryData } from '../../action/eleventy/data'
 
 const EntryList = ({
+  className,
   entries,
   selectEntry,
-  selectSite
+  selectSite,
+  selectBack
 }: {
+  className?: string
   entries: SiteEntryData[]
   selectEntry: (entryHash: string) => Promise<void>
   selectSite: (siteHash: string) => Promise<void>
+  selectBack?: () => void
 }) => (
-  <section className="prose w-72 xl:w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto">
+  <section
+    className={`prose w-72 xl:w-96 flex-shrink-0 p-6 max-h-screen overflow-y-auto ${className}`}
+  >
+    <a className="cursor-pointer lg:hidden" onClick={selectBack}>
+      ← Back
+    </a>
     {entries.map((entry) => (
       <div key={`entry-${entry.entryHash}`}>
         <h3>
