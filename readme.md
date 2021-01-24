@@ -24,3 +24,8 @@ jobs:
 ```
 
 After this, enable github page on `contents` branch and content should be available on that page
+
+Sample site
+
+- https://feeds.llun.dev
+- https://llun.github.io/feeds/
