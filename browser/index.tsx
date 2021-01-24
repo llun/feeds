@@ -20,7 +20,13 @@ const Page = () => {
   const [entries, setEntries] = useState<SiteEntryData[]>([])
   const [entry, setEntry] = useState<EntryData | undefined>()
 
-  const selectCategory = async (category: string) => {}
+  const selectCategory = async (category: string) => {
+    const response = await fetch(`${root}/data/categories/${category}.json`)
+    if (!response.ok) return
+
+    const json: SiteEntryData[] = await response.json()
+    setEntries(json)
+  }
   const selectSite = async (siteHash: string) => {
     if (siteHash === 'all') {
       const response = await fetch(`${root}/data/all.json`)

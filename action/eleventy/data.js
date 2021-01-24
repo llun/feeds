@@ -53,6 +53,7 @@ const DATA_PATH = path.join(
   'pages',
   'data'
 )
+const CATEGORY_DATA_PATH = path.join(DATA_PATH, 'categories')
 const SITES_DATA_PATH = path.join(DATA_PATH, 'sites')
 const ENTRIES_DATA_PATH = path.join(DATA_PATH, 'entries')
 const REPOSITORY_DATA_PATH = path.join(EMBEDDED_DATA_PATH, 'github.json')
@@ -60,6 +61,7 @@ const REPOSITORY_DATA_PATH = path.join(EMBEDDED_DATA_PATH, 'github.json')
 function prepareDirectories() {
   fs.statSync(FEEDS_CONTENT_PATH)
   fs.mkdirSync(EMBEDDED_DATA_PATH, { recursive: true })
+  fs.mkdirSync(CATEGORY_DATA_PATH, { recursive: true })
   fs.mkdirSync(SITES_DATA_PATH, { recursive: true })
   fs.mkdirSync(ENTRIES_DATA_PATH, { recursive: true })
 }
@@ -196,12 +198,7 @@ async function createAllEntriesData() {
     })
     .sort((a, b) => b.date - a.date)
   const text = JSON.stringify(entriesData)
-  await new Promise((resolve, reject) => {
-    fs.writeFile(path.join(DATA_PATH, 'all.json'), text, 'utf8', (error) => {
-      if (error) return reject(error)
-      resolve(undefined)
-    })
-  })
+  fs.writeFileSync(path.join(DATA_PATH, 'all.json'), text)
 }
 
 async function createCategoryData() {
@@ -222,19 +219,19 @@ async function createCategoryData() {
       }))
     }
     categoriesData.push(categoryData)
+
+    const categoryEntries = sitesData.reduce(
+      (entries, site) => [...entries, ...site.entries],
+      /** @type {SiteEntryData[]} */ ([])
+    )
+    categoryEntries.sort((a, b) => b.date - a.date)
+    fs.writeFileSync(
+      path.join(CATEGORY_DATA_PATH, `${category}.json`),
+      JSON.stringify(categoryEntries)
+    )
   }
   const text = JSON.stringify(categoriesData)
-  await new Promise((resolve, reject) => {
-    fs.writeFile(
-      path.join(EMBEDDED_DATA_PATH, 'categories.json'),
-      text,
-      'utf8',
-      (error) => {
-        if (error) return reject(error)
-        resolve(undefined)
-      }
-    )
-  })
+  fs.writeFileSync(path.join(EMBEDDED_DATA_PATH, 'categories.json'), text)
 }
 
 async function prepareEleventyData() {
