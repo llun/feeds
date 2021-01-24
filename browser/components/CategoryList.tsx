@@ -2,12 +2,10 @@ import React, { Fragment, useState } from 'react'
 import { CategoryData } from '../../action/eleventy/data'
 
 export default ({
-  root,
   categories,
   selectCategory,
   selectSite
 }: {
-  root: string
   categories: CategoryData[]
   selectCategory: (category: string) => Promise<void>
   selectSite: (siteHash: string) => Promise<void>

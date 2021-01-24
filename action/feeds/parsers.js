@@ -60,10 +60,9 @@ function parseRss(xml) {
         date: new Date(
           joinValuesOrEmptyString(pubDate || item['dc:date'])
         ).getTime(),
-        content: Buffer.from(
-          joinValuesOrEmptyString(item['content:encoded'] || description),
-          'utf8'
-        ).toString('base64'),
+        content: joinValuesOrEmptyString(
+          item['content:encoded'] || description
+        ),
         author: joinValuesOrEmptyString(item['dc:creator'])
       }
     })
@@ -97,7 +96,7 @@ function parseAtom(xml) {
         title: joinValuesOrEmptyString(title).trim(),
         link: itemLink.$.href,
         date: new Date(joinValuesOrEmptyString(published || updated)).getTime(),
-        content: Buffer.from(feedContent, 'utf8').toString('base64'),
+        content: feedContent,
         author: (author && joinValuesOrEmptyString(author[0].name)) || ''
       }
     })
