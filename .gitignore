@@ -4,5 +4,5 @@ contents
 _site
 pages/_data
 tailwind.css
-pages/js/index.js
+pages/js/*
 pages/data/*.json
