@@ -29,3 +29,7 @@ Sample site
 
 - https://feeds.llun.dev
 - https://llun.github.io/feeds/
+
+Sample repo
+
+- https://github.com/llun/personal-feeds
