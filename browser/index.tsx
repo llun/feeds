@@ -60,6 +60,7 @@ const Page = () => {
 
     const json: SiteEntryData[] = await response.json()
     setEntries(json)
+    setEntry(undefined)
     setPageState('entries')
   }
   const selectSite = async (siteHash: string) => {
@@ -69,6 +70,7 @@ const Page = () => {
 
       const json: SiteEntryData[] = await response.json()
       setEntries(json)
+      setEntry(undefined)
       setPageState('entries')
       return
     }
@@ -78,6 +80,7 @@ const Page = () => {
 
     const json: SiteDataWithEntries = await response.json()
     setEntries(json.entries)
+    setEntry(undefined)
     setPageState('entries')
   }
   const selectEntry = async (entryHash: string) => {
