@@ -44,7 +44,6 @@ function parseRss(xml) {
     generator,
     item: items
   } = channels[0]
-  console.log(channels[0]['atom:link'])
   const feed = {
     title: joinValuesOrEmptyString(title).trim(),
     link: joinValuesOrEmptyString(link),
