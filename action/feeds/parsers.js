@@ -44,6 +44,7 @@ function parseRss(xml) {
     generator,
     item: items
   } = channels[0]
+  console.log(channels[0]['atom:link'])
   const feed = {
     title: joinValuesOrEmptyString(title).trim(),
     link: joinValuesOrEmptyString(link),
@@ -52,20 +53,23 @@ function parseRss(xml) {
       joinValuesOrEmptyString(lastBuildDate || channels[0]['dc:date'])
     ).getTime(),
     generator: joinValuesOrEmptyString(generator || channels[0]['dc:creator']),
-    entries: items.map((item) => {
-      const { title, link, pubDate, description } = item
-      return {
-        title: joinValuesOrEmptyString(title).trim(),
-        link: joinValuesOrEmptyString(link),
-        date: new Date(
-          joinValuesOrEmptyString(pubDate || item['dc:date'])
-        ).getTime(),
-        content: joinValuesOrEmptyString(
-          item['content:encoded'] || description
-        ),
-        author: joinValuesOrEmptyString(item['dc:creator'])
-      }
-    })
+    entries:
+      (items &&
+        items.map((item) => {
+          const { title, link, pubDate, description } = item
+          return {
+            title: joinValuesOrEmptyString(title).trim(),
+            link: joinValuesOrEmptyString(link),
+            date: new Date(
+              joinValuesOrEmptyString(pubDate || item['dc:date'])
+            ).getTime(),
+            content: joinValuesOrEmptyString(
+              item['content:encoded'] || description
+            ),
+            author: joinValuesOrEmptyString(item['dc:creator'])
+          }
+        })) ||
+      []
   }
 
   return feed
