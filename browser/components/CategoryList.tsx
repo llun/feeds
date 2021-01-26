@@ -16,7 +16,7 @@ const CategoryList = ({
 
   return (
     <aside
-      className={`prose pb-4 w-full sm:w-48 xl:w-96 flex-shrink-0 p-6 ${className}`}
+      className={`prose w-full sm:w-48 xl:w-96 flex-shrink-0 p-6 ${className}`}
     >
       <h1>Feeds</h1>
       <h2 className="cursor-pointer">
@@ -48,6 +48,7 @@ const CategoryList = ({
           )}
         </Fragment>
       ))}
+      <div className="pb-8"></div>
     </aside>
   )
 }

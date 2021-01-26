@@ -26,6 +26,7 @@ const Entry = ({
         <div dangerouslySetInnerHTML={{ __html: entry.content }} />
       </div>
     )}
+    <div className="pb-8"></div>
   </article>
 )
 

@@ -47,6 +47,7 @@ const EntryList = ({
         <h3>No contents</h3>
       </div>
     )}
+    <div className="pb-8"></div>
   </section>
 )
 
