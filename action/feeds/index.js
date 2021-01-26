@@ -13,8 +13,8 @@ const { parseAtom, parseRss } = require('./parsers')
  * @returns {Promise<import('./parsers').Site | null>}
  */
 async function loadFeed(url) {
-  const data = await fetch(url).then((response) => response.text())
   try {
+    const data = await fetch(url).then((response) => response.text())
     const xml = await new Promise((resolve, reject) =>
       parseString(data, (error, result) => {
         if (error) return reject(error)
