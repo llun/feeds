@@ -3,7 +3,7 @@
 Use this action to fetch feeds from OPML file and build static site
 with all feeds information
 
-To use it, craete a new repository and add opml file name it as `feeds.opml` with list of
+To use it, create a new repository and add opml file name it as `feeds.opml` with list of
 website rss/atom feeds. Create a github workflow like below to make this fetch data and
 put it in contents branch
 
