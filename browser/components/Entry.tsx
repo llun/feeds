@@ -1,19 +1,23 @@
 import React, { useEffect } from 'react'
 import { EntryData } from '../../action/eleventy/data'
+import type { PageState } from '../index'
 
 const Entry = ({
   className,
   entry,
+  page,
   selectBack
 }: {
   className?: string
   entry?: EntryData
+  page: PageState
   selectBack?: () => void
 }) => {
   let element: HTMLElement | null = null
   useEffect(() => {
     if (!element) return
-    element.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+    if (page !== 'article') return
+    element.scrollTo(0, 0)
   })
 
   return (

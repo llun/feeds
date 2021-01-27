@@ -1,16 +1,19 @@
 import React, { useEffect } from 'react'
 import formatDistance from 'date-fns/formatDistance'
 import { SiteEntryData } from '../../action/eleventy/data'
+import type { PageState } from '../index'
 
 const EntryList = ({
   className,
   entries,
+  page,
   selectEntry,
   selectSite,
   selectBack
 }: {
   className?: string
   entries: SiteEntryData[]
+  page: PageState
   selectEntry: (entryHash: string) => Promise<void>
   selectSite: (siteHash: string) => Promise<void>
   selectBack?: () => void
@@ -18,7 +21,8 @@ const EntryList = ({
   let element: HTMLElement | null = null
   useEffect(() => {
     if (!element) return
-    element.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+    if (page !== 'entries') return
+    element.scrollTo(0, 0)
   })
 
   return (

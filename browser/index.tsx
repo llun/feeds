@@ -11,7 +11,7 @@ import CategoryList from './components/CategoryList'
 import Entry from './components/Entry'
 import EntryList from './components/EntryList'
 
-type PageState = 'categories' | 'entries' | 'article'
+export type PageState = 'categories' | 'entries' | 'article'
 
 declare global {
   const root: string
@@ -59,9 +59,9 @@ const Page = () => {
     if (!response.ok) return
 
     const json: SiteEntryData[] = await response.json()
+    setPageState('entries')
     setEntries(json)
     setEntry(undefined)
-    setPageState('entries')
   }
   const selectSite = async (siteHash: string) => {
     if (siteHash === 'all') {
@@ -69,9 +69,9 @@ const Page = () => {
       if (!response.ok) return
 
       const json: SiteEntryData[] = await response.json()
+      setPageState('entries')
       setEntries(json)
       setEntry(undefined)
-      setPageState('entries')
       return
     }
 
@@ -79,17 +79,17 @@ const Page = () => {
     if (!response.ok) return
 
     const json: SiteDataWithEntries = await response.json()
+    setPageState('entries')
     setEntries(json.entries)
     setEntry(undefined)
-    setPageState('entries')
   }
   const selectEntry = async (entryHash: string) => {
     const response = await fetch(`${root}/data/entries/${entryHash}.json`)
     if (!response.ok) return
 
     const json: EntryData = await response.json()
-    setEntry(json)
     setPageState('article')
+    setEntry(json)
   }
 
   return (
@@ -103,12 +103,14 @@ const Page = () => {
       <EntryList
         className={entriesClassName(pageState)}
         entries={entries}
+        page={pageState}
         selectSite={(siteHash: string) => selectSite(siteHash)}
         selectEntry={(entryHash: string) => selectEntry(entryHash)}
         selectBack={() => setPageState('categories')}
       />
       <Entry
         className={articleClassName(pageState)}
+        page={pageState}
         entry={entry}
         selectBack={() => setPageState('entries')}
       />
