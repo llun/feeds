@@ -78,6 +78,8 @@ function changePage(url: string, state: LocationState) {
 function parseLocation(url: string): LocationState {
   const parts = url.split('/')
   parts.shift()
+  // Remove repository path out
+  if (github.repository) parts.shift()
   if (parts.length !== 2) return null
   switch (parts[0]) {
     case 'categories':
@@ -209,12 +211,12 @@ const Page = () => {
   })
 
   const selectCategory = async (category: string) =>
-    changePage(`/categories/${category}`, {
+    changePage(`${github.repository}/categories/${category}`, {
       type: 'categories',
       category
     })
   const selectSite = async (siteHash: string) =>
-    changePage(`/sites/${siteHash}`, {
+    changePage(`${github.repository}/sites/${siteHash}`, {
       type: 'sites',
       siteHash
     })
