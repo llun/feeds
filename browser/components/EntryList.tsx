@@ -3,17 +3,19 @@ import formatDistance from 'date-fns/formatDistance'
 import { SiteEntryData } from '../../action/eleventy/data'
 import type { PageState } from '../index'
 
+interface EntryItemProps {
+  entry: SiteEntryData
+  selectedEntryHash: string
+  selectEntry: (entryHash: string) => Promise<void>
+  selectSite: (siteHash: string) => Promise<void>
+}
+
 const EntryItem = ({
   entry,
   selectedEntryHash,
   selectEntry,
   selectSite
-}: {
-  entry: SiteEntryData
-  selectedEntryHash: string
-  selectEntry: (entryHash: string) => Promise<void>
-  selectSite: (siteHash: string) => Promise<void>
-}) => (
+}: EntryItemProps) => (
   <div
     className={`rounded px-4 ${
       (selectedEntryHash === entry.entryHash && 'bg-gray-200') || ''
@@ -36,6 +38,15 @@ const EntryItem = ({
   </div>
 )
 
+interface EntryListProps {
+  className?: string
+  entries: SiteEntryData[]
+  page: PageState
+  selectEntry: (entryHash: string) => Promise<void>
+  selectSite: (siteHash: string) => Promise<void>
+  selectBack?: () => void
+}
+
 const EntryList = ({
   className,
   entries,
@@ -43,15 +54,8 @@ const EntryList = ({
   selectEntry,
   selectSite,
   selectBack
-}: {
-  className?: string
-  entries: SiteEntryData[]
-  page: PageState
-  selectEntry: (entryHash: string) => Promise<void>
-  selectSite: (siteHash: string) => Promise<void>
-  selectBack?: () => void
-}) => {
-  const [selectedEntryHash, setSelectedEntryHash] = useState('')
+}: EntryListProps) => {
+  const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
 
   let element: HTMLElement | null = null
   useEffect(() => {

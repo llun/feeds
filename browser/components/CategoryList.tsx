@@ -1,17 +1,19 @@
 import React, { Fragment, useState } from 'react'
 import { CategoryData } from '../../action/eleventy/data'
 
+interface Props {
+  className?: string
+  categories: CategoryData[]
+  selectCategory: (category: string) => Promise<void>
+  selectSite: (siteHash: string) => Promise<void>
+}
+
 const CategoryList = ({
   className,
   categories,
   selectCategory,
   selectSite
-}: {
-  className?: string
-  categories: CategoryData[]
-  selectCategory: (category: string) => Promise<void>
-  selectSite: (siteHash: string) => Promise<void>
-}) => {
+}: Props) => {
   const [currentCategory, setCurrentCategory] = useState<string | undefined>()
 
   return (

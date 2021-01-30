@@ -10,16 +10,19 @@ import type {
 import CategoryList from './components/CategoryList'
 import Entry from './components/Entry'
 import EntryList from './components/EntryList'
+import Loading from './components/Loading'
+import { fetchWithProgress } from './utils'
 
+export type Github = { repository: string }
 export type PageState = 'categories' | 'entries' | 'article'
 
 const githubElement = document.getElementById('github')
-const github = (githubElement &&
+const github: Github = (githubElement &&
   JSON.parse(githubElement.textContent || '{ repository: "" }')) || {
   repository: ''
 }
 const categoriesElement = document.getElementById('categories')
-const categories =
+const categories: CategoryData[] =
   (categoriesElement && JSON.parse(categoriesElement.textContent || '[]')) || []
 
 function articleClassName(pageState: PageState): string {
@@ -57,53 +60,74 @@ const Page = () => {
   const [pageState, setPageState] = useState<PageState>('categories')
   const [entries, setEntries] = useState<SiteEntryData[]>([])
   const [entry, setEntry] = useState<EntryData | undefined>()
+  const [loadingProgress, setLoadingProgress] = useState<number>(0)
 
   const selectCategory = async (category: string) => {
-    const response = await fetch(
-      `${github.repository}/data/categories/${category}.json`
+    const response = await fetchWithProgress(
+      `${github.repository}/data/categories/${category}.json`,
+      async (bytes: number, total: number) => {
+        setLoadingProgress((bytes / total) * 100)
+      }
     )
     if (!response.ok) return
 
-    const json: SiteEntryData[] = await response.json()
+    const json: SiteEntryData[] = JSON.parse(response.text)
+    setLoadingProgress(0)
     setPageState('entries')
     setEntries(json)
     setEntry(undefined)
   }
+
   const selectSite = async (siteHash: string) => {
     if (siteHash === 'all') {
-      const response = await fetch(`${github.repository}/data/all.json`)
+      const response = await fetchWithProgress(
+        `${github.repository}/data/all.json`,
+        async (bytes: number, total: number) => {
+          setLoadingProgress((bytes / total) * 100)
+        }
+      )
       if (!response.ok) return
 
-      const json: SiteEntryData[] = await response.json()
+      const json: SiteEntryData[] = JSON.parse(response.text)
+      setLoadingProgress(0)
       setPageState('entries')
       setEntries(json)
       setEntry(undefined)
       return
     }
 
-    const response = await fetch(
-      `${github.repository}/data/sites/${siteHash}.json`
+    const response = await fetchWithProgress(
+      `${github.repository}/data/sites/${siteHash}.json`,
+      async (bytes: number, total: number) => {
+        setLoadingProgress((bytes / total) * 100)
+      }
     )
     if (!response.ok) return
 
-    const json: SiteDataWithEntries = await response.json()
+    const json: SiteDataWithEntries = JSON.parse(response.text)
+    setLoadingProgress(0)
     setPageState('entries')
     setEntries(json.entries)
     setEntry(undefined)
   }
   const selectEntry = async (entryHash: string) => {
-    const response = await fetch(
-      `${github.repository}/data/entries/${entryHash}.json`
+    const response = await fetchWithProgress(
+      `${github.repository}/data/entries/${entryHash}.json`,
+      async (bytes: number, total: number) => {
+        setLoadingProgress((bytes / total) * 100)
+      }
     )
     if (!response.ok) return
 
-    const json: EntryData = await response.json()
+    const json: EntryData = JSON.parse(response.text)
+    setLoadingProgress(0)
     setPageState('article')
     setEntry(json)
   }
 
   return (
     <>
+      <Loading className="inset-x-0 top-0 fixed" percentage={loadingProgress} />
       <CategoryList
         className={categoriesClassName(pageState)}
         categories={categories}

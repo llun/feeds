@@ -2,17 +2,14 @@ import React, { useEffect } from 'react'
 import { EntryData } from '../../action/eleventy/data'
 import type { PageState } from '../index'
 
-const Entry = ({
-  className,
-  entry,
-  page,
-  selectBack
-}: {
+interface Props {
   className?: string
   entry?: EntryData
   page: PageState
   selectBack?: () => void
-}) => {
+}
+
+const Entry = ({ className, entry, page, selectBack }: Props) => {
   let element: HTMLElement | null = null
   useEffect(() => {
     if (!element) return
