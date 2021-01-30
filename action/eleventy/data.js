@@ -239,6 +239,7 @@ async function createCategoryData() {
   }
   const text = JSON.stringify(categoriesData)
   fs.writeFileSync(path.join(EMBEDDED_DATA_PATH, 'categories.json'), text)
+  fs.writeFileSync(path.join(DATA_PATH, 'categories.json'), text)
 }
 
 async function prepareEleventyData() {

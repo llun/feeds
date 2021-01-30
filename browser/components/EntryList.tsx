@@ -1,7 +1,40 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import formatDistance from 'date-fns/formatDistance'
 import { SiteEntryData } from '../../action/eleventy/data'
 import type { PageState } from '../index'
+
+const EntryItem = ({
+  entry,
+  selectedEntryHash,
+  selectEntry,
+  selectSite
+}: {
+  entry: SiteEntryData
+  selectedEntryHash: string
+  selectEntry: (entryHash: string) => Promise<void>
+  selectSite: (siteHash: string) => Promise<void>
+}) => (
+  <div
+    className={`rounded px-4 ${
+      (selectedEntryHash === entry.entryHash && 'bg-gray-200') || ''
+    }`.trim()}
+  >
+    <h3>
+      <a
+        className="cursor-pointer"
+        onClick={() => selectEntry(entry.entryHash)}
+      >
+        {entry.title}
+      </a>
+    </h3>
+    <small>
+      <a className="cursor-pointer" onClick={() => selectSite(entry.siteHash)}>
+        {entry.siteTitle}
+      </a>
+      ,{formatDistance(entry.date, new Date())}
+    </small>
+  </div>
+)
 
 const EntryList = ({
   className,
@@ -18,6 +51,8 @@ const EntryList = ({
   selectSite: (siteHash: string) => Promise<void>
   selectBack?: () => void
 }) => {
+  const [selectedEntryHash, setSelectedEntryHash] = useState('')
+
   let element: HTMLElement | null = null
   useEffect(() => {
     if (!element) return
@@ -36,25 +71,16 @@ const EntryList = ({
         ← Back
       </a>
       {entries.map((entry) => (
-        <div key={`entry-${entry.entryHash}`}>
-          <h3>
-            <a
-              className="cursor-pointer"
-              onClick={() => selectEntry(entry.entryHash)}
-            >
-              {entry.title}
-            </a>
-          </h3>
-          <small>
-            <a
-              className="cursor-pointer"
-              onClick={() => selectSite(entry.siteHash)}
-            >
-              {entry.siteTitle}
-            </a>
-            ,{formatDistance(entry.date, new Date())}
-          </small>
-        </div>
+        <EntryItem
+          key={`entry-${entry.entryHash}`}
+          entry={entry}
+          selectedEntryHash={selectedEntryHash}
+          selectEntry={async (entryHash: string) => {
+            setSelectedEntryHash(entryHash)
+            await selectEntry(entryHash)
+          }}
+          selectSite={selectSite}
+        />
       ))}
       {entries.length === 0 && (
         <div key="none">
