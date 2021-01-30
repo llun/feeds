@@ -92,6 +92,11 @@ function parseLocation(url: string): LocationState {
         type: parts[0],
         siteHash: parts[1]
       }
+    case 'entries':
+      return {
+        type: parts[0],
+        entryHash: parts[1]
+      }
     default:
       return null
   }
@@ -177,12 +182,25 @@ const Page = () => {
         const response = await fetchWithProgress(
           `${github.repository}/data/entries/${entryHash}.json`,
           async (bytes: number, total: number) => {
-            setLoadingProgress((bytes / total) * 100)
+            setLoadingProgress((bytes / total) * (entries ? 50 : 100))
           }
         )
         if (!response.ok) return
 
         const json: EntryData = JSON.parse(response.text)
+        if (entries.length === 0) {
+          const response = await fetchWithProgress(
+            `${github.repository}/data/sites/${json.siteHash}.json`,
+            async (bytes: number, total: number) => {
+              setLoadingProgress(50 + (bytes / total) * 50)
+            }
+          )
+          if (response.ok) {
+            const json: SiteDataWithEntries = JSON.parse(response.text)
+            setEntries(json.entries)
+          }
+        }
+
         setLoadingProgress(100)
         setTimeout(() => {
           setLoadingProgress(null)
@@ -228,9 +246,11 @@ const Page = () => {
       type: 'sites',
       siteHash
     })
-  const selectEntry = async (entryHash: string) => {
-    locationController({ type: 'entries', entryHash })
-  }
+  const selectEntry = async (entryHash: string) =>
+    changePage(`${github.repository}/entries/${entryHash}`, {
+      type: 'entries',
+      entryHash
+    })
 
   return (
     <>
