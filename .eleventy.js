@@ -1,4 +1,5 @@
 // @ts-check
+const htmlmin = require('html-minifier')
 const fs = require('fs')
 const { formatDistance } = require('date-fns')
 
@@ -38,8 +39,22 @@ module.exports = function (eleventyConfig) {
     }
   })
 
+  eleventyConfig.addTransform('htmlmin', function (content, outputPath) {
+    // Eleventy 1.0+: use this.inputPath and this.outputPath instead
+    if (outputPath.endsWith('.html')) {
+      let minified = htmlmin.minify(content, {
+        useShortDoctype: true,
+        removeComments: true,
+        collapseWhitespace: true
+      })
+      return minified
+    }
+
+    return content
+  })
+
   return {
-    templateFormats: ['njk', 'html', 'png', 'jpg'],
+    templateFormats: ['js', 'njk', 'html', 'png', 'jpg'],
 
     // If your site lives in a different subdirectory, change this.
     // Leading or trailing slashes are all normalized away, so don’t worry about it.

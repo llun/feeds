@@ -13,10 +13,14 @@ import EntryList from './components/EntryList'
 
 export type PageState = 'categories' | 'entries' | 'article'
 
-declare global {
-  const root: string
-  const categories: CategoryData[]
+const githubElement = document.getElementById('github')
+const github = (githubElement &&
+  JSON.parse(githubElement.textContent || '{ repository: "" }')) || {
+  repository: ''
 }
+const categoriesElement = document.getElementById('categories')
+const categories =
+  (categoriesElement && JSON.parse(categoriesElement.textContent || '[]')) || []
 
 function articleClassName(pageState: PageState): string {
   switch (pageState) {
@@ -55,7 +59,9 @@ const Page = () => {
   const [entry, setEntry] = useState<EntryData | undefined>()
 
   const selectCategory = async (category: string) => {
-    const response = await fetch(`${root}/data/categories/${category}.json`)
+    const response = await fetch(
+      `${github.repository}/data/categories/${category}.json`
+    )
     if (!response.ok) return
 
     const json: SiteEntryData[] = await response.json()
@@ -65,7 +71,7 @@ const Page = () => {
   }
   const selectSite = async (siteHash: string) => {
     if (siteHash === 'all') {
-      const response = await fetch(`${root}/data/all.json`)
+      const response = await fetch(`${github.repository}/data/all.json`)
       if (!response.ok) return
 
       const json: SiteEntryData[] = await response.json()
@@ -75,7 +81,9 @@ const Page = () => {
       return
     }
 
-    const response = await fetch(`${root}/data/sites/${siteHash}.json`)
+    const response = await fetch(
+      `${github.repository}/data/sites/${siteHash}.json`
+    )
     if (!response.ok) return
 
     const json: SiteDataWithEntries = await response.json()
@@ -84,7 +92,9 @@ const Page = () => {
     setEntry(undefined)
   }
   const selectEntry = async (entryHash: string) => {
-    const response = await fetch(`${root}/data/entries/${entryHash}.json`)
+    const response = await fetch(
+      `${github.repository}/data/entries/${entryHash}.json`
+    )
     if (!response.ok) return
 
     const json: EntryData = await response.json()
@@ -118,4 +128,4 @@ const Page = () => {
   )
 }
 
-ReactDOM.render(<Page />, document.getElementById('root'))
+ReactDOM.hydrate(<Page />, document.getElementById('root'))
