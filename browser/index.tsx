@@ -60,9 +60,10 @@ const Page = () => {
   const [pageState, setPageState] = useState<PageState>('categories')
   const [entries, setEntries] = useState<SiteEntryData[]>([])
   const [entry, setEntry] = useState<EntryData | undefined>()
-  const [loadingProgress, setLoadingProgress] = useState<number>(0)
+  const [loadingProgress, setLoadingProgress] = useState<number | null>(null)
 
   const selectCategory = async (category: string) => {
+    setLoadingProgress(0)
     const response = await fetchWithProgress(
       `${github.repository}/data/categories/${category}.json`,
       async (bytes: number, total: number) => {
@@ -72,7 +73,10 @@ const Page = () => {
     if (!response.ok) return
 
     const json: SiteEntryData[] = JSON.parse(response.text)
-    setLoadingProgress(0)
+    setLoadingProgress(100)
+    setTimeout(() => {
+      setLoadingProgress(null)
+    }, 100)
     setPageState('entries')
     setEntries(json)
     setEntry(undefined)
@@ -80,6 +84,7 @@ const Page = () => {
 
   const selectSite = async (siteHash: string) => {
     if (siteHash === 'all') {
+      setLoadingProgress(0)
       const response = await fetchWithProgress(
         `${github.repository}/data/all.json`,
         async (bytes: number, total: number) => {
@@ -89,13 +94,17 @@ const Page = () => {
       if (!response.ok) return
 
       const json: SiteEntryData[] = JSON.parse(response.text)
-      setLoadingProgress(0)
+      setLoadingProgress(100)
+      setTimeout(() => {
+        setLoadingProgress(null)
+      }, 100)
       setPageState('entries')
       setEntries(json)
       setEntry(undefined)
       return
     }
 
+    setLoadingProgress(0)
     const response = await fetchWithProgress(
       `${github.repository}/data/sites/${siteHash}.json`,
       async (bytes: number, total: number) => {
@@ -105,12 +114,16 @@ const Page = () => {
     if (!response.ok) return
 
     const json: SiteDataWithEntries = JSON.parse(response.text)
-    setLoadingProgress(0)
+    setLoadingProgress(100)
+    setTimeout(() => {
+      setLoadingProgress(null)
+    }, 100)
     setPageState('entries')
     setEntries(json.entries)
     setEntry(undefined)
   }
   const selectEntry = async (entryHash: string) => {
+    setLoadingProgress(0)
     const response = await fetchWithProgress(
       `${github.repository}/data/entries/${entryHash}.json`,
       async (bytes: number, total: number) => {
@@ -120,7 +133,10 @@ const Page = () => {
     if (!response.ok) return
 
     const json: EntryData = JSON.parse(response.text)
-    setLoadingProgress(0)
+    setLoadingProgress(100)
+    setTimeout(() => {
+      setLoadingProgress(null)
+    }, 100)
     setPageState('article')
     setEntry(json)
   }
