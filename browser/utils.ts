@@ -9,7 +9,6 @@ export async function fetchWithProgress(
   url: string,
   progress: (bytes: number, total: number) => Promise<void>
 ): Promise<FetchResponse> {
-  console.log(`fetching ${url}`)
   const response = await fetch(url)
   if (!response.body) {
     return {

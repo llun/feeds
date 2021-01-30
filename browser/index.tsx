@@ -195,16 +195,24 @@ const Page = () => {
   }
 
   useEffect(() => {
-    if (!pageLoaded) {
-      pageLoaded = true
-      locationController(parseLocation(BrowserHistory.location.pathname))
-    }
     const unlisten = BrowserHistory.listen(({ location }) => {
       const state = location.state
       if (!state) return
       const locationState = state as LocationState
       locationController(locationState)
     })
+    if (!pageLoaded) {
+      pageLoaded = true
+      const stateLocation = parseLocation(BrowserHistory.location.pathname)
+      if (!stateLocation) {
+        changePage(`${github.repository}/sites/all`, {
+          type: 'sites',
+          siteHash: 'all'
+        })
+        return
+      }
+      locationController(parseLocation(BrowserHistory.location.pathname))
+    }
     return () => {
       unlisten()
     }
