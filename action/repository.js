@@ -53,11 +53,12 @@ async function setup() {
     const octokit = new Octokit({
       auth: token
     })
-    const branches = await octokit.repos.listBranches({
+    const getBranchResult = octokit.repos.getBranch({
       owner: github.context.repo.owner,
-      repo: github.context.repo.repo
+      repo: github.context.repo.repo,
+      branch: branch
     })
-    console.log(branches)
+    console.log(getBranchResult)
     const response = await octokit.git.listMatchingRefs({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
