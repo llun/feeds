@@ -53,9 +53,14 @@ async function setup() {
     const octokit = new Octokit({
       auth: token
     })
+    const branches = await octokit.repos.listBranches({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo
+    })
+    console.log(branches)
     const response = await octokit.git.listMatchingRefs({
-      owner: 'llun',
-      repo: 'blog',
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
       ref: `heads/${branch}`
     })
     const checkoutBranch =
