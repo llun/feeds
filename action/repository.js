@@ -56,7 +56,7 @@ async function setup() {
     const getBranchResult = await octokit.repos.getBranch({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      branch: branch
+      branch: 'xxxx'
     })
     console.log(getBranchResult)
     const response = await octokit.git.listMatchingRefs({
