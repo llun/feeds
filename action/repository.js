@@ -53,7 +53,7 @@ async function setup() {
     const octokit = new Octokit({
       auth: token
     })
-    const getBranchResult = octokit.repos.getBranch({
+    const getBranchResult = await octokit.repos.getBranch({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       branch: branch
