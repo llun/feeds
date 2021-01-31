@@ -53,21 +53,16 @@ async function setup() {
     const octokit = new Octokit({
       auth: token
     })
-    const getBranchResult = await octokit.repos.getBranch({
+    const response = await octokit.repos.listBranches({
       owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      branch: 'xxxx'
+      repo: github.context.repo.repo
     })
-    console.log(getBranchResult)
-    const response = await octokit.git.listMatchingRefs({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      ref: `heads/${branch}`
-    })
-    const checkoutBranch =
-      response.data.length > 0
-        ? branch
-        : github.context.ref.substring('refs/heads/'.length)
+    const isBranchExist = response.data
+      .map((item) => item.name)
+      .includes(branch)
+    const checkoutBranch = isBranchExist
+      ? branch
+      : github.context.ref.substring('refs/heads/'.length)
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
     const cloneResult = runCommand([
       'git',
@@ -83,7 +78,7 @@ async function setup() {
       throw new Error('Fail to clone repository')
     }
 
-    if (response.data.length === 0) {
+    if (!isBranchExist) {
       console.log(`Create content branch ${branch}`)
       const branchResult = runCommand(['git', 'checkout', '-B', branch])
       if (branchResult.error) {
