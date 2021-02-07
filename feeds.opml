@@ -4,8 +4,11 @@
     <title>Feeds</title>
   </head>
   <body>
-    <outline title="Me" text="Me">
+    <outline title="Category1" text="Category1">
       <outline type="rss" text="@llun story" title="@llun story" xmlUrl="https://www.llun.me/feeds/main" htmlUrl="https://www.llun.me/" />
+    </outline>
+    <outline title="Category2" text="Category2">
+      <outline title="cheeaunblog" xmlUrl="https://cheeaun.com/blog/feed.xml" type="rss" htmlUrl="https://cheeaun.com/blog" text="cheeaunblog" />
     </outline>
   </body>
 </opml>

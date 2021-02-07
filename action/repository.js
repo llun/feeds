@@ -45,14 +45,30 @@ async function setup() {
   if (workSpace) {
     const core = require('@actions/core')
     const github = require('@actions/github')
+    const { Octokit } = require('@octokit/rest')
     const user = process.env['GITHUB_ACTOR']
     const token = core.getInput('token', { required: true })
+    const branch = core.getInput('branch', { required: true })
+
+    const octokit = new Octokit({
+      auth: token
+    })
+    const response = await octokit.repos.listBranches({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo
+    })
+    const isBranchExist = response.data
+      .map((item) => item.name)
+      .includes(branch)
+    const checkoutBranch = isBranchExist
+      ? branch
+      : github.context.ref.substring('refs/heads/'.length)
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
     const cloneResult = runCommand([
       'git',
       'clone',
       '-b',
-      github.context.ref.substring('refs/heads/'.length),
+      checkoutBranch,
       '--depth',
       '1',
       cloneUrl,
@@ -62,11 +78,12 @@ async function setup() {
       throw new Error('Fail to clone repository')
     }
 
-    const branch = core.getInput('branch', { required: true })
-    console.log(`Switch to ${branch}`)
-    const branchResult = runCommand(['git', 'checkout', '-B', branch])
-    if (branchResult.error) {
-      throw new Error('Fail to switch branch')
+    if (!isBranchExist) {
+      console.log(`Create content branch ${branch}`)
+      const branchResult = runCommand(['git', 'checkout', '-B', branch])
+      if (branchResult.error) {
+        throw new Error('Fail to switch branch')
+      }
     }
   }
 }
@@ -80,7 +97,7 @@ async function publish() {
     const branch = core.getInput('branch', { required: true })
     const token = core.getInput('token', { required: true })
     const user = process.env['GITHUB_ACTOR']
-    const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
+    const pushUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
 
     // Fix custom domain getting disable after run
     const customDomain = core.getInput('customDomain')
@@ -112,7 +129,7 @@ async function publish() {
     runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
     runCommand(['git', 'add', '-f', '--all'])
     runCommand(['git', 'commit', '-m', 'Update feeds contents'])
-    runCommand(['git', 'push', '-f', cloneUrl, `HEAD:${branch}`])
+    runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`])
   }
 }
 exports.publish = publish

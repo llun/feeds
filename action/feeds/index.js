@@ -14,7 +14,11 @@ const { parseAtom, parseRss } = require('./parsers')
  */
 async function loadFeed(url) {
   try {
-    const data = await fetch(url).then((response) => response.text())
+    const data = await fetch(url, {
+      headers: {
+        'User-Agent': 'llun/feeds'
+      }
+    }).then((response) => response.text())
     const xml = await new Promise((resolve, reject) =>
       parseString(data, (error, result) => {
         if (error) return reject(error)
