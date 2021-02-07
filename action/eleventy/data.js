@@ -38,7 +38,6 @@ const fs = require('fs')
 const htmlmin = require('html-minifier')
 const core = require('@actions/core')
 const crypto = require('crypto')
-const { spawnSync, spawn } = require('child_process')
 const { loadContent, close } = require('../puppeteer')
 
 const GITHUB_ACTION_PATH = '/home/runner/work/_actions/llun/feeds/test-puppeteer'
@@ -243,7 +242,12 @@ async function createAllEntriesData() {
         removeComments: true,
         collapseWhitespace: true
       })
-      fs.writeFileSync(readabilityFile, JSON.stringify({ content: minifyContent }))
+      /** @type {EntryData} */
+      const entryData = {
+        ...json,
+        content: minifyContent
+      }
+      fs.writeFileSync(readabilityFile, JSON.stringify(entryData))
       await close()
     } catch (error) {
       console.log(`${entryHash} - Fail to load ${json.link}`)

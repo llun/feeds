@@ -179,13 +179,24 @@ const Page = () => {
       case 'entries': {
         const { entryHash } = locationState
         setLoadingProgress(0)
-        const response = await fetchWithProgress(
-          `${github.repository}/data/entries/${entryHash}.json`,
+
+        // Try fetching readability version first
+        let response = await fetchWithProgress(
+          `${github.repository}/data/readability/${entryHash}.json`,
           async (bytes: number, total: number) => {
             setLoadingProgress((bytes / total) * (entries ? 50 : 100))
           }
         )
-        if (!response.ok) return
+        if (!response.ok) {
+          // If it's not found, use feed content
+          const response = await fetchWithProgress(
+            `${github.repository}/data/entries/${entryHash}.json`,
+            async (bytes: number, total: number) => {
+              setLoadingProgress((bytes / total) * (entries ? 50 : 100))
+            }
+          )
+          if (!response.ok) return
+        }
 
         const json: EntryData = JSON.parse(response.text)
         if (entries.length === 0) {
