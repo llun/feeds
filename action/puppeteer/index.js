@@ -38,7 +38,8 @@ async function loadContent(url) {
   const resultArticle = /** @type {import('./').ParseResponse} */ (await page.evaluate(`
     (function(){
       ${readabilityJsStr}
-      return new Readability({}, document).parse()
+      const documentClone = document.cloneNode(true)
+      return new Readability(documentClone, { disableJSONLD: true }).parse()
     }())
   `))
   await page.close()
