@@ -221,8 +221,6 @@ async function createAllEntriesData() {
     )
     const readabilityFile = path.join(READABILITY_CACHE_PATH, `${entryHash}.json`)
     try {
-      spawnSync('ls', ['-l', WORKSPACE_READABILITY_CACHE_PATH], { stdio: 'inherit' })
-      fs.statSync(readabilityFile)
       fs.statSync(path.join(WORKSPACE_READABILITY_CACHE_PATH, `${entryHash}.json`))
       console.log(`${entryHash} - Readability loaded, skip`)
       continue
