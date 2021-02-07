@@ -8,4 +8,4 @@ jobs:
     name: Test
     steps:
       - name: Run Action
-        uses: llun/feeds@test-puppeteer
+        uses: llun/feeds@main
