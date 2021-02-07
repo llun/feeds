@@ -40,7 +40,7 @@ const core = require('@actions/core')
 const crypto = require('crypto')
 const { loadContent, close } = require('../puppeteer')
 
-const GITHUB_ACTION_PATH = '/home/runner/work/_actions/llun/feeds/main'
+const GITHUB_ACTION_PATH = '/home/runner/work/_actions/llun/feeds/test-puppeteer'
 const FEEDS_CONTENT_PATH = path.join(
   process.env['GITHUB_WORKSPACE'] || '',
   'contents'
