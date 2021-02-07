@@ -35,8 +35,10 @@
  */
 const path = require('path')
 const fs = require('fs')
+const htmlmin = require('html-minifier')
 const core = require('@actions/core')
 const crypto = require('crypto')
+const { loadContent, close } = require('../puppeteer')
 
 const GITHUB_ACTION_PATH = '/home/runner/work/_actions/llun/feeds/main'
 const FEEDS_CONTENT_PATH = path.join(
@@ -56,6 +58,7 @@ const DATA_PATH = path.join(
 const CATEGORY_DATA_PATH = path.join(DATA_PATH, 'categories')
 const SITES_DATA_PATH = path.join(DATA_PATH, 'sites')
 const ENTRIES_DATA_PATH = path.join(DATA_PATH, 'entries')
+const READABILITY_CACHE_PATH = path.join(DATA_PATH, 'readability')
 const REPOSITORY_DATA_PATH = path.join(EMBEDDED_DATA_PATH, 'github.json')
 
 function prepareDirectories() {
@@ -64,6 +67,7 @@ function prepareDirectories() {
   fs.mkdirSync(CATEGORY_DATA_PATH, { recursive: true })
   fs.mkdirSync(SITES_DATA_PATH, { recursive: true })
   fs.mkdirSync(ENTRIES_DATA_PATH, { recursive: true })
+  fs.mkdirSync(READABILITY_CACHE_PATH, { recursive: true })
 }
 
 /**
@@ -206,6 +210,45 @@ async function createAllEntriesData() {
     .sort((a, b) => b.date - a.date)
   const text = JSON.stringify(entriesData)
   fs.writeFileSync(path.join(DATA_PATH, 'all.json'), text)
+
+  // Load entry site with readability
+  for (const entryHashFile of entries) {
+    const entryHash = entryHashFile.slice(
+      0,
+      entryHashFile.length - '.json'.length
+    )
+    const readabilityFile = path.join(READABILITY_CACHE_PATH, `${entryHash}.html`)
+    try {
+      fs.statSync(readabilityFile)
+      console.log(`${entryHash} - Readability loaded, skip`)
+      continue
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        console.error(error.message)
+        continue
+      }
+    }
+    const entry = fs
+      .readFileSync(path.join(ENTRIES_DATA_PATH, entryHashFile))
+      .toString('utf8')
+    /** @type {EntryData} */
+    const json = JSON.parse(entry)
+    console.log(`${entryHash} - Load ${json.link}`)
+    try {
+      const content = await loadContent(json.link)
+      const minifyContent = htmlmin.minify(content, {
+        useShortDoctype: true,
+        removeComments: true,
+        collapseWhitespace: true
+      })
+      fs.writeFileSync(readabilityFile, minifyContent)
+      await close()
+    } catch (error) {
+      console.log(`${entryHash} - Fail to load ${json.link}`)
+      await close()
+      continue
+    }
+  }
 }
 
 async function createCategoryData() {
