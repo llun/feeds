@@ -38,6 +38,7 @@ const fs = require('fs')
 const htmlmin = require('html-minifier')
 const core = require('@actions/core')
 const crypto = require('crypto')
+const { spawnSync, spawn } = require('child_process')
 const { loadContent, close } = require('../puppeteer')
 
 const GITHUB_ACTION_PATH = '/home/runner/work/_actions/llun/feeds/test-puppeteer'
@@ -220,6 +221,7 @@ async function createAllEntriesData() {
     )
     const readabilityFile = path.join(READABILITY_CACHE_PATH, `${entryHash}.json`)
     try {
+      spawnSync('ls', ['-l', WORKSPACE_READABILITY_CACHE_PATH], { stdio: 'inherit' })
       fs.statSync(readabilityFile)
       fs.statSync(path.join(WORKSPACE_READABILITY_CACHE_PATH, `${entryHash}.json`))
       console.log(`${entryHash} - Readability loaded, skip`)
