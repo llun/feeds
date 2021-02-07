@@ -224,12 +224,6 @@ const Page = () => {
   }
 
   useEffect(() => {
-    const unlisten = BrowserHistory.listen(({ location }) => {
-      const state = location.state
-      if (!state) return
-      const locationState = state as LocationState
-      locationController(locationState)
-    })
     if (!pageLoaded) {
       pageLoaded = true
       const stateLocation = parseLocation(BrowserHistory.location.pathname)
@@ -238,10 +232,15 @@ const Page = () => {
           type: 'sites',
           siteHash: 'all'
         })
-        return
       }
       locationController(parseLocation(BrowserHistory.location.pathname))
     }
+    const unlisten = BrowserHistory.listen(({ location }) => {
+      const state = location.state
+      if (!state) return
+      const locationState = state as LocationState
+      locationController(locationState)
+    })
     return () => {
       unlisten()
     }
@@ -252,16 +251,20 @@ const Page = () => {
       type: 'categories',
       category
     })
-  const selectSite = async (siteHash: string) =>
+  const selectSite = async (siteHash: string) => {
+    console.log('Select site')
     changePage(`${github.repository}/sites/${siteHash}`, {
       type: 'sites',
       siteHash
     })
-  const selectEntry = async (entryHash: string) =>
+  }
+  const selectEntry = async (entryHash: string) => {
+    console.log('Select entry')
     changePage(`${github.repository}/entries/${entryHash}`, {
       type: 'entries',
       entryHash
     })
+  }
 
   return (
     <>
