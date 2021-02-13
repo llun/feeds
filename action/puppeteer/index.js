@@ -30,7 +30,7 @@ async function loadContent(url) {
   )
   const page = await _browser.newPage()
   try {
-    await page.goto(url)
+    await page.goto(url, { waitUntil: 'networkidle2' })
   } catch (e) {
     throw e
   }
