@@ -211,8 +211,10 @@ async function createAllEntriesData() {
     .sort((a, b) => b.date - a.date)
   const text = JSON.stringify(entriesData)
   fs.writeFileSync(path.join(DATA_PATH, 'all.json'), text)
+}
 
-  // Load entry site with readability
+async function loadEntryWithPuppeteer() {
+  const entries = fs.readdirSync(ENTRIES_DATA_PATH)
   for (const entryHashFile of entries) {
     const entryHash = entryHashFile.slice(
       0,
@@ -299,6 +301,7 @@ async function prepareEleventyData() {
     createRepositoryData(customDomainName)
     await createCategoryData()
     await createAllEntriesData()
+    await loadEntryWithPuppeteer()
   } catch (error) {
     if (error !== 'ENOENT') {
       core.setFailed(error)
