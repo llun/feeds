@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+  xmlns:slash="http://purl.org/rss/1.0/modules/slash/">
+
+  <channel>
+    <title>icez network</title>
+    <atom:link href="https://www.icez.net/blog/feed" rel="self" type="application/rss+xml" />
+    <link>https://www.icez.net/blog</link>
+    <description>Technical Blog by icez network</description>
+    <lastBuildDate>Mon, 08 Feb 2021 10:05:50 +0000</lastBuildDate>
+    <language>en-US</language>
+    <sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+    <sy:updateFrequency>
+	1	</sy:updateFrequency>
+    <generator>https://wordpress.org/?v=5.3.6</generator>
+    <item>
+      <title>0249 &#124; rsyslog log remote host to separate file</title>
+      <link>https://www.icez.net/blog/167459/rsyslog-log-remote-host-to-separate-file</link>
+      <comments>https://www.icez.net/blog/167459/rsyslog-log-remote-host-to-separate-file#respond</comments>
+      <pubDate>Mon, 08 Feb 2021 10:05:48 +0000</pubDate>
+      <dc:creator><![CDATA[icez]]></dc:creator>
+      <category><![CDATA[Misc]]></category>
+
+      <guid isPermaLink="false">https://www.icez.net/blog/?p=167459</guid>
+      <description><![CDATA[enter these in /etc/rsyslog.d/udp.conf $ModLoad imudp $UDPServerRun 514 $FileOwner root $FileGroup adm $FileCreateMode 0640 $DirCreateMode 0755 $Umask 0022 $template RemoteHost,"/var/log/remote/%fromhost-ip%/%$YEAR%/%$MONTH%-%$DAY%.log" if $fromhost-ip != '127.0.0.1' then ?RemoteHost &#38; stop]]></description>
+      <content:encoded><![CDATA[<p>enter these in /etc/rsyslog.d/udp.conf</p>
+<pre>$ModLoad imudp
+$UDPServerRun 514
+
+
+$FileOwner root
+$FileGroup adm
+$FileCreateMode 0640
+$DirCreateMode 0755
+$Umask 0022
+
+$template RemoteHost,"/var/log/remote/%fromhost-ip%/%$YEAR%/%$MONTH%-%$DAY%.log"
+
+if $fromhost-ip != '127.0.0.1' then ?RemoteHost
+&amp; stop
+</pre>
+]]>      </content:encoded>
+      <wfw:commentRss>https://www.icez.net/blog/167459/rsyslog-log-remote-host-to-separate-file/feed</wfw:commentRss>
+      <slash:comments>0</slash:comments>
+    </item>
+    <item>
+      <title>0248 &#124; vscode remote ssh บน windows</title>
+      <link>https://www.icez.net/blog/167450/0248-vscode-remote-ssh-on-windows</link>
+      <comments>https://www.icez.net/blog/167450/0248-vscode-remote-ssh-on-windows#respond</comments>
+      <pubDate>Mon, 01 Feb 2021 05:31:58 +0000</pubDate>
+      <dc:creator><![CDATA[icez]]></dc:creator>
+      <category><![CDATA[Misc]]></category>
+
+      <guid isPermaLink="false">https://www.icez.net/blog/?p=167450</guid>
+      <description><![CDATA[ไม่รู้จะทำให้ชีวิตยุ่งยากไปทำไม ใช้ code-server ง่ายกว่าเยอะเลย แต่ถ้าอยากทำก็&#8230; สำหรับคนที่ใช้ putty / pageant ในการ ssh อยู่แล้ว และไม่อยากจัดการ key ให้วุ่นวาย ติดตั้ง vscode (แหงล่ะ) ติดตั้ง openssh บน windows (กด start &#62; พิมพ์คำว่า optional feature &#62; เลือก เมนู Add an optional features &#62; เลือก OpenSSH Client กด install) เชื่อม ssh-agent กับ pageant โหลด https://github.com/benpye/wsl-ssh-pageant มาลง (หน้า release &#62; ไฟล์ wsl-ssh-pageant-amd64-gui.exe) เปิด windows [&#8230;]]]></description>
+      <content:encoded><![CDATA[<p>ไม่รู้จะทำให้ชีวิตยุ่งยากไปทำไม ใช้ <a href="https://github.com/cdr/code-server">code-server</a> ง่ายกว่าเยอะเลย แต่ถ้าอยากทำก็&#8230;</p>
+<p>สำหรับคนที่ใช้ putty / pageant ในการ ssh อยู่แล้ว และไม่อยากจัดการ key ให้วุ่นวาย</p>
+<ol>
+<li>ติดตั้ง vscode (แหงล่ะ)</li>
+<li>ติดตั้ง openssh บน windows (กด start &gt; พิมพ์คำว่า optional feature &gt; เลือก เมนู Add an optional features &gt; เลือก OpenSSH Client กด install)</li>
+</ol>
+<h2>เชื่อม ssh-agent กับ pageant</h2>
+<ol>
+<li>โหลด https://github.com/benpye/wsl-ssh-pageant มาลง (หน้า release &gt; ไฟล์ wsl-ssh-pageant-amd64-gui.exe)</li>
+<li>เปิด windows explorer คลิกขวาที่ไฟล์ wsl-ssh-pageant-amd64-gui.exe กด create shortcut คลิก</li>
+<li>คลิกขวาไฟล์ shortcut ที่เพิ่งสร้าง กด properties ช่อง target เติม <code>--winssh ssh-pageant</code> ต่อท้ายไป (เว้นวรรคก่อนเติมด้วย)</li>
+<li>double click ตัว shortcut ที่รันมาเมื่อกี้ + จับย้ายไปใน startup ได้เลย</li>
+<li>กด start &gt; พิมพ์คำว่า environment เลือก &gt; Edit the system environment &gt; แล้วกดตามนี้<br />
+<img src="https://www.icez.net/blog/wp-content/uploads/2021/02/c-20210201-120639.png" alt=""></li>
+</ol>
+<h2>ทดสอบการ ssh</h2>
+<ol>
+<li>เปิด powershell</li>
+<li>สั่ง <code>ssh-add -l</code> ถ้าระบบทำงานถูกควรจะมี key ที่เรา add ไว้ใน pageant โผล่ขึ้นมา</li>
+</ol>
+<h2>ใช้งาน</h2>
+<p>ใน vscode ติดตั้ง remote ssh extension แล้วกด connect เข้า server ได้เลย</p>
+]]>      </content:encoded>
+      <wfw:commentRss>https://www.icez.net/blog/167450/0248-vscode-remote-ssh-on-windows/feed</wfw:commentRss>
+      <slash:comments>0</slash:comments>
+    </item>
+    <item>
+      <title>0247 &#124; internal linux traffic flow</title>
+      <link>https://www.icez.net/blog/167435/0247-internal-linux-traffic-flow</link>
+      <comments>https://www.icez.net/blog/167435/0247-internal-linux-traffic-flow#respond</comments>
+      <pubDate>Mon, 01 Jun 2020 10:39:11 +0000</pubDate>
+      <dc:creator><![CDATA[icez]]></dc:creator>
+      <category><![CDATA[Misc]]></category>
+
+      <guid isPermaLink="false">https://www.icez.net/blog/?p=167435</guid>
+      <description><![CDATA[diagram จาก wikipedia action log จาก linux box จริงๆ Jun 14 13:02:12 deb8 kernel: [ 4273.341087] simple: tc[eth1]ingress_1 Jun 14 13:02:12 deb8 kernel: [ 4273.341114] simple: tc[ifb1]egress_1 Jun 14 13:02:12 deb8 kernel: [ 4273.341229] ipt[PREROUTING]raw IN=eth1 OUT= MAC=08:00:27:ee:8f:15:08:00:27:89:16:5b:08:00 SRC=10.1.1.3 DST=10.1.1.2 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=53979 DF PROTO=ICMP TYPE=8 CODE=0 ID=1382 SEQ=1 Jun 14 13:02:12 deb8 [&#8230;]]]></description>
+      <content:encoded><![CDATA[<p>diagram จาก wikipedia</p>
+<p><a href="https://en.wikipedia.org/wiki/Netfilter"><img src="https://upload.wikimedia.org/wikipedia/commons/3/37/Netfilter-packet-flow.svg" alt="" /></a></p>
+<p>action log จาก linux box จริงๆ</p>
+<pre>Jun 14 13:02:12 deb8 kernel: [ 4273.341087] simple: tc[eth1]ingress_1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341114] simple: tc[ifb1]egress_1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341229] ipt[PREROUTING]raw IN=eth1 OUT= MAC=08:00:27:ee:8f:15:08:00:27:89:16:5b:08:00 SRC=10.1.1.3 DST=10.1.1.2 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=53979 DF PROTO=ICMP TYPE=8 CODE=0 ID=1382 SEQ=1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341238] ipt[PREROUTING]mangle IN=eth1 OUT= MAC=08:00:27:ee:8f:15:08:00:27:89:16:5b:08:00 SRC=10.1.1.3 DST=10.1.1.2 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=53979 DF PROTO=ICMP TYPE=8 CODE=0 ID=1382 SEQ=1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341242] ipt[PREROUTING]nat IN=eth1 OUT= MAC=08:00:27:ee:8f:15:08:00:27:89:16:5b:08:00 SRC=10.1.1.3 DST=10.1.1.2 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=53979 DF PROTO=ICMP TYPE=8 CODE=0 ID=1382 SEQ=1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341249] ipt[INPUT]mangle IN=eth1 OUT= MAC=08:00:27:ee:8f:15:08:00:27:89:16:5b:08:00 SRC=10.1.1.3 DST=10.1.1.2 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=53979 DF PROTO=ICMP TYPE=8 CODE=0 ID=1382 SEQ=1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341252] ipt[INPUT]filter IN=eth1 OUT= MAC=08:00:27:ee:8f:15:08:00:27:89:16:5b:08:00 SRC=10.1.1.3 DST=10.1.1.2 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=53979 DF PROTO=ICMP TYPE=8 CODE=0 ID=1382 SEQ=1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341255] ipt[INPUT]nat IN=eth1 OUT= MAC=08:00:27:ee:8f:15:08:00:27:89:16:5b:08:00 SRC=10.1.1.3 DST=10.1.1.2 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=53979 DF PROTO=ICMP TYPE=8 CODE=0 ID=1382 SEQ=1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341267] ipt[OUTPUT]raw IN= OUT=eth1 SRC=10.1.1.2 DST=10.1.1.3 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=37735 PROTO=ICMP TYPE=0 CODE=0 ID=1382 SEQ=1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341270] ipt[OUTPUT]mangle IN= OUT=eth1 SRC=10.1.1.2 DST=10.1.1.3 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=37735 PROTO=ICMP TYPE=0 CODE=0 ID=1382 SEQ=1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341272] ipt[OUTPUT]filter IN= OUT=eth1 SRC=10.1.1.2 DST=10.1.1.3 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=37735 PROTO=ICMP TYPE=0 CODE=0 ID=1382 SEQ=1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341274] ipt[POSTROUTING]mangle IN= OUT=eth1 SRC=10.1.1.2 DST=10.1.1.3 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=37735 PROTO=ICMP TYPE=0 CODE=0 ID=1382 SEQ=1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341278] simple: tc[eth1]egress_1
+Jun 14 13:02:12 deb8 kernel: [ 4273.341280] simple: tc[ifb0]egress_1</pre>
+<p>source: <a href="https://unix.stackexchange.com/questions/288959/how-is-the-ifb-device-positioned-in-the-packet-flow-of-the-linux-kernel">https://unix.stackexchange.com/questions/288959/how-is-the-ifb-device-positioned-in-the-packet-flow-of-the-linux-kernel</a></p>
+]]>      </content:encoded>
+      <wfw:commentRss>https://www.icez.net/blog/167435/0247-internal-linux-traffic-flow/feed</wfw:commentRss>
+      <slash:comments>0</slash:comments>
+    </item>
+    <item>
+      <title>0246 &#124; tcpdump filter multiple vlans</title>
+      <link>https://www.icez.net/blog/167424/tcpdump-filter-multiple-vlans</link>
+      <comments>https://www.icez.net/blog/167424/tcpdump-filter-multiple-vlans#respond</comments>
+      <pubDate>Sat, 09 May 2020 11:59:58 +0000</pubDate>
+      <dc:creator><![CDATA[icez]]></dc:creator>
+      <category><![CDATA[Linux]]></category>
+
+      <guid isPermaLink="false">https://www.icez.net/blog/?p=167424</guid>
+      <description><![CDATA[tcpdump "vlan and (ether[14:2]&#38;0x0fff=2001 or ether[14:2]&#38;0x0fff=2002 or ... or ether[14:2]&#38;0x0fff=2026)" ref: https://github.com/the-tcpdump-group/libpcap/issues/815]]></description>
+      <content:encoded><![CDATA[<p><code lang="bash">tcpdump "vlan and (ether[14:2]&amp;0x0fff=2001 or ether[14:2]&amp;0x0fff=2002 or ... or ether[14:2]&amp;0x0fff=2026)"</code></p>
+<p>ref: <a href="https://github.com/the-tcpdump-group/libpcap/issues/815">https://github.com/the-tcpdump-group/libpcap/issues/815</a></p>
+]]>      </content:encoded>
+      <wfw:commentRss>https://www.icez.net/blog/167424/tcpdump-filter-multiple-vlans/feed</wfw:commentRss>
+      <slash:comments>0</slash:comments>
+    </item>
+    <item>
+      <title>0245 &#124; เพจของโครงการก่อสร้างมอเตอร์เวย์ 81 (บางใหญ่ &#8211; กาญจนบุรี)</title>
+      <link>https://www.icez.net/blog/167413/0245-motorway-81-construction-project-pages</link>
+      <comments>https://www.icez.net/blog/167413/0245-motorway-81-construction-project-pages#respond</comments>
+      <pubDate>Sat, 02 May 2020 15:47:41 +0000</pubDate>
+      <dc:creator><![CDATA[icez]]></dc:creator>
+      <category><![CDATA[Misc]]></category>
+
+      <guid isPermaLink="false">https://www.icez.net/blog/?p=167413</guid>
+      <description><![CDATA[เท่าที่หามาได้ เป็นทางการมั่งไม่เป็นทางการมั่ง ตอน 1 https://www.facebook.com/pages/โครงการก่อสร้างมอเตอร์เวย์ทางหลวงระหว่างเมือง-บางใหญ่-กาญจนบุรี-ตอนที่-1/107302320116961 ตอน 1-2 https://www.facebook.com/Ekkabhob/ ตอน 4 https://www.facebook.com/pages/โครงการมอเตอร์เวย์-บางใหญ่-กาญจนบุรี-ตอน4/157102398388620 ตอน 5 https://www.facebook.com/โครงการก่อสร้างทางหลวงพิเศษระหว่างเมือง-สายบางใหญ่-กาญจนบุรี-ตอน5-224749621363734/ https://www.facebook.com/pages/โครงการก่อสร้างทางหลวงพิเศษระหว่างเมือง-สายบางใหญ่-กาญจนบุรี-ตอน-5/168752320719738 ตอน 4-5??? https://www.facebook.com/pages/โครงการ-ทล-81-มอเตอร์เวย์บางใหญ่-กาญจนบุรี/350480208639859 ตอน 6 https://www.facebook.com/pages/สำนักงานควบคุมโครงการ-บางใหญ่-กาญจนบุรี-ตอน-6/1641126339529425 ตอน 7 https://www.facebook.com/pages/โครงการมอเตอร์เวย์บางใหญ่-เมืองกาญตอน7/287834341714815 ตอน 10 https://www.facebook.com/pages/โครงการก่อสร้างทางหลวงพิเศษระหว่างเมือง-บางใหญ่-กาญฯ-ตอน-10/174132526691697 ตอน 12 https://www.facebook.com/โครงการฯ-สายบางใหญ่-กาญจนบุรี-ตอน-12-ระหว่าง-กม-38-ถึง-44-638705109642274/ https://www.facebook.com/pages/โครงการฯ-สายบางใหญ่-กาญจนบุรี-ตอน-12/437367396628493 ตอน 14 https://www.facebook.com/โครงการฯ-สาย-บางใหญ่-กาญจนบุรี-ตอน-14-1540622262634643/ https://www.facebook.com/pages/โครงการ-บางใหญ่-กาญจนบุรี-ตอนที่14/378147885891944 ตอน 15 https://www.facebook.com/โครงการก่อสร้างทางหลวงพิเศษระหว่างเมือง-สาย-บางใหญ่-กาญจนบุรี-ตอน15-1834672776842710/ ตอน 17 https://www.facebook.com/มอเตอร์เวย์-บางใหญ่-กาญจนบุรี-ตอน-17-1872042599675138/ ตอน 20 https://www.facebook.com/pages/โครงการก่อสร้างทางหลวงพิเศษระหว่างเมือง-สายบางใหญ่-กาญจนบุรี-ตอน-20/843291149146834 ตอน 21 https://www.facebook.com/pages/สำนักงานโครงการทางหลวง-สายบางใหญ่-กาญจนบุรี-ตอนที่-21/538736306478037 ตอน 22 https://www.facebook.com/pages/โครงการทางด่วนมอเตอร์เวย์-สาย81-บางใหญ่-กาญจนบุรี-ตอนที่-22/257410621664594 ตอน 23 https://www.facebook.com/bangyaikanchanaburi23/]]></description>
+      <content:encoded><![CDATA[<p>เท่าที่หามาได้ เป็นทางการมั่งไม่เป็นทางการมั่ง</p>
+<p>ตอน 1<br />
+<a href="https://www.facebook.com/pages/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%AA%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%A1%E0%B8%AD%E0%B9%80%E0%B8%95%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%A7%E0%B8%A2%E0%B9%8C%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B8%A7%E0%B8%87%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87-%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99%E0%B8%97%E0%B8%B5%E0%B9%88-1/107302320116961">https://www.facebook.com/pages/โครงการก่อสร้างมอเตอร์เวย์ทางหลวงระหว่างเมือง-บางใหญ่-กาญจนบุรี-ตอนที่-1/107302320116961</a></p>
+<p>ตอน 1-2<br />
+<a href="https://www.facebook.com/Ekkabhob/">https://www.facebook.com/Ekkabhob/</a></p>
+<p>ตอน 4<br />
+<a href="https://www.facebook.com/pages/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A1%E0%B8%AD%E0%B9%80%E0%B8%95%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%A7%E0%B8%A2%E0%B9%8C-%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%994/157102398388620">https://www.facebook.com/pages/โครงการมอเตอร์เวย์-บางใหญ่-กาญจนบุรี-ตอน4/157102398388620</a></p>
+<p>ตอน 5<br />
+<a href="https://www.facebook.com/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%AA%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B8%A7%E0%B8%87%E0%B8%9E%E0%B8%B4%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87-%E0%B8%AA%E0%B8%B2%E0%B8%A2%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%995-224749621363734/">https://www.facebook.com/โครงการก่อสร้างทางหลวงพิเศษระหว่างเมือง-สายบางใหญ่-กาญจนบุรี-ตอน5-224749621363734/</a><br />
+<a href="https://www.facebook.com/pages/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%AA%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B8%A7%E0%B8%87%E0%B8%9E%E0%B8%B4%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87-%E0%B8%AA%E0%B8%B2%E0%B8%A2%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99-5/168752320719738">https://www.facebook.com/pages/โครงการก่อสร้างทางหลวงพิเศษระหว่างเมือง-สายบางใหญ่-กาญจนบุรี-ตอน-5/168752320719738</a></p>
+<p>ตอน 4-5???<br />
+<a href="https://www.facebook.com/pages/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3-%E0%B8%97%E0%B8%A5-81-%E0%B8%A1%E0%B8%AD%E0%B9%80%E0%B8%95%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%A7%E0%B8%A2%E0%B9%8C%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5/350480208639859">https://www.facebook.com/pages/โครงการ-ทล-81-มอเตอร์เวย์บางใหญ่-กาญจนบุรี/350480208639859</a></p>
+<p>ตอน 6<br />
+<a href="https://www.facebook.com/pages/%E0%B8%AA%E0%B8%B3%E0%B8%99%E0%B8%B1%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%84%E0%B8%A7%E0%B8%9A%E0%B8%84%E0%B8%B8%E0%B8%A1%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3-%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99-6/1641126339529425">https://www.facebook.com/pages/สำนักงานควบคุมโครงการ-บางใหญ่-กาญจนบุรี-ตอน-6/1641126339529425</a></p>
+<p>ตอน 7<br />
+<a href="https://www.facebook.com/pages/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A1%E0%B8%AD%E0%B9%80%E0%B8%95%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%A7%E0%B8%A2%E0%B9%8C%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%95%E0%B8%AD%E0%B8%997/287834341714815">https://www.facebook.com/pages/โครงการมอเตอร์เวย์บางใหญ่-เมืองกาญตอน7/287834341714815</a></p>
+<p>ตอน 10<br />
+<a href="https://www.facebook.com/pages/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%AA%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B8%A7%E0%B8%87%E0%B8%9E%E0%B8%B4%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87-%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%AF-%E0%B8%95%E0%B8%AD%E0%B8%99-10/174132526691697">https://www.facebook.com/pages/โครงการก่อสร้างทางหลวงพิเศษระหว่างเมือง-บางใหญ่-กาญฯ-ตอน-10/174132526691697</a></p>
+<p>ตอน 12<br />
+<a href="https://www.facebook.com/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%AF-%E0%B8%AA%E0%B8%B2%E0%B8%A2%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99-12-%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B8%87-%E0%B8%81%E0%B8%A1-38-%E0%B8%96%E0%B8%B6%E0%B8%87-44-638705109642274/">https://www.facebook.com/โครงการฯ-สายบางใหญ่-กาญจนบุรี-ตอน-12-ระหว่าง-กม-38-ถึง-44-638705109642274/</a><br />
+<a href="https://www.facebook.com/pages/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%AF-%E0%B8%AA%E0%B8%B2%E0%B8%A2%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99-12/437367396628493">https://www.facebook.com/pages/โครงการฯ-สายบางใหญ่-กาญจนบุรี-ตอน-12/437367396628493</a></p>
+<p>ตอน 14<br />
+<a href="https://www.facebook.com/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%AF-%E0%B8%AA%E0%B8%B2%E0%B8%A2-%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99-14-1540622262634643/">https://www.facebook.com/โครงการฯ-สาย-บางใหญ่-กาญจนบุรี-ตอน-14-1540622262634643/</a><br />
+<a href="https://www.facebook.com/pages/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3-%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99%E0%B8%97%E0%B8%B5%E0%B9%8814/378147885891944">https://www.facebook.com/pages/โครงการ-บางใหญ่-กาญจนบุรี-ตอนที่14/378147885891944</a></p>
+<p>ตอน 15<br />
+<a href="https://www.facebook.com/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%AA%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B8%A7%E0%B8%87%E0%B8%9E%E0%B8%B4%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87-%E0%B8%AA%E0%B8%B2%E0%B8%A2-%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%9915-1834672776842710/">https://www.facebook.com/โครงการก่อสร้างทางหลวงพิเศษระหว่างเมือง-สาย-บางใหญ่-กาญจนบุรี-ตอน15-1834672776842710/</a></p>
+<p>ตอน 17<br />
+<a href="https://www.facebook.com/%E0%B8%A1%E0%B8%AD%E0%B9%80%E0%B8%95%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%A7%E0%B8%A2%E0%B9%8C-%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99-17-1872042599675138/">https://www.facebook.com/มอเตอร์เวย์-บางใหญ่-กาญจนบุรี-ตอน-17-1872042599675138/</a></p>
+<p>ตอน 20<br />
+<a href="https://www.facebook.com/pages/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%AA%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B8%A7%E0%B8%87%E0%B8%9E%E0%B8%B4%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87-%E0%B8%AA%E0%B8%B2%E0%B8%A2%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99-20/843291149146834">https://www.facebook.com/pages/โครงการก่อสร้างทางหลวงพิเศษระหว่างเมือง-สายบางใหญ่-กาญจนบุรี-ตอน-20/843291149146834</a></p>
+<p>ตอน 21<br />
+<a href="https://www.facebook.com/pages/%E0%B8%AA%E0%B8%B3%E0%B8%99%E0%B8%B1%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B8%A7%E0%B8%87-%E0%B8%AA%E0%B8%B2%E0%B8%A2%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99%E0%B8%97%E0%B8%B5%E0%B9%88-21/538736306478037">https://www.facebook.com/pages/สำนักงานโครงการทางหลวง-สายบางใหญ่-กาญจนบุรี-ตอนที่-21/538736306478037</a></p>
+<p>ตอน 22<br />
+<a href="https://www.facebook.com/pages/%E0%B9%82%E0%B8%84%E0%B8%A3%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%94%E0%B9%88%E0%B8%A7%E0%B8%99%E0%B8%A1%E0%B8%AD%E0%B9%80%E0%B8%95%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%A7%E0%B8%A2%E0%B9%8C-%E0%B8%AA%E0%B8%B2%E0%B8%A281-%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%8D%E0%B9%88-%E0%B8%81%E0%B8%B2%E0%B8%8D%E0%B8%88%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%A3%E0%B8%B5-%E0%B8%95%E0%B8%AD%E0%B8%99%E0%B8%97%E0%B8%B5%E0%B9%88-22/257410621664594">https://www.facebook.com/pages/โครงการทางด่วนมอเตอร์เวย์-สาย81-บางใหญ่-กาญจนบุรี-ตอนที่-22/257410621664594</a></p>
+<p>ตอน 23<br />
+<a href="https://www.facebook.com/bangyaikanchanaburi23/">https://www.facebook.com/bangyaikanchanaburi23/</a></p>
+]]>      </content:encoded>
+      <wfw:commentRss>https://www.icez.net/blog/167413/0245-motorway-81-construction-project-pages/feed</wfw:commentRss>
+      <slash:comments>0</slash:comments>
+    </item>
+    <item>
+      <title>0244 &#124; ใช้ GPU intel transcode video ด้วย ffmpeg</title>
+      <link>https://www.icez.net/blog/167400/ffmpeg-transcode-video-intel</link>
+      <comments>https://www.icez.net/blog/167400/ffmpeg-transcode-video-intel#respond</comments>
+      <pubDate>Wed, 25 Mar 2020 10:53:26 +0000</pubDate>
+      <dc:creator><![CDATA[icez]]></dc:creator>
+      <category><![CDATA[Misc]]></category>
+
+      <guid isPermaLink="false">https://www.icez.net/blog/?p=167400</guid>
+      <description><![CDATA[API ใหม่ๆ ของ ffmpeg จะทำงานบน vaapi (video accelerator api) เพราะงั้นเวลา transcode เลยต้องใช้ interface ของ vaapi ประมาณนี้ ffmpeg \ -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi \ -i inputfile.mp4 \ -c:v h264_vaapi -b:v 1500k -profile:v main -g 100 \ -c:a aac -b:a 128k \ -f mp4 output.mp4 สั่ง ffmpeg ตั้งค่าให้สัญญาณ video ขาเข้า ไป decode ด้วย vaapi (เพื่อให้เอาผลลัพท์ไปใช้ต่อใน [&#8230;]]]></description>
+      <content:encoded><![CDATA[<p>API ใหม่ๆ ของ ffmpeg จะทำงานบน vaapi (video accelerator api) เพราะงั้นเวลา transcode เลยต้องใช้ interface ของ vaapi ประมาณนี้</p>
+<pre lang="bash">ffmpeg \
+  -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi \
+  -i inputfile.mp4 \
+  -c:v h264_vaapi -b:v 1500k -profile:v main -g 100 \
+  -c:a aac -b:a 128k \
+  -f mp4 output.mp4
+</pre>
+<ol>
+<li>สั่ง ffmpeg</li>
+<li>ตั้งค่าให้สัญญาณ video ขาเข้า ไป decode ด้วย vaapi (เพื่อให้เอาผลลัพท์ไปใช้ต่อใน vaapi ได้)</li>
+<li>ระบุสัญญาณ input</li>
+<li>ระบุการแปลง format ให้ใช้ vaapi h264 encoder ปรับ profile/bitrate ตามชอบ option อื่นๆ ไปดูใน docs</li>
+<li>ตั้ง codec เสียง</li>
+<li>เก็บ output เป็น format mp4 ลงไฟล์ output.mp4</li>
+</ol>
+<p>ref: https://trac.ffmpeg.org/wiki/Hardware/VAAPI</p>
+<p>แถม อันนี้ใช้ vlc clean สัญญาณกล้องวงจรปิด ก่อนส่งให้ ffmpeg transcode ต่อ (ไม่รู้ทำไม ffmpeg transcode ตรงๆ ไม่ได้)</p>
+<pre lang="bash">vlc \
+ 'rtsp://192.168.1.102/user=admin&amp;password=&amp;channel=1&amp;stream=0.sdp?' \
+  --sout '#duplicate{dst=std{access=file,mux=ts,dst=-}}' | \
+  ffmpeg \
+    -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi \
+    -i - \
+    -c:v h264_vaapi -b:v 1500k -profile:v main -g 100  \
+    -y -f flv rtmp://127.0.0.1/live/cctv2
+</pre>
+]]>      </content:encoded>
+      <wfw:commentRss>https://www.icez.net/blog/167400/ffmpeg-transcode-video-intel/feed</wfw:commentRss>
+      <slash:comments>0</slash:comments>
+    </item>
+    <item>
+      <title>0243 &#124; upgrade centos 7 เป็น centos 8</title>
+      <link>https://www.icez.net/blog/167388/upgrade-centos-7-to-centos-8</link>
+      <comments>https://www.icez.net/blog/167388/upgrade-centos-7-to-centos-8#respond</comments>
+      <pubDate>Wed, 12 Feb 2020 17:06:48 +0000</pubDate>
+      <dc:creator><![CDATA[icez]]></dc:creator>
+      <category><![CDATA[Linux]]></category>
+
+      <guid isPermaLink="false">https://www.icez.net/blog/?p=167388</guid>
+      <description><![CDATA[อาจไม่ได้ผลในกรณีที่ลง software จาก repository ภายนอก ตรวจสอบให้แน่ใจว่าทุก repository ที่ใช้งานอยู่ รองรับ centos 8 ก่อนอัพเกรด backup ก่อนเสมอ reference: https://www.tecmint.com/upgrade-centos-7-to-centos-8/ 1) ลง epel repository yum install epel-release -y 2) ลง package yum-utils กับ rpmconf yum install yum-utils rpmconf 3) check ไฟล์ config ว่ามีอะไรเปลี่ยนบ้าง ให้ revert กลับมาที่ default rpm ก่อน ** ระวัง rpmconf -a 4) cleanup package ที่ซ้ำซ้อน package-cleanup --leaves [&#8230;]]]></description>
+      <content:encoded><![CDATA[<ul>
+<li>อาจไม่ได้ผลในกรณีที่ลง software จาก repository ภายนอก</li>
+<li>ตรวจสอบให้แน่ใจว่าทุก repository ที่ใช้งานอยู่ รองรับ centos 8 ก่อนอัพเกรด</li>
+<li>backup ก่อนเสมอ</li>
+</ul>
+<p>reference: <a href="https://www.tecmint.com/upgrade-centos-7-to-centos-8/">https://www.tecmint.com/upgrade-centos-7-to-centos-8/</a></p>
+<p>1) ลง epel repository</p>
+<pre>yum install epel-release -y</pre>
+<p>2) ลง package yum-utils กับ rpmconf</p>
+<pre>yum install yum-utils rpmconf</pre>
+<p>3) check ไฟล์ config ว่ามีอะไรเปลี่ยนบ้าง ให้ revert กลับมาที่ default rpm ก่อน ** ระวัง</p>
+<pre>rpmconf -a</pre>
+<p>4) cleanup package ที่ซ้ำซ้อน</p>
+<pre>package-cleanup --leaves
+package-cleanup --orphans</pre>
+<p>5) ติดตั้ง dnf แล้วลบ yum ทิ้ง (package manager ตัวใหม่ที่มาแทน yum)</p>
+<pre>yum install dnf
+dnf -y remove yum yum-metadata-parser
+rm -Rf /etc/yum</pre>
+<p>6) upgrade package ทั้งหมดของ centos 7 ให้เป็น version ล่าสุด</p>
+<pre>dnf upgrade</pre>
+<p>7) ติดตั้ง centos release ของ centos 8 <u>ถ้าวันไหน centos 8 ออก update ก็ต้องแก้ version package ตาม</u></p>
+<pre>dnf install \
+    http://mirror.centos.org/centos/8/BaseOS/x86_64/os/Packages/centos-repos-8.1-1.1911.0.8.el8.x86_64.rpm \
+    http://mirror.centos.org/centos/8/BaseOS/x86_64/os/Packages/centos-gpg-keys-8.1-1.1911.0.8.el8.noarch.rpm \
+    http://mirror.centos.org/centos/8/BaseOS/x86_64/os/Packages/centos-release-8.1-1.1911.0.8.el8.x86_64.rpm
+</pre>
+<p>8) upgrade epel repository และ repository อื่นๆ ให้เป็น package ของ centos 8</p>
+<pre>dnf -y upgrade https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm</pre>
+<p>** ถ้ามีใช้งาน repository ภายนอก เช่น remi ก็ไล่ upgrade release package ของแต่ละ repository ให้หมด<br />
+9) ลบ kernel เก่าของ centos 7 ออก</p>
+<pre>rpm -e `rpm -q kernel`</pre>
+<p>10) ลบ conflict package ระหว่าง centos 7 กับ 8 (อาจมีอีก ถ้า error ตอน upgrade ในขั้นถัดไปก็มาไล่ลบ)</p>
+<pre>rpm -e --nodeps sysvinit-tools</pre>
+<p>11) <em>upgrade เป็น centos 8</em></p>
+<pre>dnf -y --releasever=8 --allowerasing --setopt=deltarpm=false distro-sync</pre>
+<p>12) ติดตั้ง kernel ใหม่</p>
+<pre>dnf -y install kernel-core</pre>
+<p>13) ติดตั้ง package ใน group minimal ของ centos 8 เพิ่มให้ครบ</p>
+<pre>dnf -y groupupdate "Core" "Minimal Install"</pre>
+<p>14) <strong>สำคัญมาก</strong> ตรวจสอบให้แน่ใจว่า SELINUX ปิดไปแล้ว (ในไฟล์ /etc/selinux/config)</p>
+<p>เสร็จแล้วก็ reboot แล้วก็สวดภาวนาได้เลยครับ</p>
+]]>      </content:encoded>
+      <wfw:commentRss>https://www.icez.net/blog/167388/upgrade-centos-7-to-centos-8/feed</wfw:commentRss>
+      <slash:comments>0</slash:comments>
+    </item>
+    <item>
+      <title>0242 &#124; bgp route-map processing flow</title>
+      <link>https://www.icez.net/blog/167384/0242-bgp-route-map-processing-flow</link>
+      <comments>https://www.icez.net/blog/167384/0242-bgp-route-map-processing-flow#respond</comments>
+      <pubDate>Mon, 10 Feb 2020 05:54:17 +0000</pubDate>
+      <dc:creator><![CDATA[icez]]></dc:creator>
+      <category><![CDATA[IP Network]]></category>
+
+      <guid isPermaLink="false">https://www.icez.net/blog/?p=167384</guid>
+      <description><![CDATA[จดกันลืม list รายการ prefix แล้วส่งไปตรวจสอบกับ route-map ว่ามี match รึเปล่า ตัวอย่าง 2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1000, prefix: 192.0.2.0/24, result: no match 2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1010, prefix: 192.0.2.0/24, result: no match 2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1020, prefix: 192.0.2.0/24, result: no match 2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1030, prefix: 192.0.2.0/24, [&#8230;]]]></description>
+      <content:encoded><![CDATA[<p>จดกันลืม</p>
+<ul>
+<li>list รายการ prefix แล้วส่งไปตรวจสอบกับ route-map ว่ามี match รึเปล่า</li>
+</ul>
+<p>ตัวอย่าง</p>
+<p>2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1000, prefix: 192.0.2.0/24, result: no match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1010, prefix: 192.0.2.0/24, result: no match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1020, prefix: 192.0.2.0/24, result: no match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1030, prefix: 192.0.2.0/24, result: no match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, prefix: 192.0.2.0/24, result: deny<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1000, prefix: 192.0.2.2/32, result: no match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1010, prefix: 192.0.2.2/32, result: no match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1020, prefix: 192.0.2.2/32, result: no match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1030, prefix: 192.0.2.2/32, result: no match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, prefix: 192.0.2.2/32, result: deny<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1000, prefix: 10.24.0.0/22, result: no match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1010, prefix: 10.24.0.0/22, result: no match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, sequence: 1020, prefix: 10.24.0.0/22, result: match<br />
+2020/02/10 12:45:34 BGP: Route-map: v4-test-out, prefix: 10.24.0.0/22, result: permit</p>
+<p>ref: <a href="https://github.com/FRRouting/frr/blob/master/lib/routemap.c">https://github.com/FRRouting/frr/blob/master/lib/routemap.c</a></p>
+]]>      </content:encoded>
+      <wfw:commentRss>https://www.icez.net/blog/167384/0242-bgp-route-map-processing-flow/feed</wfw:commentRss>
+      <slash:comments>0</slash:comments>
+    </item>
+    <item>
+      <title>0241 &#124; This Video Is Sponsored By ███ VPN</title>
+      <link>https://www.icez.net/blog/167376/0241-this-video-is-sponsored-by-%e2%96%88%e2%96%88%e2%96%88-vpn</link>
+      <comments>https://www.icez.net/blog/167376/0241-this-video-is-sponsored-by-%e2%96%88%e2%96%88%e2%96%88-vpn#respond</comments>
+      <pubDate>Wed, 30 Oct 2019 16:17:15 +0000</pubDate>
+      <dc:creator><![CDATA[icez]]></dc:creator>
+      <category><![CDATA[Misc]]></category>
+
+      <guid isPermaLink="false">https://www.icez.net/blog/?p=167376</guid>
+      <description><![CDATA[คนไทย/คลิปไทยคงไม่ค่อยเจอ แต่นั่งดูคลิปต่างประเทศแล้วชอบเจอ This Video Is Sponsored By ***VPN แล้วก็จะมีพูดว่าทำไมต้องใช้ VPN อย่างโน้นอย่างนี้ ทั้งเรื่อง wifi ไม่ปลอดภัย โน่นนี่นั่นไม่ปลอดภัย อะไรก็แล้วแต่ ที่คนสาย security ดูแล้วก็จะหัวเราะหึหึ วันนี้มี Youtuber คนนึงมาพูดเรื่องนี้แทนแล้วครับ แฮปปี้มาก 555 ครบถ้วนกระบวนความ ว่าแล้วก็ไปชมกันเลย สำหรับในไทย เหตุผลหลักของการใช้ VPN คงมีอยู่สองเรื่องหลักๆ ป้องกันการติดตามตัว เข้าเว็บที่ถูกบล็อก (ซึ่งอันนี้ปกติผู้ให้บริการ VPN ก็ไม่ค่อยอยากพูดถึง เพราะมันเทาๆ กึ่งๆ จะผิดกฎหมาย 555)]]></description>
+      <content:encoded><![CDATA[<p>คนไทย/คลิปไทยคงไม่ค่อยเจอ แต่นั่งดูคลิปต่างประเทศแล้วชอบเจอ This Video Is Sponsored By ***VPN แล้วก็จะมีพูดว่าทำไมต้องใช้ VPN อย่างโน้นอย่างนี้ ทั้งเรื่อง wifi ไม่ปลอดภัย โน่นนี่นั่นไม่ปลอดภัย อะไรก็แล้วแต่ ที่คนสาย security ดูแล้วก็จะหัวเราะหึหึ</p>
+<p>วันนี้มี Youtuber คนนึงมาพูดเรื่องนี้แทนแล้วครับ แฮปปี้มาก 555 ครบถ้วนกระบวนความ ว่าแล้วก็ไปชมกันเลย</p>
+<p><iframe width="560" height="315" src="https://www.youtube.com/embed/WVDQEoe6ZWY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></p>
+<p>สำหรับในไทย เหตุผลหลักของการใช้ VPN คงมีอยู่สองเรื่องหลักๆ</p>
+<ul>
+<li>ป้องกันการติดตามตัว</li>
+<li>เข้าเว็บที่ถูกบล็อก</li>
+</ul>
+<p>(ซึ่งอันนี้ปกติผู้ให้บริการ VPN ก็ไม่ค่อยอยากพูดถึง เพราะมันเทาๆ กึ่งๆ จะผิดกฎหมาย 555)</p>
+]]>      </content:encoded>
+      <wfw:commentRss>https://www.icez.net/blog/167376/0241-this-video-is-sponsored-by-%e2%96%88%e2%96%88%e2%96%88-vpn/feed</wfw:commentRss>
+      <slash:comments>0</slash:comments>
+    </item>
+    <item>
+      <title>0240 &#124; ping: socket: Operation not permitted</title>
+      <link>https://www.icez.net/blog/167369/0240</link>
+      <comments>https://www.icez.net/blog/167369/0240#respond</comments>
+      <pubDate>Tue, 29 Oct 2019 16:43:54 +0000</pubDate>
+      <dc:creator><![CDATA[icez]]></dc:creator>
+      <category><![CDATA[Linux]]></category>
+
+      <guid isPermaLink="false">https://www.icez.net/blog/?p=167369</guid>
+      <description><![CDATA[rhel 7.4 มีบั๊กนิดหน่อย ทำให้ user ที่ไม่ใช่ root สั่ง ping ไม่ได้ แล้วขึ้น error ประมาณนี้ ping: socket: Operation not permitted วิธีแก้ ให้สั่งคำสั่งนี้ sudo setcap 'cap_net_admin,cap_net_raw+ep' /usr/bin/ping reference: https://bugzilla.redhat.com/show_bug.cgi?id=1475871]]></description>
+      <content:encoded><![CDATA[<p>rhel 7.4 มีบั๊กนิดหน่อย ทำให้ user ที่ไม่ใช่ root สั่ง ping ไม่ได้ แล้วขึ้น error ประมาณนี้</p>
+<p>ping: socket: Operation not permitted</p>
+<p>วิธีแก้ ให้สั่งคำสั่งนี้</p>
+<pre lang="bash">sudo setcap 'cap_net_admin,cap_net_raw+ep' /usr/bin/ping
+</pre>
+<p>reference: <a href="https://bugzilla.redhat.com/show_bug.cgi?id=1475871">https://bugzilla.redhat.com/show_bug.cgi?id=1475871</a></p>
+]]>      </content:encoded>
+      <wfw:commentRss>https://www.icez.net/blog/167369/0240/feed</wfw:commentRss>
+      <slash:comments>0</slash:comments>
+    </item>
+  </channel>
+</rss>
