@@ -32,29 +32,22 @@ exports.loadFeed = loadFeed
 
 /**
  *
- * @param {string} fileName
+ * @param {string} opmlContent
  * @returns {Promise<any>}
  */
-async function readOpml(fileName) {
-  try {
-    const opml = fs.readFileSync(fileName, 'utf-8')
-    const input = await parseXML(opml)
-    const body = input.opml.body
-    const outlines = body[0].outline
-    return outlines.reduce((out, outline) => {
-      const category = outline.$.title
-      const items = outline.outline
-      out.push({
-        category,
-        items: items && items.map((item) => item.$)
-      })
-      return out
-    }, [])
-  } catch (error) {
-    console.error(error.message)
-    console.error(error.stack)
-    throw new Error(`${fileName} is not found in repository`)
-  }
+async function readOpml(opmlContent) {
+  const input = await parseXML(opmlContent)
+  const body = input.opml.body
+  const outlines = body[0].outline
+  return outlines.reduce((out, outline) => {
+    const category = outline.$.title
+    const items = outline.outline
+    out.push({
+      category,
+      items: items && items.map((item) => item.$)
+    })
+    return out
+  }, [])
 }
 exports.readOpml = readOpml
 
@@ -85,7 +78,8 @@ async function writeFeedsContent() {
       required: true
     })
     const feedsFile = core.getInput('opmlFile', { required: true })
-    const opml = await readOpml(feedsFile)
+    const opmlContent = fs.readFileSync(feedsFile).toString('utf8')
+    const opml = await readOpml(opmlContent)
     for (const category of opml) {
       const { category: title, items } = category
       createCategoryDirectory(contentDirectory, title)
