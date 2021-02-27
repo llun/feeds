@@ -2,6 +2,7 @@
 const test = /** @type {import('ava').TestInterface<{}>} */ (require('ava')
   .default)
 const fs = require('fs')
+const sinon = require('sinon')
 const path = require('path')
 const {
   createRepositoryData,
@@ -57,7 +58,7 @@ test('#createEntryData create entry hash and persist entry information in entry 
   const expected = {
     author: 'Site Author',
     content: 'Sample Content',
-    date: Date.now(),
+    date: sinon.match.number,
     link: 'https://llun.dev/',
     title: 'Sample Content',
     siteTitle: 'Sample Site',
@@ -65,7 +66,7 @@ test('#createEntryData create entry hash and persist entry information in entry 
     entryHash: createHash('Sample Content,https://llun.dev/'),
     category: 'category1'
   }
-  t.deepEqual(
+  sinon.assert.match(
     createEntryData(paths, 'category1', 'Sample Site', '123456', {
       author: 'Site Author',
       content: 'Sample Content',
@@ -75,7 +76,7 @@ test('#createEntryData create entry hash and persist entry information in entry 
     }),
     expected
   )
-  t.deepEqual(
+  sinon.assert.match(
     JSON.parse(
       fs
         .readFileSync(
