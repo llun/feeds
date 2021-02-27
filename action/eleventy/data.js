@@ -65,6 +65,7 @@ const WORKSPACE_READABILITY_CACHE_PATH = path.join(
   'readability'
 )
 const REPOSITORY_DATA_PATH = path.join(EMBEDDED_DATA_PATH, 'github.json')
+exports.REPOSITORY_DATA_PATH = REPOSITORY_DATA_PATH
 
 function prepareDirectories() {
   fs.statSync(FEEDS_CONTENT_PATH)
@@ -89,11 +90,13 @@ function createHash(input) {
 /**
  * Create repository eleventy variable
  *
+ * @param {string} githubRootName
  * @param {string} customDomainName
+ *
+ * @returns {RepositoryData}
  */
-function createRepositoryData(customDomainName) {
+function createRepositoryData(githubRootName, customDomainName) {
   const isCustomDomainEnabled = !!customDomainName
-  const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
   /**
    * @type {RepositoryData}
    */
@@ -105,7 +108,9 @@ function createRepositoryData(customDomainName) {
       ''
   }
   fs.writeFileSync(REPOSITORY_DATA_PATH, JSON.stringify(data))
+  return data
 }
+exports.createRepositoryData = createRepositoryData
 
 /**
  *
@@ -315,8 +320,9 @@ async function prepareEleventyData() {
   try {
     console.log('Preparing eleventy data')
     const customDomainName = core.getInput('customDomain')
+    const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
     prepareDirectories()
-    createRepositoryData(customDomainName)
+    createRepositoryData(githubRootName, customDomainName)
     await createCategoryData()
     await createAllEntriesData()
     await loadEntryWithPuppeteer()
