@@ -3,9 +3,25 @@ name: Dev
 on: push
 
 jobs:
-  playground:
+  test:
     runs-on: ubuntu-latest
-    name: Test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Use Node.js 12.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 12.x
+      - name: Test
+        run: |
+          npm install
+          npm run test
+
+  sample:
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.ref == 'refs/heads/main'
+    name: Sample
     steps:
       - name: Run Action
         uses: llun/feeds@main
