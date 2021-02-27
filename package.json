@@ -11,7 +11,11 @@
     "css": "tailwindcss-cli build -c tailwind.config.js -o pages/css/tailwind.css",
     "serve": "eleventy --serve",
     "build": "NODE_ENV=production npm run css && webpack && eleventy",
-    "load": "INPUT_OUTPUTDIRECTORY='contents' INPUT_OPMLFILE='feeds.opml' node index.js"
+    "load": "INPUT_OUTPUTDIRECTORY='contents' INPUT_OPMLFILE='feeds.opml' node index.js",
+    "test": "ava"
+  },
+  "ava": {
+    "failWithoutAssertions": false
   },
   "dependencies": {
     "@11ty/eleventy": "^0.11.1",
@@ -26,12 +30,15 @@
     "@types/puppeteer": "^5.4.3",
     "@types/react": "^17.0.2",
     "@types/react-dom": "^17.0.1",
+    "@types/sinon": "^9.0.10",
+    "ava": "^3.15.0",
     "date-fns": "^2.17.0",
     "history": "^5.0.0",
     "html-minifier": "^4.0.0",
     "puppeteer": "^8.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "sinon": "^9.2.4",
     "tailwindcss-cli": "^0.1.2",
     "ts-loader": "^8.0.17",
     "typescript": "^4.2.2",

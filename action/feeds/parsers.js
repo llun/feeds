@@ -1,4 +1,5 @@
 // @ts-check
+const parseString = require('xml2js').parseString
 /**
  * @typedef {{
  *  title: string
@@ -28,6 +29,22 @@ function joinValuesOrEmptyString(values) {
   }
   return (values && values.join('').trim()) || ''
 }
+
+/**
+ *
+ * @param {string} data
+ * @returns {Promise<any>}
+ */
+async function parseXML(data) {
+  const xml = await new Promise((resolve, reject) =>
+    parseString(data, (error, result) => {
+      if (error) return reject(error)
+      resolve(result)
+    })
+  )
+  return xml
+}
+exports.parseXML = parseXML
 
 /**
  * @param {any} xml
@@ -82,8 +99,9 @@ exports.parseRss = parseRss
  */
 function parseAtom(xml) {
   if (!xml.feed) return null
-  const { title, subtitle, link, updated, generator, entry } = xml.feed
+  const { title, subtitle, link, updated, generator, entry, author } = xml.feed
   const siteLink = link && link.find((item) => item.$.rel === 'alternate')
+  const siteAuthor = (author && joinValuesOrEmptyString(author[0].name)) || ''
   const feed = {
     title: joinValuesOrEmptyString(title).trim(),
     description: joinValuesOrEmptyString(subtitle),
@@ -100,7 +118,8 @@ function parseAtom(xml) {
         link: itemLink.$.href,
         date: new Date(joinValuesOrEmptyString(published || updated)).getTime(),
         content: feedContent,
-        author: (author && joinValuesOrEmptyString(author[0].name)) || ''
+        author:
+          (author && joinValuesOrEmptyString(author[0].name)) || siteAuthor
       }
     })
   }

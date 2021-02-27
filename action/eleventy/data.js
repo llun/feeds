@@ -59,7 +59,11 @@ const CATEGORY_DATA_PATH = path.join(DATA_PATH, 'categories')
 const SITES_DATA_PATH = path.join(DATA_PATH, 'sites')
 const ENTRIES_DATA_PATH = path.join(DATA_PATH, 'entries')
 const READABILITY_CACHE_PATH = path.join(DATA_PATH, 'readability')
-const WORKSPACE_READABILITY_CACHE_PATH = path.join(process.env['GITHUB_WORKSPACE'] || '_site', 'data', 'readability')
+const WORKSPACE_READABILITY_CACHE_PATH = path.join(
+  process.env['GITHUB_WORKSPACE'] || '_site',
+  'data',
+  'readability'
+)
 const REPOSITORY_DATA_PATH = path.join(EMBEDDED_DATA_PATH, 'github.json')
 
 function prepareDirectories() {
@@ -229,9 +233,14 @@ async function loadEntryWithPuppeteer() {
       0,
       entryHashFile.length - '.json'.length
     )
-    const readabilityFile = path.join(READABILITY_CACHE_PATH, `${entryHash}.json`)
+    const readabilityFile = path.join(
+      READABILITY_CACHE_PATH,
+      `${entryHash}.json`
+    )
     try {
-      fs.statSync(path.join(WORKSPACE_READABILITY_CACHE_PATH, `${entryHash}.json`))
+      fs.statSync(
+        path.join(WORKSPACE_READABILITY_CACHE_PATH, `${entryHash}.json`)
+      )
       console.log(`${entryHash} - Readability loaded, skip`)
       continue
     } catch (error) {

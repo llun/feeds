@@ -4,8 +4,7 @@ const core = require('@actions/core')
 const fs = require('fs')
 const path = require('path')
 const fetch = require('node-fetch').default
-const parseString = require('xml2js').parseString
-const { parseAtom, parseRss } = require('./parsers')
+const { parseXML, parseAtom, parseRss } = require('./parsers')
 
 /**
  *
@@ -19,12 +18,7 @@ async function loadFeed(url) {
         'User-Agent': 'llun/feeds'
       }
     }).then((response) => response.text())
-    const xml = await new Promise((resolve, reject) =>
-      parseString(data, (error, result) => {
-        if (error) return reject(error)
-        resolve(result)
-      })
-    )
+    const xml = await parseXML(data)
     if (xml.rss) return parseRss(xml)
     if (xml.feed) return parseAtom(xml)
     return null
@@ -44,12 +38,7 @@ exports.loadFeed = loadFeed
 async function readOpml(fileName) {
   try {
     const opml = fs.readFileSync(fileName, 'utf-8')
-    const input = await new Promise((resolve, reject) =>
-      parseString(opml, (error, result) => {
-        if (error) return reject(error)
-        resolve(result)
-      })
-    )
+    const input = await parseXML(opml)
     const body = input.opml.body
     const outlines = body[0].outline
     return outlines.reduce((out, outline) => {

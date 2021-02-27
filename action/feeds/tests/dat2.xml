@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+	<title type="text">cheeaunblog</title>
+	<id>tag:cheeaun.com,2011:blog</id>
+	<link rel="alternate" type="text/html" href="https://cheeaun.com/blog"/>
+	<link rel="self" type="application/atom+xml" href="https://cheeaun.com/blog/feed.xml"/>
+	<updated>2020-12-31T00:00:00Z</updated>
+	<author>
+		<name>Lim Chee Aun</name>
+	</author>
+	<entry>
+		<id>https://cheeaun.com/blog/2020/12/2020-in-review/</id>
+		<updated>2020-12-31T00:00:00Z</updated>
+		<title type="text">2020 in review</title>
+		<summary type="text">Alright, let’s do this. On January, I received my State of JS t-shirt. 👕 On February, I physically attended JavaScript Bangkok. 🎟 On March,…</summary>
+		<link rel="alternate" type="text/html" href="https://cheeaun.com/blog/2020/12/2020-in-review/" title="2020 in review"/>
+	</entry>
+	<entry>
+		<id>https://cheeaun.com/blog/2020/01/2019-in-review/</id>
+		<updated>2020-01-05T00:00:00Z</updated>
+		<title type="text">2019 in review</title>
+		<summary type="text">As per my previous year-in-reviews (2018, 2017, 2016, 2015, 2014), I always start with the little things, now properly sectioned by month, as…</summary>
+		<link rel="alternate" type="text/html" href="https://cheeaun.com/blog/2020/01/2019-in-review/" title="2019 in review"/>
+	</entry>
+	<entry>
+		<id>https://cheeaun.com/blog/2019/07/next-level-visualizations-exploretrees-sg/</id>
+		<updated>2019-07-10T00:00:00Z</updated>
+		<title type="text">Next-level visualizations with ExploreTrees.SG</title>
+		<summary type="text">Last year, I wrote about one of my most ambitious side project ever, ExploreTrees.SG. It was simply breath-taking.Revisiting the masterpieceI…</summary>
+		<link rel="alternate" type="text/html" href="https://cheeaun.com/blog/2019/07/next-level-visualizations-exploretrees-sg/" title="Next-level visualizations with ExploreTrees.SG"/>
+	</entry>
+	<entry>
+		<id>https://cheeaun.com/blog/2019/06/what-i-learned-from-printing-custom-swags/</id>
+		<updated>2019-06-02T00:00:00Z</updated>
+		<title type="text">What I learned from printing custom swags</title>
+		<summary type="text">Apparently, I’ve been called the “swag king” of Singapore 😅, mainly due to my voluntary work on printing swags like stickers and t-shirts for…</summary>
+		<link rel="alternate" type="text/html" href="https://cheeaun.com/blog/2019/06/what-i-learned-from-printing-custom-swags/" title="What I learned from printing custom swags"/>
+	</entry>
+	<entry>
+		<id>https://cheeaun.com/blog/2019/02/building-busrouter-sg/</id>
+		<updated>2019-02-04T00:00:00Z</updated>
+		<title type="text">Building BusRouter SG</title>
+		<summary type="text">In 2016, I wrote on Building side projects: More than 10 years ago, I used to take buses all the time. At first, it's quite exhilarating because…</summary>
+		<link rel="alternate" type="text/html" href="https://cheeaun.com/blog/2019/02/building-busrouter-sg/" title="Building BusRouter SG"/>
+	</entry>
+</feed>
