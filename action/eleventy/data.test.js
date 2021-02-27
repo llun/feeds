@@ -14,40 +14,45 @@ const {
 
 function randomPaths() {
   const random = Math.floor(Math.random() * 1000)
-  const dataPath = path.join('/tmp', 'data')
+  const rootPath = path.join('/tmp', random.toString())
+  const dataPath = path.join(rootPath, 'data')
   const paths = /** @type {import('./data').Paths} */ ({
-    feedsContentPath: path.join('/tmp', random.toString(), 'contents'),
+    feedsContentPath: path.join(rootPath, 'contents'),
     dataPath: dataPath,
     categoryDataPath: path.join(dataPath, 'categories'),
     embeddedDataPath: path.join(dataPath, 'embedded'),
     entriesDataPath: path.join(dataPath, 'entries'),
     readabilityCachePath: path.join(dataPath, 'cached'),
-    sitesDataPath: path.join(dataPath, 'sites')
+    sitesDataPath: path.join(dataPath, 'sites'),
+    repositoryDataPath: path.join(rootPath, 'github.json')
   })
   return paths
 }
 
 test('#createRepositoryData generate repository information in repository file', (t) => {
-  try {
-    fs.unlinkSync(REPOSITORY_DATA_PATH)
-  } catch (error) {}
-  t.deepEqual(createRepositoryData('', 'feeds.llun.dev'), { repository: '' })
+  const paths = randomPaths()
+  fs.mkdirSync(paths.dataPath, { recursive: true })
+  t.deepEqual(createRepositoryData(paths, '', 'feeds.llun.dev'), {
+    repository: ''
+  })
   t.deepEqual(
-    JSON.parse(fs.readFileSync(REPOSITORY_DATA_PATH).toString('utf8')),
+    JSON.parse(fs.readFileSync(paths.repositoryDataPath).toString('utf8')),
     { repository: '' }
   )
 
-  t.deepEqual(createRepositoryData('octocat/Hello-World', 'feeds.llun.dev'), {
-    repository: ''
-  })
-  t.deepEqual(createRepositoryData('octocat/Hello-World', ''), {
+  t.deepEqual(
+    createRepositoryData(paths, 'octocat/Hello-World', 'feeds.llun.dev'),
+    {
+      repository: ''
+    }
+  )
+  t.deepEqual(createRepositoryData(paths, 'octocat/Hello-World', ''), {
     repository: '/Hello-World'
   })
   t.deepEqual(
-    JSON.parse(fs.readFileSync(REPOSITORY_DATA_PATH).toString('utf8')),
+    JSON.parse(fs.readFileSync(paths.repositoryDataPath).toString('utf8')),
     { repository: '/Hello-World' }
   )
-  fs.unlinkSync(REPOSITORY_DATA_PATH)
 })
 
 test('#createEntryData create entry hash and persist entry information in entry hash file', (t) => {

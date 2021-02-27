@@ -8,6 +8,7 @@
  *  entriesDataPath: string
  *  dataPath: string
  *  readabilityCachePath: string
+ *  repositoryDataPath: string
  * }} Paths
  * @typedef {{
  *  repository: string
@@ -113,12 +114,14 @@ exports.createHash = createHash
 /**
  * Create repository eleventy variable
  *
+ * @param {Paths} paths
  * @param {string} githubRootName
  * @param {string} customDomainName
  *
  * @returns {RepositoryData}
  */
-function createRepositoryData(githubRootName, customDomainName) {
+function createRepositoryData(paths, githubRootName, customDomainName) {
+  const { repositoryDataPath } = paths
   const isCustomDomainEnabled = !!customDomainName
   /**
    * @type {RepositoryData}
@@ -130,7 +133,7 @@ function createRepositoryData(githubRootName, customDomainName) {
         `/${githubRootName.split('/')[1]}`) ||
       ''
   }
-  fs.writeFileSync(REPOSITORY_DATA_PATH, JSON.stringify(data))
+  fs.writeFileSync(repositoryDataPath, JSON.stringify(data))
   return data
 }
 exports.createRepositoryData = createRepositoryData
@@ -368,10 +371,11 @@ async function prepareEleventyData() {
       sitesDataPath: SITES_DATA_PATH,
       entriesDataPath: ENTRIES_DATA_PATH,
       readabilityCachePath: READABILITY_CACHE_PATH,
-      dataPath: DATA_PATH
+      dataPath: DATA_PATH,
+      repositoryDataPath: REPOSITORY_DATA_PATH
     }
     prepareDirectories(paths)
-    createRepositoryData(githubRootName, customDomainName)
+    createRepositoryData(paths, githubRootName, customDomainName)
     await createCategoryData(paths)
     await createAllEntriesData()
     await loadEntryWithPuppeteer()
