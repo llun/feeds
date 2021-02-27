@@ -1,6 +1,15 @@
 // @ts-check
 /**
  * @typedef {{
+ *  feedsContentPath: string
+ *  categoryDataPath: string
+ *  embeddedDataPath: string
+ *  sitesDataPath: string
+ *  entriesDataPath: string
+ *  dataPath: string
+ *  readabilityCachePath: string
+ * }} Paths
+ * @typedef {{
  *  repository: string
  * }} RepositoryData
  * @typedef {{
@@ -67,14 +76,27 @@ const WORKSPACE_READABILITY_CACHE_PATH = path.join(
 const REPOSITORY_DATA_PATH = path.join(EMBEDDED_DATA_PATH, 'github.json')
 exports.REPOSITORY_DATA_PATH = REPOSITORY_DATA_PATH
 
-function prepareDirectories() {
-  fs.statSync(FEEDS_CONTENT_PATH)
-  fs.mkdirSync(EMBEDDED_DATA_PATH, { recursive: true })
-  fs.mkdirSync(CATEGORY_DATA_PATH, { recursive: true })
-  fs.mkdirSync(SITES_DATA_PATH, { recursive: true })
-  fs.mkdirSync(ENTRIES_DATA_PATH, { recursive: true })
-  fs.mkdirSync(READABILITY_CACHE_PATH, { recursive: true })
+/**
+ *
+ * @param {Paths} paths
+ */
+function prepareDirectories(paths) {
+  const {
+    feedsContentPath,
+    embeddedDataPath,
+    categoryDataPath,
+    sitesDataPath,
+    entriesDataPath,
+    readabilityCachePath
+  } = paths
+  fs.statSync(feedsContentPath)
+  fs.mkdirSync(embeddedDataPath, { recursive: true })
+  fs.mkdirSync(categoryDataPath, { recursive: true })
+  fs.mkdirSync(sitesDataPath, { recursive: true })
+  fs.mkdirSync(entriesDataPath, { recursive: true })
+  fs.mkdirSync(readabilityCachePath, { recursive: true })
 }
+exports.prepareDirectories = prepareDirectories
 
 /**
  *
@@ -86,6 +108,7 @@ function createHash(input) {
   hash.update(input)
   return hash.digest('hex')
 }
+exports.createHash = createHash
 
 /**
  * Create repository eleventy variable
@@ -114,13 +137,15 @@ exports.createRepositoryData = createRepositoryData
 
 /**
  *
+ * @param {Paths} paths
  * @param {string} category
  * @param {string} siteTitle
  * @param {string} siteHash
  * @param {import('../feeds/parsers').Entry} entry
  * @returns {EntryData}
  */
-function createEntryData(category, siteTitle, siteHash, entry) {
+function createEntryData(paths, category, siteTitle, siteHash, entry) {
+  const { entriesDataPath } = paths
   const entryHash = createHash(`${entry.title},${entry.link}`)
   /**
    * @type {EntryData}
@@ -133,24 +158,27 @@ function createEntryData(category, siteTitle, siteHash, entry) {
     category
   }
   fs.writeFileSync(
-    path.join(ENTRIES_DATA_PATH, `${entryHash}.json`),
+    path.join(entriesDataPath, `${entryHash}.json`),
     JSON.stringify(data)
   )
   return data
 }
+exports.createEntryData = createEntryData
 
 /**
  *
+ * @param {Paths} paths
  * @param {string} category
  * @param {string[]} sites
  * @returns {SiteDataWithEntries[]}
  */
-function createSitesData(category, sites) {
+function createSitesData(paths, category, sites) {
+  const { feedsContentPath, sitesDataPath } = paths
   /** @type {SiteDataWithEntries[]} */
   const result = []
   for (const site of sites) {
     const content = fs
-      .readFileSync(path.join(FEEDS_CONTENT_PATH, category, site))
+      .readFileSync(path.join(feedsContentPath, category, site))
       .toString('utf8')
     /**
      * @type {import('../feeds/parsers').Site}
@@ -168,6 +196,7 @@ function createSitesData(category, sites) {
       entries: json.entries
         .map((entry) => {
           const entryData = createEntryData(
+            paths,
             category,
             json.title,
             siteHash,
@@ -187,7 +216,7 @@ function createSitesData(category, sites) {
         .sort((a, b) => b.date - a.date)
     }
     fs.writeFileSync(
-      path.join(SITES_DATA_PATH, `${siteHash}.json`),
+      path.join(sitesDataPath, `${siteHash}.json`),
       JSON.stringify(data)
     )
     result.push(data)
@@ -282,13 +311,23 @@ async function loadEntryWithPuppeteer() {
   }
 }
 
-async function createCategoryData() {
-  const categories = fs.readdirSync(FEEDS_CONTENT_PATH)
+/**
+ *
+ * @param {Paths} paths
+ */
+async function createCategoryData(paths) {
+  const {
+    feedsContentPath,
+    categoryDataPath,
+    embeddedDataPath,
+    dataPath
+  } = paths
+  const categories = fs.readdirSync(feedsContentPath)
   /** @type {CategoryData[]} */
   const categoriesData = []
   for (const category of categories) {
-    const sites = fs.readdirSync(path.join(FEEDS_CONTENT_PATH, category))
-    const sitesData = createSitesData(category, sites)
+    const sites = fs.readdirSync(path.join(feedsContentPath, category))
+    const sitesData = createSitesData(paths, category, sites)
     /** @type {CategoryData} */
     const categoryData = {
       name: category,
@@ -307,23 +346,33 @@ async function createCategoryData() {
     )
     categoryEntries.sort((a, b) => b.date - a.date)
     fs.writeFileSync(
-      path.join(CATEGORY_DATA_PATH, `${category}.json`),
+      path.join(categoryDataPath, `${category}.json`),
       JSON.stringify(categoryEntries)
     )
   }
   const text = JSON.stringify(categoriesData)
-  fs.writeFileSync(path.join(EMBEDDED_DATA_PATH, 'categories.json'), text)
-  fs.writeFileSync(path.join(DATA_PATH, 'categories.json'), text)
+  fs.writeFileSync(path.join(embeddedDataPath, 'categories.json'), text)
+  fs.writeFileSync(path.join(dataPath, 'categories.json'), text)
 }
+exports.createCategoryData = createCategoryData
 
 async function prepareEleventyData() {
   try {
     console.log('Preparing eleventy data')
     const customDomainName = core.getInput('customDomain')
     const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
-    prepareDirectories()
+    const paths = {
+      feedsContentPath: FEEDS_CONTENT_PATH,
+      categoryDataPath: CATEGORY_DATA_PATH,
+      embeddedDataPath: EMBEDDED_DATA_PATH,
+      sitesDataPath: SITES_DATA_PATH,
+      entriesDataPath: ENTRIES_DATA_PATH,
+      readabilityCachePath: READABILITY_CACHE_PATH,
+      dataPath: DATA_PATH
+    }
+    prepareDirectories(paths)
     createRepositoryData(githubRootName, customDomainName)
-    await createCategoryData()
+    await createCategoryData(paths)
     await createAllEntriesData()
     await loadEntryWithPuppeteer()
   } catch (error) {
