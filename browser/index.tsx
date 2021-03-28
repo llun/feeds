@@ -189,7 +189,7 @@ const Page = () => {
         )
         if (!response.ok) {
           // If it's not found, use feed content
-          const response = await fetchWithProgress(
+          response = await fetchWithProgress(
             `${github.repository}/data/entries/${entryHash}.json`,
             async (bytes: number, total: number) => {
               setLoadingProgress((bytes / total) * (entries ? 50 : 100))
@@ -197,7 +197,6 @@ const Page = () => {
           )
           if (!response.ok) return
         }
-
         const json: EntryData = JSON.parse(response.text)
         if (entries.length === 0) {
           const response = await fetchWithProgress(

@@ -293,7 +293,12 @@ async function loadEntryWithPuppeteer() {
     const json = JSON.parse(entry)
     console.log(`${entryHash} - Load ${json.link}`)
     try {
-      const content = await loadContent(json.link)
+      const content = await loadContent(json)
+      if (!content) {
+        console.log(`${entryHash} - Skip ${json.link}`)
+        await close()
+        continue
+      }
       const minifyContent = htmlmin.minify(content, {
         useShortDoctype: true,
         removeComments: true,

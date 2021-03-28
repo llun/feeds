@@ -1,50 +1,31 @@
 // @ts-check
-// @ts-ignore
-const puppeteer = /** @type {import('puppeteer/lib/cjs/puppeteer/node/Puppeteer').PuppeteerNode} */ (require('puppeteer'))
-const fs = require('fs')
-const path = require('path')
+const puppeteer = require('puppeteer')
+const { defaultSiteLoaders } = require('./sites')
 
-/** @type {import('puppeteer/lib/cjs/puppeteer/common/Browser').Browser | null} */
+/** @type {import('puppeteer').Browser | null} */
 let _browser = null
 
 /**
  *
- * @param {string} url
+ * @param {import('../eleventy/data').EntryData} entry
+ * @param {import('./sites').SiteLoaderMap} [siteLoaders]
  * @returns {Promise<string>}
  */
-async function loadContent(url) {
+async function loadContent(entry, siteLoaders = defaultSiteLoaders) {
+  if (!siteLoaders) {
+    return ''
+  }
+
+  const entryLinkUrl = new URL(entry.link)
+  const siteLoader = siteLoaders.get(entryLinkUrl.hostname)
+  if (!siteLoader) {
+    return ''
+  }
+
   if (!_browser) {
     _browser = await puppeteer.launch()
   }
-  const readabilityJsStr = fs.readFileSync(
-    path.join(
-      __dirname,
-      '..',
-      '..',
-      'node_modules',
-      '@mozilla',
-      'readability',
-      'Readability.js'
-    ),
-    { encoding: 'utf-8' }
-  )
-  const page = await _browser.newPage()
-  try {
-    await page.goto(url, { waitUntil: 'networkidle2' })
-  } catch (e) {
-    throw e
-  }
-
-  const resultArticle = /** @type {import('./').ParseResponse} */ (await page.evaluate(`
-    (function(){
-      ${readabilityJsStr}
-      const documentClone = document.cloneNode(true)
-      return new Readability(documentClone, { disableJSONLD: true }).parse()
-    }())
-  `))
-  await page.close()
-  if (!resultArticle) return ''
-  return resultArticle.content
+  return siteLoader(_browser, entry.link)
 }
 exports.loadContent = loadContent
 

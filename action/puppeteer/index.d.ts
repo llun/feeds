@@ -1,3 +1,6 @@
+import { EntryData } from '../eleventy/data'
+import { SiteLoaderMap } from './sites'
+
 export type ParseResponse = null | {
   /** article title */
   title: string
@@ -16,5 +19,10 @@ export type ParseResponse = null | {
   siteName: string
 }
 
-export declare const loadContent: (url: string) => Promise<string>
+export declare const siteLoaders: () => SiteLoaderMap
+
+export declare const loadContent: (
+  entry: EntryData,
+  siteLoaders?: SiteLoaderMap
+) => Promise<string>
 export declare const close: () => Promise<void>
