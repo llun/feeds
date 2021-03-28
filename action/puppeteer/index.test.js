@@ -15,7 +15,12 @@ test('#loadContent use SiteLoader if it exists to load site content with puppete
   })
   const content = await loadContent(entry, siteLoaders)
   t.deepEqual(content, 'Content')
-  t.true(siteLoader.calledWith(sinon.match.any, entry))
+  t.true(
+    siteLoader.calledWith(
+      sinon.match.any,
+      'https://www.llun.me/posts/2021-03-27-Lasik/'
+    )
+  )
 })
 
 test('#loadContent returns empty string when siteLoaders does not support site', async (t) => {
