@@ -1,10 +1,11 @@
 // @ts-check
 const cyclingtipscomLoader = require('./cyclingtips.com.loader')
-const cheeauncomLoader = require('./cheeaun.com.loader')
+const readabilityLoader = require('./readability.loader')
 
 /** @type {import('.').SiteLoaderMap} */
 const defaultSiteLoaders = new Map([
   ['cyclingtips.com', cyclingtipscomLoader],
-  ['cheeaun.com', cheeauncomLoader]
+  ['cheeaun.com', readabilityLoader],
+  ['www.somkiat.cc', readabilityLoader]
 ])
 exports.defaultSiteLoaders = defaultSiteLoaders
