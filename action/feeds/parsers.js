@@ -47,14 +47,14 @@ async function parseXML(data) {
 exports.parseXML = parseXML
 
 /**
+ * @param {string} feedTitle
  * @param {any} xml
  * @returns {Site | null}
  */
-function parseRss(xml) {
+function parseRss(feedTitle, xml) {
   if (!xml.rss) return null
   const { channel: channels } = xml.rss
   const {
-    title,
     link,
     description,
     lastBuildDate,
@@ -62,7 +62,7 @@ function parseRss(xml) {
     item: items
   } = channels[0]
   const feed = {
-    title: joinValuesOrEmptyString(title).trim(),
+    title: feedTitle,
     link: joinValuesOrEmptyString(link),
     description: joinValuesOrEmptyString(description),
     updatedAt: new Date(
@@ -94,16 +94,17 @@ exports.parseRss = parseRss
 
 /**
  *
+ * @param {string} feedTitle
  * @param {any} xml
  * @returns {Site | null}
  */
-function parseAtom(xml) {
+function parseAtom(feedTitle, xml) {
   if (!xml.feed) return null
   const { title, subtitle, link, updated, generator, entry, author } = xml.feed
   const siteLink = link && link.find((item) => item.$.rel === 'alternate')
   const siteAuthor = (author && joinValuesOrEmptyString(author[0].name)) || ''
   const feed = {
-    title: joinValuesOrEmptyString(title).trim(),
+    title: feedTitle,
     description: joinValuesOrEmptyString(subtitle),
     link: siteLink && siteLink.$.href,
     updatedAt: new Date(joinValuesOrEmptyString(updated)).getTime(),

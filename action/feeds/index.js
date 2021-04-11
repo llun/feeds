@@ -8,10 +8,11 @@ const { parseXML, parseAtom, parseRss } = require('./parsers')
 
 /**
  *
+ * @param {string} title
  * @param {string} url
  * @returns {Promise<import('./parsers').Site | null>}
  */
-async function loadFeed(url) {
+async function loadFeed(title, url) {
   try {
     const data = await fetch(url, {
       headers: {
@@ -19,8 +20,8 @@ async function loadFeed(url) {
       }
     }).then((response) => response.text())
     const xml = await parseXML(data)
-    if (xml.rss) return parseRss(xml)
-    if (xml.feed) return parseAtom(xml)
+    if (xml.rss) return parseRss(title, xml)
+    if (xml.feed) return parseAtom(title, xml)
     return null
   } catch (error) {
     console.error(error.message)
@@ -86,7 +87,7 @@ async function writeFeedsContent() {
       if (!items) continue
       console.log(`Load category ${title}`)
       for (const item of items) {
-        const feedData = await loadFeed(item.xmlUrl)
+        const feedData = await loadFeed(item.title, item.xmlUrl)
         if (!feedData) {
           continue
         }

@@ -11,11 +11,11 @@ test('#parseAtom returns site information with empty string for fields that does
     .readFileSync(path.join(__dirname, 'tests', 'rss1.xml'))
     .toString('utf8')
   const xml = await parseXML(data)
-  const site = parseRss(xml)
+  const site = parseRss('icez blog', xml)
   const firstEntry = xml.rss.channel[0].item[0]
   t.is(site?.entries.length, 10)
   sinon.assert.match(site, {
-    title: 'icez network',
+    title: 'icez blog',
     description: 'Technical Blog by icez network',
     link: 'https://www.icez.net/blog',
     updatedAt: new Date('2021-02-08T10:05:50Z').getTime(),

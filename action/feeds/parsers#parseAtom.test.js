@@ -11,11 +11,11 @@ test('#parseAtom returns site information with empty string for fields that does
     .readFileSync(path.join(__dirname, 'tests', 'atom1.xml'))
     .toString('utf8')
   const xml = await parseXML(data)
-  const site = parseAtom(xml)
+  const site = parseAtom('llun site', xml)
 
   t.is(site?.entries.length, 2)
   sinon.assert.match(site, {
-    title: '@llun story',
+    title: 'llun site',
     description: 'Life, Ride and Code',
     link: 'https://www.llun.me/',
     updatedAt: new Date('2021-02-16T00:00:00Z').getTime(),
@@ -45,11 +45,11 @@ test('#parseAtom uses summary when entry does not have content', async (t) => {
     .readFileSync(path.join(__dirname, 'tests', 'atom2.xml'))
     .toString('utf8')
   const xml = await parseXML(data)
-  const site = parseAtom(xml)
+  const site = parseAtom('cheeaun blog', xml)
 
   t.is(site?.entries.length, 5)
   sinon.assert.match(site, {
-    title: 'cheeaunblog',
+    title: 'cheeaun blog',
     description: '',
     link: 'https://cheeaun.com/blog',
     updatedAt: new Date('2020-12-31T00:00:00Z').getTime(),
