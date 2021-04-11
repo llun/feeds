@@ -1,6 +1,7 @@
 // @ts-check
 const fs = require('fs')
 const path = require('path')
+const sanitizeHtml = require('sanitize-html')
 
 /**
  *
@@ -41,6 +42,10 @@ const loader = async (browser, url) => {
           image.setAttribute('src', image.getAttribute('data-src'))
         }
       })
+      const tags = document.querySelectorAll('.article__tags')
+      tags.forEach((tag) => {
+        tag.parentElement.removeChild(tag)
+      })
     }())
   `)
 
@@ -53,6 +58,8 @@ const loader = async (browser, url) => {
   `))
   await page.close()
   if (!resultArticle) return ''
-  return resultArticle.content
+  return sanitizeHtml(resultArticle.content, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
+  })
 }
 module.exports = loader

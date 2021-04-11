@@ -1,5 +1,6 @@
 // @ts-check
 const parseString = require('xml2js').parseString
+const sanitizeHtml = require('sanitize-html')
 /**
  * @typedef {{
  *  title: string
@@ -79,8 +80,11 @@ function parseRss(feedTitle, xml) {
             date: new Date(
               joinValuesOrEmptyString(pubDate || item['dc:date'])
             ).getTime(),
-            content: joinValuesOrEmptyString(
-              item['content:encoded'] || description
+            content: sanitizeHtml(
+              joinValuesOrEmptyString(item['content:encoded'] || description),
+              {
+                allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
+              }
             ),
             author: joinValuesOrEmptyString(item['dc:creator'])
           }
@@ -118,7 +122,9 @@ function parseAtom(feedTitle, xml) {
         title: joinValuesOrEmptyString(title).trim(),
         link: itemLink.$.href,
         date: new Date(joinValuesOrEmptyString(published || updated)).getTime(),
-        content: feedContent,
+        content: sanitizeHtml(feedContent, {
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
+        }),
         author:
           (author && joinValuesOrEmptyString(author[0].name)) || siteAuthor
       }
