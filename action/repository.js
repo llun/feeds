@@ -31,7 +31,10 @@ exports.buildSite = buildSite
 
 async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
-  if (process.env['GITHUB_ACTION'] === 'llunfeeds') {
+  if (
+    process.env['GITHUB_ACTION'] === 'llunfeeds' ||
+    process.env['GITHUB_ACTION'] === '__llun_feeds'
+  ) {
     const result = runCommand(
       ['npm', 'install'],
       '/home/runner/work/_actions/llun/feeds/main'
