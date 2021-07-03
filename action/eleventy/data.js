@@ -48,9 +48,10 @@ const fs = require('fs')
 const htmlmin = require('html-minifier')
 const core = require('@actions/core')
 const crypto = require('crypto')
+const { getGithubActionPath } = require('../repository')
 const { loadContent, close } = require('../puppeteer')
 
-const GITHUB_ACTION_PATH = '/home/runner/work/_actions/llun/feeds/main'
+const GITHUB_ACTION_PATH = getGithubActionPath()
 const FEEDS_CONTENT_PATH = path.join(
   process.env['GITHUB_WORKSPACE'] || '',
   'contents'
@@ -324,12 +325,8 @@ async function loadEntryWithPuppeteer() {
  * @param {Paths} paths
  */
 async function createCategoryData(paths) {
-  const {
-    feedsContentPath,
-    categoryDataPath,
-    embeddedDataPath,
-    dataPath
-  } = paths
+  const { feedsContentPath, categoryDataPath, embeddedDataPath, dataPath } =
+    paths
   const categories = fs.readdirSync(feedsContentPath)
   /** @type {CategoryData[]} */
   const categoriesData = []

@@ -16,23 +16,23 @@ function runCommand(commands, cwd) {
 }
 exports.runCommand = runCommand
 
-function getGithubActionVersion() {
+function getGithubActionPath() {
   const actionPath = '/home/runner/work/_actions/llun/feeds'
   const files = fs.readdirSync(actionPath)
-  console.log(files)
-  for (const file of files) {
+  const version = files.filter((file) => {
     const stat = fs.statSync(path.join(actionPath, file))
-    console.log(stat.isDirectory())
-  }
+    return stat.isDirectory()
+  })
+  return path.join(actionPath, version.pop() || 'main')
 }
-exports.getGithubActionVersion = getGithubActionVersion
+exports.getGithubActionPath = getGithubActionPath
 
 function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
     const result = runCommand(
       ['npm', 'run', 'build', `--output=${workSpace}`],
-      '/home/runner/work/_actions/llun/feeds/main'
+      getGithubActionPath()
     )
     if (result.error) {
       throw new Error('Fail to build site')
@@ -43,15 +43,11 @@ exports.buildSite = buildSite
 
 async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
-  getGithubActionVersion()
   if (
     process.env['GITHUB_ACTION'] === 'llunfeeds' ||
     process.env['GITHUB_ACTION'] === '__llun_feeds'
   ) {
-    const result = runCommand(
-      ['npm', 'install'],
-      '/home/runner/work/_actions/llun/feeds/main'
-    )
+    const result = runCommand(['npm', 'install'], getGithubActionPath())
     if (result.error) {
       throw new Error('Fail to run setup')
     }
