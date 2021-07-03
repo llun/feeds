@@ -1,12 +1,12 @@
 // @ts-check
-const test = /** @type {import('ava').TestInterface<{}>} */ (require('ava')
-  .default)
+const test = /** @type {import('ava').TestInterface<{}>} */ (
+  require('ava').default
+)
 const fs = require('fs')
 const sinon = require('sinon')
 const path = require('path')
 const {
   createRepositoryData,
-  REPOSITORY_DATA_PATH,
   prepareDirectories,
   createEntryData,
   createHash

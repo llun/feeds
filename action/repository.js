@@ -18,12 +18,16 @@ exports.runCommand = runCommand
 
 function getGithubActionPath() {
   const actionPath = '/home/runner/work/_actions/llun/feeds'
-  const files = fs.readdirSync(actionPath)
-  const version = files.filter((file) => {
-    const stat = fs.statSync(path.join(actionPath, file))
-    return stat.isDirectory()
-  })
-  return path.join(actionPath, version.pop() || 'main')
+  try {
+    const files = fs.readdirSync(actionPath)
+    const version = files.filter((file) => {
+      const stat = fs.statSync(path.join(actionPath, file))
+      return stat.isDirectory()
+    })
+    return path.join(actionPath, version.pop() || 'main')
+  } catch (error) {
+    return path.join(actionPath, 'main')
+  }
 }
 exports.getGithubActionPath = getGithubActionPath
 
