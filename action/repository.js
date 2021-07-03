@@ -22,7 +22,7 @@ function getGithubActionVersion() {
   console.log(files)
   for (const file of files) {
     const stat = fs.statSync(path.join(actionPath, file))
-    console.log(stat)
+    console.log(stat.isDirectory())
   }
 }
 exports.getGithubActionVersion = getGithubActionVersion
