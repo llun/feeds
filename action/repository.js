@@ -1,6 +1,7 @@
 // @ts-check
 const { spawnSync } = require('child_process')
 const fs = require('fs')
+const path = require('path')
 
 /**
  *
@@ -20,7 +21,7 @@ function getGithubActionVersion() {
   const files = fs.readdirSync(actionPath)
   console.log(files)
   for (const file of files) {
-    const stat = fs.statSync(file)
+    const stat = fs.statSync(path.join(actionPath, file))
     console.log(stat)
   }
 }
