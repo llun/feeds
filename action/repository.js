@@ -15,9 +15,16 @@ function runCommand(commands, cwd) {
 }
 exports.runCommand = runCommand
 
+function getGithubActionVersion() {
+  const files = fs.readdirSync('/home/runner/work/_actions/llun/feeds')
+  console.log(files)
+}
+exports.getGithubActionVersion = getGithubActionVersion
+
 function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
+    getGithubActionVersion()
     const result = runCommand(
       ['npm', 'run', 'build', `--output=${workSpace}`],
       '/home/runner/work/_actions/llun/feeds/main'
