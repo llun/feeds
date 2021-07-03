@@ -16,15 +16,19 @@ function runCommand(commands, cwd) {
 exports.runCommand = runCommand
 
 function getGithubActionVersion() {
-  const files = fs.readdirSync('/home/runner/work/_actions/llun/feeds')
+  const actionPath = '/home/runner/work/_actions/llun/feeds'
+  const files = fs.readdirSync(actionPath)
   console.log(files)
+  for (const file of files) {
+    const stat = fs.statSync(file)
+    console.log(stat)
+  }
 }
 exports.getGithubActionVersion = getGithubActionVersion
 
 function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
-    getGithubActionVersion()
     const result = runCommand(
       ['npm', 'run', 'build', `--output=${workSpace}`],
       '/home/runner/work/_actions/llun/feeds/main'
@@ -38,6 +42,7 @@ exports.buildSite = buildSite
 
 async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
+  getGithubActionVersion()
   if (
     process.env['GITHUB_ACTION'] === 'llunfeeds' ||
     process.env['GITHUB_ACTION'] === '__llun_feeds'
