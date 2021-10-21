@@ -257,7 +257,12 @@ async function createAllEntriesData() {
 
 async function loadEntryWithPuppeteer() {
   const entries = fs.readdirSync(ENTRIES_DATA_PATH)
-  const cacheEntries = fs.readdirSync(WORKSPACE_READABILITY_CACHE_PATH)
+  let cacheEntries = []
+  try {
+    cacheEntries = fs.readdirSync(WORKSPACE_READABILITY_CACHE_PATH)
+  } catch (error) {
+    console.log('No old contents')
+  }
   const previousSet = new Set(cacheEntries)
   for (const entry of entries) {
     previousSet.delete(entry)
