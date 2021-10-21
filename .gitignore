@@ -6,3 +6,4 @@ pages/_data
 tailwind.css
 pages/js/*
 pages/data/*.json
+public

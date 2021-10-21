@@ -1,6 +1,12 @@
-default:
-  image: node:14
+image: node:14
 
-build:
-  stage: build
-  script: npm install
+pages:
+  script:
+    - npm install
+    - npm run load
+    - npm run build
+  artifacts:
+    paths:
+      - _site
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
