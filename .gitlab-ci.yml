@@ -3,4 +3,4 @@ default:
 
 build:
   stage: build
-  script: echo "console.log('hello, world')" | node
+  script: npm install
