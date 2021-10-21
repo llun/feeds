@@ -32,4 +32,4 @@ Sample site
 
 Sample repo
 
-- https://github.com/llun/personal-feeds
+- https://github.com/llunbot/personal-feeds
