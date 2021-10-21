@@ -1,12 +1,13 @@
 image: node:14
 
 pages:
+  stage: deploy
   script:
     - npm install
     - npm run load
-    - npm run build
+    - npm run build -- --output=public
   artifacts:
     paths:
-      - _site
+      - public
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
