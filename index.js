@@ -4,9 +4,7 @@ const { setup, publish, buildSite } = require('./action/repository')
 async function run() {
   await setup()
   const { writeFeedsContent } = require('./action/feeds')
-  const { prepareEleventyData } = require('./action/eleventy/data')
   await writeFeedsContent()
-  await prepareEleventyData()
   buildSite()
   await publish()
 }

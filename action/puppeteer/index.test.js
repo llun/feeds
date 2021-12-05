@@ -1,8 +1,7 @@
 // @ts-check
-const test = /** @type {import('ava').TestInterface<{}>} */ (require('ava')
-  .default)
-const fs = require('fs')
-const path = require('path')
+const test = /** @type {import('ava').TestInterface<{}>} */ (
+  require('ava').default
+)
 const sinon = require('sinon')
 const { loadContent } = require('./')
 
@@ -10,9 +9,9 @@ test('#loadContent use SiteLoader if it exists to load site content with puppete
   const siteLoader = sinon.stub().resolves('Content')
   /** @type {import('./sites').SiteLoaderMap} */
   const siteLoaders = new Map([['www.llun.me', siteLoader]])
-  const entry = /** @type {import('../eleventy/data').EntryData} */ ({
+  const entry = {
     link: 'https://www.llun.me/posts/2021-03-27-Lasik/'
-  })
+  }
   const content = await loadContent(entry, siteLoaders)
   t.deepEqual(content, 'Content')
   t.true(
@@ -26,9 +25,9 @@ test('#loadContent use SiteLoader if it exists to load site content with puppete
 test('#loadContent returns empty string when siteLoaders does not support site', async (t) => {
   /** @type {import('./sites').SiteLoaderMap} */
   const siteLoaders = new Map()
-  const entry = /** @type {import('../eleventy/data').EntryData} */ ({
+  const entry = {
     link: 'https://www.llun.me/posts/2021-03-27-Lasik/'
-  })
+  }
   const content = await loadContent(entry, siteLoaders)
   t.deepEqual(content, '')
 })

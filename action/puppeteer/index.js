@@ -7,7 +7,7 @@ let _browser = null
 
 /**
  *
- * @param {import('../eleventy/data').EntryData} entry
+ * @param {{ link: string }} entry
  * @param {import('./sites').SiteLoaderMap} [siteLoaders]
  * @returns {Promise<string>}
  */
