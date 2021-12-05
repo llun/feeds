@@ -33,7 +33,7 @@ const EntryItem = ({
       <a className="cursor-pointer" onClick={() => selectSite(entry.siteHash)}>
         {entry.siteTitle}
       </a>
-      ,{formatDistance(entry.date, new Date())}
+      {entry.date && <span>,{formatDistance(entry.date, new Date())}</span>}
     </small>
   </div>
 )
