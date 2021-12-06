@@ -1,10 +1,19 @@
 import { GetStaticPropsContext } from 'next'
 import * as core from '@actions/core'
-import React from 'react'
+import { getGithubConfigs, GithubConfigs } from '../../lib/config'
+import Meta from '../../lib/components/Meta'
+import Application from '../../lib/components/Application'
 
-import { getGithubConfigs, GithubConfigs } from '../lib/config'
-import Application from '../lib/components/Application'
-import Meta from '../lib/components/Meta'
+export async function getStaticPaths() {
+  const paths = [
+    {
+      params: {
+        category: 'all'
+      }
+    }
+  ]
+  return { paths, fallback: false }
+}
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const githubConfigs = getGithubConfigs({
@@ -21,7 +30,7 @@ export async function getStaticProps(context: GetStaticPropsContext) {
 interface Props {
   githubConfigs: GithubConfigs
 }
-export default function Home({ githubConfigs }: Props) {
+const Category = ({ githubConfigs }: Props) => {
   return (
     <>
       <Meta />
@@ -29,3 +38,4 @@ export default function Home({ githubConfigs }: Props) {
     </>
   )
 }
+export default Category

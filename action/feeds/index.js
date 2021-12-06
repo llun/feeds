@@ -72,6 +72,7 @@ function createCategoryDirectory(rootDirectory, category) {
     fs.mkdirSync(path.join(rootDirectory, category), { recursive: true })
   }
 }
+exports.createCategoryDirectory = createCategoryDirectory
 
 async function writeFeedsContent() {
   try {

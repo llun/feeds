@@ -1,4 +1,4 @@
-interface GithubConfigs {
+export interface GithubConfigs {
   repository: string
 }
 interface GithubConfigParameters {
@@ -21,4 +21,8 @@ export const getGithubConfigs = ({
         `/${githubRootName.split('/')[1]}`) ||
       ''
   }
+}
+
+export const getCategories = (rootPath: string) => {
+  return []
 }
