@@ -1,3 +1,6 @@
+import fs from 'fs'
+import path from 'path/posix'
+
 export interface GithubConfigs {
   repository: string
 }
@@ -23,6 +26,22 @@ export const getGithubConfigs = ({
   }
 }
 
-export const getCategories = (rootPath: string) => {
-  return []
+export const getCategories = (contentPath: string) => {
+  try {
+    const stat = fs.statSync(contentPath)
+    if (!stat.isDirectory()) {
+      return []
+    }
+    const children = fs.readdirSync(contentPath)
+    return children.filter((child) => {
+      const fullChildPath = path.join(contentPath, child)
+      const stat = fs.statSync(fullChildPath)
+      if (!stat.isDirectory()) return false
+      return true
+    })
+  } catch (error) {
+    console.error(error.message)
+    // Can't access content path or content path is not exists
+    return []
+  }
 }

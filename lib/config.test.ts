@@ -34,7 +34,7 @@ test('#getCategories', (t) => {
   createCategoryDirectory(rootPath, 'cat1')
   createCategoryDirectory(rootPath, 'cat2')
   createCategoryDirectory(rootPath, 'cat3')
-  t.deepEqual(getCategories(path.join('contents', uuid)), [
+  t.deepEqual(getCategories(path.join(__dirname, 'contents', uuid)), [
     'cat1',
     'cat2',
     'cat3'
