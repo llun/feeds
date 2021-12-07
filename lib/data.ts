@@ -1,8 +1,6 @@
 import fs from 'fs'
 import path from 'path/posix'
 
-import type { Site } from '../action/feeds/parsers'
-
 export interface GithubConfigs {
   repository: string
 }
@@ -28,23 +26,42 @@ export const getGithubConfigs = ({
   }
 }
 
+export interface CategorySite {
+  id: string
+  name: string
+}
 export interface Category {
   name: string
-  sites: Site[]
+  sites: CategorySite[]
 }
-export const getCategories = (contentPath: string) => {
+export const getCategories = (contentPath: string): Category[] => {
   try {
     const stat = fs.statSync(contentPath)
     if (!stat.isDirectory()) {
       return []
     }
     const children = fs.readdirSync(contentPath)
-    return children.filter((child) => {
-      const fullChildPath = path.join(contentPath, child)
-      const stat = fs.statSync(fullChildPath)
-      if (!stat.isDirectory()) return false
-      return true
-    })
+    return children
+      .filter((child) => {
+        const fullChildPath = path.join(contentPath, child)
+        const stat = fs.statSync(fullChildPath)
+        if (!stat.isDirectory()) return false
+        return true
+      })
+      .map((name) => {
+        const categoryPath = path.join(contentPath, name)
+        const category = fs.readdirSync(categoryPath)
+        const sites = category.map((site) => {
+          const siteContent = JSON.parse(
+            fs.readFileSync(path.join(categoryPath, site)).toString('utf-8')
+          )
+          return {
+            id: path.basename(site, path.extname(site)),
+            name: siteContent.title
+          }
+        })
+        return { name, sites }
+      })
   } catch (error) {
     console.error(error.message)
     // Can't access content path or content path is not exists
