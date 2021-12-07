@@ -1,9 +1,12 @@
 import test from 'ava'
 import path from 'path'
 import fs from 'fs'
-import { randomUUID } from 'crypto'
-import { getCategories, getGithubConfigs } from './data'
-import { createCategoryDirectory } from '../action/feeds'
+import {
+  createHash,
+  getCategories,
+  getGithubConfigs,
+  prepareSiteData
+} from './data'
 
 test('#getGithubConfigs', (t) => {
   t.deepEqual(
@@ -58,5 +61,38 @@ test('#getCategories', (t) => {
         }
       ]
     }
+  ])
+})
+
+test('#prepareSiteData', (t) => {
+  const fixtureDirectory = path.join(__dirname, 'fixtures', 'contents')
+  const outputDirectory = path.join(__dirname, 'fixtures', 'output')
+  prepareSiteData(fixtureDirectory, outputDirectory)
+
+  const sites = fs.readdirSync(outputDirectory).sort()
+  t.deepEqual(
+    sites,
+    ['site1', 'site2', 'site3', 'cat1.json', 'cat2.json'].sort()
+  )
+
+  const first = fs.readdirSync(path.join(outputDirectory, sites[0]))
+  t.deepEqual(first, [
+    'site1.json',
+    createHash('Content1,https://www.llun.me/sample1'),
+    createHash('Content2,https://www.llun.me/sample2')
+  ])
+
+  const second = fs.readdirSync(path.join(outputDirectory, sites[1]))
+  t.deepEqual(first, [
+    'site2.json',
+    createHash('Content1,https://www.llun.me/sample3'),
+    createHash('Content2,https://www.llun.me/sample4')
+  ])
+
+  const third = fs.readdirSync(path.join(outputDirectory, sites[1]))
+  t.deepEqual(third, [
+    'site3.json',
+    createHash('Content1,https://www.llun.me/sample5'),
+    createHash('Content2,https://www.llun.me/sample6')
   ])
 })

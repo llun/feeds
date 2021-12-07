@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path/posix'
+import crypto from 'crypto'
 
 export interface GithubConfigs {
   repository: string
@@ -67,4 +68,12 @@ export const getCategories = (contentPath: string): Category[] => {
     // Can't access content path or content path is not exists
     return []
   }
+}
+
+export const prepareSiteData = (inputPath: string, outputPath: string) => {}
+
+export const createHash = (input: string) => {
+  const hash = crypto.createHash('sha256')
+  hash.update(input)
+  return hash.digest('hex')
 }
