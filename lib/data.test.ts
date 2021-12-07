@@ -29,12 +29,12 @@ test('#getGithubConfigs', (t) => {
 test('#getCategories', (t) => {
   const nonExistsDirectory = path.join(
     __dirname,
-    '__fixtures__',
+    'fixtures',
     'non-exists-content-directory'
   )
   t.deepEqual(getCategories(nonExistsDirectory), [])
 
-  const fixtureDirectory = path.join(__dirname, '__fixtures__', 'contents')
+  const fixtureDirectory = path.join(__dirname, 'fixtures', 'contents')
   t.deepEqual(getCategories(fixtureDirectory), [
     {
       name: 'cat1',
