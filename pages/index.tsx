@@ -3,7 +3,12 @@ import path from 'path'
 import * as core from '@actions/core'
 import React from 'react'
 
-import { getCategories, getGithubConfigs, GithubConfigs } from '../lib/data'
+import {
+  Category,
+  getCategories,
+  getGithubConfigs,
+  GithubConfigs
+} from '../lib/data'
 import Application from '../lib/components/Application'
 import Meta from '../lib/components/Meta'
 
@@ -23,7 +28,7 @@ export async function getStaticProps(context: GetStaticPropsContext) {
 
 interface Props {
   githubConfigs: GithubConfigs
-  categories: string[]
+  categories: Category[]
 }
 export default function Home({ githubConfigs, categories }: Props) {
   return (
