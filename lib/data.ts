@@ -1,6 +1,8 @@
 import fs from 'fs'
 import path from 'path/posix'
 
+import type { Site } from '../action/feeds/parsers'
+
 export interface GithubConfigs {
   repository: string
 }
@@ -26,6 +28,10 @@ export const getGithubConfigs = ({
   }
 }
 
+export interface Category {
+  name: string
+  sites: Site[]
+}
 export const getCategories = (contentPath: string) => {
   try {
     const stat = fs.statSync(contentPath)

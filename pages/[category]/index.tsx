@@ -1,6 +1,6 @@
 import { GetStaticPropsContext } from 'next'
 import * as core from '@actions/core'
-import { getGithubConfigs, GithubConfigs } from '../../lib/config'
+import { getGithubConfigs, GithubConfigs } from '../../lib/data'
 import Meta from '../../lib/components/Meta'
 import Application from '../../lib/components/Application'
 
@@ -29,12 +29,13 @@ export async function getStaticProps(context: GetStaticPropsContext) {
 
 interface Props {
   githubConfigs: GithubConfigs
+  categories: string[]
 }
-const Category = ({ githubConfigs }: Props) => {
+const Category = ({ githubConfigs, categories }: Props) => {
   return (
     <>
       <Meta />
-      <Application githubConfigs={githubConfigs} />
+      <Application githubConfigs={githubConfigs} categories={categories} />
     </>
   )
 }
