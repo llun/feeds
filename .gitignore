@@ -20,6 +20,7 @@
 *.pem
 contents
 tsconfig.tsbuildinfo
+*.sqlite3
 
 # debug
 npm-debug.log*

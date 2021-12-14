@@ -57,14 +57,11 @@ exports.readOpml = readOpml
 
 async function createFeedDatabase() {
   try {
-    const contentDirectory = core.getInput('outputDirectory', {
-      required: true
-    })
     const feedsFile = core.getInput('opmlFile', { required: true })
     const opmlContent = fs.readFileSync(feedsFile).toString('utf8')
     const opml = await readOpml(opmlContent)
 
-    const database = getDatabase(contentDirectory)
+    const database = getDatabase('public')
     await createSchema(database)
     for (const category of opml) {
       const { category: title, items } = category

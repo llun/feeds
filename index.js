@@ -3,8 +3,8 @@ const { setup, publish, buildSite } = require('./action/repository')
 
 async function run() {
   await setup()
-  const { writeFeedsContent } = require('./action/feeds')
-  await writeFeedsContent()
+  const { createFeedDatabase } = require('./action/feeds')
+  await createFeedDatabase()
   buildSite()
   await publish()
 }

@@ -10,7 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "load": "INPUT_OUTPUTDIRECTORY='contents' INPUT_OPMLFILE='feeds.opml' node index.js",
+    "load": "INPUT_OPMLFILE='feeds.opml' node index.js",
     "test": "ava"
   },
   "ava": {
@@ -45,7 +45,7 @@
     "sanitize-html": "^2.6.1",
     "sql.js-httpvfs": "^0.8.11",
     "sqlite3": "^5.0.2",
-    "tailwindcss": "^3.0.1",
+    "tailwindcss": "^3.0.2",
     "tailwindcss-cli": "^0.1.2",
     "xml2js": "^0.4.23"
   },
