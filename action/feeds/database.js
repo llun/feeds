@@ -53,21 +53,29 @@ async function createSchema(/** @type {import('knex').Knex} */ knex) {
     })
     .createTable('Entries', (table) => {
       table.string('key').primary()
-      table.string('site').notNullable()
+      table.string('siteKey').notNullable()
+      table.string('siteTitle').notNullable()
       table.string('title').notNullable()
       table.string('url').notNullable()
       table.text('content').notNullable()
       table.integer('contentTime').nullable()
       table.integer('createdAt').notNullable()
-      table.index(['site', 'contentTime', 'createdAt'], 'site_content_date_idx')
+      table.index(
+        ['siteKey', 'contentTime', 'createdAt'],
+        'site_content_date_idx'
+      )
     })
     .createTable('EntryCategories', (table) => {
       table.string('category').notNullable()
       table.string('entryKey').notNullable()
       table.string('entryTitle').notNullable()
+      table.string('siteKey').notNullable()
       table.string('siteTitle').notNullable()
       table.string('entryContentTime').nullable()
-      table.index(['category', 'entryKey'], 'category_entryKey_idx')
+      table.index(
+        ['category', 'siteKey', 'entryKey'],
+        'category_siteKey_entryKey_idx'
+      )
     })
 }
 exports.createSchema = createSchema
@@ -103,7 +111,8 @@ async function insertEntry(
   const contentTime = (entry.date && Math.floor(entry.date / 1000)) || null
   await trx('Entries').insert({
     key,
-    site: siteKey,
+    siteKey,
+    siteTitle,
     title: entry.title,
     url: entry.link,
     content: entry.content,
@@ -114,6 +123,7 @@ async function insertEntry(
     category,
     entryKey: key,
     entryTitle: entry.title,
+    siteKey,
     siteTitle,
     entryContentTime: contentTime
   })
