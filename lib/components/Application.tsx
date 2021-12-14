@@ -1,14 +1,12 @@
-import { Category, GithubConfigs } from '../data'
 import Navigation from './Navigation'
 
 interface Props {
-  githubConfigs: GithubConfigs
-  categories: Category[]
+  categories: string[]
 }
-const Application = ({ githubConfigs, categories }: Props) => {
+const Application = ({ categories }: Props) => {
   return (
     <div className="container mx-auto flex flex-row w-screen h-screen">
-      <Navigation githubConfigs={githubConfigs} categories={categories} />
+      <Navigation categories={categories} />
     </div>
   )
 }

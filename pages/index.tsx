@@ -1,40 +1,43 @@
 import { GetStaticPropsContext } from 'next'
-import path from 'path'
-import * as core from '@actions/core'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
 
-import {
-  Category,
-  getCategories,
-  getGithubConfigs,
-  GithubConfigs
-} from '../lib/data'
 import Application from '../lib/components/Application'
 import Meta from '../lib/components/Meta'
+import { getCategories, getWorker } from '../lib/storage'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
-  const githubConfigs = getGithubConfigs({
-    githubRootName: process.env['GITHUB_REPOSITORY'] || '',
-    customDomain: core.getInput('customDomain')
-  })
-  const categories = getCategories(path.join(process.cwd(), 'contents'))
-  return {
-    props: {
-      githubConfigs,
-      categories
+  const config = {
+    from: 'inline',
+    config: {
+      serverMode: 'full',
+      requestChunkSize: 4096,
+      url: '/data.sqlite3'
     }
+  } as SplitFileConfig
+  return {
+    props: { config }
   }
 }
 
 interface Props {
-  githubConfigs: GithubConfigs
-  categories: Category[]
+  config: SplitFileConfig
 }
-export default function Home({ githubConfigs, categories }: Props) {
+export default function Home({ config }: Props) {
+  const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
+  useEffect(() => {
+    if (status === 'loaded') return
+    ;(async () => {
+      const worker = await getWorker(config)
+      await getCategories(worker)
+      setStatus('loaded')
+    })()
+  }, [status])
+
   return (
     <>
       <Meta />
-      <Application githubConfigs={githubConfigs} categories={categories} />
+      <Application categories={[]} />
     </>
   )
 }

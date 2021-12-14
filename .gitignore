@@ -21,6 +21,7 @@
 contents
 tsconfig.tsbuildinfo
 *.sqlite3
+target
 
 # debug
 npm-debug.log*

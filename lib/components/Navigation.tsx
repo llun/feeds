@@ -1,9 +1,7 @@
 import { Fragment } from 'react'
-import { Category, GithubConfigs } from '../data'
 
 interface Props {
-  githubConfigs: GithubConfigs
-  categories: Category[]
+  categories: string[]
   selectCategory?: (category: string) => Promise<void>
   selectSite?: (site: string) => Promise<void>
 }
@@ -15,27 +13,14 @@ const Navigation = ({ categories, selectCategory, selectSite }: Props) => {
         <a onClick={() => selectSite && selectSite('all')}>All sites</a>
       </h2>
       {categories.map((category) => (
-        <Fragment key={category.name}>
+        <Fragment key={category}>
           <h2 className="cursor-pointer">
-            <a onClick={() => selectCategory && selectCategory(category.name)}>
-              {category.name}
-            </a>
+            <a>{category}</a>
           </h2>
           <ul>
             <li>
-              <a
-                onClick={() => selectCategory && selectCategory(category.name)}
-              >
-                All sites
-              </a>
+              <a>All sites</a>
             </li>
-            {category.sites.map((site) => (
-              <li key={site.id} className="cursor-pointer">
-                <a onClick={() => selectSite && selectSite(site.id)}>
-                  {site.name}
-                </a>
-              </li>
-            ))}
           </ul>
         </Fragment>
       ))}
