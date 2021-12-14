@@ -43,11 +43,12 @@ async function createSchema(/** @type {import('knex').Knex} */ knex) {
       table.string('title').notNullable()
       table.string('url').nullable()
       table.string('description')
-      table.integer('updated_at')
+      table.integer('createdAt')
     })
     .createTable('SiteCategories', (table) => {
       table.string('category').notNullable()
       table.string('siteKey').notNullable()
+      table.string('siteTitle').notNullable()
       table.index(['category', 'siteKey'], 'site_category_idx')
     })
     .createTable('Entries', (table) => {
@@ -56,16 +57,16 @@ async function createSchema(/** @type {import('knex').Knex} */ knex) {
       table.string('title').notNullable()
       table.string('url').notNullable()
       table.text('content').notNullable()
-      table.integer('content_date').nullable()
-      table.integer('created_at').notNullable()
-      table.index(
-        ['site', 'content_date', 'created_at'],
-        'site_content_date_idx'
-      )
+      table.integer('contentTime').nullable()
+      table.integer('createdAt').notNullable()
+      table.index(['site', 'contentTime', 'createdAt'], 'site_content_date_idx')
     })
     .createTable('EntryCategories', (table) => {
       table.string('category').notNullable()
       table.string('entryKey').notNullable()
+      table.string('entryTitle').notNullable()
+      table.string('siteTitle').notNullable()
+      table.string('entryContentTime').nullable()
       table.index(['category', 'entryKey'], 'category_entryKey_idx')
     })
 }
@@ -91,24 +92,30 @@ exports.insertCategory = insertCategory
 async function insertEntry(
   /** @type {import('knex').Knex.Transaction} */ trx,
   /** @type {string} */ siteKey,
+  /** @type {string} */ siteTitle,
   /** @type {string} */ category,
   /** @type {import('./parsers').Entry}*/ entry
 ) {
   const key = hash(`${entry.title}${entry.link}`)
   const existingEntry = await trx('Entries').where('key', key).first()
   if (existingEntry) return
+
+  const contentTime = (entry.date && Math.floor(entry.date / 1000)) || null
   await trx('Entries').insert({
     key,
     site: siteKey,
     title: entry.title,
     url: entry.link,
     content: entry.content,
-    content_date: (entry.date && Math.floor(entry.date / 1000)) || null,
-    created_at: Math.floor(Date.now() / 1000)
+    contentTime,
+    createdAt: Math.floor(Date.now() / 1000)
   })
   await trx('EntryCategories').insert({
     category,
-    entryKey: key
+    entryKey: key,
+    entryTitle: entry.title,
+    siteTitle,
+    entryContentTime: contentTime
   })
 }
 
@@ -126,7 +133,11 @@ async function insertSite(
         .andWhere('siteKey', key)
         .first()
       if (siteCategory) return
-      await trx('SiteCategories').insert({ category, siteKey: key })
+      await trx('SiteCategories').insert({
+        category,
+        siteKey: key,
+        siteTitle: site.title
+      })
 
       const insertedSite = await trx('Sites').where('key', key).first()
       if (insertedSite) return
@@ -136,11 +147,11 @@ async function insertSite(
         title: site.title,
         url: site.link || null,
         description: site.description || null,
-        updated_at: Math.floor(updatedAt / 1000)
+        createdAt: Math.floor(updatedAt / 1000)
       })
 
       for (const entry of site.entries) {
-        await insertEntry(trx, key, category, entry)
+        await insertEntry(trx, key, site.title, category, entry)
       }
     })
   } catch (error) {
