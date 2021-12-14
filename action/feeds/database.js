@@ -163,7 +163,7 @@ exports.insertSite = insertSite
 
 async function cleanup(/** @type {import('knex').Knex} */ knex) {
   await knex.raw('pragma journal_mode = delete')
-  await knex.raw('pragma page_size = 1024')
+  await knex.raw('pragma page_size = 4096')
   await knex.raw('vacuum')
 }
 exports.cleanup = cleanup
