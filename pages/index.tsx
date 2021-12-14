@@ -9,6 +9,7 @@ import {
   Category,
   getCategories,
   getCategoryEntries,
+  getSiteEntries,
   getWorker,
   SiteEntry
 } from '../lib/storage'
@@ -54,6 +55,11 @@ export default function Home({ config }: Props) {
           selectCategory={async (category) => {
             const worker = await getWorker(config)
             const entries = await getCategoryEntries(worker, category, 0)
+            setEntries(entries)
+          }}
+          selectSite={async (key) => {
+            const worker = await getWorker(config)
+            const entries = await getSiteEntries(worker, key, 0)
             setEntries(entries)
           }}
         />

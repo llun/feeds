@@ -36,7 +36,7 @@ const EntryItem = ({
         {entry.site.title}
       </a>
       {entry.timestamp && (
-        <span>,{formatDistance(entry.timestamp * 1000, new Date())}</span>
+        <span>, {formatDistance(entry.timestamp * 1000, new Date())}</span>
       )}
     </small>
   </div>

@@ -79,3 +79,29 @@ export async function getCategoryEntries(
     timestamp: item.entryContentTime
   }))
 }
+
+export async function getSiteEntries(
+  worker: WorkerHttpvfs,
+  siteKey: string,
+  page: number
+) {
+  const list = (await worker.db.query(
+    `select key, siteKey, siteTitle, title, contentTime from Entries where siteKey = ? order by contentTime desc limit 50`,
+    [siteKey]
+  )) as {
+    key: string
+    siteKey: string
+    siteTitle: string
+    title: string
+    contentTime?: number
+  }[]
+  return list.map((item) => ({
+    key: item.key,
+    title: item.title,
+    site: {
+      key: item.siteKey,
+      title: item.siteTitle
+    },
+    timestamp: item.contentTime
+  }))
+}
