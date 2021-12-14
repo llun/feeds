@@ -44,7 +44,7 @@ export async function getCategories(
   return Object.keys(map).map((title) => ({ title, sites: map[title] }))
 }
 
-export interface SiteEntries {
+export interface SiteEntry {
   key: string
   title: string
   site: {
@@ -57,7 +57,7 @@ export async function getCategoryEntries(
   worker: WorkerHttpvfs,
   category: string,
   page: number
-): Promise<SiteEntries[]> {
+): Promise<SiteEntry[]> {
   const list = (await worker.db.query(
     `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc limit 50`,
     [category]
