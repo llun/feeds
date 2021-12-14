@@ -7,7 +7,8 @@ const {
   getDatabase,
   createSchema,
   insertCategory,
-  insertSite
+  insertSite,
+  cleanup
 } = require('./database')
 
 /**
@@ -79,6 +80,7 @@ async function createFeedDatabase() {
         await insertSite(database, title, feedData)
       }
     }
+    await cleanup(database)
     await database.destroy()
   } catch (error) {
     console.error(error.message)

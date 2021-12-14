@@ -95,6 +95,8 @@ async function insertEntry(
   /** @type {import('./parsers').Entry}*/ entry
 ) {
   const key = hash(`${entry.title}${entry.link}`)
+  const existingEntry = await trx('Entries').where('key', key).first()
+  if (existingEntry) return
   await trx('Entries').insert({
     key,
     site: siteKey,
@@ -147,3 +149,10 @@ async function insertSite(
   }
 }
 exports.insertSite = insertSite
+
+async function cleanup(/** @type {import('knex').Knex} */ knex) {
+  await knex.raw('pragma journal_mode = delete')
+  await knex.raw('pragma page_size = 1024')
+  await knex.raw('vacuum')
+}
+exports.cleanup = cleanup
