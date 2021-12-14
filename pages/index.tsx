@@ -9,6 +9,7 @@ import Navigation from '../lib/components/Navigation'
 import {
   Category,
   Content,
+  getAllEntries,
   getCategories,
   getCategoryEntries,
   getContent,
@@ -58,12 +59,19 @@ export default function Home({ config }: Props) {
           categories={categories}
           selectCategory={async (category) => {
             const worker = await getWorker(config)
-            const entries = await getCategoryEntries(worker, category, 0)
+            const entries = await getCategoryEntries(worker, category)
             setEntries(entries)
           }}
           selectSite={async (key) => {
             const worker = await getWorker(config)
-            const entries = await getSiteEntries(worker, key, 0)
+
+            if (key === 'all') {
+              const entries = await getAllEntries(worker)
+              setEntries(entries)
+              return
+            }
+
+            const entries = await getSiteEntries(worker, key)
             setEntries(entries)
           }}
         />

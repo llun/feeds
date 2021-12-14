@@ -56,7 +56,7 @@ export interface SiteEntry {
 export async function getCategoryEntries(
   worker: WorkerHttpvfs,
   category: string,
-  page: number
+  page: number = 0
 ): Promise<SiteEntry[]> {
   const list = (await worker.db.query(
     `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc limit 50`,
@@ -83,26 +83,47 @@ export async function getCategoryEntries(
 export async function getSiteEntries(
   worker: WorkerHttpvfs,
   siteKey: string,
-  page: number
+  page: number = 0
 ) {
   const list = (await worker.db.query(
-    `select key, siteKey, siteTitle, title, contentTime from Entries where siteKey = ? order by contentTime desc limit 50`,
+    `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where siteKey = ? order by entryContentTime desc limit 50`,
     [siteKey]
   )) as {
-    key: string
+    entryKey: string
     siteKey: string
     siteTitle: string
-    title: string
-    contentTime?: number
+    entryTitle: string
+    entryContentTime?: number
   }[]
   return list.map((item) => ({
-    key: item.key,
-    title: item.title,
+    key: item.entryKey,
+    title: item.entryTitle,
     site: {
       key: item.siteKey,
       title: item.siteTitle
     },
-    timestamp: item.contentTime
+    timestamp: item.entryContentTime
+  }))
+}
+
+export async function getAllEntries(worker: WorkerHttpvfs, page: number = 0) {
+  const list = (await worker.db.query(
+    `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where entryContentTime is not null order by entryContentTime desc limit 50`
+  )) as {
+    entryKey: string
+    siteKey: string
+    siteTitle: string
+    entryTitle: string
+    entryContentTime?: number
+  }[]
+  return list.map((item) => ({
+    key: item.entryKey,
+    title: item.entryTitle,
+    site: {
+      key: item.siteKey,
+      title: item.siteTitle
+    },
+    timestamp: item.entryContentTime
   }))
 }
 
