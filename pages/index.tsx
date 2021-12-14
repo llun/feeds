@@ -4,7 +4,7 @@ import { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
 
 import Application from '../lib/components/Application'
 import Meta from '../lib/components/Meta'
-import { getCategories, getWorker } from '../lib/storage'
+import { Category, getCategories, getWorker } from '../lib/storage'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const config = {
@@ -25,11 +25,14 @@ interface Props {
 }
 export default function Home({ config }: Props) {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
+  const [categories, setCategories] = useState<Category[]>([])
+
   useEffect(() => {
     if (status === 'loaded') return
     ;(async () => {
       const worker = await getWorker(config)
-      await getCategories(worker)
+      const categories = await getCategories(worker)
+      setCategories(categories)
       setStatus('loaded')
     })()
   }, [status])
@@ -37,7 +40,7 @@ export default function Home({ config }: Props) {
   return (
     <>
       <Meta />
-      <Application categories={[]} />
+      <Application categories={categories} />
     </>
   )
 }

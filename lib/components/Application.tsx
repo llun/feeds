@@ -1,7 +1,8 @@
 import Navigation from './Navigation'
+import { Category } from '../storage'
 
 interface Props {
-  categories: string[]
+  categories: Category[]
 }
 const Application = ({ categories }: Props) => {
   return (

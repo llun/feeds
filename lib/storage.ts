@@ -16,12 +16,32 @@ export async function getWorker(
   return worker
 }
 
-export async function getCategories(worker: WorkerHttpvfs): Promise<string[]> {
-  const x = await worker.db.query(`select name from Categories`)
-  console.log(x)
-  return []
-  // const { values } = result
-  // return values.flat() as string[]
+export interface Category {
+  name: string
+  sites: {
+    key: string
+    name: string
+  }[]
+}
+export async function getCategories(
+  worker: WorkerHttpvfs
+): Promise<Category[]> {
+  const categories = (await worker.db.query(
+    `select category, siteKey, siteTitle from SiteCategories`
+  )) as {
+    category: string
+    siteKey: string
+    siteTitle: string
+  }[]
+  const map = categories.reduce((map, item) => {
+    if (!map[item.category]) map[item.category] = []
+    map[item.category].push({
+      key: item.siteKey,
+      name: item.siteTitle
+    })
+    return map
+  }, {})
+  return Object.keys(map).map((name) => ({ name, sites: map[name] }))
 }
 
 // export interface Site {

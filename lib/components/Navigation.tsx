@@ -1,7 +1,8 @@
 import { Fragment } from 'react'
+import { Category } from '../storage'
 
 interface Props {
-  categories: string[]
+  categories: Category[]
   selectCategory?: (category: string) => Promise<void>
   selectSite?: (site: string) => Promise<void>
 }
@@ -13,9 +14,9 @@ const Navigation = ({ categories, selectCategory, selectSite }: Props) => {
         <a onClick={() => selectSite && selectSite('all')}>All sites</a>
       </h2>
       {categories.map((category) => (
-        <Fragment key={category}>
+        <Fragment key={category.name}>
           <h2 className="cursor-pointer">
-            <a>{category}</a>
+            <a>{category.name}</a>
           </h2>
           <ul>
             <li>
