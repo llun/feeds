@@ -59,7 +59,7 @@ export async function getCategoryEntries(
   page: number = 0
 ): Promise<SiteEntry[]> {
   const list = (await worker.db.query(
-    `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc limit 50`,
+    `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc limit 30`,
     [category]
   )) as {
     category: string
@@ -86,7 +86,7 @@ export async function getSiteEntries(
   page: number = 0
 ) {
   const list = (await worker.db.query(
-    `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where siteKey = ? order by entryContentTime desc limit 50`,
+    `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where siteKey = ? order by entryContentTime desc limit 30`,
     [siteKey]
   )) as {
     entryKey: string
@@ -108,7 +108,7 @@ export async function getSiteEntries(
 
 export async function getAllEntries(worker: WorkerHttpvfs, page: number = 0) {
   const list = (await worker.db.query(
-    `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where entryContentTime is not null order by entryContentTime desc limit 50`
+    `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where entryContentTime is not null order by entryContentTime desc limit 30`
   )) as {
     entryKey: string
     siteKey: string
