@@ -62,7 +62,7 @@ async function createSchema(/** @type {import('knex').Knex} */ knex) {
       table.integer('createdAt').notNullable()
       table.index(
         ['siteKey', 'contentTime', 'createdAt'],
-        'site_content_date_idx'
+        'site_content_time_created_at_idx'
       )
     })
     .createTable('EntryCategories', (table) => {

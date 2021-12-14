@@ -105,3 +105,20 @@ export async function getSiteEntries(
     timestamp: item.contentTime
   }))
 }
+
+export interface Content {
+  title: string
+  content: string
+  url: string
+}
+export async function getContent(
+  worker: WorkerHttpvfs,
+  key: string
+): Promise<Content | null> {
+  const entry = await worker.db.query(
+    `select title, content, url from Entries where key = ?`,
+    [key]
+  )
+  if (entry.length === 0) return null
+  return entry[0] as Content
+}

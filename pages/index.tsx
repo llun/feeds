@@ -1,14 +1,17 @@
 import { GetStaticPropsContext } from 'next'
 import React, { useEffect, useState } from 'react'
 import { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
+import Entry from '../lib/components/Entry'
 import EntryList from '../lib/components/EntryList'
 
 import Meta from '../lib/components/Meta'
 import Navigation from '../lib/components/Navigation'
 import {
   Category,
+  Content,
   getCategories,
   getCategoryEntries,
+  getContent,
   getSiteEntries,
   getWorker,
   SiteEntry
@@ -35,6 +38,7 @@ export default function Home({ config }: Props) {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
   const [categories, setCategories] = useState<Category[]>([])
   const [entries, setEntries] = useState<SiteEntry[]>([])
+  const [content, setContent] = useState<Content>(null)
 
   useEffect(() => {
     if (status === 'loaded') return
@@ -63,7 +67,16 @@ export default function Home({ config }: Props) {
             setEntries(entries)
           }}
         />
-        <EntryList entries={entries} />
+        <EntryList
+          entries={entries}
+          selectEntry={async (key) => {
+            const worker = await getWorker(config)
+            const content = await getContent(worker, key)
+            if (!content) return
+            setContent(content)
+          }}
+        />
+        <Entry content={content} />
       </div>
     </>
   )

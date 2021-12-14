@@ -62,7 +62,8 @@ const EntryList = ({
   let element: HTMLElement | null = null
   useEffect(() => {
     if (!element) return
-  })
+    element.scrollTo(0, 0)
+  }, [entries])
 
   return (
     <section
