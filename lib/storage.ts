@@ -17,10 +17,10 @@ export async function getWorker(
 }
 
 export interface Category {
-  name: string
+  title: string
   sites: {
     key: string
-    name: string
+    title: string
   }[]
 }
 export async function getCategories(
@@ -37,29 +37,45 @@ export async function getCategories(
     if (!map[item.category]) map[item.category] = []
     map[item.category].push({
       key: item.siteKey,
-      name: item.siteTitle
+      title: item.siteTitle
     })
     return map
   }, {})
-  return Object.keys(map).map((name) => ({ name, sites: map[name] }))
+  return Object.keys(map).map((title) => ({ title, sites: map[title] }))
 }
 
-// export interface Site {
-//   key: string
-//   category: string
-//   description: string
-//   title: string
-//   url: string
-//   updated_at: number
-// }
-// export async function getSites(
-//   worker: WorkerHttpvfs,
-//   category: string
-// ): Promise<Site[]> {
-//   const [result] = await worker.db.query(
-//     `select * from Sites where category = ?`,
-//     [category]
-//   )
-//   const { columns, values } = result
-//   return values.map((value) => zipObject(columns, value))
-// }
+export interface SiteEntries {
+  key: string
+  title: string
+  site: {
+    key: string
+    title: string
+  }
+  timestamp?: number
+}
+export async function getCategoryEntries(
+  worker: WorkerHttpvfs,
+  category: string,
+  page: number
+): Promise<SiteEntries[]> {
+  const list = (await worker.db.query(
+    `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc limit 50`,
+    [category]
+  )) as {
+    category: string
+    entryContentTime: number
+    entryKey: string
+    entryTitle: string
+    siteKey: string
+    siteTitle: string
+  }[]
+  return list.map((item) => ({
+    key: item.entryKey,
+    title: item.entryTitle,
+    site: {
+      key: item.siteKey,
+      title: item.siteTitle
+    },
+    timestamp: item.entryContentTime
+  }))
+}

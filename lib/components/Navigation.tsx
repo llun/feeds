@@ -16,20 +16,28 @@ const Navigation = ({ categories, selectCategory, selectSite }: Props) => {
         <a onClick={() => selectSite && selectSite('all')}>All sites</a>
       </h2>
       {categories.map((category) => (
-        <Fragment key={category.name}>
+        <Fragment key={category.title}>
           <h2 className="cursor-pointer">
-            <a onClick={() => setCurrentCategory(category.name)}>
-              {category.name}
+            <a onClick={() => setCurrentCategory(category.title)}>
+              {category.title}
             </a>
           </h2>
-          {category.name === currentCategory && (
+          {category.title === currentCategory && (
             <ul>
-              <li>
-                <a>All sites</a>
+              <li className="cursor-pointer">
+                <a
+                  onClick={() =>
+                    selectCategory && selectCategory(currentCategory)
+                  }
+                >
+                  All sites
+                </a>
               </li>
               {category.sites.map((site) => (
                 <li key={site.key} className="cursor-pointer">
-                  <a onClick={() => selectSite(site.key)}>{site.name}</a>
+                  <a onClick={() => selectSite && selectSite(site.key)}>
+                    {site.title}
+                  </a>
                 </li>
               ))}
             </ul>

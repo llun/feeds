@@ -2,9 +2,14 @@ import { GetStaticPropsContext } from 'next'
 import React, { useEffect, useState } from 'react'
 import { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
 
-import Application from '../lib/components/Application'
 import Meta from '../lib/components/Meta'
-import { Category, getCategories, getWorker } from '../lib/storage'
+import Navigation from '../lib/components/Navigation'
+import {
+  Category,
+  getCategories,
+  getCategoryEntries,
+  getWorker
+} from '../lib/storage'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const config = {
@@ -26,6 +31,7 @@ interface Props {
 export default function Home({ config }: Props) {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
   const [categories, setCategories] = useState<Category[]>([])
+  const [entries, setEntries] = useState([])
 
   useEffect(() => {
     if (status === 'loaded') return
@@ -40,7 +46,15 @@ export default function Home({ config }: Props) {
   return (
     <>
       <Meta />
-      <Application categories={categories} />
+      <div className="container mx-auto flex flex-row w-screen h-screen">
+        <Navigation
+          categories={categories}
+          selectCategory={async (category) => {
+            const worker = await getWorker(config)
+            await getCategoryEntries(worker, category, 0)
+          }}
+        />
+      </div>
     </>
   )
 }
