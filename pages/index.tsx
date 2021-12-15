@@ -1,6 +1,6 @@
 import { GetStaticPropsContext } from 'next'
 import React, { useEffect, useState } from 'react'
-import Router, { NextRouter, useRouter } from 'next/router'
+import { useRouter } from 'next/router'
 import { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
 import Entry from '../lib/components/Entry'
 import EntryList from '../lib/components/EntryList'
