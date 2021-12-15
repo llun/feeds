@@ -1,5 +1,6 @@
 import { GetStaticPropsContext } from 'next'
 import React, { useEffect, useState } from 'react'
+import Router, { NextRouter, useRouter } from 'next/router'
 import { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
 import Entry from '../lib/components/Entry'
 import EntryList from '../lib/components/EntryList'
@@ -17,6 +18,49 @@ import {
   getWorker,
   SiteEntry
 } from '../lib/storage'
+
+export type PageState = 'categories' | 'entries' | 'article'
+type LocationState =
+  | {
+      type: 'categories'
+      category: string
+    }
+  | {
+      type: 'sites'
+      siteHash: string
+    }
+  | {
+      type: 'entries'
+      entryHash: string
+    }
+  | null
+
+function parseLocation(url: string): LocationState {
+  const parts = url.split('/')
+  parts.shift()
+  // Remove repository path out
+  // if (github.repository) parts.shift()
+  if (parts.length !== 2) return null
+  switch (parts[0]) {
+    case 'categories':
+      return {
+        type: parts[0],
+        category: parts[1]
+      }
+    case 'sites':
+      return {
+        type: parts[0],
+        siteHash: parts[1]
+      }
+    case 'entries':
+      return {
+        type: parts[0],
+        entryHash: parts[1]
+      }
+    default:
+      return null
+  }
+}
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const config = {
@@ -40,9 +84,45 @@ export default function Home({ config }: Props) {
   const [categories, setCategories] = useState<Category[]>([])
   const [entries, setEntries] = useState<SiteEntry[]>([])
   const [content, setContent] = useState<Content>(null)
+  const router = useRouter()
+
+  const locationController = async (locationState: LocationState) => {
+    if (!locationState) return null
+    const worker = await getWorker(config)
+    switch (locationState.type) {
+      case 'categories': {
+        const category = locationState.category
+        const entries = await getCategoryEntries(worker, category)
+        setEntries(entries)
+        setContent(null)
+        return
+      }
+      case 'sites': {
+        const { siteHash } = locationState
+        const entries =
+          siteHash === 'all'
+            ? await getAllEntries(worker)
+            : await getSiteEntries(worker, siteHash)
+        setEntries(entries)
+        setContent(null)
+        return
+      }
+      case 'entries': {
+        const { entryHash } = locationState
+        const content = await getContent(worker, entryHash)
+        if (!content) return
+        if (entries.length === 0) {
+          const entries = await getSiteEntries(worker, content.siteKey)
+          setEntries(entries)
+        }
+
+        setContent(content)
+        return
+      }
+    }
+  }
 
   useEffect(() => {
-    if (status === 'loaded') return
     ;(async () => {
       const worker = await getWorker(config)
       const categories = await getCategories(worker)
@@ -51,39 +131,37 @@ export default function Home({ config }: Props) {
     })()
   }, [status])
 
+  useEffect(() => {
+    const stateLocation = parseLocation(router.asPath)
+    if (!stateLocation) {
+      router.push('/sites/all')
+      return
+    }
+    locationController(stateLocation)
+  }, [router.asPath])
+
+  const selectCategory = async (category: string) => {
+    router.push(`/categories/${category}`)
+  }
+
+  const selectSite = async (site: string) => {
+    router.push(`/sites/${site}`)
+  }
+
+  const selectEntry = async (entry: string) => {
+    router.push(`/entries/${entry}`)
+  }
+
   return (
     <>
       <Meta />
       <div className="container mx-auto flex flex-row w-screen h-screen">
         <Navigation
           categories={categories}
-          selectCategory={async (category) => {
-            const worker = await getWorker(config)
-            const entries = await getCategoryEntries(worker, category)
-            setEntries(entries)
-          }}
-          selectSite={async (key) => {
-            const worker = await getWorker(config)
-
-            if (key === 'all') {
-              const entries = await getAllEntries(worker)
-              setEntries(entries)
-              return
-            }
-
-            const entries = await getSiteEntries(worker, key)
-            setEntries(entries)
-          }}
+          selectCategory={selectCategory}
+          selectSite={selectSite}
         />
-        <EntryList
-          entries={entries}
-          selectEntry={async (key) => {
-            const worker = await getWorker(config)
-            const content = await getContent(worker, key)
-            if (!content) return
-            setContent(content)
-          }}
-        />
+        <EntryList entries={entries} selectEntry={selectEntry} />
         <Entry content={content} />
       </div>
     </>
