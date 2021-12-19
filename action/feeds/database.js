@@ -22,7 +22,7 @@ function getDatabase(/** @type {string} */ contentDirectory) {
   }
 
   const databasePath = path.join(contentDirectory, 'data.sqlite3')
-  fs.rmSync(databasePath, { force: true, recursive: true })
+  fs.unlinkSync(databasePath)
   return knex({
     client: 'sqlite3',
     connection: {
