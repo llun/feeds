@@ -22,7 +22,11 @@ function getDatabase(/** @type {string} */ contentDirectory) {
   }
 
   const databasePath = path.join(contentDirectory, 'data.sqlite3')
-  fs.unlinkSync(databasePath)
+  try {
+    fs.unlinkSync(databasePath)
+  } catch (error) {
+    // Ignore if delete old database fail
+  }
   return knex({
     client: 'sqlite3',
     connection: {
