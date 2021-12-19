@@ -35,7 +35,7 @@ function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
     const result = runCommand(
-      ['npm', 'run', 'build', '--', `-outdir=${workSpace}`],
+      ['npm', 'run', 'build', '--', `--outdir=${workSpace}`],
       getGithubActionPath()
     )
     if (result.error) {
