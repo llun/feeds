@@ -20,8 +20,8 @@ jobs:
   sample:
     runs-on: ubuntu-latest
     needs: [test]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/next'
     name: Sample
     steps:
       - name: Run Action
-        uses: llun/feeds@main
+        uses: llun/feeds@next

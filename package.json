@@ -8,7 +8,7 @@
   "license": "ISC",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && next export",
     "start": "next start",
     "load": "INPUT_OPMLFILE='feeds.opml' node index.js",
     "test": "ava"
