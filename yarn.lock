@@ -393,7 +393,7 @@
   dependencies:
     "@swc/core" "^1.2.119"
 
-"@swc-node/register@^1.4.1":
+"@swc-node/register@^1.4.2":
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/@swc-node/register/-/register-1.4.2.tgz#98801cc5ad8792519511bd6ae31c01f40aa487a3"
   integrity sha512-wLZz0J7BTO//1Eq7e4eBQjKF380Hr2eVemz849msQSKcVM1D7UJUt/dP2TinEVGx++/BXJ/0q37i6n9Iw0EM0w==
@@ -546,15 +546,10 @@
   resolved "https://registry.yarnpkg.com/@types/mozilla-readability/-/mozilla-readability-0.2.1.tgz#3c92215157f2d36d117c2676389887f530ccafd5"
   integrity sha512-RjLpe3MIpj53L+q50DTNlhv6KjHjgajFQwAF4KuxVZTa2+6Cs2UNAxS5awxABfZEHRYjGKeRDB21Zrtnsi911w==
 
-"@types/node@*":
+"@types/node@*", "@types/node@^17.0.0":
   version "17.0.1"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.1.tgz#88d501e84b6185f6489ecee4ba9e8fcec7f29bb2"
   integrity sha512-NXKvBVUzIbs6ylBwmOwHFkZS2EXCcjnqr8ZCRNaXBkHAf+3mn/rPcJxwrzuc6movh8fxQAsUUfYklJ/EG+hZqQ==
-
-"@types/node@^16.11.12":
-  version "16.11.14"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.11.14.tgz#4939fb42e5b0ffb3ea7e193c28244fe7414977a6"
-  integrity sha512-mK6BKLpL0bG6v2CxHbm0ed6RcZrAtTHBTd/ZpnlVPVa3HkumsqLE4BC4u6TQ8D7pnrRbOU0am6epuALs+Ncnzw==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
@@ -2551,7 +2546,7 @@ hex-color-regex@^1.1.0:
   resolved "https://registry.yarnpkg.com/hex-color-regex/-/hex-color-regex-1.1.0.tgz#4c06fccb4602fe2602b3c93df82d7e7dbf1a8a8e"
   integrity sha512-l9sfDFsuqtOqKDsQdqrMRk0U85RZc0RtOR9yPI7mRVOa4FsR/BVnZ0shmQRM96Ji99kYZP/7hn1cedc1+ApsTQ==
 
-history@^5.1.0:
+history@^5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/history/-/history-5.2.0.tgz#7cdd31cf9bac3c5d31f09c231c9928fad0007b7c"
   integrity sha512-uPSF6lAJb3nSePJ43hN3eKj1dTWpN9gMod0ZssbFTIsen+WehTmEadgL+kg78xLJFdRfrrC//SavDzmRVdE+Ig==
@@ -5079,7 +5074,7 @@ tailwindcss@^2.0.1:
     resolve "^1.20.0"
     tmp "^0.2.1"
 
-tailwindcss@^3.0.2:
+tailwindcss@^3.0.7:
   version "3.0.7"
   resolved "https://registry.yarnpkg.com/tailwindcss/-/tailwindcss-3.0.7.tgz#15936881f042a7eb8d6f2b6a454bac9f51181bbd"
   integrity sha512-rZdKNHtC64jcQncLoWOuCzj4lQDTAgLtgK3WmQS88tTdpHh9OwLqULTQxI3tw9AMJsqSpCKlmcjW/8CSnni6zQ==
