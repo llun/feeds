@@ -7,16 +7,16 @@ let _browser = null
 
 /**
  *
- * @param {{ link: string }} entry
+ * @param {string} link
  * @param {import('./sites').SiteLoaderMap} [siteLoaders]
  * @returns {Promise<string>}
  */
-async function loadContent(entry, siteLoaders = defaultSiteLoaders) {
+async function loadContent(link, siteLoaders = defaultSiteLoaders) {
   if (!siteLoaders) {
     return ''
   }
 
-  const entryLinkUrl = new URL(entry.link)
+  const entryLinkUrl = new URL(link)
   const siteLoader = siteLoaders.get(entryLinkUrl.hostname)
   if (!siteLoader) {
     return ''
@@ -25,7 +25,7 @@ async function loadContent(entry, siteLoaders = defaultSiteLoaders) {
   if (!_browser) {
     _browser = await puppeteer.launch()
   }
-  return siteLoader(_browser, entry.link)
+  return siteLoader(_browser, link)
 }
 exports.loadContent = loadContent
 

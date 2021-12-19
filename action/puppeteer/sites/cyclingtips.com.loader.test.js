@@ -1,8 +1,9 @@
 // @ts-check
 const puppeteer = require('puppeteer')
-const test = /** @type {import('ava').TestInterface<{ browser: import('puppeteer').Browser }>} */ (require('ava')
-  .default)
-const sinon = require('sinon')
+const test =
+  /** @type {import('ava').TestInterface<{ browser: import('puppeteer').Browser }>} */ (
+    require('ava').default
+  )
 const { JSDOM } = require('jsdom')
 const loader = require('./cyclingtips.com.loader')
 
@@ -17,7 +18,7 @@ test.after(async (t) => {
   await t.context.browser.close()
 })
 
-test('cyclingtips.com#loader load page', async (t) => {
+test.skip('cyclingtips.com#loader load page', async (t) => {
   const { browser } = t.context
   const content = await loader(
     browser,

@@ -3,6 +3,7 @@ const core = require('@actions/core')
 const fs = require('fs')
 const axios = require('axios').default
 const { parseXML, parseAtom, parseRss } = require('./parsers')
+const { loadContent, close } = require('../puppeteer')
 const {
   getDatabase,
   createSchema,
@@ -74,6 +75,16 @@ async function createFeedDatabase() {
           continue
         }
         console.log(`Load ${feedData.title}`)
+        for (const entry of feedData.entries) {
+          const link = entry.link
+          const content = await loadContent(link)
+          if (content) {
+            console.log(`Puppenteer - ${entry.link}`)
+            entry.content = content
+          }
+          await close()
+        }
+
         await insertSite(database, title, feedData)
       }
     }
