@@ -72,6 +72,7 @@ async function createFeedDatabase() {
       for (const item of items) {
         const feedData = await loadFeed(item.title, item.xmlUrl)
         if (!feedData) {
+          console.log('No feed data, continue to next item')
           continue
         }
         console.log(`Load ${feedData.title}`)

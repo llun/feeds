@@ -38,8 +38,6 @@ function buildSite() {
       ['npm', 'run', 'build', '--', `--outdir=${workSpace}`],
       getGithubActionPath()
     )
-    runCommand(['ls', '-l'], getGithubActionPath())
-    runCommand(['ls', '-l', 'public'], getGithubActionPath())
     if (result.error) {
       throw new Error('Fail to build site')
     }

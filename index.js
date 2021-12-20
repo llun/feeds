@@ -5,8 +5,9 @@ async function run() {
   await setup()
   const { createFeedDatabase } = require('./action/feeds')
   await createFeedDatabase()
-  buildSite()
-  await publish()
+  console.log('Finish creating database')
+  // buildSite()
+  // await publish()
 }
 
 run()
