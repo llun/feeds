@@ -121,8 +121,6 @@ async function publish() {
     if (customDomain) {
       fs.writeFileSync('CNAME', customDomain)
     }
-    runCommand(['ls', '-l'])
-    return
 
     runCommand([
       'rm',
