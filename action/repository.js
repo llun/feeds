@@ -38,7 +38,6 @@ function buildSite() {
       ['npm', 'run', 'build', '--', `--outdir=${workSpace}`],
       getGithubActionPath()
     )
-    runCommand(['which', 'node'])
     if (result.error) {
       throw new Error('Fail to build site')
     }
