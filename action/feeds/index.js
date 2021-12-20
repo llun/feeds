@@ -11,7 +11,8 @@ const {
   insertCategory,
   insertSite,
   cleanup,
-  insertEntry
+  insertEntry,
+  isEntryExists
 } = require('./database')
 
 /**
@@ -85,12 +86,15 @@ async function createFeedDatabase(githubActionPath) {
         console.log(`Load ${feedData.title}`)
         const siteKey = await insertSite(database, title, feedData)
         for (const entry of feedData.entries) {
+          if (await isEntryExists(database, entry)) continue
+
           const link = entry.link
           const content = await loadContent(link)
           if (content) {
             entry.content = content
             await close()
           }
+
           await insertEntry(database, siteKey, title, category, entry)
         }
       }

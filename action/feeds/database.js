@@ -34,24 +34,33 @@ function getDatabase(/** @type {string} */ contentDirectory) {
 exports.getDatabase = getDatabase
 
 async function createSchema(/** @type {import('knex').Knex} */ knex) {
-  await knex.schema
-    .createTableIfNotExists('Categories', (table) => {
+  if (!(await knex.schema.hasTable('Categories'))) {
+    await knex.schema.createTable('Categories', (table) => {
       table.string('name').primary()
     })
-    .createTableIfNotExists('Sites', (table) => {
+  }
+
+  if (!(await knex.schema.hasTable('Sites'))) {
+    await knex.schema.createTableIfNotExists('Sites', (table) => {
       table.string('key').primary()
       table.string('title').notNullable()
       table.string('url').nullable()
       table.string('description')
       table.integer('createdAt')
     })
-    .createTableIfNotExists('SiteCategories', (table) => {
+  }
+
+  if (!(await knex.schema.hasTable('SiteCategories'))) {
+    await knex.schema.createTableIfNotExists('SiteCategories', (table) => {
       table.string('category').notNullable()
       table.string('siteKey').notNullable()
       table.string('siteTitle').notNullable()
       table.index(['category', 'siteKey'], 'site_category_idx')
     })
-    .createTableIfNotExists('Entries', (table) => {
+  }
+
+  if (!(await knex.schema.hasTable('Entries'))) {
+    await knex.schema.createTable('Entries', (table) => {
       table.string('key').primary()
       table.string('siteKey').notNullable()
       table.string('siteTitle').notNullable()
@@ -65,7 +74,10 @@ async function createSchema(/** @type {import('knex').Knex} */ knex) {
         'site_content_time_created_at_idx'
       )
     })
-    .createTableIfNotExists('EntryCategories', (table) => {
+  }
+
+  if (!(await knex.schema.hasTable('EntryCategories'))) {
+    await knex.schema.createTable('EntryCategories', (table) => {
       table.string('category').notNullable()
       table.string('entryKey').notNullable()
       table.string('entryTitle').notNullable()
@@ -77,6 +89,7 @@ async function createSchema(/** @type {import('knex').Knex} */ knex) {
         'category_siteKey_entryKey_idx'
       )
     })
+  }
 }
 exports.createSchema = createSchema
 
@@ -96,6 +109,19 @@ async function insertCategory(
   }
 }
 exports.insertCategory = insertCategory
+
+async function isEntryExists(
+  /** @type {import('knex').Knex} */ knex,
+  /** @type {import('./parsers').Entry}*/ entry
+) {
+  const key = hash(`${entry.title}${entry.link}`)
+  const existingEntry = await knex('Entries')
+    .where('key', key)
+    .count('* as total')
+    .first()
+  return existingEntry['total'] === 1
+}
+exports.isEntryExists = isEntryExists
 
 async function insertEntry(
   /** @type {import('knex').Knex} */ knex,
