@@ -62,13 +62,13 @@ async function createFeedDatabase() {
     const opmlContent = fs.readFileSync(feedsFile).toString('utf8')
     const opml = await readOpml(opmlContent)
 
-    const database = getDatabase('public')
-    await createSchema(database)
+    // const database = getDatabase('public')
+    // await createSchema(database)
     for (const category of opml) {
       const { category: title, items } = category
       if (!items) continue
       console.log(`Load category ${title}`)
-      await insertCategory(database, title)
+      // await insertCategory(database, title)
       for (const item of items) {
         const feedData = await loadFeed(item.title, item.xmlUrl)
         if (!feedData) {
@@ -86,11 +86,11 @@ async function createFeedDatabase() {
         //     await close()
         //   }
         // }
-        await insertSite(database, title, feedData)
+        // await insertSite(database, title, feedData)
       }
     }
-    await cleanup(database)
-    await database.destroy()
+    // await cleanup(database)
+    // await database.destroy()
   } catch (error) {
     console.error(error.message)
     console.error(error.stack)
