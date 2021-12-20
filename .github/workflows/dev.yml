@@ -19,7 +19,6 @@ jobs:
 
   sample:
     runs-on: ubuntu-latest
-    needs: [test]
     if: github.ref == 'refs/heads/next'
     name: Sample
     steps:
