@@ -78,6 +78,7 @@ async function createFeedDatabase() {
         console.log(`Load ${feedData.title}`)
         for (const entry of feedData.entries) {
           const link = entry.link
+          console.log('Before loading content', link)
           const content = await loadContent(link)
           if (content) {
             console.log(`Puppenteer - ${entry.link}`)
