@@ -5,8 +5,8 @@ import { SiteEntry } from '../storage'
 interface EntryItemProps {
   entry: SiteEntry
   selectedEntryHash: string
-  selectEntry?: (entryHash: string) => Promise<void>
-  selectSite?: (siteHash: string) => Promise<void>
+  selectEntry?: (entryHash: string) => void
+  selectSite?: (siteHash: string) => void
 }
 
 const EntryItem = ({
@@ -45,8 +45,8 @@ const EntryItem = ({
 interface EntryListProps {
   className?: string
   entries: SiteEntry[]
-  selectEntry?: (entryHash: string) => Promise<void>
-  selectSite?: (siteHash: string) => Promise<void>
+  selectEntry?: (entryHash: string) => void
+  selectSite?: (siteHash: string) => void
   selectBack?: () => void
 }
 
@@ -83,7 +83,7 @@ const EntryList = ({
           selectEntry={async (entryHash: string) => {
             setSelectedEntryHash(entryHash)
             if (!selectEntry) return
-            await selectEntry(entryHash)
+            selectEntry(entryHash)
           }}
           selectSite={selectSite}
         />
