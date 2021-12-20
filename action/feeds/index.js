@@ -62,39 +62,34 @@ async function createFeedDatabase() {
     const opmlContent = fs.readFileSync(feedsFile).toString('utf8')
     const opml = await readOpml(opmlContent)
 
-    // const database = getDatabase('public')
-    // await createSchema(database)
-    console.log('Opml length', opml.length, opml)
+    const database = getDatabase('public')
+    await createSchema(database)
     for (const category of opml) {
       const { category: title, items } = category
-      console.log(`Load category ${title}, ${items.length}`)
       if (!items) continue
-      // await insertCategory(database, title)
+      await insertCategory(database, title)
       for (const item of items) {
         const feedData = await loadFeed(item.title, item.xmlUrl)
         if (!feedData) {
-          console.log('No feed data, continue to next item')
           continue
         }
         console.log(`Load ${feedData.title}`)
-        // for (const entry of feedData.entries) {
-        //   const link = entry.link
-        //   console.log('Before loading content', link)
-        //   const content = await loadContent(link)
-        //   if (content) {
-        //     console.log(`Puppenteer - ${entry.link}`)
-        //     entry.content = content
-        //     await close()
-        //   }
-        // }
-        // await insertSite(database, title, feedData)
+        for (const entry of feedData.entries) {
+          const link = entry.link
+          console.log('Before loading content', link)
+          const content = await loadContent(link)
+          if (content) {
+            console.log(`Puppenteer - ${entry.link}`)
+            entry.content = content
+            await close()
+          }
+        }
+        await insertSite(database, title, feedData)
       }
     }
-    console.log('Finished create feed database')
-    // await cleanup(database)
-    // await database.destroy()
+    await cleanup(database)
+    await database.destroy()
   } catch (error) {
-    console.log(error)
     console.error(error.message)
     console.error(error.stack)
     core.setFailed(error)

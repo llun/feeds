@@ -22,6 +22,7 @@ function getDatabase(/** @type {string} */ contentDirectory) {
   }
 
   const databasePath = path.join(contentDirectory, 'data.sqlite3')
+  console.log('Database path', databasePath)
   return knex({
     client: 'sqlite3',
     connection: {
