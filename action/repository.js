@@ -57,7 +57,7 @@ async function setup() {
     process.env['GITHUB_ACTION'] === 'llunfeeds' ||
     process.env['GITHUB_ACTION'] === '__llun_feeds'
   ) {
-    const result = runCommand(['npm', 'install'], getGithubActionPath())
+    const result = runCommand(['yarn', 'install'], getGithubActionPath())
     if (result.error) {
       throw new Error('Fail to run setup')
     }
