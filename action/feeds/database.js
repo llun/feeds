@@ -35,23 +35,23 @@ exports.getDatabase = getDatabase
 
 async function createSchema(/** @type {import('knex').Knex} */ knex) {
   await knex.schema
-    .createTable('Categories', (table) => {
+    .createTableIfNotExists('Categories', (table) => {
       table.string('name').primary()
     })
-    .createTable('Sites', (table) => {
+    .createTableIfNotExists('Sites', (table) => {
       table.string('key').primary()
       table.string('title').notNullable()
       table.string('url').nullable()
       table.string('description')
       table.integer('createdAt')
     })
-    .createTable('SiteCategories', (table) => {
+    .createTableIfNotExists('SiteCategories', (table) => {
       table.string('category').notNullable()
       table.string('siteKey').notNullable()
       table.string('siteTitle').notNullable()
       table.index(['category', 'siteKey'], 'site_category_idx')
     })
-    .createTable('Entries', (table) => {
+    .createTableIfNotExists('Entries', (table) => {
       table.string('key').primary()
       table.string('siteKey').notNullable()
       table.string('siteTitle').notNullable()
@@ -65,7 +65,7 @@ async function createSchema(/** @type {import('knex').Knex} */ knex) {
         'site_content_time_created_at_idx'
       )
     })
-    .createTable('EntryCategories', (table) => {
+    .createTableIfNotExists('EntryCategories', (table) => {
       table.string('category').notNullable()
       table.string('entryKey').notNullable()
       table.string('entryTitle').notNullable()
