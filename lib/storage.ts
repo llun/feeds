@@ -1,19 +1,30 @@
-import zipObject from 'lodash/zipObject'
 import { createDbWorker, WorkerHttpvfs } from 'sql.js-httpvfs'
 import { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
 
-let worker: WorkerHttpvfs = null
+let worker: WorkerHttpvfs | null = null
 export async function getWorker(
-  config: SplitFileConfig
+  config: SplitFileConfig,
+  basePath: string
 ): Promise<WorkerHttpvfs> {
   if (!worker) {
     worker = await createDbWorker(
       [config],
-      '/sqlite.worker.js',
-      '/sql-wasm.wasm'
+      `${basePath}/sqlite.worker.js`,
+      `${basePath}/sql-wasm.wasm`
     )
   }
   return worker
+}
+
+export function getDatabaseConfig(basePath: string): SplitFileConfig {
+  return {
+    from: 'inline',
+    config: {
+      serverMode: 'full',
+      requestChunkSize: 4096,
+      url: `${basePath}/data.sqlite3`
+    }
+  }
 }
 
 export interface Category {

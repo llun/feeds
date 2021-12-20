@@ -17,6 +17,10 @@ function runCommand(commands, cwd) {
 exports.runCommand = runCommand
 
 function getGithubActionPath() {
+  const workSpace = process.env['GITHUB_WORKSPACE']
+  if (!workSpace) {
+    return ''
+  }
   const actionPath = '/home/runner/work/_actions/llun/feeds'
   try {
     const files = fs.readdirSync(actionPath)

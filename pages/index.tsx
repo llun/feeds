@@ -14,6 +14,7 @@ import {
   getCategories,
   getCategoryEntries,
   getContent,
+  getDatabaseConfig,
   getSiteEntries,
   getWorker,
   SiteEntry
@@ -62,33 +63,19 @@ function parseLocation(url: string): LocationState {
   }
 }
 
-export async function getStaticProps(context: GetStaticPropsContext) {
-  const config = {
-    from: 'inline',
-    config: {
-      serverMode: 'full',
-      requestChunkSize: 4096,
-      url: '/data.sqlite3'
-    }
-  } as SplitFileConfig
-  return {
-    props: { config }
-  }
-}
-
-interface Props {
-  config: SplitFileConfig
-}
-export default function Home({ config }: Props) {
+export default function Home() {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
   const [categories, setCategories] = useState<Category[]>([])
   const [entries, setEntries] = useState<SiteEntry[]>([])
-  const [content, setContent] = useState<Content>(null)
+  const [content, setContent] = useState<Content | null>(null)
   const router = useRouter()
 
   const locationController = async (locationState: LocationState) => {
     if (!locationState) return null
-    const worker = await getWorker(config)
+    const worker = await getWorker(
+      getDatabaseConfig(router.basePath),
+      router.basePath
+    )
     switch (locationState.type) {
       case 'categories': {
         const category = locationState.category
@@ -124,7 +111,10 @@ export default function Home({ config }: Props) {
 
   useEffect(() => {
     ;(async () => {
-      const worker = await getWorker(config)
+      const worker = await getWorker(
+        getDatabaseConfig(router.basePath),
+        router.basePath
+      )
       const categories = await getCategories(worker)
       setCategories(categories)
       setStatus('loaded')

@@ -4,10 +4,10 @@ module.exports = (phase, { defaultConfig }) => {
   const customDomainName = core.getInput('customDomain')
   const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
   const basePath = customDomainName
-    ? '/'
+    ? ''
     : (githubRootName.split('/').length > 1 &&
         `/${githubRootName.split('/')[1]}`) ||
-      '/'
+      ''
 
   /**
    * @type {import('next').NextConfig}

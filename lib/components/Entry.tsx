@@ -3,7 +3,7 @@ import { Content } from '../storage'
 
 interface Props {
   className?: string
-  content?: Content
+  content: Content | null
   selectBack?: () => void
 }
 
