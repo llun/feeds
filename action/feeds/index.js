@@ -64,6 +64,7 @@ async function createFeedDatabase() {
 
     // const database = getDatabase('public')
     // await createSchema(database)
+    console.log('Opml length', opml.length, opml)
     for (const category of opml) {
       const { category: title, items } = category
       console.log(`Load category ${title}, ${items.length}`)
