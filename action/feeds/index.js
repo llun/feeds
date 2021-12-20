@@ -83,8 +83,8 @@ async function createFeedDatabase() {
           if (content) {
             console.log(`Puppenteer - ${entry.link}`)
             entry.content = content
+            await close()
           }
-          await close()
         }
 
         await insertSite(database, title, feedData)
