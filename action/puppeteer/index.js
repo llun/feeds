@@ -23,8 +23,10 @@ async function loadContent(link, siteLoaders = defaultSiteLoaders) {
   }
 
   if (!_browser) {
+    console.log('Starting puppeteer')
     _browser = await puppeteer.launch()
   }
+  console.log('Load site')
   return siteLoader(_browser, link)
 }
 exports.loadContent = loadContent
