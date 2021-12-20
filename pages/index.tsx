@@ -32,31 +32,30 @@ export default function Home() {
 
   useEffect(() => {
     ;(async () => {
-      const worker = await getWorker(
-        getDatabaseConfig(router.basePath),
-        router.basePath
+      if (status !== 'loaded') {
+        const worker = await getWorker(
+          getDatabaseConfig(router.basePath),
+          router.basePath
+        )
+        const categories = await getCategories(worker)
+        setCategories(categories)
+        setStatus('loaded')
+      }
+      const stateLocation = parseLocation(router.asPath)
+      if (!stateLocation) {
+        router.push('/sites/all')
+        return
+      }
+      locationController(
+        stateLocation,
+        router.basePath,
+        entries,
+        setEntries,
+        setContent,
+        setPageState
       )
-      const categories = await getCategories(worker)
-      setCategories(categories)
-      setStatus('loaded')
     })()
-  }, [status])
-
-  useEffect(() => {
-    const stateLocation = parseLocation(router.asPath)
-    if (!stateLocation) {
-      router.push('/sites/all')
-      return
-    }
-    locationController(
-      stateLocation,
-      router.basePath,
-      entries,
-      setEntries,
-      setContent,
-      setPageState
-    )
-  }, [router.asPath])
+  }, [status, router.asPath])
 
   return (
     <>
