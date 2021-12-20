@@ -10,7 +10,8 @@ const {
   createSchema,
   insertCategory,
   insertSite,
-  cleanup
+  cleanup,
+  insertEntry
 } = require('./database')
 
 /**
@@ -82,6 +83,7 @@ async function createFeedDatabase(githubActionPath) {
           continue
         }
         console.log(`Load ${feedData.title}`)
+        const siteKey = await insertSite(database, title, feedData)
         for (const entry of feedData.entries) {
           const link = entry.link
           const content = await loadContent(link)
@@ -89,8 +91,8 @@ async function createFeedDatabase(githubActionPath) {
             entry.content = content
             await close()
           }
+          await insertEntry(database, siteKey, title, category, entry)
         }
-        await insertSite(database, title, feedData)
       }
     }
     await cleanup(database)

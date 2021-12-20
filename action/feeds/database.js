@@ -98,18 +98,18 @@ async function insertCategory(
 exports.insertCategory = insertCategory
 
 async function insertEntry(
-  /** @type {import('knex').Knex.Transaction} */ trx,
+  /** @type {import('knex').Knex} */ knex,
   /** @type {string} */ siteKey,
   /** @type {string} */ siteTitle,
   /** @type {string} */ category,
   /** @type {import('./parsers').Entry}*/ entry
 ) {
   const key = hash(`${entry.title}${entry.link}`)
-  const existingEntry = await trx('Entries').where('key', key).first()
+  const existingEntry = await knex('Entries').where('key', key).first()
   if (existingEntry) return
 
   const contentTime = (entry.date && Math.floor(entry.date / 1000)) || null
-  await trx('Entries').insert({
+  await knex('Entries').insert({
     key,
     siteKey,
     siteTitle,
@@ -119,7 +119,7 @@ async function insertEntry(
     contentTime,
     createdAt: Math.floor(Date.now() / 1000)
   })
-  await trx('EntryCategories').insert({
+  await knex('EntryCategories').insert({
     category,
     entryKey: key,
     entryTitle: entry.title,
@@ -128,6 +128,7 @@ async function insertEntry(
     entryContentTime: contentTime
   })
 }
+exports.insertEntry = insertEntry
 
 async function insertSite(
   /** @type {import('knex').Knex} */ knex,
@@ -135,7 +136,7 @@ async function insertSite(
   /** @type {import('./parsers').Site} */ site
 ) {
   try {
-    await knex.transaction(async (trx) => {
+    const key = await knex.transaction(async (trx) => {
       const key = hash(site.title)
       const updatedAt = site.updatedAt || Date.now()
       const siteCategory = await trx('SiteCategories')
@@ -159,14 +160,13 @@ async function insertSite(
         description: site.description || null,
         createdAt: Math.floor(updatedAt / 1000)
       })
-
-      for (const entry of site.entries) {
-        await insertEntry(trx, key, site.title, category, entry)
-      }
+      return key
     })
+    return key
   } catch (error) {
     console.error(`Fail to insert site ${site.title}`)
     console.error(error.message)
+    return null
   }
 }
 exports.insertSite = insertSite
