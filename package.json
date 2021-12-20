@@ -62,5 +62,8 @@
     "@types/sanitize-html": "^2.6.0",
     "@types/sinon": "^10.0.6",
     "sinon": "^12.0.1"
+  },
+  "resolutions": {
+    "sqlite3/node-gyp/tar": "^4.4.19"
   }
 }
