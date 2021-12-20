@@ -49,13 +49,15 @@ const loader = async (browser, url) => {
     }())
   `)
 
-  const resultArticle = /** @type {import('../').ParseResponse} */ (await page.evaluate(`
+  const resultArticle = /** @type {import('../').ParseResponse} */ (
+    await page.evaluate(`
     (function(){
       ${readabilityJsStr}
       const documentClone = document.cloneNode(true)
       return new Readability(documentClone, { disableJSONLD: true }).parse()
     }())
-  `))
+  `)
+  )
   await page.close()
   if (!resultArticle) return ''
   return sanitizeHtml(resultArticle.content, {

@@ -89,9 +89,15 @@ async function createFeedDatabase(githubActionPath) {
           if (await isEntryExists(database, entry)) continue
 
           const link = entry.link
-          const content = await loadContent(link)
-          if (content) {
-            entry.content = content
+          try {
+            const content = await loadContent(link)
+            if (content) {
+              entry.content = content
+            }
+          } catch (error) {
+            // Puppeteer timeout
+            console.error(error.message)
+          } finally {
             await close()
           }
 
