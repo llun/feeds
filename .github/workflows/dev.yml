@@ -3,27 +3,24 @@ name: Dev
 on: push
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Use Node.js 16
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16
-      - name: Test
-        run: |
-          npm install
-          npm run test
+  # test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Use Node.js 16
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: 16
+  #     - name: Test
+  #       run: |
+  #         npm install
+  #         npm run test
 
   sample:
     runs-on: ubuntu-latest
-    needs: [test]
     if: github.ref == 'refs/heads/next'
     name: Sample
     steps:
       - name: Run Action
         uses: llun/feeds@next
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3

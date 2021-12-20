@@ -66,8 +66,8 @@ async function createFeedDatabase() {
     // await createSchema(database)
     for (const category of opml) {
       const { category: title, items } = category
+      console.log(`Load category ${title}, ${items.length}`)
       if (!items) continue
-      console.log(`Load category ${title}`)
       // await insertCategory(database, title)
       for (const item of items) {
         const feedData = await loadFeed(item.title, item.xmlUrl)
@@ -89,9 +89,11 @@ async function createFeedDatabase() {
         // await insertSite(database, title, feedData)
       }
     }
+    console.log('Finished create feed database')
     // await cleanup(database)
     // await database.destroy()
   } catch (error) {
+    console.log(error)
     console.error(error.message)
     console.error(error.stack)
     core.setFailed(error)
