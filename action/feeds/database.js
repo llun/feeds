@@ -41,7 +41,7 @@ async function createSchema(/** @type {import('knex').Knex} */ knex) {
   }
 
   if (!(await knex.schema.hasTable('Sites'))) {
-    await knex.schema.createTableIfNotExists('Sites', (table) => {
+    await knex.schema.createTable('Sites', (table) => {
       table.string('key').primary()
       table.string('title').notNullable()
       table.string('url').nullable()
@@ -51,7 +51,7 @@ async function createSchema(/** @type {import('knex').Knex} */ knex) {
   }
 
   if (!(await knex.schema.hasTable('SiteCategories'))) {
-    await knex.schema.createTableIfNotExists('SiteCategories', (table) => {
+    await knex.schema.createTable('SiteCategories', (table) => {
       table.string('category').notNullable()
       table.string('siteKey').notNullable()
       table.string('siteTitle').notNullable()
