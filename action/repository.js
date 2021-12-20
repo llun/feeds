@@ -34,10 +34,8 @@ exports.getGithubActionPath = getGithubActionPath
 function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
-    const result = runCommand(
-      ['npm', 'run', 'build', '--', `--outdir=${workSpace}`],
-      getGithubActionPath()
-    )
+    const result = runCommand(['npm', 'run', 'build'], getGithubActionPath())
+    runCommand(['cp', '-rT', 'out', workSpace], getGithubActionPath())
     if (result.error) {
       throw new Error('Fail to build site')
     }
@@ -121,31 +119,33 @@ async function publish() {
       fs.writeFileSync('CNAME', customDomain)
     }
 
-    runCommand([
-      'rm',
-      '-rf',
-      'action.yml',
-      'index.js',
-      'package-lock.json',
-      'package.json',
-      '.gitignore',
-      '.prettierrc.yml',
-      'tsconfig.json',
-      '.eleventy.js',
-      'tailwind.config.js',
-      'webpack.config.js',
-      '.github',
-      'action',
-      'readme.md',
-      'pages',
-      'contents',
-      'browser'
-    ])
-    runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
-    runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
-    runCommand(['git', 'add', '-f', '--all'])
-    runCommand(['git', 'commit', '-m', 'Update feeds contents'])
-    runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`])
+    runCommand(['ls', '-la'])
+
+    // runCommand([
+    //   'rm',
+    //   '-rf',
+    //   'action.yml',
+    //   'index.js',
+    //   'package-lock.json',
+    //   'package.json',
+    //   '.gitignore',
+    //   '.prettierrc.yml',
+    //   'tsconfig.json',
+    //   '.eleventy.js',
+    //   'tailwind.config.js',
+    //   'webpack.config.js',
+    //   '.github',
+    //   'action',
+    //   'readme.md',
+    //   'pages',
+    //   'contents',
+    //   'browser'
+    // ])
+    // runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
+    // runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
+    // runCommand(['git', 'add', '-f', '--all'])
+    // runCommand(['git', 'commit', '-m', 'Update feeds contents'])
+    // runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`])
   }
 }
 exports.publish = publish

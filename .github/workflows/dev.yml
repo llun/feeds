@@ -25,5 +25,3 @@ jobs:
     steps:
       - name: Run Action
         uses: llun/feeds@next
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
