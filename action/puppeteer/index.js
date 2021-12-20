@@ -7,25 +7,27 @@ let _browser = null
 
 /**
  *
- * @param {import('../eleventy/data').EntryData} entry
+ * @param {string} link
  * @param {import('./sites').SiteLoaderMap} [siteLoaders]
  * @returns {Promise<string>}
  */
-async function loadContent(entry, siteLoaders = defaultSiteLoaders) {
+async function loadContent(link, siteLoaders = defaultSiteLoaders) {
   if (!siteLoaders) {
     return ''
   }
 
-  const entryLinkUrl = new URL(entry.link)
+  const entryLinkUrl = new URL(link)
   const siteLoader = siteLoaders.get(entryLinkUrl.hostname)
   if (!siteLoader) {
     return ''
   }
 
   if (!_browser) {
+    console.log('Starting puppeteer')
     _browser = await puppeteer.launch()
   }
-  return siteLoader(_browser, entry.link)
+  console.log('Load site')
+  return siteLoader(_browser, link)
 }
 exports.loadContent = loadContent
 

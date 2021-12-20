@@ -1,21 +1,18 @@
 import React, { useEffect } from 'react'
-import { EntryData } from '../../action/eleventy/data'
-import type { PageState } from '../index'
+import { Content } from '../storage'
 
 interface Props {
   className?: string
-  entry?: EntryData
-  page: PageState
+  content?: Content
   selectBack?: () => void
 }
 
-const Entry = ({ className, entry, page, selectBack }: Props) => {
+const Entry = ({ className, content, selectBack }: Props) => {
   let element: HTMLElement | null = null
   useEffect(() => {
     if (!element) return
-    if (page !== 'article') return
     element.scrollTo(0, 0)
-  })
+  }, [content])
 
   return (
     <article
@@ -27,14 +24,14 @@ const Entry = ({ className, entry, page, selectBack }: Props) => {
       <a className="cursor-pointer lg:hidden" onClick={selectBack}>
         ← Back
       </a>
-      {entry && (
+      {content && (
         <div>
           <h3>
-            <a href={entry.link} target="_blank">
-              {entry.title}
+            <a href={content.url} target="_blank">
+              {content.title}
             </a>
           </h3>
-          <div dangerouslySetInnerHTML={{ __html: entry.content }} />
+          <div dangerouslySetInnerHTML={{ __html: content.content }} />
         </div>
       )}
       <div className="pb-8"></div>

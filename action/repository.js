@@ -34,10 +34,8 @@ exports.getGithubActionPath = getGithubActionPath
 function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
-    const result = runCommand(
-      ['npm', 'run', 'build', `--output=${workSpace}`],
-      getGithubActionPath()
-    )
+    const result = runCommand(['npm', 'run', 'build'], getGithubActionPath())
+    runCommand(['cp', '-rT', 'out', workSpace], getGithubActionPath())
     if (result.error) {
       throw new Error('Fail to build site')
     }
@@ -139,7 +137,11 @@ async function publish() {
       'readme.md',
       'pages',
       'contents',
-      'browser'
+      'browser',
+      // Old eleventy structure
+      'css',
+      'data',
+      'js'
     ])
     runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
     runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])

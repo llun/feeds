@@ -1,10 +1,17 @@
 // @ts-check
-const crypto = require('crypto')
 const core = require('@actions/core')
 const fs = require('fs')
 const path = require('path')
-const fetch = require('node-fetch').default
+const axios = require('axios').default
 const { parseXML, parseAtom, parseRss } = require('./parsers')
+const { loadContent, close } = require('../puppeteer')
+const {
+  getDatabase,
+  createSchema,
+  insertCategory,
+  insertSite,
+  cleanup
+} = require('./database')
 
 /**
  *
@@ -14,12 +21,10 @@ const { parseXML, parseAtom, parseRss } = require('./parsers')
  */
 async function loadFeed(title, url) {
   try {
-    const data = await fetch(url, {
-      headers: {
-        'User-Agent': 'llun/feeds'
-      }
-    }).then((response) => response.text())
-    const xml = await parseXML(data)
+    const response = await axios.get(url, {
+      headers: { 'User-Agent': 'llun/feeds' }
+    })
+    const xml = await parseXML(response.data)
     if (xml.rss) return parseRss(title, xml)
     if (xml.feed) return parseAtom(title, xml)
     return null
@@ -54,57 +59,46 @@ exports.readOpml = readOpml
 
 /**
  *
- * @param {string} rootDirectory
- * @param {string} category
+ * @param {string} [githubActionPath]
  */
-function createCategoryDirectory(rootDirectory, category) {
+async function createFeedDatabase(githubActionPath) {
   try {
-    const stats = fs.statSync(path.join(rootDirectory, category))
-    if (!stats.isDirectory()) {
-      throw new Error(
-        `${path.join(rootDirectory, category)} is not a directory`
-      )
-    }
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      throw new Error(`Fail to access ${rootDirectory}`)
-    }
-    fs.mkdirSync(path.join(rootDirectory, category), { recursive: true })
-  }
-}
-
-async function writeFeedsContent() {
-  try {
-    const contentDirectory = core.getInput('outputDirectory', {
-      required: true
-    })
     const feedsFile = core.getInput('opmlFile', { required: true })
     const opmlContent = fs.readFileSync(feedsFile).toString('utf8')
     const opml = await readOpml(opmlContent)
+
+    const publicPath = githubActionPath
+      ? path.join(githubActionPath, 'public')
+      : 'public'
+    const database = getDatabase(publicPath)
+    await createSchema(database)
     for (const category of opml) {
       const { category: title, items } = category
-      createCategoryDirectory(contentDirectory, title)
       if (!items) continue
-      console.log(`Load category ${title}`)
+      await insertCategory(database, title)
       for (const item of items) {
         const feedData = await loadFeed(item.title, item.xmlUrl)
         if (!feedData) {
           continue
         }
         console.log(`Load ${feedData.title}`)
-        const sha256 = crypto.createHash('sha256')
-        sha256.update(feedData.title)
-        const hexTitle = sha256.digest('hex')
-        fs.writeFileSync(
-          path.join(contentDirectory, title, `${hexTitle}.json`),
-          JSON.stringify(feedData)
-        )
+        for (const entry of feedData.entries) {
+          const link = entry.link
+          const content = await loadContent(link)
+          if (content) {
+            entry.content = content
+            await close()
+          }
+        }
+        await insertSite(database, title, feedData)
       }
     }
+    await cleanup(database)
+    await database.destroy()
   } catch (error) {
     console.error(error.message)
     console.error(error.stack)
     core.setFailed(error)
   }
 }
-exports.writeFeedsContent = writeFeedsContent
+exports.createFeedDatabase = createFeedDatabase

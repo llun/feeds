@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import formatDistance from 'date-fns/formatDistance'
-import { SiteEntryData } from '../../action/eleventy/data'
-import type { PageState } from '../index'
+import { SiteEntry } from '../storage'
 
 interface EntryItemProps {
-  entry: SiteEntryData
+  entry: SiteEntry
   selectedEntryHash: string
-  selectEntry: (entryHash: string) => Promise<void>
-  selectSite: (siteHash: string) => Promise<void>
+  selectEntry?: (entryHash: string) => Promise<void>
+  selectSite?: (siteHash: string) => Promise<void>
 }
 
 const EntryItem = ({
@@ -18,39 +17,42 @@ const EntryItem = ({
 }: EntryItemProps) => (
   <div
     className={`rounded px-4 ${
-      (selectedEntryHash === entry.entryHash && 'bg-gray-200') || ''
+      (selectedEntryHash === entry.key && 'bg-gray-200') || ''
     }`.trim()}
   >
     <h3>
       <a
         className="cursor-pointer"
-        onClick={() => selectEntry(entry.entryHash)}
+        onClick={() => selectEntry && selectEntry(entry.key)}
       >
         {entry.title}
       </a>
     </h3>
     <small>
-      <a className="cursor-pointer" onClick={() => selectSite(entry.siteHash)}>
-        {entry.siteTitle}
+      <a
+        className="cursor-pointer"
+        onClick={() => selectSite && selectSite(entry.key)}
+      >
+        {entry.site.title}
       </a>
-      {entry.date && <span>,{formatDistance(entry.date, new Date())}</span>}
+      {entry.timestamp && (
+        <span>, {formatDistance(entry.timestamp * 1000, new Date())}</span>
+      )}
     </small>
   </div>
 )
 
 interface EntryListProps {
   className?: string
-  entries: SiteEntryData[]
-  page: PageState
-  selectEntry: (entryHash: string) => Promise<void>
-  selectSite: (siteHash: string) => Promise<void>
+  entries: SiteEntry[]
+  selectEntry?: (entryHash: string) => Promise<void>
+  selectSite?: (siteHash: string) => Promise<void>
   selectBack?: () => void
 }
 
 const EntryList = ({
   className,
   entries,
-  page,
   selectEntry,
   selectSite,
   selectBack
@@ -60,9 +62,8 @@ const EntryList = ({
   let element: HTMLElement | null = null
   useEffect(() => {
     if (!element) return
-    if (page !== 'entries') return
     element.scrollTo(0, 0)
-  })
+  }, [entries])
 
   return (
     <section
@@ -76,11 +77,12 @@ const EntryList = ({
       </a>
       {entries.map((entry) => (
         <EntryItem
-          key={`entry-${entry.entryHash}`}
+          key={`entry-${entry.key}`}
           entry={entry}
           selectedEntryHash={selectedEntryHash}
           selectEntry={async (entryHash: string) => {
             setSelectedEntryHash(entryHash)
+            if (!selectEntry) return
             await selectEntry(entryHash)
           }}
           selectSite={selectSite}

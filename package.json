@@ -7,47 +7,60 @@
   "repository": "github:llun/test-action",
   "license": "ISC",
   "scripts": {
-    "js": "NODE_ENV=development webpack",
-    "css": "tailwindcss-cli build -c tailwind.config.js -o pages/css/tailwind.css",
-    "serve": "eleventy --serve",
-    "build": "NODE_ENV=production npm run css && webpack && eleventy",
-    "load": "INPUT_OUTPUTDIRECTORY='contents' INPUT_OPMLFILE='feeds.opml' node index.js",
+    "dev": "next dev",
+    "build": "next build && next export",
+    "start": "next start",
+    "load": "INPUT_OPMLFILE='feeds.opml' node index.js",
     "test": "ava"
   },
   "ava": {
-    "failWithoutAssertions": false
+    "extensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "require": [
+      "@swc-node/register"
+    ]
   },
   "dependencies": {
-    "@11ty/eleventy": "^0.12.1",
     "@actions/core": "^1.6.0",
     "@actions/github": "^5.0.0",
     "@mozilla/readability": "^0.4.1",
     "@octokit/rest": "^18.12.0",
-    "@tailwindcss/typography": "^0.4.1",
+    "@tailwindcss/typography": "^0.5.0",
+    "autoprefixer": "^10.4.0",
+    "ava": "^3.15.0",
+    "axios": "^0.24.0",
+    "date-fns": "^2.27.0",
+    "history": "^5.2.0",
+    "html-minifier": "^4.0.0",
+    "jsdom": "^19.0.0",
+    "knex": "^0.95.14",
+    "lodash": "^4.17.21",
+    "next": "^12.0.7",
+    "postcss": "^8.4.5",
+    "puppeteer": "^13.0.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "sanitize-html": "^2.6.1",
+    "sql.js-httpvfs": "^0.8.11",
+    "sqlite3": "^5.0.2",
+    "tailwindcss": "^3.0.7",
+    "tailwindcss-cli": "^0.1.2",
+    "xml2js": "^0.4.23"
+  },
+  "devDependencies": {
+    "@swc-node/register": "^1.4.2",
     "@types/html-minifier": "^4.0.1",
     "@types/jsdom": "^16.2.13",
     "@types/mozilla-readability": "^0.2.1",
-    "@types/node": "^16.11.11",
+    "@types/node": "^17.0.0",
     "@types/puppeteer": "^5.4.4",
     "@types/react": "^17.0.37",
     "@types/react-dom": "^17.0.11",
     "@types/sanitize-html": "^2.6.0",
     "@types/sinon": "^10.0.6",
-    "ava": "^3.15.0",
-    "date-fns": "^2.27.0",
-    "history": "^5.1.0",
-    "html-minifier": "^4.0.0",
-    "jsdom": "^19.0.0",
-    "puppeteer": "^12.0.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "sanitize-html": "^2.6.0",
-    "sinon": "^12.0.1",
-    "tailwindcss-cli": "^0.1.2",
-    "ts-loader": "^9.2.6",
-    "typescript": "^4.5.2",
-    "webpack": "^5.64.4",
-    "webpack-cli": "^4.9.1",
-    "xml2js": "^0.4.23"
+    "sinon": "^12.0.1"
   }
 }
