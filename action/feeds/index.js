@@ -1,6 +1,7 @@
 // @ts-check
 const core = require('@actions/core')
 const fs = require('fs')
+const path = require('path')
 const axios = require('axios').default
 const { parseXML, parseAtom, parseRss } = require('./parsers')
 const { loadContent, close } = require('../puppeteer')
@@ -56,13 +57,20 @@ async function readOpml(opmlContent) {
 }
 exports.readOpml = readOpml
 
-async function createFeedDatabase() {
+/**
+ *
+ * @param {string} [githubActionPath]
+ */
+async function createFeedDatabase(githubActionPath) {
   try {
     const feedsFile = core.getInput('opmlFile', { required: true })
     const opmlContent = fs.readFileSync(feedsFile).toString('utf8')
     const opml = await readOpml(opmlContent)
 
-    const database = getDatabase('public')
+    const publicPath = githubActionPath
+      ? path.join(githubActionPath, 'public')
+      : 'public'
+    const database = getDatabase(publicPath)
     await createSchema(database)
     for (const category of opml) {
       const { category: title, items } = category
@@ -76,10 +84,8 @@ async function createFeedDatabase() {
         console.log(`Load ${feedData.title}`)
         for (const entry of feedData.entries) {
           const link = entry.link
-          console.log('Before loading content', link)
           const content = await loadContent(link)
           if (content) {
-            console.log(`Puppenteer - ${entry.link}`)
             entry.content = content
             await close()
           }

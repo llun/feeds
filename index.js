@@ -1,13 +1,17 @@
 // @ts-check
-const { setup, publish, buildSite } = require('./action/repository')
+const {
+  setup,
+  publish,
+  buildSite,
+  getGithubActionPath
+} = require('./action/repository')
 
 async function run() {
   await setup()
   const { createFeedDatabase } = require('./action/feeds')
-  await createFeedDatabase()
-  console.log('Finish creating database')
-  // buildSite()
-  // await publish()
+  await createFeedDatabase(getGithubActionPath())
+  buildSite()
+  await publish()
 }
 
 run()
