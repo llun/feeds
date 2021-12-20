@@ -31,7 +31,7 @@ const EntryItem = ({
     <small>
       <a
         className="cursor-pointer"
-        onClick={() => selectSite && selectSite(entry.key)}
+        onClick={() => selectSite && selectSite(entry.site.key)}
       >
         {entry.site.title}
       </a>
