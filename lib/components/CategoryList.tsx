@@ -7,7 +7,7 @@ interface Props {
   selectCategory?: (category: string) => void
   selectSite?: (site: string) => void
 }
-const Navigation = ({
+const CategoryList = ({
   className,
   categories,
   selectCategory,
@@ -17,7 +17,7 @@ const Navigation = ({
 
   return (
     <aside
-      className={`prose max-w-none w-full sm:w-48 xl:w-96 flex-shrink-0 p-6 ${className}`}
+      className={`max-w-none w-full sm:w-48 xl:w-96 flex-shrink-0 p-6 ${className}`}
     >
       <h1>Feeds</h1>
       <h2 className="cursor-pointer">
@@ -57,4 +57,4 @@ const Navigation = ({
   )
 }
 
-export default Navigation
+export default CategoryList

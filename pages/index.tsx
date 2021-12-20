@@ -4,7 +4,7 @@ import Entry from '../lib/components/Entry'
 import EntryList from '../lib/components/EntryList'
 
 import Meta from '../lib/components/Meta'
-import Navigation from '../lib/components/Navigation'
+import CategoryList from '../lib/components/CategoryList'
 import {
   Category,
   Content,
@@ -32,55 +32,61 @@ export default function Home() {
 
   useEffect(() => {
     ;(async () => {
-      if (status !== 'loaded') {
-        const worker = await getWorker(
-          getDatabaseConfig(router.basePath),
-          router.basePath
-        )
-        const categories = await getCategories(worker)
-        setCategories(categories)
-        setStatus('loaded')
-      }
       const stateLocation = parseLocation(router.asPath)
       if (!stateLocation) {
         router.push('/sites/all')
         return
       }
-      locationController(
-        stateLocation,
-        router.basePath,
-        entries,
-        setEntries,
-        setContent,
-        setPageState
+
+      const worker = await getWorker(
+        getDatabaseConfig(router.basePath),
+        router.basePath
       )
+      const [categories] = await Promise.all([
+        getCategories(worker),
+        locationController(
+          stateLocation,
+          router.basePath,
+          entries,
+          setEntries,
+          setContent,
+          setPageState
+        )
+      ])
+      setCategories(categories)
+      setStatus('loaded')
     })()
   }, [status, router.asPath])
 
   return (
     <>
       <Meta />
-      <div className="container mx-auto flex flex-row w-screen h-screen">
-        <Navigation
-          className={categoriesClassName(pageState)}
-          categories={categories}
-          selectCategory={(category: string) =>
-            router.push(`/categories/${category}`)
-          }
-          selectSite={(site: string) => router.push(`/sites/${site}`)}
-        />
-        <EntryList
-          className={entriesClassName(pageState)}
-          entries={entries}
-          selectBack={() => setPageState('categories')}
-          selectSite={(site: string) => router.push(`/sites/${site}`)}
-          selectEntry={(entry: string) => router.push(`/entries/${entry}`)}
-        />
-        <Entry
-          className={articleClassName(pageState)}
-          content={content}
-          selectBack={() => setPageState('entries')}
-        />
+      <div className="prose container mx-auto flex flex-row w-screen h-screen">
+        {status === 'loading' && <h1>Loading database</h1>}
+        {status === 'loaded' && (
+          <>
+            <CategoryList
+              className={categoriesClassName(pageState)}
+              categories={categories}
+              selectCategory={(category: string) =>
+                router.push(`/categories/${category}`)
+              }
+              selectSite={(site: string) => router.push(`/sites/${site}`)}
+            />
+            <EntryList
+              className={entriesClassName(pageState)}
+              entries={entries}
+              selectBack={() => setPageState('categories')}
+              selectSite={(site: string) => router.push(`/sites/${site}`)}
+              selectEntry={(entry: string) => router.push(`/entries/${entry}`)}
+            />
+            <Entry
+              className={articleClassName(pageState)}
+              content={content}
+              selectBack={() => setPageState('entries')}
+            />
+          </>
+        )}
       </div>
     </>
   )
