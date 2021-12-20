@@ -34,11 +34,11 @@ exports.getGithubActionPath = getGithubActionPath
 function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
-    runCommand(['which', 'node'])
     const result = runCommand(
       ['npm', 'run', 'build', '--', `--outdir=${workSpace}`],
       getGithubActionPath()
     )
+    runCommand(['which', 'node'])
     if (result.error) {
       throw new Error('Fail to build site')
     }

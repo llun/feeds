@@ -76,17 +76,16 @@ async function createFeedDatabase() {
           continue
         }
         console.log(`Load ${feedData.title}`)
-        for (const entry of feedData.entries) {
-          const link = entry.link
-          console.log('Before loading content', link)
-          const content = await loadContent(link)
-          if (content) {
-            console.log(`Puppenteer - ${entry.link}`)
-            entry.content = content
-            await close()
-          }
-        }
-
+        // for (const entry of feedData.entries) {
+        //   const link = entry.link
+        //   console.log('Before loading content', link)
+        //   const content = await loadContent(link)
+        //   if (content) {
+        //     console.log(`Puppenteer - ${entry.link}`)
+        //     entry.content = content
+        //     await close()
+        //   }
+        // }
         await insertSite(database, title, feedData)
       }
     }
