@@ -34,6 +34,10 @@ exports.getGithubActionPath = getGithubActionPath
 function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
+    // Remove old static resources
+    runCommand(['rm', '-rf', '_next'])
+    // Bypass Jekyll
+    runCommand(['touch', '.nojekyll'])
     const result = runCommand(['npm', 'run', 'build'], getGithubActionPath())
     runCommand(['cp', '-rT', 'out', workSpace], getGithubActionPath())
     if (result.error) {
