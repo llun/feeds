@@ -19,7 +19,7 @@ const Entry = ({ className, content, selectBack }: Props) => {
       ref={(article) => {
         element = article
       }}
-      className={`pb-4 max-w-full break-words flex-grow p-6 lg:overflow-auto ${className}`}
+      className={`prose pb-4 max-w-full break-words flex-grow p-6 lg:overflow-auto ${className}`}
     >
       <a className="cursor-pointer lg:hidden" onClick={selectBack}>
         ← Back

@@ -70,7 +70,7 @@ const EntryList = ({
       ref={(section) => {
         element = section
       }}
-      className={`pb-4 w-full sm:w-96 flex-shrink-0 p-6 sm:overflow-auto ${className}`}
+      className={`prose pb-4 w-full sm:w-96 flex-shrink-0 p-6 sm:overflow-auto ${className}`}
     >
       <a className="cursor-pointer sm:hidden" onClick={selectBack}>
         ← Back
