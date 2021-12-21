@@ -38,11 +38,6 @@ exports.getGithubActionPath = getGithubActionPath
 function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
-    // Copy old database to public
-    runCommand(
-      ['cp', `${workSpace}/data.sqlite3`, 'public/'],
-      getGithubActionPath()
-    )
     // Remove old static resources
     runCommand(['rm', '-rf', '_next'])
     // Bypass Jekyll
