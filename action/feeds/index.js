@@ -75,17 +75,17 @@ async function createFeedDatabase(githubActionPath) {
     const database = getDatabase(publicPath)
     await createSchema(database)
     for (const category of opml) {
-      const { category: title, items } = category
+      const { category: categoryName, items } = category
       if (!items) continue
-      await insertCategory(database, title)
+      await insertCategory(database, categoryName)
       for (const item of items) {
-        const feedData = await loadFeed(item.title, item.xmlUrl)
-        if (!feedData) {
+        const site = await loadFeed(item.title, item.xmlUrl)
+        if (!site) {
           continue
         }
-        console.log(`Load ${feedData.title}`)
-        const siteKey = await insertSite(database, title, feedData)
-        for (const entry of feedData.entries) {
+        console.log(`Load ${site.title}`)
+        const siteKey = await insertSite(database, categoryName, site)
+        for (const entry of site.entries) {
           if (await isEntryExists(database, entry)) continue
 
           const link = entry.link
@@ -101,7 +101,7 @@ async function createFeedDatabase(githubActionPath) {
             await close()
           }
 
-          await insertEntry(database, siteKey, title, category, entry)
+          await insertEntry(database, siteKey, site.title, categoryName, entry)
         }
       }
     }
