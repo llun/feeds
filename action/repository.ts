@@ -27,13 +27,21 @@ export function getGithubActionPath() {
   }
 }
 
-export function buildSite() {
+export function getWorkspacePath() {
   const workSpace = process.env['GITHUB_WORKSPACE']
+  if (!workSpace) {
+    return ''
+  }
+  return workSpace
+}
+
+export function buildSite() {
+  const workSpace = getWorkspacePath()
   if (workSpace) {
     // Remove old static resources
-    runCommand(['rm', '-rf', '_next'])
+    runCommand(['rm', '-rf', '_next'], workSpace)
     // Bypass Jekyll
-    runCommand(['touch', '.nojekyll'])
+    runCommand(['touch', '.nojekyll'], workSpace)
     const result = runCommand(['npm', 'run', 'build'], getGithubActionPath())
     runCommand(['cp', '-rT', 'out', workSpace], getGithubActionPath())
     if (result.error) {
@@ -44,7 +52,7 @@ export function buildSite() {
 
 export async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
-  const workSpace = process.env['GITHUB_WORKSPACE']
+  const workSpace = getWorkspacePath()
   if (workSpace) {
     const core = require('@actions/core')
     const github = require('@actions/github')
@@ -83,7 +91,10 @@ export async function setup() {
 
     if (!isBranchExist) {
       console.log(`Create content branch ${branch}`)
-      const branchResult = runCommand(['git', 'checkout', '-B', branch])
+      const branchResult = runCommand(
+        ['git', 'checkout', '-B', branch],
+        workSpace
+      )
       if (branchResult.error) {
         throw new Error('Fail to switch branch')
       }
@@ -92,7 +103,7 @@ export async function setup() {
 }
 
 export async function publish() {
-  const workSpace = process.env['GITHUB_WORKSPACE']
+  const workSpace = getWorkspacePath()
   if (workSpace) {
     const core = require('@actions/core')
     const github = require('@actions/github')
@@ -107,35 +118,38 @@ export async function publish() {
       fs.writeFileSync('CNAME', customDomain)
     }
 
-    runCommand([
-      'rm',
-      '-rf',
-      'action.yml',
-      'index.js',
-      'package-lock.json',
-      'package.json',
-      '.gitignore',
-      '.prettierrc.yml',
-      'tsconfig.json',
-      '.eleventy.js',
-      'tailwind.config.js',
-      'webpack.config.js',
-      '.github',
-      'action',
-      'readme.md',
-      'pages',
-      'contents',
-      'browser',
-      // Old eleventy structure
-      'css',
-      'data',
-      'js'
-    ])
-    runCommand(['ls', '-la'])
-    // runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
-    // runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
-    // runCommand(['git', 'add', '-f', '--all'])
-    // runCommand(['git', 'commit', '-m', 'Update feeds contents'])
-    // runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`])
+    runCommand(
+      [
+        'rm',
+        '-rf',
+        'action.yml',
+        'index.js',
+        'package-lock.json',
+        'package.json',
+        '.gitignore',
+        '.prettierrc.yml',
+        'tsconfig.json',
+        '.eleventy.js',
+        'tailwind.config.js',
+        'webpack.config.js',
+        '.github',
+        'action',
+        'readme.md',
+        'pages',
+        'contents',
+        'browser',
+        // Old eleventy structure
+        'css',
+        'data',
+        'js'
+      ],
+      workSpace
+    )
+    runCommand(['ls', '-la'], workSpace)
+    // runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'], workSpace)
+    // runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'], workSpace)
+    // runCommand(['git', 'add', '-f', '--all'], workSpace)
+    // runCommand(['git', 'commit', '-m', 'Update feeds contents'], workSpace)
+    // runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`], workSpace)
   }
 }
