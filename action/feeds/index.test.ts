@@ -1,10 +1,8 @@
-// @ts-check
-const test = /** @type {import('ava').TestInterface<{}>} */ (require('ava')
-  .default)
-const fs = require('fs')
-const path = require('path')
-const sinon = require('sinon')
-const { readOpml } = require('./')
+import test from 'ava'
+import fs from 'fs'
+import path from 'path'
+import sinon from 'sinon'
+import { readOpml } from './'
 
 test('#readOpml returns categories and sites in OPML file', async (t) => {
   const data = fs

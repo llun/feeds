@@ -1,11 +1,9 @@
-// @ts-check
-const puppeteer = require('puppeteer')
-const test =
-  /** @type {import('ava').TestInterface<{ browser: import('puppeteer').Browser }>} */ (
-    require('ava').default
-  )
-const { JSDOM } = require('jsdom')
-const loader = require('./cyclingtips.com.loader')
+import puppeteer, { Browser } from 'puppeteer'
+import anyTest, { TestInterface } from 'ava'
+import { JSDOM } from 'jsdom'
+import loader from './cyclingtips.com.loader'
+
+const test = anyTest as TestInterface<{ browser: Browser }>
 
 test.before(async (t) => {
   const browser = await puppeteer.launch()
