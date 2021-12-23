@@ -1,11 +1,11 @@
-image: node:14
+image: node:lts
 
 pages:
   stage: deploy
   script:
-    - npm install
-    - npm run load
-    - npm run build -- --output=public
+    - yarn install
+    - INPUT_OPMLFILE='feeds.opml' yarn run swc-node index.ts
+    - yarn run build -o public
   artifacts:
     paths:
       - public
