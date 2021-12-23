@@ -14,8 +14,8 @@ jobs:
           node-version: 16
       - name: Test
         run: |
-          npm install
-          npm run test
+          yarn install
+          yarn test
 
   sample:
     runs-on: ubuntu-latest
