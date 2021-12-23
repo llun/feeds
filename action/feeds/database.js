@@ -130,10 +130,9 @@ async function insertEntry(
   /** @type {string} */ category,
   /** @type {import('./parsers').Entry}*/ entry
 ) {
-  const key = hash(`${entry.title}${entry.link}`)
-  const existingEntry = await knex('Entries').where('key', key).first()
-  if (existingEntry) return
+  if (isEntryExists(knex, entry)) return
 
+  const key = hash(`${entry.title}${entry.link}`)
   const contentTime = (entry.date && Math.floor(entry.date / 1000)) || null
   await knex('Entries').insert({
     key,
