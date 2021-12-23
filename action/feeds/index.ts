@@ -13,6 +13,7 @@ import {
   insertEntry,
   isEntryExists
 } from './database'
+import { getWorkspacePath } from '../repository'
 
 export async function loadFeed(title: string, url: string) {
   try {
@@ -48,7 +49,9 @@ export async function readOpml(opmlContent: string) {
 export async function createFeedDatabase(githubActionPath: string) {
   try {
     const feedsFile = core.getInput('opmlFile', { required: true })
-    const opmlContent = fs.readFileSync(feedsFile).toString('utf8')
+    const opmlContent = fs
+      .readFileSync(path.join(getWorkspacePath(), feedsFile))
+      .toString('utf8')
     const opml = await readOpml(opmlContent)
 
     const publicPath = githubActionPath
