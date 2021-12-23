@@ -47,10 +47,12 @@ if (
     throw new Error('Fail to run setup')
   }
 
-  const executeResult = runCommand(
-    ['yarn', 'run', 'swc-node', 'index.ts'],
-    getGithubActionPath()
-  )
+  const executeResult = runCommand([
+    'yarn',
+    'run',
+    'swc-node',
+    path.join(getGithubActionPath(), 'index.ts')
+  ])
   if (executeResult.error) {
     throw new Error('Fail to site builder')
   }
