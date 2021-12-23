@@ -145,11 +145,16 @@ export async function publish() {
       ],
       workSpace
     )
-    runCommand(['ls', '-la'], workSpace)
-    // runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'], workSpace)
-    // runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'], workSpace)
-    // runCommand(['git', 'add', '-f', '--all'], workSpace)
-    // runCommand(['git', 'commit', '-m', 'Update feeds contents'], workSpace)
-    // runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`], workSpace)
+    runCommand(
+      ['git', 'config', '--global', 'user.email', 'bot@llun.dev'],
+      workSpace
+    )
+    runCommand(
+      ['git', 'config', '--global', 'user.name', '"Feed bots"'],
+      workSpace
+    )
+    runCommand(['git', 'add', '-f', '--all'], workSpace)
+    runCommand(['git', 'commit', '-m', 'Update feeds contents'], workSpace)
+    runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`], workSpace)
   }
 }
