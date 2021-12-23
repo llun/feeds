@@ -1,42 +1,33 @@
-// @ts-check
-const parseString = require('xml2js').parseString
-const sanitizeHtml = require('sanitize-html')
-/**
- * @typedef {{
- *  title: string
- *  link: string
- *  date: number
- *  content: string
- *  author: string
- * }} Entry
- * @typedef {{
- *  title: string
- *  link: string
- *  description: string
- *  updatedAt: number
- *  generator: string,
- *  entries: Entry[]
- * }} Site
- */
+import { parseString } from 'xml2js'
+import sanitizeHtml from 'sanitize-html'
 
-/**
- *
- * @param {string[] | { _: string, $: { type: 'text' }}[] | null} values
- * @returns {string}
- */
-function joinValuesOrEmptyString(values) {
+export interface Entry {
+  title: string
+  link: string
+  date: number
+  content: string
+  author: string
+}
+
+export interface Site {
+  title: string
+  link: string
+  description: string
+  updatedAt: number
+  generator: string
+  entries: Entry[]
+}
+
+type Values = string[] | { _: string; $: { type: 'text' } }[] | null
+
+function joinValuesOrEmptyString(values: Values) {
   if (values && values.length > 0 && typeof values[0] !== 'string') {
     return values[0]._
   }
   return (values && values.join('').trim()) || ''
 }
 
-/**
- *
- * @param {string} data
- * @returns {Promise<any>}
- */
-async function parseXML(data) {
+export async function parseXML(data: string): Promise<any> {
   const xml = await new Promise((resolve, reject) =>
     parseString(data, (error, result) => {
       if (error) return reject(error)
@@ -45,14 +36,8 @@ async function parseXML(data) {
   )
   return xml
 }
-exports.parseXML = parseXML
 
-/**
- * @param {string} feedTitle
- * @param {any} xml
- * @returns {Site | null}
- */
-function parseRss(feedTitle, xml) {
+export function parseRss(feedTitle: string, xml: any): Site {
   if (!xml.rss) return null
   const { channel: channels } = xml.rss
   const {
@@ -94,15 +79,8 @@ function parseRss(feedTitle, xml) {
 
   return feed
 }
-exports.parseRss = parseRss
 
-/**
- *
- * @param {string} feedTitle
- * @param {any} xml
- * @returns {Site | null}
- */
-function parseAtom(feedTitle, xml) {
+export function parseAtom(feedTitle: string, xml: any): Site {
   if (!xml.feed) return null
   const { title, subtitle, link, updated, generator, entry, author } = xml.feed
   const siteLink = link && link.find((item) => item.$.rel === 'alternate')
@@ -133,4 +111,3 @@ function parseAtom(feedTitle, xml) {
 
   return feed
 }
-exports.parseAtom = parseAtom

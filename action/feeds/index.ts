@@ -1,11 +1,10 @@
-// @ts-check
-const core = require('@actions/core')
-const fs = require('fs')
-const path = require('path')
-const axios = require('axios').default
-const { parseXML, parseAtom, parseRss } = require('./parsers')
-const { loadContent, close } = require('../puppeteer')
-const {
+import * as core from '@actions/core'
+import fs from 'fs'
+import path from 'path'
+import axios from 'axios'
+import { parseXML, parseAtom, parseRss } from './parsers'
+import { loadContent, close } from '../puppeteer'
+import {
   getDatabase,
   createSchema,
   insertCategory,
@@ -13,15 +12,9 @@ const {
   cleanup,
   insertEntry,
   isEntryExists
-} = require('./database')
+} from './database'
 
-/**
- *
- * @param {string} title
- * @param {string} url
- * @returns {Promise<import('./parsers').Site | null>}
- */
-async function loadFeed(title, url) {
+export async function loadFeed(title: string, url: string) {
   try {
     const response = await axios.get(url, {
       headers: { 'User-Agent': 'llun/feeds' }
@@ -36,14 +29,8 @@ async function loadFeed(title, url) {
     return null
   }
 }
-exports.loadFeed = loadFeed
 
-/**
- *
- * @param {string} opmlContent
- * @returns {Promise<any>}
- */
-async function readOpml(opmlContent) {
+export async function readOpml(opmlContent: string) {
   const input = await parseXML(opmlContent)
   const body = input.opml.body
   const outlines = body[0].outline
@@ -57,13 +44,8 @@ async function readOpml(opmlContent) {
     return out
   }, [])
 }
-exports.readOpml = readOpml
 
-/**
- *
- * @param {string} [githubActionPath]
- */
-async function createFeedDatabase(githubActionPath) {
+export async function createFeedDatabase(githubActionPath: string) {
   try {
     const feedsFile = core.getInput('opmlFile', { required: true })
     const opmlContent = fs.readFileSync(feedsFile).toString('utf8')
@@ -113,4 +95,3 @@ async function createFeedDatabase(githubActionPath) {
     core.setFailed(error)
   }
 }
-exports.createFeedDatabase = createFeedDatabase

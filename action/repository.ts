@@ -1,22 +1,15 @@
-// @ts-check
-const { spawnSync } = require('child_process')
-const fs = require('fs')
-const path = require('path')
+import { spawnSync } from 'child_process'
+import fs from 'fs'
+import path from 'path'
 
-/**
- *
- * @param {string[]} commands
- * @param {string} [cwd]
- */
-function runCommand(commands, cwd) {
+export function runCommand(commands: string[], cwd?: string) {
   return spawnSync(commands[0], commands.slice(1), {
     stdio: 'inherit',
     cwd
   })
 }
-exports.runCommand = runCommand
 
-function getGithubActionPath() {
+export function getGithubActionPath() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (!workSpace) {
     return ''
@@ -33,9 +26,8 @@ function getGithubActionPath() {
     return path.join(actionPath, 'main')
   }
 }
-exports.getGithubActionPath = getGithubActionPath
 
-function buildSite() {
+export function buildSite() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
     // Remove old static resources
@@ -49,9 +41,8 @@ function buildSite() {
     }
   }
 }
-exports.buildSite = buildSite
 
-async function setup() {
+export async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
   if (
     process.env['GITHUB_ACTION'] === 'llunfeeds' ||
@@ -109,9 +100,8 @@ async function setup() {
     }
   }
 }
-exports.setup = setup
 
-async function publish() {
+export async function publish() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
     const core = require('@actions/core')
@@ -158,4 +148,3 @@ async function publish() {
     runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`])
   }
 }
-exports.publish = publish

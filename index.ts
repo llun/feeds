@@ -1,10 +1,9 @@
-// @ts-check
-const {
+import {
   setup,
   publish,
   buildSite,
   getGithubActionPath
-} = require('./action/repository')
+} from './action/repository'
 
 async function run() {
   await setup()
