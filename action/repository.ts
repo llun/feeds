@@ -95,6 +95,10 @@ export async function setup() {
         ['git', 'checkout', '-B', branch],
         workSpace
       )
+      runCommand(['ls', '-la'], workSpace)
+      console.log(
+        fs.readFileSync(path.join(workSpace, 'feeds.opml')).toString('utf-8')
+      )
       if (branchResult.error) {
         throw new Error('Fail to switch branch')
       }
