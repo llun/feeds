@@ -89,15 +89,16 @@ export async function setup() {
       throw new Error('Fail to clone repository')
     }
 
+    runCommand(['ls', '-la'], workSpace)
+    console.log(
+      fs.readFileSync(path.join(workSpace, 'feeds.opml')).toString('utf-8')
+    )
+
     if (!isBranchExist) {
       console.log(`Create content branch ${branch}`)
       const branchResult = runCommand(
         ['git', 'checkout', '-B', branch],
         workSpace
-      )
-      runCommand(['ls', '-la'], workSpace)
-      console.log(
-        fs.readFileSync(path.join(workSpace, 'feeds.opml')).toString('utf-8')
       )
       if (branchResult.error) {
         throw new Error('Fail to switch branch')
