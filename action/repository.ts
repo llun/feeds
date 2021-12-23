@@ -89,11 +89,6 @@ export async function setup() {
       throw new Error('Fail to clone repository')
     }
 
-    runCommand(['ls', '-la'], workSpace)
-    console.log(
-      fs.readFileSync(path.join(workSpace, 'feeds.opml')).toString('utf-8')
-    )
-
     if (!isBranchExist) {
       console.log(`Create content branch ${branch}`)
       const branchResult = runCommand(
@@ -123,43 +118,34 @@ export async function publish() {
       fs.writeFileSync('CNAME', customDomain)
     }
 
-    runCommand(
-      [
-        'rm',
-        '-rf',
-        'action.yml',
-        'index.js',
-        'package-lock.json',
-        'package.json',
-        '.gitignore',
-        '.prettierrc.yml',
-        'tsconfig.json',
-        '.eleventy.js',
-        'tailwind.config.js',
-        'webpack.config.js',
-        '.github',
-        'action',
-        'readme.md',
-        'pages',
-        'contents',
-        'browser',
-        // Old eleventy structure
-        'css',
-        'data',
-        'js'
-      ],
-      workSpace
-    )
-    runCommand(
-      ['git', 'config', '--global', 'user.email', 'bot@llun.dev'],
-      workSpace
-    )
-    runCommand(
-      ['git', 'config', '--global', 'user.name', '"Feed bots"'],
-      workSpace
-    )
-    runCommand(['git', 'add', '-f', '--all'], workSpace)
-    runCommand(['git', 'commit', '-m', 'Update feeds contents'], workSpace)
-    runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`], workSpace)
+    runCommand([
+      'rm',
+      '-rf',
+      'action.yml',
+      'index.js',
+      'package-lock.json',
+      'package.json',
+      '.gitignore',
+      '.prettierrc.yml',
+      'tsconfig.json',
+      '.eleventy.js',
+      'tailwind.config.js',
+      'webpack.config.js',
+      '.github',
+      'action',
+      'readme.md',
+      'pages',
+      'contents',
+      'browser',
+      // Old eleventy structure
+      'css',
+      'data',
+      'js'
+    ])
+    runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
+    runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
+    runCommand(['git', 'add', '-f', '--all'])
+    runCommand(['git', 'commit', '-m', 'Update feeds contents'])
+    runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`])
   }
 }
