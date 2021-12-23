@@ -1,22 +1,15 @@
-// @ts-check
-const { spawnSync } = require('child_process')
-const fs = require('fs')
-const path = require('path')
+import { spawnSync } from 'child_process'
+import fs from 'fs'
+import path from 'path'
 
-/**
- *
- * @param {string[]} commands
- * @param {string} [cwd]
- */
-function runCommand(commands, cwd) {
+export function runCommand(commands: string[], cwd?: string) {
   return spawnSync(commands[0], commands.slice(1), {
     stdio: 'inherit',
     cwd
   })
 }
-exports.runCommand = runCommand
 
-function getGithubActionPath() {
+export function getGithubActionPath() {
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (!workSpace) {
     return ''
@@ -33,15 +26,22 @@ function getGithubActionPath() {
     return path.join(actionPath, 'main')
   }
 }
-exports.getGithubActionPath = getGithubActionPath
 
-function buildSite() {
+export function getWorkspacePath() {
   const workSpace = process.env['GITHUB_WORKSPACE']
+  if (!workSpace) {
+    return ''
+  }
+  return workSpace
+}
+
+export function buildSite() {
+  const workSpace = getWorkspacePath()
   if (workSpace) {
     // Remove old static resources
-    runCommand(['rm', '-rf', '_next'])
+    runCommand(['rm', '-rf', '_next'], workSpace)
     // Bypass Jekyll
-    runCommand(['touch', '.nojekyll'])
+    runCommand(['touch', '.nojekyll'], workSpace)
     const result = runCommand(['npm', 'run', 'build'], getGithubActionPath())
     runCommand(['cp', '-rT', 'out', workSpace], getGithubActionPath())
     if (result.error) {
@@ -49,21 +49,10 @@ function buildSite() {
     }
   }
 }
-exports.buildSite = buildSite
 
-async function setup() {
+export async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
-  if (
-    process.env['GITHUB_ACTION'] === 'llunfeeds' ||
-    process.env['GITHUB_ACTION'] === '__llun_feeds'
-  ) {
-    const result = runCommand(['yarn', 'install'], getGithubActionPath())
-    if (result.error) {
-      throw new Error('Fail to run setup')
-    }
-  }
-
-  const workSpace = process.env['GITHUB_WORKSPACE']
+  const workSpace = getWorkspacePath()
   if (workSpace) {
     const core = require('@actions/core')
     const github = require('@actions/github')
@@ -102,17 +91,19 @@ async function setup() {
 
     if (!isBranchExist) {
       console.log(`Create content branch ${branch}`)
-      const branchResult = runCommand(['git', 'checkout', '-B', branch])
+      const branchResult = runCommand(
+        ['git', 'checkout', '-B', branch],
+        workSpace
+      )
       if (branchResult.error) {
         throw new Error('Fail to switch branch')
       }
     }
   }
 }
-exports.setup = setup
 
-async function publish() {
-  const workSpace = process.env['GITHUB_WORKSPACE']
+export async function publish() {
+  const workSpace = getWorkspacePath()
   if (workSpace) {
     const core = require('@actions/core')
     const github = require('@actions/github')
@@ -127,35 +118,43 @@ async function publish() {
       fs.writeFileSync('CNAME', customDomain)
     }
 
-    runCommand([
-      'rm',
-      '-rf',
-      'action.yml',
-      'index.js',
-      'package-lock.json',
-      'package.json',
-      '.gitignore',
-      '.prettierrc.yml',
-      'tsconfig.json',
-      '.eleventy.js',
-      'tailwind.config.js',
-      'webpack.config.js',
-      '.github',
-      'action',
-      'readme.md',
-      'pages',
-      'contents',
-      'browser',
-      // Old eleventy structure
-      'css',
-      'data',
-      'js'
-    ])
-    runCommand(['git', 'config', '--global', 'user.email', 'bot@llun.dev'])
-    runCommand(['git', 'config', '--global', 'user.name', '"Feed bots"'])
-    runCommand(['git', 'add', '-f', '--all'])
-    runCommand(['git', 'commit', '-m', 'Update feeds contents'])
-    runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`])
+    runCommand(
+      [
+        'rm',
+        '-rf',
+        'action.yml',
+        'index.js',
+        'package-lock.json',
+        'package.json',
+        '.gitignore',
+        '.prettierrc.yml',
+        'tsconfig.json',
+        '.eleventy.js',
+        'tailwind.config.js',
+        'webpack.config.js',
+        '.github',
+        'action',
+        'readme.md',
+        'pages',
+        'contents',
+        'browser',
+        // Old eleventy structure
+        'css',
+        'data',
+        'js'
+      ],
+      workSpace
+    )
+    runCommand(
+      ['git', 'config', '--global', 'user.email', 'bot@llun.dev'],
+      workSpace
+    )
+    runCommand(
+      ['git', 'config', '--global', 'user.name', '"Feed bots"'],
+      workSpace
+    )
+    runCommand(['git', 'add', '-f', '--all'], workSpace)
+    runCommand(['git', 'commit', '-m', 'Update feeds contents'], workSpace)
+    runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`], workSpace)
   }
 }
-exports.publish = publish

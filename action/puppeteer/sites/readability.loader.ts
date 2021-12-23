@@ -1,14 +1,9 @@
-// @ts-check
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
+import { Browser } from 'puppeteer'
+import { ParseResponse } from '..'
 
-/**
- *
- * @param {import('puppeteer').Browser | null} browser
- * @param {string} url
- * @returns {Promise<string>}
- */
-const loader = async (browser, url) => {
+const loader = async (browser: Browser, url: string) => {
   if (!browser) return ''
 
   const page = await browser.newPage()
@@ -32,17 +27,15 @@ const loader = async (browser, url) => {
     { encoding: 'utf-8' }
   )
 
-  const resultArticle = /** @type {import('../').ParseResponse} */ (
-    await page.evaluate(`
+  const resultArticle = (await page.evaluate(`
     (function(){
       ${readabilityJsStr}
       const documentClone = document.cloneNode(true)
       return new Readability(documentClone, { disableJSONLD: true }).parse()
     }())
-  `)
-  )
+  `)) as ParseResponse
   await page.close()
   if (!resultArticle) return ''
   return resultArticle.content
 }
-module.exports = loader
+export default loader

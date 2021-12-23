@@ -1,10 +1,8 @@
-// @ts-check
-const test = /** @type {import('ava').TestInterface<{}>} */ (require('ava')
-  .default)
-const sinon = require('sinon')
-const fs = require('fs')
-const path = require('path')
-const { parseXML, parseAtom } = require('./parsers')
+import test from 'ava'
+import sinon from 'sinon'
+import fs from 'fs'
+import path from 'path'
+import { parseXML, parseAtom } from './parsers'
 
 test('#parseAtom returns site information with empty string for fields that does not have information', async (t) => {
   const data = fs

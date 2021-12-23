@@ -10,7 +10,7 @@
     "dev": "next dev",
     "build": "next build && next export",
     "start": "next start",
-    "load": "INPUT_OPMLFILE='feeds.opml' swc-node index.js",
+    "load": "INPUT_OPMLFILE='feeds.opml' swc-node index.ts",
     "test": "ava"
   },
   "ava": {
@@ -62,6 +62,7 @@
     "@types/react-dom": "^17.0.11",
     "@types/sanitize-html": "^2.6.0",
     "@types/sinon": "^10.0.6",
+    "@types/xml2js": "^0.4.9",
     "sinon": "^12.0.1",
     "swc-node": "^1.0.0"
   },

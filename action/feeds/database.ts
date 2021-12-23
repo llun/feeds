@@ -1,14 +1,15 @@
-// @ts-check
-const fs = require('fs')
-const path = require('path')
-const crypto = require('crypto')
-const { knex } = require('knex')
+import fs from 'fs'
+import path from 'path'
+import crypto from 'crypto'
+import { knex, Knex } from 'knex'
 
-function hash(/** @type {string} */ input) {
+import type { Entry, Site } from './parsers'
+
+function hash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
 }
 
-function getDatabase(/** @type {string} */ contentDirectory) {
+export function getDatabase(contentDirectory: string) {
   try {
     const stats = fs.statSync(contentDirectory)
     if (!stats.isDirectory()) {
@@ -31,9 +32,8 @@ function getDatabase(/** @type {string} */ contentDirectory) {
     useNullAsDefault: true
   })
 }
-exports.getDatabase = getDatabase
 
-async function createSchema(/** @type {import('knex').Knex} */ knex) {
+export async function createSchema(knex: Knex) {
   if (!(await knex.schema.hasTable('Categories'))) {
     await knex.schema.createTable('Categories', (table) => {
       table.string('name').primary()
@@ -91,12 +91,8 @@ async function createSchema(/** @type {import('knex').Knex} */ knex) {
     })
   }
 }
-exports.createSchema = createSchema
 
-async function insertCategory(
-  /** @type {import('knex').Knex} */ knex,
-  /** @type {string} */ category
-) {
+export async function insertCategory(knex: Knex, category: string) {
   try {
     await knex.transaction(async (trx) => {
       const record = await trx('Categories').where('name', category).first()
@@ -108,12 +104,8 @@ async function insertCategory(
     console.error(`Fail to insert ${category}`)
   }
 }
-exports.insertCategory = insertCategory
 
-async function isEntryExists(
-  /** @type {import('knex').Knex} */ knex,
-  /** @type {import('./parsers').Entry}*/ entry
-) {
+export async function isEntryExists(knex: Knex, entry: Entry) {
   const key = hash(`${entry.title}${entry.link}`)
   const existingEntry = await knex('Entries')
     .where('key', key)
@@ -121,14 +113,13 @@ async function isEntryExists(
     .first()
   return existingEntry['total'] === 1
 }
-exports.isEntryExists = isEntryExists
 
-async function insertEntry(
-  /** @type {import('knex').Knex} */ knex,
-  /** @type {string} */ siteKey,
-  /** @type {string} */ siteTitle,
-  /** @type {string} */ category,
-  /** @type {import('./parsers').Entry}*/ entry
+export async function insertEntry(
+  knex: Knex,
+  siteKey: string,
+  siteTitle: string,
+  category: string,
+  entry: Entry
 ) {
   if (isEntryExists(knex, entry)) return
 
@@ -153,13 +144,8 @@ async function insertEntry(
     entryContentTime: contentTime
   })
 }
-exports.insertEntry = insertEntry
 
-async function insertSite(
-  /** @type {import('knex').Knex} */ knex,
-  /** @type {string} */ category,
-  /** @type {import('./parsers').Site} */ site
-) {
+export async function insertSite(knex: Knex, category: string, site: Site) {
   try {
     const key = await knex.transaction(async (trx) => {
       const key = hash(site.title)
@@ -194,11 +180,9 @@ async function insertSite(
     return null
   }
 }
-exports.insertSite = insertSite
 
-async function cleanup(/** @type {import('knex').Knex} */ knex) {
+export async function cleanup(knex: Knex) {
   await knex.raw('pragma journal_mode = delete')
   await knex.raw('pragma page_size = 4096')
   await knex.raw('vacuum')
 }
-exports.cleanup = cleanup

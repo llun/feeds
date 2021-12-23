@@ -1,15 +1,10 @@
-// @ts-check
-const fs = require('fs')
-const path = require('path')
-const sanitizeHtml = require('sanitize-html')
+import fs from 'fs'
+import path from 'path'
+import { Browser } from 'puppeteer'
+import sanitizeHtml from 'sanitize-html'
+import { ParseResponse } from '..'
 
-/**
- *
- * @param {import('puppeteer').Browser | null} browser
- * @param {string} url
- * @returns {Promise<string>}
- */
-const loader = async (browser, url) => {
+const loader = async (browser: Browser, url: string) => {
   if (!browser) return ''
 
   const page = await browser.newPage()
@@ -49,19 +44,17 @@ const loader = async (browser, url) => {
     }())
   `)
 
-  const resultArticle = /** @type {import('../').ParseResponse} */ (
-    await page.evaluate(`
+  const resultArticle = (await page.evaluate(`
     (function(){
       ${readabilityJsStr}
       const documentClone = document.cloneNode(true)
       return new Readability(documentClone, { disableJSONLD: true }).parse()
     }())
-  `)
-  )
+  `)) as ParseResponse
   await page.close()
   if (!resultArticle) return ''
   return sanitizeHtml(resultArticle.content, {
     allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
   })
 }
-module.exports = loader
+export default loader
