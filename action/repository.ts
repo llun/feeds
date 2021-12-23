@@ -44,16 +44,6 @@ export function buildSite() {
 
 export async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
-  if (
-    process.env['GITHUB_ACTION'] === 'llunfeeds' ||
-    process.env['GITHUB_ACTION'] === '__llun_feeds'
-  ) {
-    const result = runCommand(['yarn', 'install'], getGithubActionPath())
-    if (result.error) {
-      throw new Error('Fail to run setup')
-    }
-  }
-
   const workSpace = process.env['GITHUB_WORKSPACE']
   if (workSpace) {
     const core = require('@actions/core')

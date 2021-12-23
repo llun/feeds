@@ -4,10 +4,10 @@ import {
   buildSite,
   getGithubActionPath
 } from './action/repository'
+import { createFeedDatabase } from './action/feeds'
 
 async function run() {
-  await setup()
-  const { createFeedDatabase } = require('./action/feeds')
+  setup()
   await createFeedDatabase(getGithubActionPath())
   buildSite()
   await publish()
