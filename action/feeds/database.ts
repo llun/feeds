@@ -121,7 +121,7 @@ export async function insertEntry(
   category: string,
   entry: Entry
 ) {
-  if (isEntryExists(knex, entry)) return
+  if (await isEntryExists(knex, entry)) return
 
   const key = hash(`${entry.title}${entry.link}`)
   const contentTime = (entry.date && Math.floor(entry.date / 1000)) || null
