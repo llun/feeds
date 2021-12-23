@@ -7,7 +7,7 @@ import {
 import { createFeedDatabase } from './action/feeds'
 
 async function run() {
-  setup()
+  await setup()
   await createFeedDatabase(getGithubActionPath())
   buildSite()
   await publish()
