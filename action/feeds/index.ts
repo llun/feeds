@@ -49,6 +49,9 @@ export async function readOpml(opmlContent: string) {
 export async function createFeedDatabase(githubActionPath: string) {
   try {
     const feedsFile = core.getInput('opmlFile', { required: true })
+    const files = fs.readdirSync(getWorkspacePath())
+    console.log('Workspace Path =====>', getWorkspacePath())
+    console.log(files)
     const opmlContent = fs.readFileSync(feedsFile).toString('utf8')
     const opml = await readOpml(opmlContent)
 
