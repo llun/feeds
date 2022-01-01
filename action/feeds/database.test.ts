@@ -55,4 +55,14 @@ test('#insertSite', async (t) => {
     siteKey: hash(site.title),
     siteTitle: site.title
   })
+
+  // Ignore insertion when category is not exists
+  await insertSite(db, 'category2', site)
+  const siteCategoryCount = await db('SiteCategories')
+    .count('* as total')
+    .first()
+  t.is(siteCategoryCount.total, 1)
+
+  const siteCount = await db('Sites').count('* as total').first()
+  t.is(siteCount.total, 1)
 })

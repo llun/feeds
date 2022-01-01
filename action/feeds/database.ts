@@ -161,6 +161,11 @@ export async function insertSite(knex: Knex, category: string, site: Site) {
     const key = await knex.transaction(async (trx) => {
       const key = hash(site.title)
       const updatedAt = site.updatedAt || Date.now()
+      const categoryCount = await trx('Categories')
+        .where('name', category)
+        .count('* as total')
+        .first()
+      if (!categoryCount.total) return
       const siteCategory = await trx('SiteCategories')
         .where('category', category)
         .andWhere('siteKey', key)
