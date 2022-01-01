@@ -22,6 +22,7 @@ import {
 } from './database'
 import { getWorkspacePath } from '../repository'
 import { Knex } from 'knex'
+import { SiteLoaderMap } from '../puppeteer/sites'
 
 export async function loadFeed(title: string, url: string) {
   try {
@@ -118,6 +119,48 @@ export async function removeOldEntries(db: Knex, site: Site) {
     .map((item) => item.entryKey)
     .filter((key) => !siteEntries.includes(key))
   await Promise.all(removedEntries.map((key) => deleteEntry(db, key)))
+}
+
+export async function createOrUpdateDatabase(
+  db: Knex,
+  opmlCategories: OpmlCategory[],
+  feedLoader: (title: string, url: string) => Promise<Site>,
+  contentLoader: (link: string, siteLoaders?: SiteLoaderMap) => Promise<string>
+) {
+  await removeOldCategories(db, opmlCategories)
+  for (const category of opmlCategories) {
+    const { category: categoryName, items } = category
+    if (!items) continue
+    await insertCategory(db, categoryName)
+    await removeOldSites(db, category)
+    for (const item of items) {
+      const site = await feedLoader(item.title, item.xmlUrl)
+      if (!site) {
+        continue
+      }
+      console.log(`Load ${site.title}`)
+      const siteKey = await insertSite(db, categoryName, site)
+      await removeOldEntries(db, site)
+      for (const entry of site.entries) {
+        if (await isEntryExists(db, entry)) continue
+
+        const link = entry.link
+        try {
+          const content = await contentLoader(link)
+          if (content) {
+            entry.content = content
+          }
+        } catch (error) {
+          // Puppeteer timeout
+          console.error(error.message)
+        } finally {
+          await close()
+        }
+
+        await insertEntry(db, siteKey, site.title, categoryName, entry)
+      }
+    }
+  }
 }
 
 export async function createFeedDatabase(githubActionPath: string) {
