@@ -2,7 +2,9 @@ import test from 'ava'
 import fs from 'fs'
 import path from 'path'
 import sinon from 'sinon'
-import { readOpml } from './'
+import { knex } from 'knex'
+import { readOpml, removeOldCategories } from './'
+import { createTables, getAllCategories, insertCategory } from './database'
 
 test('#readOpml returns categories and sites in OPML file', async (t) => {
   const data = fs
@@ -78,4 +80,44 @@ test('#readOpml ignore sub-category', async (t) => {
   })
   t.is(feeds[0].items.length, 2)
   t.is(feeds[1].items.length, 1)
+})
+
+test('#removeOldCategories do nothing for category exists in opml', async (t) => {
+  const db = knex({
+    client: 'sqlite3',
+    connection: ':memory:',
+    useNullAsDefault: true
+  })
+  await createTables(db)
+  await insertCategory(db, 'Category1')
+  await insertCategory(db, 'Category2')
+
+  const data = fs
+    .readFileSync(path.join(__dirname, 'tests', 'opml.xml'))
+    .toString('utf8')
+  const opml = await readOpml(data)
+  await removeOldCategories(db, opml)
+
+  const categories = await getAllCategories(db)
+  t.deepEqual(categories, ['Category1', 'Category2'])
+})
+
+test('#removeOldCategories delete category not exists in opml', async (t) => {
+  const db = knex({
+    client: 'sqlite3',
+    connection: ':memory:',
+    useNullAsDefault: true
+  })
+  await createTables(db)
+  await insertCategory(db, 'Category1')
+  await insertCategory(db, 'Category2')
+  await insertCategory(db, 'Category3')
+
+  const data = fs
+    .readFileSync(path.join(__dirname, 'tests', 'opml.xml'))
+    .toString('utf8')
+  const opml = await readOpml(data)
+  await removeOldCategories(db, opml)
+  const categories = await getAllCategories(db)
+  t.deepEqual(categories, ['Category1', 'Category2'])
 })

@@ -11,9 +11,12 @@ import {
   insertSite,
   cleanup,
   insertEntry,
-  isEntryExists
+  isEntryExists,
+  getAllCategories,
+  deleteCategory
 } from './database'
 import { getWorkspacePath } from '../repository'
+import { Knex } from 'knex'
 
 export async function loadFeed(title: string, url: string) {
   try {
@@ -77,7 +80,16 @@ export async function readOpml(opmlContent: string): Promise<OpmlCategory[]> {
   return output
 }
 
-export async function diff() {}
+export async function removeOldCategories(db: Knex, opml: OpmlCategory[]) {
+  const existingCategories = await getAllCategories(db)
+  const opmlCategories = opml.map((item) => item.category)
+  const removedCategory = existingCategories.filter(
+    (category) => !opmlCategories.includes(category)
+  )
+  await Promise.all(
+    removedCategory.map((category) => deleteCategory(db, category))
+  )
+}
 
 export async function createFeedDatabase(githubActionPath: string) {
   try {

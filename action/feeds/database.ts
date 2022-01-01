@@ -139,6 +139,11 @@ export async function deleteCategory(knex: Knex, category: string) {
   )
 }
 
+export async function getAllCategories(knex: Knex): Promise<string[]> {
+  const categories = await knex('Categories').orderBy('name', 'asc')
+  return categories.map((item) => item.name)
+}
+
 export async function isEntryExists(knex: Knex, entry: Entry) {
   const key = hash(`${entry.title}${entry.link}`)
   const count = await knex('Entries')
