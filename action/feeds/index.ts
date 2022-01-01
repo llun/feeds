@@ -31,20 +31,46 @@ export async function loadFeed(title: string, url: string) {
   }
 }
 
-export async function readOpml(opmlContent: string) {
+interface OpmlItem {
+  type: string
+  text: string
+  title: string
+  xmlUrl: string
+  htmlUrl: string
+}
+interface OpmlCategory {
+  category: string
+  items: OpmlItem[]
+}
+
+export async function readOpml(opmlContent: string): Promise<OpmlCategory[]> {
   const input = await parseXML(opmlContent)
   const body = input.opml.body
   const outlines = body[0].outline
-  return outlines.reduce((out, outline) => {
-    const category = outline.$.title
-    const items = outline.outline
-    out.push({
-      category,
-      items: items && items.map((item) => item.$)
+
+  const rootSubscriptions = outlines
+    .filter((item: any) => item.$.type === 'rss')
+    .map((item: any) => item.$)
+  const categories = outlines
+    .filter((item: any) => item.$.type !== 'rss')
+    .reduce((out: OpmlCategory[], outline: any) => {
+      const category = outline.$.title
+      const items = outline.outline
+      out.push({ category, items: items && items.map((item) => item.$) })
+      return out
+    }, [])
+  const output: OpmlCategory[] = []
+  if (rootSubscriptions.length > 0) {
+    output.push({
+      category: 'default',
+      items: rootSubscriptions
     })
-    return out
-  }, [])
+  }
+  output.push(...categories)
+  return output
 }
+
+export async function diff() {}
 
 export async function createFeedDatabase(githubActionPath: string) {
   try {
