@@ -110,7 +110,6 @@ export async function insertCategory(knex: Knex, category: string) {
     await knex.transaction(async (trx) => {
       const record = await trx('Categories').where('name', category).first()
       if (record) return
-      console.log(category)
       await trx('Categories').insert({ name: category })
     })
   } catch (error) {
