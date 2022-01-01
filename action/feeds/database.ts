@@ -116,6 +116,8 @@ export async function insertCategory(knex: Knex, category: string) {
   }
 }
 
+export async function deleteCategory(knex: Knex, category: string) {}
+
 export async function isEntryExists(knex: Knex, entry: Entry) {
   const key = hash(`${entry.title}${entry.link}`)
   const count = await knex('Entries')
@@ -185,7 +187,10 @@ export async function insertEntry(
     siteTitle,
     entryContentTime: contentTime
   })
+  return key
 }
+
+export async function deleteEntry(knex: Knex, entryKey: string) {}
 
 export async function insertSite(knex: Knex, category: string, site: Site) {
   try {
@@ -217,6 +222,14 @@ export async function insertSite(knex: Knex, category: string, site: Site) {
     return null
   }
 }
+
+export async function deleteSiteCategory(
+  knex: Knex,
+  category: string,
+  siteKey: string
+) {}
+
+export async function deleteSite(knex: Knex, siteKey: string) {}
 
 export async function cleanup(knex: Knex) {
   await knex.raw('pragma journal_mode = delete')

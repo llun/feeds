@@ -2,6 +2,7 @@ import anyTest, { TestInterface } from 'ava'
 import { knex, Knex } from 'knex'
 import {
   createTables,
+  deleteEntry,
   hash,
   insertCategory,
   insertEntry,
@@ -9,7 +10,13 @@ import {
 } from './database'
 import { Entry, Site } from './parsers'
 
-const test = anyTest as TestInterface<{ db: Knex }>
+const test = anyTest as TestInterface<{
+  db: Knex
+  fixtures: {
+    site: Site
+    entry: Entry
+  }
+}>
 
 test.beforeEach(async (t) => {
   const db = knex({
@@ -17,9 +24,30 @@ test.beforeEach(async (t) => {
     connection: ':memory:',
     useNullAsDefault: true
   })
+
+  const fixtureEntry: Entry = {
+    title: 'Sample entry',
+    link: 'https://www.llun.me/posts/2021-12-30-2021/',
+    author: 'llun',
+    content: 'Content',
+    date: Date.now()
+  }
+  const fixtureSite: Site = {
+    title: 'Demo Site',
+    link: 'https://llun.dev',
+    description: 'Sample site',
+    updatedAt: Date.now(),
+    generator: 'Test',
+    entries: [fixtureEntry]
+  }
+
   await createTables(db)
   t.context = {
-    db
+    db,
+    fixtures: {
+      site: fixtureSite,
+      entry: fixtureEntry
+    }
   }
 })
 
@@ -33,19 +61,16 @@ test('#insertCategory', async (t) => {
   t.is(first.name, 'category1')
 })
 
-test('#insertSite', async (t) => {
-  const { db } = t.context
-  await insertCategory(db, 'category1')
+test('#deleteCategory', async (t) => {
+  t.fail()
+})
 
-  const site: Site = {
-    title: 'Demo Site',
-    link: 'https://llun.dev',
-    description: 'Sample site',
-    updatedAt: Date.now(),
-    generator: 'Test',
-    entries: []
-  }
-  await insertSite(db, 'category1', site)
+test('#insertSite', async (t) => {
+  const { db, fixtures } = t.context
+  const { site } = fixtures
+  await insertCategory(db, 'category1')
+  const siteKey = await insertSite(db, 'category1', site)
+  t.is(siteKey, hash(site.title))
   const persistedSite = await db('Sites').first()
   t.deepEqual(persistedSite, {
     key: hash(site.title),
@@ -73,33 +98,29 @@ test('#insertSite', async (t) => {
   t.is(siteCount.total, 1)
 })
 
-test('#insertEntry', async (t) => {
-  const { db } = t.context
-  await insertCategory(db, 'category1')
+test('#deleteSiteCategory', async (t) => {})
 
-  const entry: Entry = {
-    title: 'Sample entry',
-    link: 'https://www.llun.me/posts/2021-12-30-2021/',
-    author: 'llun',
-    content: 'Content',
-    date: Date.now()
-  }
+test('#deleteSite', async (t) => {})
+
+test('#insertEntry', async (t) => {
+  const { db, fixtures } = t.context
+  const { entry, site } = fixtures
+  await insertCategory(db, 'category1')
   await insertEntry(db, 'nonexist', 'nonexists', 'category1', entry)
   t.is((await db('Entries').count('* as total').first()).total, 0)
 
-  const site: Site = {
-    title: 'Demo Site',
-    link: 'https://llun.dev',
-    description: 'Sample site',
-    updatedAt: Date.now(),
-    generator: 'Test',
-    entries: [entry]
-  }
-  await insertSite(db, 'category1', site)
-  await insertEntry(db, hash(site.title), site.title, 'category2', entry)
+  const siteKey = await insertSite(db, 'category1', site)
+  await insertEntry(db, siteKey, site.title, 'category2', entry)
   t.is((await db('Entries').count('* as total').first()).total, 0)
 
-  await insertEntry(db, hash(site.title), site.title, 'category1', entry)
+  const entryKey = await insertEntry(
+    db,
+    siteKey,
+    site.title,
+    'category1',
+    entry
+  )
+  t.is(entryKey, hash(`${entry.title}${entry.link}`))
   t.is((await db('Entries').count('* as total').first()).total, 1)
   const persistedEntry = await db('Entries').first()
   t.like(persistedEntry, {
@@ -110,4 +131,17 @@ test('#insertEntry', async (t) => {
     content: entry.content,
     contentTime: Math.floor(entry.date / 1000)
   })
+})
+
+test('#deleteEntry', async (t) => {
+  const { db, fixtures } = t.context
+  const { entry, site } = fixtures
+
+  await insertCategory(db, 'category1')
+  const siteKey = await insertSite(db, 'category1', site)
+  const key = await insertEntry(db, siteKey, site.title, 'category1', entry)
+
+  await deleteEntry(db, key)
+  const count = await db('Entries').count('* as total').first()
+  t.is(count.total, 0)
 })
