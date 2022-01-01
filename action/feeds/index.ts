@@ -13,7 +13,10 @@ import {
   insertEntry,
   isEntryExists,
   getAllCategories,
-  deleteCategory
+  deleteCategory,
+  getCategorySites,
+  hash,
+  deleteSiteCategory
 } from './database'
 import { getWorkspacePath } from '../repository'
 import { Knex } from 'knex'
@@ -91,7 +94,18 @@ export async function removeOldCategories(db: Knex, opml: OpmlCategory[]) {
   )
 }
 
-export async function removeOldSites(db: Knex, opmlCategory: OpmlCategory) {}
+export async function removeOldSites(db: Knex, opmlCategory: OpmlCategory) {
+  const existingSites = await getCategorySites(db, opmlCategory.category)
+  const opmlSites = opmlCategory.items.map((item) => hash(`${item.title}`))
+  const removedCategorySites = existingSites
+    .map((item) => item.siteKey)
+    .filter((key) => !opmlSites.includes(key))
+  await Promise.all(
+    removedCategorySites.map((siteKey) =>
+      deleteSiteCategory(db, opmlCategory.category, siteKey)
+    )
+  )
+}
 
 export async function createFeedDatabase(githubActionPath: string) {
   try {
