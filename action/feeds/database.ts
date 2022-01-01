@@ -163,12 +163,27 @@ export async function insertEntry(
   category: string,
   entry: Entry
 ) {
-  if (await isEntryExists(knex, entry)) return
   if (!(await isSiteExists(knex, siteKey))) return
   if (!(await isCategoryExists(knex, category))) return
 
   const key = hash(`${entry.title}${entry.link}`)
   const contentTime = (entry.date && Math.floor(entry.date / 1000)) || null
+  const isEntryCategoryExists = await knex('EntryCategories')
+    .where('category', category)
+    .andWhere('entryKey', key)
+    .first()
+  if (!isEntryCategoryExists) {
+    await knex('EntryCategories').insert({
+      category,
+      entryKey: key,
+      entryTitle: entry.title,
+      siteKey,
+      siteTitle,
+      entryContentTime: contentTime
+    })
+  }
+
+  if (await isEntryExists(knex, entry)) return
   await knex('Entries').insert({
     key,
     siteKey,
@@ -178,14 +193,6 @@ export async function insertEntry(
     content: entry.content,
     contentTime,
     createdAt: Math.floor(Date.now() / 1000)
-  })
-  await knex('EntryCategories').insert({
-    category,
-    entryKey: key,
-    entryTitle: entry.title,
-    siteKey,
-    siteTitle,
-    entryContentTime: contentTime
   })
   return key
 }
@@ -206,7 +213,7 @@ export async function insertSite(knex: Knex, category: string, site: Site) {
     const key = await knex.transaction(async (trx) => {
       const key = hash(site.title)
       const updatedAt = site.updatedAt || Date.now()
-      if (!(await isCategoryExists(trx, category))) return
+      if (!(await isCategoryExists(trx, category))) return null
       if (!(await isSiteCategoryExists(trx, category, key))) {
         await trx('SiteCategories').insert({
           category,
@@ -214,7 +221,7 @@ export async function insertSite(knex: Knex, category: string, site: Site) {
           siteTitle: site.title
         })
       }
-      if (await isSiteExists(trx, key)) return
+      if (await isSiteExists(trx, key)) return key
       await trx('Sites').insert({
         key,
         title: site.title,

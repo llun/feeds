@@ -89,18 +89,38 @@ test('#insertSite', async (t) => {
 
   // Ignore insertion when category is not exists
   await insertSite(db, 'category2', site)
-  const siteCategoryCount = await db('SiteCategories')
-    .count('* as total')
-    .first()
-  t.is(siteCategoryCount.total, 1)
+  t.is((await db('SiteCategories').count('* as total').first()).total, 1)
+  t.is((await db('Sites').count('* as total').first()).total, 1)
 
-  const siteCount = await db('Sites').count('* as total').first()
-  t.is(siteCount.total, 1)
+  // Multiple category but same site
+  await insertCategory(db, 'category2')
+  const siteKey2 = await insertSite(db, 'category2', site)
+  t.is(siteKey, siteKey2)
+  t.is((await db('SiteCategories').count('* as total').first()).total, 2)
+  t.is((await db('Sites').count('* as total').first()).total, 1)
 })
 
-test('#deleteSiteCategory', async (t) => {})
+test.only('#deleteSiteCategory', async (t) => {
+  const { db, fixtures } = t.context
+  const { entry, site } = fixtures
+  await insertCategory(db, 'category1')
+  await insertCategory(db, 'category2')
+  await insertSite(db, 'category1', site)
+  await insertSite(db, 'category2', site)
 
-test('#deleteSite', async (t) => {})
+  const siteKey = hash(site.title)
+  const entryKey = hash(`${entry.title}${entry.link}`)
+  await insertEntry(db, siteKey, site.title, 'category1', entry)
+  await insertEntry(db, siteKey, site.title, 'category2', entry)
+  await deleteEntry(db, entryKey)
+
+  t.is((await db('Entries').count('* as total').first()).total, 0)
+  t.is((await db('EntryCategories').count('* as total').first()).total, 0)
+})
+
+test('#deleteSite', async (t) => {
+  t.fail()
+})
 
 test('#insertEntry', async (t) => {
   const { db, fixtures } = t.context
@@ -122,6 +142,7 @@ test('#insertEntry', async (t) => {
   )
   t.is(entryKey, hash(`${entry.title}${entry.link}`))
   t.is((await db('Entries').count('* as total').first()).total, 1)
+  t.is((await db('EntryCategories').count('* as total').first()).total, 1)
   const persistedEntry = await db('Entries').first()
   t.like(persistedEntry, {
     key: hash(`${entry.title}${entry.link}`),
@@ -131,6 +152,13 @@ test('#insertEntry', async (t) => {
     content: entry.content,
     contentTime: Math.floor(entry.date / 1000)
   })
+
+  // Multiple categories
+  await insertCategory(db, 'category2')
+  await insertSite(db, 'category2', site)
+  await insertEntry(db, siteKey, site.title, 'category2', entry)
+  t.is((await db('Entries').count('* as total').first()).total, 1)
+  t.is((await db('EntryCategories').count('* as total').first()).total, 2)
 })
 
 test('#deleteEntry', async (t) => {
