@@ -6,7 +6,7 @@ import { parseXML, parseAtom, parseRss } from './parsers'
 import { loadContent, close } from '../puppeteer'
 import {
   getDatabase,
-  createSchema,
+  createTables,
   insertCategory,
   insertSite,
   cleanup,
@@ -57,7 +57,7 @@ export async function createFeedDatabase(githubActionPath: string) {
       ? path.join(githubActionPath, 'public')
       : 'public'
     const database = getDatabase(publicPath)
-    await createSchema(database)
+    await createTables(database)
     for (const category of opml) {
       const { category: categoryName, items } = category
       if (!items) continue

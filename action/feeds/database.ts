@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import { knex, Knex } from 'knex'
 
 import type { Entry, Site } from './parsers'
+import { table } from 'console'
 
 function hash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
@@ -33,7 +34,7 @@ export function getDatabase(contentDirectory: string) {
   })
 }
 
-export async function createSchema(knex: Knex) {
+export async function createTables(knex: Knex) {
   if (!(await knex.schema.hasTable('Categories'))) {
     await knex.schema.createTable('Categories', (table) => {
       table.string('name').primary()
@@ -56,6 +57,11 @@ export async function createSchema(knex: Knex) {
       table.string('siteKey').notNullable()
       table.string('siteTitle').notNullable()
       table.index(['category', 'siteKey'], 'site_category_idx')
+      table
+        .foreign('category')
+        .references('Categories.name')
+        .onDelete('cascade')
+      table.foreign('siteKey').references('Sites.key').onDelete('cascade')
     })
   }
 
@@ -73,6 +79,7 @@ export async function createSchema(knex: Knex) {
         ['siteKey', 'contentTime', 'createdAt'],
         'site_content_time_created_at_idx'
       )
+      table.foreign('siteKey').references('Sites.key').onDelete('cascade')
     })
   }
 
@@ -88,6 +95,12 @@ export async function createSchema(knex: Knex) {
         ['category', 'siteKey', 'entryKey'],
         'category_siteKey_entryKey_idx'
       )
+      table.foreign('entryKey').references('Entries.key').onDelete('cascade')
+      table.foreign('siteKey').references('Sites.key').onDelete('cascade')
+      table
+        .foreign('category')
+        .references('Categories.name')
+        .onDelete('cascade')
     })
   }
 }
