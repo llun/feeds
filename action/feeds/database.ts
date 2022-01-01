@@ -117,7 +117,27 @@ export async function insertCategory(knex: Knex, category: string) {
   }
 }
 
-export async function deleteCategory(knex: Knex, category: string) {}
+export async function deleteCategory(knex: Knex, category: string) {
+  const sites = (
+    await knex('SiteCategories').select('siteKey').where('category', category)
+  ).map((item) => item.siteKey)
+
+  await knex('Categories').where('name', category).delete()
+  const siteWithoutCategories = (await Promise.all(
+    sites.map((siteKey) =>
+      knex('SiteCategories')
+        .where('siteKey', siteKey)
+        .select(knex.raw(`'${siteKey}' as key`))
+        .count('* as total')
+        .first()
+    )
+  )) as { key: string; total: number }[]
+  await Promise.all(
+    siteWithoutCategories
+      .filter((item) => item.total === 0)
+      .map((item) => deleteSite(knex, item.key))
+  )
+}
 
 export async function isEntryExists(knex: Knex, entry: Entry) {
   const key = hash(`${entry.title}${entry.link}`)

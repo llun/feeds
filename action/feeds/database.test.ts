@@ -2,6 +2,7 @@ import anyTest, { TestInterface } from 'ava'
 import { knex, Knex } from 'knex'
 import {
   createTables,
+  deleteCategory,
   deleteEntry,
   deleteSite,
   deleteSiteCategory,
@@ -63,8 +64,33 @@ test('#insertCategory', async (t) => {
   t.is(first.name, 'category1')
 })
 
-test.skip('#deleteCategory', async (t) => {
-  t.fail()
+test('#deleteCategory', async (t) => {
+  const { db, fixtures } = t.context
+  const { site, entry } = fixtures
+
+  await insertCategory(db, 'category1')
+  await insertCategory(db, 'category2')
+  await insertSite(db, 'category1', site)
+  await insertSite(db, 'category2', site)
+
+  const siteKey = hash(site.title)
+  await insertEntry(db, siteKey, site.title, 'category1', entry)
+  await insertEntry(db, siteKey, site.title, 'category2', entry)
+
+  await deleteCategory(db, 'category2')
+
+  t.is((await db('Entries').count('* as total').first()).total, 1)
+  t.is((await db('Sites').count('* as total').first()).total, 1)
+  t.is((await db('EntryCategories').count('* as total').first()).total, 1)
+  t.is((await db('SiteCategories').count('* as total').first()).total, 1)
+  t.is((await db('Categories').count('* as total').first()).total, 1)
+
+  await deleteCategory(db, 'category1')
+  t.is((await db('Entries').count('* as total').first()).total, 0)
+  t.is((await db('Sites').count('* as total').first()).total, 0)
+  t.is((await db('EntryCategories').count('* as total').first()).total, 0)
+  t.is((await db('SiteCategories').count('* as total').first()).total, 0)
+  t.is((await db('Categories').count('* as total').first()).total, 0)
 })
 
 test('#insertSite', async (t) => {
