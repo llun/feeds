@@ -142,6 +142,11 @@ test('#deleteEntry', async (t) => {
   const key = await insertEntry(db, siteKey, site.title, 'category1', entry)
 
   await deleteEntry(db, key)
-  const count = await db('Entries').count('* as total').first()
-  t.is(count.total, 0)
+  const entryCount = await db('Entries').count('* as total').first()
+  t.is(entryCount.total, 0)
+
+  const entryCategoryCount = await db('EntryCategories')
+    .count('* as total')
+    .first()
+  t.is(entryCategoryCount.total, 0)
 })

@@ -190,7 +190,16 @@ export async function insertEntry(
   return key
 }
 
-export async function deleteEntry(knex: Knex, entryKey: string) {}
+export async function deleteEntry(knex: Knex, entryKey: string) {
+  const counter = await knex('Entries')
+    .where('key', entryKey)
+    .count('* as total')
+    .first()
+  if (counter.total === 0) return
+
+  await knex('Entries').where('key', entryKey).delete()
+  await knex('EntryCategories').where('entryKey', entryKey).delete()
+}
 
 export async function insertSite(knex: Knex, category: string, site: Site) {
   try {
