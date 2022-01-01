@@ -34,6 +34,7 @@ export function getDatabase(contentDirectory: string) {
 }
 
 export async function createTables(knex: Knex) {
+  await knex.raw('PRAGMA foreign_keys = ON')
   if (!(await knex.schema.hasTable('Categories'))) {
     await knex.schema.createTable('Categories', (table) => {
       table.string('name').primary()
@@ -168,6 +169,18 @@ export async function insertEntry(
 
   const key = hash(`${entry.title}${entry.link}`)
   const contentTime = (entry.date && Math.floor(entry.date / 1000)) || null
+  if (!(await isEntryExists(knex, entry))) {
+    await knex('Entries').insert({
+      key,
+      siteKey,
+      siteTitle,
+      title: entry.title,
+      url: entry.link,
+      content: entry.content,
+      contentTime,
+      createdAt: Math.floor(Date.now() / 1000)
+    })
+  }
   const isEntryCategoryExists = await knex('EntryCategories')
     .where('category', category)
     .andWhere('entryKey', key)
@@ -182,18 +195,6 @@ export async function insertEntry(
       entryContentTime: contentTime
     })
   }
-
-  if (await isEntryExists(knex, entry)) return
-  await knex('Entries').insert({
-    key,
-    siteKey,
-    siteTitle,
-    title: entry.title,
-    url: entry.link,
-    content: entry.content,
-    contentTime,
-    createdAt: Math.floor(Date.now() / 1000)
-  })
   return key
 }
 
@@ -214,6 +215,15 @@ export async function insertSite(knex: Knex, category: string, site: Site) {
       const key = hash(site.title)
       const updatedAt = site.updatedAt || Date.now()
       if (!(await isCategoryExists(trx, category))) return null
+      if (!(await isSiteExists(trx, key))) {
+        await trx('Sites').insert({
+          key,
+          title: site.title,
+          url: site.link || null,
+          description: site.description || null,
+          createdAt: Math.floor(updatedAt / 1000)
+        })
+      }
       if (!(await isSiteCategoryExists(trx, category, key))) {
         await trx('SiteCategories').insert({
           category,
@@ -221,14 +231,6 @@ export async function insertSite(knex: Knex, category: string, site: Site) {
           siteTitle: site.title
         })
       }
-      if (await isSiteExists(trx, key)) return key
-      await trx('Sites').insert({
-        key,
-        title: site.title,
-        url: site.link || null,
-        description: site.description || null,
-        createdAt: Math.floor(updatedAt / 1000)
-      })
       return key
     })
     return key
@@ -243,7 +245,23 @@ export async function deleteSiteCategory(
   knex: Knex,
   category: string,
   siteKey: string
-) {}
+) {
+  await knex('SiteCategories')
+    .where('category', category)
+    .andWhere('siteKey', siteKey)
+    .delete()
+  await knex('EntryCategories')
+    .where('category', category)
+    .andWhere('siteKey', siteKey)
+    .delete()
+
+  const siteCategoryCount = await knex('SiteCategories')
+    .where('siteKey', siteKey)
+    .count('* as total')
+    .first()
+  if (siteCategoryCount.total > 0) return
+  await knex('Sites').where('key', siteKey).delete()
+}
 
 export async function deleteSite(knex: Knex, siteKey: string) {}
 

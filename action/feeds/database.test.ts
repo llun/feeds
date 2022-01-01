@@ -3,6 +3,7 @@ import { knex, Knex } from 'knex'
 import {
   createTables,
   deleteEntry,
+  deleteSiteCategory,
   hash,
   insertCategory,
   insertEntry,
@@ -61,7 +62,7 @@ test('#insertCategory', async (t) => {
   t.is(first.name, 'category1')
 })
 
-test('#deleteCategory', async (t) => {
+test.skip('#deleteCategory', async (t) => {
   t.fail()
 })
 
@@ -100,7 +101,7 @@ test('#insertSite', async (t) => {
   t.is((await db('Sites').count('* as total').first()).total, 1)
 })
 
-test.only('#deleteSiteCategory', async (t) => {
+test('#deleteSiteCategory', async (t) => {
   const { db, fixtures } = t.context
   const { entry, site } = fixtures
   await insertCategory(db, 'category1')
@@ -109,16 +110,23 @@ test.only('#deleteSiteCategory', async (t) => {
   await insertSite(db, 'category2', site)
 
   const siteKey = hash(site.title)
-  const entryKey = hash(`${entry.title}${entry.link}`)
   await insertEntry(db, siteKey, site.title, 'category1', entry)
   await insertEntry(db, siteKey, site.title, 'category2', entry)
-  await deleteEntry(db, entryKey)
+  await deleteSiteCategory(db, 'category2', siteKey)
 
-  t.is((await db('Entries').count('* as total').first()).total, 0)
+  t.is((await db('Entries').count('* as total').first()).total, 1)
+  t.is((await db('Sites').count('* as total').first()).total, 1)
+  t.is((await db('EntryCategories').count('* as total').first()).total, 1)
+  t.is((await db('SiteCategories').count('* as total').first()).total, 1)
+
+  await deleteSiteCategory(db, 'category1', siteKey)
+  t.is((await db('SiteCategories').count('* as total').first()).total, 0)
   t.is((await db('EntryCategories').count('* as total').first()).total, 0)
+  t.is((await db('Sites').count('* as total').first()).total, 0)
+  t.is((await db('Entries').count('* as total').first()).total, 0)
 })
 
-test('#deleteSite', async (t) => {
+test.skip('#deleteSite', async (t) => {
   t.fail()
 })
 
