@@ -4,9 +4,8 @@ import crypto from 'crypto'
 import { knex, Knex } from 'knex'
 
 import type { Entry, Site } from './parsers'
-import { table } from 'console'
 
-function hash(input: string) {
+export function hash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
 }
 
