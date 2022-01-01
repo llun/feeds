@@ -234,6 +234,13 @@ export async function deleteEntry(knex: Knex, entryKey: string) {
   await knex('EntryCategories').where('entryKey', entryKey).delete()
 }
 
+export async function getAllSiteEntries(knex: Knex, siteKey: string) {
+  const entries = await knex('EntryCategories')
+    .select('entryKey', 'siteKey', 'category')
+    .where('siteKey', siteKey)
+  return entries as { entryKey: string; siteKey: string; category: string }[]
+}
+
 export async function insertSite(knex: Knex, category: string, site: Site) {
   try {
     const key = await knex.transaction(async (trx) => {

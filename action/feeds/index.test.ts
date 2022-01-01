@@ -3,15 +3,23 @@ import fs from 'fs'
 import path from 'path'
 import sinon from 'sinon'
 import { knex } from 'knex'
-import { readOpml, removeOldCategories, removeOldSites } from './'
+import {
+  readOpml,
+  removeOldCategories,
+  removeOldEntries,
+  removeOldSites
+} from './'
 import {
   createTables,
   getAllCategories,
+  getAllSiteEntries,
   getCategorySites,
   hash,
   insertCategory,
+  insertEntry,
   insertSite
 } from './database'
+import { Site } from './parsers'
 
 test('#readOpml returns categories and sites in OPML file', async (t) => {
   const data = fs
@@ -172,4 +180,56 @@ test('#removeOldSites delete sites not exists in opml', async (t) => {
     { siteKey: site2, siteTitle: 'cheeaunblog', category: 'Category2' },
     { siteKey: site3, siteTitle: 'icez network', category: 'Category2' }
   ])
+})
+
+test('#removeOldEntries delete entries not exists in feed site anymore', async (t) => {
+  const db = knex({
+    client: 'sqlite3',
+    connection: ':memory:',
+    useNullAsDefault: true
+  })
+  await createTables(db)
+  await insertCategory(db, 'Category1')
+
+  const site: Site = {
+    title: '@llun story',
+    description: '',
+    entries: [
+      {
+        author: 'llun',
+        content: 'content1',
+        date: Math.floor(Date.now() / 1000),
+        link: 'https://www.llun.me/posts/2021-12-30-2021/',
+        title: '2021'
+      },
+      {
+        author: 'llun',
+        content: 'content2',
+        date: Math.floor(Date.now() / 1000),
+        link: 'https://www.llun.me/posts/2020-12-31-2020/',
+        title: '2020'
+      }
+    ],
+    generator: '',
+    link: 'https://www.llun.me',
+    updatedAt: Math.floor(Date.now() / 1000)
+  }
+  const siteKey = await insertSite(db, 'Category1', site)
+  await insertEntry(db, siteKey, '@llun story', 'Category1', {
+    author: 'llun',
+    content: 'content3',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2018-12-31-2018/',
+    title: '2018'
+  })
+  const entryKey = await insertEntry(db, siteKey, '@llun story', 'Category1', {
+    author: 'llun',
+    content: 'content2',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2020-12-31-2020/',
+    title: '2020'
+  })
+  await removeOldEntries(db, site)
+  const entries = await getAllSiteEntries(db, siteKey)
+  t.deepEqual(entries, [{ entryKey, siteKey, category: 'Category1' }])
 })

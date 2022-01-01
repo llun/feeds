@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import fs from 'fs'
 import path from 'path'
 import axios from 'axios'
-import { parseXML, parseAtom, parseRss } from './parsers'
+import { parseXML, parseAtom, parseRss, Site } from './parsers'
 import { loadContent, close } from '../puppeteer'
 import {
   getDatabase,
@@ -16,7 +16,9 @@ import {
   deleteCategory,
   getCategorySites,
   hash,
-  deleteSiteCategory
+  deleteSiteCategory,
+  getAllSiteEntries,
+  deleteEntry
 } from './database'
 import { getWorkspacePath } from '../repository'
 import { Knex } from 'knex'
@@ -105,6 +107,17 @@ export async function removeOldSites(db: Knex, opmlCategory: OpmlCategory) {
       deleteSiteCategory(db, opmlCategory.category, siteKey)
     )
   )
+}
+
+export async function removeOldEntries(db: Knex, site: Site) {
+  const existingEntries = await getAllSiteEntries(db, hash(site.title))
+  const siteEntries = site.entries.map((item) =>
+    hash(`${item.title}${item.link}`)
+  )
+  const removedEntries = existingEntries
+    .map((item) => item.entryKey)
+    .filter((key) => !siteEntries.includes(key))
+  await Promise.all(removedEntries.map((key) => deleteEntry(db, key)))
 }
 
 export async function createFeedDatabase(githubActionPath: string) {
