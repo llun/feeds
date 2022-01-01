@@ -304,3 +304,99 @@ test('#createOrUpdateDatabase add fresh data for empty database', async (t) => {
     }
   }
 })
+
+test('#createOrUpdateDatabase with old contents in database', async (t) => {
+  const db = knex({
+    client: 'sqlite3',
+    connection: ':memory:',
+    useNullAsDefault: true
+  })
+  const data = fs
+    .readFileSync(path.join(__dirname, 'tests', 'opml.single.xml'))
+    .toString('utf8')
+  const opml = await readOpml(data)
+  const entry1: Entry = {
+    author: 'llun',
+    content: 'content1',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2021-12-30-2021/',
+    title: '2021'
+  }
+  const entry2: Entry = {
+    author: 'llun',
+    content: 'content2',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2020-12-31-2020/',
+    title: '2020'
+  }
+  const site: Site = {
+    title: '@llun story',
+    description: '',
+    entries: [entry1, entry2],
+    generator: '',
+    link: 'https://www.llun.me',
+    updatedAt: Math.floor(Date.now() / 1000)
+  }
+  await createTables(db)
+  await insertCategory(db, 'default')
+  await insertCategory(db, 'Category1')
+  await insertSite(db, 'default', site)
+  await insertSite(db, 'default', {
+    title: 'Other site',
+    description: '',
+    entries: [],
+    generator: '',
+    link: 'https://google.com',
+    updatedAt: Math.floor(Date.now() / 1000)
+  })
+  await insertSite(db, 'Category1', {
+    title: 'Other site2',
+    description: '',
+    entries: [],
+    generator: '',
+    link: 'https://youtube.com',
+    updatedAt: Math.floor(Date.now() / 1000)
+  })
+  await insertEntry(db, hash(site.title), site.title, 'default', {
+    author: 'llun',
+    content: 'content3',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2018-12-31-2018/',
+    title: '2018'
+  })
+
+  await createOrUpdateDatabase(
+    db,
+    opml,
+    async (title: string, url: string) => site,
+    async (link: string, siteLoaders?: SiteLoaderMap) => 'Content'
+  )
+  const categories = await getAllCategories(db)
+  t.deepEqual(categories, ['default'])
+  for (const category of categories) {
+    const sites = await getCategorySites(db, category)
+    t.deepEqual(sites, [
+      {
+        siteKey: hash(site.title),
+        siteTitle: site.title,
+        category: 'default'
+      }
+    ])
+
+    for (const site of sites) {
+      const entries = await getAllSiteEntries(db, site.siteKey)
+      t.deepEqual(entries, [
+        {
+          entryKey: hash(`${entry2.title}${entry2.link}`),
+          siteKey: site.siteKey,
+          category: 'default'
+        },
+        {
+          entryKey: hash(`${entry1.title}${entry1.link}`),
+          siteKey: site.siteKey,
+          category: 'default'
+        }
+      ])
+    }
+  }
+})
