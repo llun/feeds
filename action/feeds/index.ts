@@ -56,7 +56,14 @@ export async function readOpml(opmlContent: string): Promise<OpmlCategory[]> {
     .reduce((out: OpmlCategory[], outline: any) => {
       const category = outline.$.title
       const items = outline.outline
-      out.push({ category, items: items && items.map((item) => item.$) })
+      out.push({
+        category,
+        items:
+          items &&
+          items
+            .map((item: any) => item.$)
+            .filter((item: any) => item.type === 'rss')
+      })
       return out
     }, [])
   const output: OpmlCategory[] = []
