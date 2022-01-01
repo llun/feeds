@@ -1,7 +1,13 @@
 import anyTest, { TestInterface } from 'ava'
 import { knex, Knex } from 'knex'
-import { createTables, hash, insertCategory, insertSite } from './database'
-import { Site } from './parsers'
+import {
+  createTables,
+  hash,
+  insertCategory,
+  insertEntry,
+  insertSite
+} from './database'
+import { Entry, Site } from './parsers'
 
 const test = anyTest as TestInterface<{ db: Knex }>
 
@@ -65,4 +71,43 @@ test('#insertSite', async (t) => {
 
   const siteCount = await db('Sites').count('* as total').first()
   t.is(siteCount.total, 1)
+})
+
+test('#insertEntry', async (t) => {
+  const { db } = t.context
+  await insertCategory(db, 'category1')
+
+  const entry: Entry = {
+    title: 'Sample entry',
+    link: 'https://www.llun.me/posts/2021-12-30-2021/',
+    author: 'llun',
+    content: 'Content',
+    date: Date.now()
+  }
+  await insertEntry(db, 'nonexist', 'nonexists', 'category1', entry)
+  t.is((await db('Entries').count('* as total').first()).total, 0)
+
+  const site: Site = {
+    title: 'Demo Site',
+    link: 'https://llun.dev',
+    description: 'Sample site',
+    updatedAt: Date.now(),
+    generator: 'Test',
+    entries: [entry]
+  }
+  await insertSite(db, 'category1', site)
+  await insertEntry(db, hash(site.title), site.title, 'category2', entry)
+  t.is((await db('Entries').count('* as total').first()).total, 0)
+
+  await insertEntry(db, hash(site.title), site.title, 'category1', entry)
+  t.is((await db('Entries').count('* as total').first()).total, 1)
+  const persistedEntry = await db('Entries').first()
+  t.like(persistedEntry, {
+    key: hash(`${entry.title}${entry.link}`),
+    siteKey: hash(site.title),
+    siteTitle: site.title,
+    url: entry.link,
+    content: entry.content,
+    contentTime: Math.floor(entry.date / 1000)
+  })
 })

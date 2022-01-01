@@ -118,11 +118,40 @@ export async function insertCategory(knex: Knex, category: string) {
 
 export async function isEntryExists(knex: Knex, entry: Entry) {
   const key = hash(`${entry.title}${entry.link}`)
-  const existingEntry = await knex('Entries')
+  const count = await knex('Entries')
     .where('key', key)
     .count('* as total')
     .first()
-  return existingEntry['total'] === 1
+  return count.total > 0
+}
+
+async function isSiteExists(knex: Knex, siteKey: string) {
+  const count = await knex('Sites')
+    .where('key', siteKey)
+    .count('* as total')
+    .first()
+  return count.total > 0
+}
+
+async function isSiteCategoryExists(
+  knex: Knex,
+  category: string,
+  siteKey: string
+) {
+  const count = await knex('SiteCategories')
+    .where('category', category)
+    .andWhere('siteKey', siteKey)
+    .count('* as total')
+    .first()
+  return count.total > 0
+}
+
+async function isCategoryExists(knex: Knex, category: string) {
+  const count = await knex('Categories')
+    .where('name', category)
+    .count('* as total')
+    .first()
+  return count.total > 0
 }
 
 export async function insertEntry(
@@ -133,6 +162,8 @@ export async function insertEntry(
   entry: Entry
 ) {
   if (await isEntryExists(knex, entry)) return
+  if (!(await isSiteExists(knex, siteKey))) return
+  if (!(await isCategoryExists(knex, category))) return
 
   const key = hash(`${entry.title}${entry.link}`)
   const contentTime = (entry.date && Math.floor(entry.date / 1000)) || null
@@ -161,25 +192,15 @@ export async function insertSite(knex: Knex, category: string, site: Site) {
     const key = await knex.transaction(async (trx) => {
       const key = hash(site.title)
       const updatedAt = site.updatedAt || Date.now()
-      const categoryCount = await trx('Categories')
-        .where('name', category)
-        .count('* as total')
-        .first()
-      if (!categoryCount.total) return
-      const siteCategory = await trx('SiteCategories')
-        .where('category', category)
-        .andWhere('siteKey', key)
-        .first()
-      if (siteCategory) return
-      await trx('SiteCategories').insert({
-        category,
-        siteKey: key,
-        siteTitle: site.title
-      })
-
-      const insertedSite = await trx('Sites').where('key', key).first()
-      if (insertedSite) return
-
+      if (!(await isCategoryExists(trx, category))) return
+      if (!(await isSiteCategoryExists(trx, category, key))) {
+        await trx('SiteCategories').insert({
+          category,
+          siteKey: key,
+          siteTitle: site.title
+        })
+      }
+      if (await isSiteExists(trx, key)) return
       await trx('Sites').insert({
         key,
         title: site.title,
