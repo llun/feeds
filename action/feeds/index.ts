@@ -91,6 +91,8 @@ export async function removeOldCategories(db: Knex, opml: OpmlCategory[]) {
   )
 }
 
+export async function removeOldSites(db: Knex, opmlCategory: OpmlCategory) {}
+
 export async function createFeedDatabase(githubActionPath: string) {
   try {
     const feedsFile = core.getInput('opmlFile', { required: true })

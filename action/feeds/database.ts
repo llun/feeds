@@ -292,6 +292,13 @@ export async function deleteSite(knex: Knex, siteKey: string) {
   await knex('Sites').where('key', siteKey).delete()
 }
 
+export async function getCategorySites(knex: Knex, category: string) {
+  const sites = await knex('SiteCategories')
+    .select('siteKey', 'siteTitle', 'category')
+    .where('category', category)
+  return sites as { siteKey: string; siteTitle: string; category: string }[]
+}
+
 export async function cleanup(knex: Knex) {
   await knex.raw('pragma journal_mode = delete')
   await knex.raw('pragma page_size = 4096')
