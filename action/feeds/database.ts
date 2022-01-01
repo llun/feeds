@@ -263,7 +263,9 @@ export async function deleteSiteCategory(
   await knex('Sites').where('key', siteKey).delete()
 }
 
-export async function deleteSite(knex: Knex, siteKey: string) {}
+export async function deleteSite(knex: Knex, siteKey: string) {
+  await knex('Sites').where('key', siteKey).delete()
+}
 
 export async function cleanup(knex: Knex) {
   await knex.raw('pragma journal_mode = delete')
