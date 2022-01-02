@@ -175,37 +175,7 @@ export async function createFeedDatabase(githubActionPath: string) {
       : 'public'
     const database = getDatabase(publicPath)
     await createTables(database)
-    for (const category of opml) {
-      const { category: categoryName, items } = category
-      if (!items) continue
-      await insertCategory(database, categoryName)
-      for (const item of items) {
-        const site = await loadFeed(item.title, item.xmlUrl)
-        if (!site) {
-          continue
-        }
-        console.log(`Load ${site.title}`)
-        const siteKey = await insertSite(database, categoryName, site)
-        for (const entry of site.entries) {
-          if (await isEntryExists(database, entry)) continue
-
-          const link = entry.link
-          try {
-            const content = await loadContent(link)
-            if (content) {
-              entry.content = content
-            }
-          } catch (error) {
-            // Puppeteer timeout
-            console.error(error.message)
-          } finally {
-            await close()
-          }
-
-          await insertEntry(database, siteKey, site.title, categoryName, entry)
-        }
-      }
-    }
+    await createOrUpdateDatabase(database, opml, loadFeed, loadContent)
     await cleanup(database)
     await database.destroy()
   } catch (error) {
