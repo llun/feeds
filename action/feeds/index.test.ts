@@ -400,3 +400,67 @@ test('#createOrUpdateDatabase with old contents in database', async (t) => {
     }
   }
 })
+
+test('#createOrUpdateDatabase only load content for new entry', async (t) => {
+  const db = knex({
+    client: 'sqlite3',
+    connection: ':memory:',
+    useNullAsDefault: true
+  })
+  const data = fs
+    .readFileSync(path.join(__dirname, 'tests', 'opml.single.xml'))
+    .toString('utf8')
+  const opml = await readOpml(data)
+  const entry1: Entry = {
+    author: 'llun',
+    content: 'content1',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2021-12-30-2021/',
+    title: '2021'
+  }
+  const entry2: Entry = {
+    author: 'llun',
+    content: 'content2',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2020-12-31-2020/',
+    title: '2020'
+  }
+  const site: Site = {
+    title: '@llun story',
+    description: '',
+    entries: [entry1, entry2],
+    generator: '',
+    link: 'https://www.llun.me',
+    updatedAt: Math.floor(Date.now() / 1000)
+  }
+  await createTables(db)
+  await insertCategory(db, 'default')
+  await insertSite(db, 'default', site)
+  await insertEntry(db, hash(site.title), site.title, 'default', {
+    author: 'llun',
+    content: 'content2',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2020-12-31-2020/',
+    title: '2020'
+  })
+  await insertEntry(db, hash(site.title), site.title, 'default', {
+    author: 'llun',
+    content: 'content3',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2018-12-31-2018/',
+    title: '2018'
+  })
+  const contentLoaderStub = sinon
+    .stub<[link: string, loaderMap?: SiteLoaderMap], Promise<string>>()
+    .resolves('Content')
+  await createOrUpdateDatabase(
+    db,
+    opml,
+    async (title: string, url: string) => site,
+    contentLoaderStub
+  )
+  t.true(
+    contentLoaderStub.calledWith('https://www.llun.me/posts/2021-12-30-2021/')
+  )
+  t.is(contentLoaderStub.callCount, 1)
+})
