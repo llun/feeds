@@ -142,7 +142,10 @@ export async function createOrUpdateDatabase(
       const siteKey = await insertSite(db, categoryName, site)
       await removeOldEntries(db, site)
       for (const entry of site.entries) {
-        if (await isEntryExists(db, entry)) continue
+        if (await isEntryExists(db, entry)) {
+          console.log(`Skip - ${entry.link}`)
+          continue
+        }
 
         const link = entry.link
         try {
