@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import fs from 'fs'
+import fs from 'fs/promises'
 import path from 'path'
 import axios from 'axios'
 import { parseXML, parseAtom, parseRss, Site } from './parsers'
@@ -23,6 +23,7 @@ import {
 import { getWorkspacePath } from '../repository'
 import { Knex } from 'knex'
 import { SiteLoaderMap } from '../puppeteer/sites'
+import { constants } from 'fs'
 
 export async function loadFeed(title: string, url: string) {
   try {
@@ -166,16 +167,31 @@ export async function createOrUpdateDatabase(
   }
 }
 
+export async function copyExistingDatabase(targetPath: string) {
+  const workSpace = getWorkspacePath()
+  if (workSpace) {
+    const existingDatabase = path.join(workSpace, 'data.sqlite3')
+    try {
+      const stat = await fs.stat(existingDatabase)
+      if (!stat.isFile()) return
+      await fs.copyFile(existingDatabase, targetPath, constants.COPYFILE_EXCL)
+    } catch (error) {
+      // Fail to read old database, ignore it
+    }
+  }
+}
+
 export async function createFeedDatabase(githubActionPath: string) {
   try {
     const feedsFile = core.getInput('opmlFile', { required: true })
-    const opmlContent = fs
-      .readFileSync(path.join(getWorkspacePath(), feedsFile))
-      .toString('utf8')
+    const opmlContent = (
+      await fs.readFile(path.join(getWorkspacePath(), feedsFile))
+    ).toString('utf8')
     const opml = await readOpml(opmlContent)
     const publicPath = githubActionPath
       ? path.join(githubActionPath, 'public')
       : 'public'
+    await copyExistingDatabase(publicPath)
     const database = getDatabase(publicPath)
     await createTables(database)
     await createOrUpdateDatabase(database, opml, loadFeed, loadContent)
