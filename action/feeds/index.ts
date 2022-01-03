@@ -145,7 +145,6 @@ export async function createOrUpdateDatabase(
       await removeOldEntries(db, site)
       for (const entry of site.entries) {
         if (await isEntryExists(db, entry)) {
-          console.log(`Skip - ${entry.link}`)
           continue
         }
 
