@@ -18,7 +18,8 @@ import {
   hash,
   deleteSiteCategory,
   getAllSiteEntries,
-  deleteEntry
+  deleteEntry,
+  DATABASE_FILE
 } from './database'
 import { getWorkspacePath } from '../repository'
 import { Knex } from 'knex'
@@ -167,14 +168,19 @@ export async function createOrUpdateDatabase(
   }
 }
 
-export async function copyExistingDatabase(targetPath: string) {
+export async function copyExistingDatabase(publicPath: string) {
   const workSpace = getWorkspacePath()
   if (workSpace) {
-    const existingDatabase = path.join(workSpace, 'data.sqlite3')
+    const existingDatabase = path.join(workSpace, DATABASE_FILE)
+    const targetDatabase = path.join(publicPath, DATABASE_FILE)
     try {
       await fs.stat(existingDatabase)
-      console.log(`Copying ${existingDatabase} to ${targetPath}`)
-      await fs.copyFile(existingDatabase, targetPath)
+      console.log(`Copying ${existingDatabase} to ${targetDatabase}`)
+      await fs.copyFile(
+        existingDatabase,
+        targetDatabase,
+        constants.COPYFILE_EXCL
+      )
     } catch (error) {
       // Fail to read old database, ignore it
       console.log('Skip copy old database because of error: ', error.message)

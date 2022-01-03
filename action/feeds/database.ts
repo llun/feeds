@@ -5,6 +5,8 @@ import { knex, Knex } from 'knex'
 
 import type { Entry, Site } from './parsers'
 
+export const DATABASE_FILE = 'data.sqlite3'
+
 export function hash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
 }
@@ -22,7 +24,7 @@ export function getDatabase(contentDirectory: string) {
     fs.mkdirSync(contentDirectory, { recursive: true })
   }
 
-  const databasePath = path.join(contentDirectory, 'data.sqlite3')
+  const databasePath = path.join(contentDirectory, DATABASE_FILE)
   console.log('Database path', databasePath)
   return knex({
     client: 'sqlite3',
