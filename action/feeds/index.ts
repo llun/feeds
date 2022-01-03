@@ -172,11 +172,12 @@ export async function copyExistingDatabase(targetPath: string) {
   if (workSpace) {
     const existingDatabase = path.join(workSpace, 'data.sqlite3')
     try {
-      const stat = await fs.stat(existingDatabase)
-      if (!stat.isFile()) return
-      await fs.copyFile(existingDatabase, targetPath, constants.COPYFILE_EXCL)
+      await fs.stat(existingDatabase)
+      console.log(`Copying ${existingDatabase} to ${targetPath}`)
+      await fs.copyFile(existingDatabase, targetPath)
     } catch (error) {
       // Fail to read old database, ignore it
+      console.log('Skip copy old database because of error: ', error.message)
     }
   }
 }
