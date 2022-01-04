@@ -18,6 +18,7 @@ const test = anyTest as TestInterface<{
   fixtures: {
     site: Site
     entry: Entry
+    entryWithoutDate: Entry
   }
 }>
 
@@ -35,6 +36,13 @@ test.beforeEach(async (t) => {
     content: 'Content',
     date: Date.now()
   }
+  const fixtureEntryWithoutDate: Entry = {
+    title: 'Sample entry',
+    link: 'https://www.llun.me/posts/2021-12-30-2021/',
+    author: 'llun',
+    content: 'Content',
+    date: null
+  }
   const fixtureSite: Site = {
     title: 'Demo Site',
     link: 'https://llun.dev',
@@ -49,7 +57,8 @@ test.beforeEach(async (t) => {
     db,
     fixtures: {
       site: fixtureSite,
-      entry: fixtureEntry
+      entry: fixtureEntry,
+      entryWithoutDate: fixtureEntryWithoutDate
     }
   }
 })
@@ -172,7 +181,7 @@ test('#deleteSite', async (t) => {
   t.is((await db('Entries').count('* as total').first()).total, 0)
 })
 
-test('#insertEntry', async (t) => {
+test('#insertEntry single entry', async (t) => {
   const { db, fixtures } = t.context
   const { entry, site } = fixtures
   await insertCategory(db, 'category1')
@@ -202,13 +211,42 @@ test('#insertEntry', async (t) => {
     content: entry.content,
     contentTime: Math.floor(entry.date / 1000)
   })
+})
 
-  // Multiple categories
+test('#insertEntry with site in multiple categories', async (t) => {
+  const { db, fixtures } = t.context
+  const { entry, site } = fixtures
+  await insertCategory(db, 'category1')
   await insertCategory(db, 'category2')
+  await insertSite(db, 'category1', site)
   await insertSite(db, 'category2', site)
+  const siteKey = hash(site.title)
+
+  await insertEntry(db, siteKey, site.title, 'category1', entry)
   await insertEntry(db, siteKey, site.title, 'category2', entry)
   t.is((await db('Entries').count('* as total').first()).total, 1)
   t.is((await db('EntryCategories').count('* as total').first()).total, 2)
+})
+
+test('#insertEntry with empty date', async (t) => {
+  const { db, fixtures } = t.context
+  const { entryWithoutDate, site } = fixtures
+  await insertCategory(db, 'category1')
+  await insertSite(db, 'category1', site)
+  const siteKey = hash(site.title)
+
+  await insertEntry(db, siteKey, site.title, 'category1', entryWithoutDate)
+  t.is((await db('Entries').count('* as total').first()).total, 1)
+  t.is((await db('EntryCategories').count('* as total').first()).total, 1)
+
+  const entry = await db('Entries').first()
+  const entryCategory = await db('EntryCategories').first()
+  t.is(
+    entryCategory.entryContentTime,
+    entry.createdAt,
+    'entryContentTime should use entry createdAt when contentTime is null'
+  )
+  t.falsy(entry.contentTime, 'Content time in the entry should still be null')
 })
 
 test('#deleteEntry', async (t) => {
