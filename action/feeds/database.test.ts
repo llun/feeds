@@ -1,5 +1,6 @@
 import anyTest, { TestInterface } from 'ava'
 import { knex, Knex } from 'knex'
+import sinon from 'sinon'
 import {
   createTables,
   deleteCategory,
@@ -203,13 +204,14 @@ test('#insertEntry single entry', async (t) => {
   t.is((await db('Entries').count('* as total').first()).total, 1)
   t.is((await db('EntryCategories').count('* as total').first()).total, 1)
   const persistedEntry = await db('Entries').first()
-  t.like(persistedEntry, {
+  sinon.assert.match(persistedEntry, {
     key: hash(`${entry.title}${entry.link}`),
     siteKey: hash(site.title),
     siteTitle: site.title,
     url: entry.link,
     content: entry.content,
-    contentTime: Math.floor(entry.date / 1000)
+    contentTime: Math.floor(entry.date / 1000),
+    createdAt: sinon.match.number
   })
 })
 
@@ -246,7 +248,11 @@ test('#insertEntry with empty date', async (t) => {
     entry.createdAt,
     'entryContentTime should use entry createdAt when contentTime is null'
   )
-  t.falsy(entry.contentTime, 'Content time in the entry should still be null')
+  t.is(
+    entry.contentTime,
+    entry.createdAt,
+    'Content time in the entry should be the same as createdAt'
+  )
 })
 
 test('#deleteEntry', async (t) => {

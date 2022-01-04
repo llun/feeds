@@ -37,6 +37,19 @@ export function getDatabase(contentDirectory: string) {
 
 export async function createTables(knex: Knex) {
   await knex.raw('PRAGMA foreign_keys = ON')
+  if (!(await knex.schema.hasTable('SchemaVersions'))) {
+    await knex.schema.dropTableIfExists('EntryCategories')
+
+    if (!(await knex.schema.hasTable('SchemaVersions'))) {
+      await knex.schema.createTable('SchemaVersions', (table) => {
+        table.integer('timestamp')
+        table.integer('version')
+      })
+      const now = Math.floor(Date.now() / 1000)
+      await knex('SchemaVersions').insert({ timestamp: now, version: 1 })
+    }
+  }
+
   if (!(await knex.schema.hasTable('Categories'))) {
     await knex.schema.createTable('Categories', (table) => {
       table.string('name').primary()
@@ -92,10 +105,11 @@ export async function createTables(knex: Knex) {
       table.string('entryTitle').notNullable()
       table.string('siteKey').notNullable()
       table.string('siteTitle').notNullable()
-      table.string('entryContentTime').nullable()
+      table.integer('entryContentTime').nullable()
+      table.integer('entryCreatedAt').notNullable()
       table.index(
-        ['category', 'siteKey', 'entryKey'],
-        'category_siteKey_entryKey_idx'
+        ['category', 'siteKey', 'entryKey', 'entryContentTime'],
+        'category_siteKey_entryKey_entryContentTime_idx'
       )
       table.foreign('entryKey').references('Entries.key').onDelete('cascade')
       table.foreign('siteKey').references('Sites.key').onDelete('cascade')
@@ -195,7 +209,9 @@ export async function insertEntry(
   if (!(await isCategoryExists(knex, category))) return
 
   const key = hash(`${entry.title}${entry.link}`)
-  const contentTime = (entry.date && Math.floor(entry.date / 1000)) || null
+  const createdTime = Math.floor(Date.now() / 1000)
+  const contentTime =
+    (entry.date && Math.floor(entry.date / 1000)) || createdTime
   if (!(await isEntryExists(knex, entry))) {
     await knex('Entries').insert({
       key,
@@ -205,7 +221,7 @@ export async function insertEntry(
       url: entry.link,
       content: entry.content,
       contentTime,
-      createdAt: Math.floor(Date.now() / 1000)
+      createdAt: createdTime
     })
   }
   const isEntryCategoryExists = await knex('EntryCategories')
@@ -219,7 +235,8 @@ export async function insertEntry(
       entryTitle: entry.title,
       siteKey,
       siteTitle,
-      entryContentTime: contentTime
+      entryContentTime: contentTime,
+      entryCreatedAt: createdTime
     })
   }
   return key
