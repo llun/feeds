@@ -38,6 +38,7 @@ export function getDatabase(contentDirectory: string) {
 export async function createTables(knex: Knex) {
   await knex.raw('PRAGMA foreign_keys = ON')
   if (!(await knex.schema.hasTable('SchemaVersions'))) {
+    await knex.schema.dropTableIfExists('Entries')
     await knex.schema.dropTableIfExists('EntryCategories')
 
     if (!(await knex.schema.hasTable('SchemaVersions'))) {
