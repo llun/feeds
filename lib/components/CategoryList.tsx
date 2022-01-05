@@ -4,12 +4,14 @@ import { Category } from '../storage'
 interface Props {
   className?: string
   categories: Category[]
+  totalEntries: number | null
   selectCategory?: (category: string) => void
   selectSite?: (site: string) => void
 }
 const CategoryList = ({
   className,
   categories,
+  totalEntries,
   selectCategory,
   selectSite
 }: Props) => {
@@ -21,7 +23,12 @@ const CategoryList = ({
     >
       <h1>Feeds</h1>
       <h2 className="cursor-pointer">
-        <a onClick={() => selectSite && selectSite('all')}>All sites</a>
+        <a className="mr-2" onClick={() => selectSite && selectSite('all')}>
+          All sites
+        </a>
+        {totalEntries !== null && (
+          <small className="text-sm font-light">({totalEntries})</small>
+        )}
       </h2>
       {categories.map((category) => (
         <Fragment key={category.title}>

@@ -8,6 +8,7 @@ import CategoryList from '../lib/components/CategoryList'
 import {
   Category,
   Content,
+  countAllEntries,
   getCategories,
   getDatabaseConfig,
   getWorker,
@@ -28,6 +29,7 @@ export default function Home() {
   const [categories, setCategories] = useState<Category[]>([])
   const [entries, setEntries] = useState<SiteEntry[]>([])
   const [content, setContent] = useState<Content | null>(null)
+  const [totalEntries, setTotalEntries] = useState<number | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -42,8 +44,9 @@ export default function Home() {
         getDatabaseConfig(router.basePath),
         router.basePath
       )
-      const [categories] = await Promise.all([
+      const [categories, totalEntries] = await Promise.all([
         getCategories(worker),
+        countAllEntries(worker),
         locationController(
           stateLocation,
           router.basePath,
@@ -53,6 +56,7 @@ export default function Home() {
           setPageState
         )
       ])
+      setTotalEntries(totalEntries)
       setCategories(categories)
       setStatus('loaded')
     })()
@@ -72,6 +76,7 @@ export default function Home() {
             <CategoryList
               className={categoriesClassName(pageState)}
               categories={categories}
+              totalEntries={totalEntries}
               selectCategory={(category: string) =>
                 router.push(`/categories/${category}`)
               }

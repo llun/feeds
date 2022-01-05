@@ -117,9 +117,18 @@ export async function getSiteEntries(
   }))
 }
 
+export async function countAllEntries(worker: WorkerHttpvfs) {
+  const count = (await worker.db.query(
+    `select count(*) as total from EntryCategories`
+  )) as { total: number }[]
+  return count[0].total
+}
+
 export async function getAllEntries(worker: WorkerHttpvfs, page: number = 0) {
+  const perPage = 30
+  const offset = page * perPage
   const list = (await worker.db.query(
-    `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where entryContentTime is not null order by entryContentTime desc limit 30`
+    `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where entryContentTime is not null order by entryContentTime desc limit ${perPage} offset ${offset}`
   )) as {
     entryKey: string
     siteKey: string
