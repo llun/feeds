@@ -56,9 +56,15 @@ const CategoryList = ({
               </li>
               {category.sites.map((site) => (
                 <li key={site.key} className="cursor-pointer">
-                  <a onClick={() => selectSite && selectSite(site.key)}>
+                  <a
+                    className="mr-2"
+                    onClick={() => selectSite && selectSite(site.key)}
+                  >
                     {site.title}
                   </a>
+                  <small className="text-sm font-light">
+                    ({site.totalEntries})
+                  </small>
                 </li>
               ))}
             </ul>

@@ -32,6 +32,7 @@ export interface Category {
   sites: {
     key: string
     title: string
+    totalEntries: number
   }[]
   totalEntries: number
 }
@@ -50,10 +51,18 @@ export async function getCategories(
       `select category, count(*) as totalEntries from EntryCategories group by category`
     )) as { category: string; totalEntries: number }[]
   ).reduce((out, row) => {
-    console.log(row)
     out[row.category] = row.totalEntries
     return out
   }, {} as { [key in string]: number })
+  const siteEntryCounts = (
+    (await worker.db.query(
+      `select siteKey, count(*) as totalEntries from EntryCategories group by siteKey;`
+    )) as { siteKey: string; totalEntries: number }[]
+  ).reduce((out, row) => {
+    out[row.siteKey] = row.totalEntries
+    return out
+  }, {} as { [key in string]: number })
+  console.log(siteEntryCounts)
 
   const map = categories.reduce((map, item) => {
     if (!map[item.category])
@@ -63,10 +72,11 @@ export async function getCategories(
       }
     map[item.category].sites.push({
       key: item.siteKey,
-      title: item.siteTitle
+      title: item.siteTitle,
+      totalEntries: siteEntryCounts[item.siteKey]
     })
     return map
-  }, {})
+  }, {} as { [key in string]: { sites: { key: string; title: string; totalEntries: number }[]; totalEntries: number } })
   return Object.keys(map).map((title) => ({
     title,
     sites: map[title].sites,
