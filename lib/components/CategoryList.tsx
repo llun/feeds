@@ -33,9 +33,15 @@ const CategoryList = ({
       {categories.map((category) => (
         <Fragment key={category.title}>
           <h2 className="cursor-pointer">
-            <a onClick={() => setCurrentCategory(category.title)}>
+            <a
+              className="mr-2"
+              onClick={() => setCurrentCategory(category.title)}
+            >
               {category.title}
             </a>
+            <small className="text-sm font-light">
+              ({category.totalEntries})
+            </small>
           </h2>
           {category.title === currentCategory && (
             <ul>

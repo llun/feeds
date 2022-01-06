@@ -33,6 +33,7 @@ export interface Category {
     key: string
     title: string
   }[]
+  totalEntries: number
 }
 export async function getCategories(
   worker: WorkerHttpvfs
@@ -44,15 +45,33 @@ export async function getCategories(
     siteKey: string
     siteTitle: string
   }[]
+  const categoryEntryCounts = (
+    (await worker.db.query(
+      `select category, count(*) as totalEntries from EntryCategories group by category`
+    )) as { category: string; totalEntries: number }[]
+  ).reduce((out, row) => {
+    console.log(row)
+    out[row.category] = row.totalEntries
+    return out
+  }, {} as { [key in string]: number })
+
   const map = categories.reduce((map, item) => {
-    if (!map[item.category]) map[item.category] = []
-    map[item.category].push({
+    if (!map[item.category])
+      map[item.category] = {
+        totalEntries: categoryEntryCounts[item.category],
+        sites: []
+      }
+    map[item.category].sites.push({
       key: item.siteKey,
       title: item.siteTitle
     })
     return map
   }, {})
-  return Object.keys(map).map((title) => ({ title, sites: map[title] }))
+  return Object.keys(map).map((title) => ({
+    title,
+    sites: map[title].sites,
+    totalEntries: map[title].totalEntries
+  }))
 }
 
 export interface SiteEntry {
