@@ -62,7 +62,6 @@ export async function getCategories(
     out[row.siteKey] = row.totalEntries
     return out
   }, {} as { [key in string]: number })
-  console.log(siteEntryCounts)
 
   const map = categories.reduce((map, item) => {
     if (!map[item.category])
