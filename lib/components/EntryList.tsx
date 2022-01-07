@@ -22,7 +22,7 @@ const EntryItem = ({
   >
     <h3>
       <a
-        className="cursor-pointer"
+        className="font-serif no-underline hover:underline cursor-pointer"
         onClick={() => selectEntry && selectEntry(entry.key)}
       >
         {entry.title}

@@ -26,11 +26,15 @@ const Entry = ({ className, content, selectBack }: Props) => {
       </a>
       {content && (
         <div>
-          <h3>
-            <a href={content.url} target="_blank">
+          <h2>
+            <a
+              className="font-serif font-bold no-underline hover:underline"
+              href={content.url}
+              target="_blank"
+            >
               {content.title}
             </a>
-          </h3>
+          </h2>
           <div dangerouslySetInnerHTML={{ __html: content.content }} />
         </div>
       )}

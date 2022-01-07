@@ -21,9 +21,12 @@ const CategoryList = ({
     <aside
       className={`w-full sm:w-1/3 xl:w-1/5 flex-shrink-0 p-6 sm:overflow-auto ${className}`}
     >
-      <h1>Feeds</h1>
+      <h1 className="font-serif">Feeds</h1>
       <h2 className="cursor-pointer">
-        <a className="mr-2" onClick={() => selectSite && selectSite('all')}>
+        <a
+          className="font-serif no-underline hover:underline mr-2"
+          onClick={() => selectSite && selectSite('all')}
+        >
           All sites
         </a>
         {totalEntries !== null && (
@@ -34,7 +37,7 @@ const CategoryList = ({
         <Fragment key={category.title}>
           <h2 className="cursor-pointer">
             <a
-              className="mr-2"
+              className="font-serif no-underline hover:underline mr-2"
               onClick={() => setCurrentCategory(category.title)}
             >
               {category.title}
@@ -47,6 +50,7 @@ const CategoryList = ({
             <ul>
               <li className="cursor-pointer">
                 <a
+                  className="font-serif no-underline hover:underline"
                   onClick={() =>
                     selectCategory && selectCategory(currentCategory)
                   }
@@ -57,7 +61,7 @@ const CategoryList = ({
               {category.sites.map((site) => (
                 <li key={site.key} className="cursor-pointer">
                   <a
-                    className="mr-2"
+                    className="font-serif no-underline hover:underline mr-2"
                     onClick={() => selectSite && selectSite(site.key)}
                   >
                     {site.title}
