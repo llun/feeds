@@ -16,14 +16,14 @@ export const articleClassName = (pageState: PageState): string => {
     case 'article':
       return 'block'
     default:
-      return 'hidden lg:block'
+      return 'hidden xl:block'
   }
 }
 
 export const entriesClassName = (pageState: PageState): string => {
   switch (pageState) {
     case 'article':
-      return 'hidden lg:block'
+      return 'hidden xl:block'
     case 'entries':
       return 'block'
     default:
@@ -34,7 +34,7 @@ export const entriesClassName = (pageState: PageState): string => {
 export const categoriesClassName = (pageState: PageState): string => {
   switch (pageState) {
     case 'article':
-      return 'hidden lg:block'
+      return 'hidden xl:block'
     case 'entries':
       return 'hidden sm:block'
     default:
