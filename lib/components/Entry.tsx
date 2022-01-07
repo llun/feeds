@@ -1,3 +1,4 @@
+import { formatDistance } from 'date-fns'
 import React, { useEffect } from 'react'
 import { Content } from '../storage'
 
@@ -35,6 +36,12 @@ const Entry = ({ className, content, selectBack }: Props) => {
               {content.title}
             </a>
           </h2>
+          <div className="xl:hidden">
+            <strong>{content.siteTitle}</strong>
+            <span>
+              , {formatDistance(content.timestamp * 1000, new Date())}
+            </span>
+          </div>
           <div dangerouslySetInnerHTML={{ __html: content.content }} />
         </div>
       )}
