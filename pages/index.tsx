@@ -67,8 +67,8 @@ export default function Home() {
       <Meta />
       <div className="prose max-w-none container mx-auto flex flex-row w-screen h-screen">
         {status === 'loading' && (
-          <div>
-            <h4>Loading database</h4>
+          <div className="p-6">
+            <strong className="font-serif text-4xl">Loading database</strong>
           </div>
         )}
         {status === 'loaded' && (
