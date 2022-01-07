@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { UIEvent, useEffect, useState } from 'react'
 import formatDistance from 'date-fns/formatDistance'
 import { SiteEntry } from '../storage'
 
@@ -58,6 +58,8 @@ const EntryList = ({
   selectBack
 }: EntryListProps) => {
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
+  const [page, setPage] = useState<number>(0)
+  const [pageState, setPageState] = useState<'loaded' | 'loading'>('loaded')
 
   let element: HTMLElement | null = null
   useEffect(() => {
@@ -65,11 +67,28 @@ const EntryList = ({
     element.scrollTo(0, 0)
   }, [entries])
 
+  const onScroll = (event: UIEvent<HTMLElement>) => {
+    const target = event.currentTarget
+    const threshold = Math.floor(target.scrollHeight * 0.8)
+    if (
+      target.scrollTop + target.clientHeight > threshold &&
+      pageState !== 'loading'
+    ) {
+      console.log('load next page')
+      setPageState('loading')
+      setPage(page + 1)
+      setTimeout(() => {
+        setPageState('loaded')
+      }, 2000)
+    }
+  }
+
   return (
     <section
       ref={(section) => {
         element = section
       }}
+      onScroll={onScroll}
       className={`pb-4 w-full sm:w-2/3 xl:w-2/6 flex-shrink-0 p-6 sm:overflow-auto ${className}`}
     >
       <a className="cursor-pointer sm:hidden" onClick={selectBack}>
