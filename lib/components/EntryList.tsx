@@ -148,15 +148,16 @@ const EntryList = ({
     setEntries(entries.concat(newEntries))
   }
 
+  let lastScrolling = 0
   const onScroll = async (event: UIEvent<HTMLElement>) => {
+    if (event.timeStamp - lastScrolling < 2000) return
     const target = event.currentTarget
     const threshold = Math.floor(target.scrollHeight * 0.8)
-    console.log('on scroll')
+    lastScrolling = event.timeStamp
     if (
       target.scrollTop + target.clientHeight > threshold &&
       pageState !== 'loading'
     ) {
-      console.log('load next page')
       setPageState('loading')
       await loadNextPage(page + 1)
       setPage(page + 1)
