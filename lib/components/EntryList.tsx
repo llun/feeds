@@ -79,6 +79,7 @@ const EntryList = ({
   const [totalEntry, setTotalEntry] = useState<number>(0)
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
   const [page, setPage] = useState<number>(0)
+  const [lastScrolling, setLastScrolling] = useState<number>(0)
 
   let element: HTMLElement | null = null
 
@@ -148,21 +149,20 @@ const EntryList = ({
     setEntries(entries.concat(newEntries))
   }
 
-  let lastScrolling = 0
-  const onScroll = async (event: UIEvent<HTMLElement>) => {
-    if (event.timeStamp - lastScrolling < 2000) return
+  const onScroll = (event: UIEvent<HTMLElement>) => {
     const target = event.currentTarget
     const threshold = Math.floor(target.scrollHeight * 0.8)
-    lastScrolling = event.timeStamp
-    if (
-      target.scrollTop + target.clientHeight > threshold &&
-      pageState !== 'loading'
-    ) {
+    if (target.scrollTop + target.clientHeight < threshold) return
+    if (pageState === 'loading') return
+    if (event.timeStamp - lastScrolling < 2000) return
+
+    setLastScrolling(event.timeStamp)
+    window.requestAnimationFrame(async () => {
       setPageState('loading')
       await loadNextPage(page + 1)
       setPage(page + 1)
       setPageState('loaded')
-    }
+    })
   }
 
   return (
