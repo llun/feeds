@@ -11,8 +11,7 @@ import {
   countAllEntries,
   getCategories,
   getDatabaseConfig,
-  getWorker,
-  SiteEntry
+  getWorker
 } from '../lib/storage'
 import {
   articleClassName,
