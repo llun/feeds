@@ -39,23 +39,26 @@ export default function Home() {
         return
       }
 
-      const worker = await getWorker(
-        getDatabaseConfig(router.basePath),
-        router.basePath
-      )
-      const [categories, totalEntries] = await Promise.all([
-        getCategories(worker),
-        countAllEntries(worker),
-        locationController(
-          stateLocation,
-          router.basePath,
-          setContent,
-          setPageState
+      if (status === 'loading') {
+        const worker = await getWorker(
+          getDatabaseConfig(router.basePath),
+          router.basePath
         )
-      ])
-      setTotalEntries(totalEntries)
-      setCategories(categories)
-      setStatus('loaded')
+        const [categories, totalEntries] = await Promise.all([
+          getCategories(worker),
+          countAllEntries(worker)
+        ])
+        setTotalEntries(totalEntries)
+        setCategories(categories)
+        setStatus('loaded')
+      }
+
+      await locationController(
+        stateLocation,
+        router.basePath,
+        setContent,
+        setPageState
+      )
     })()
   }, [status, router.asPath])
 
