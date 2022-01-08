@@ -83,7 +83,7 @@ const EntryList = ({
     if (!element) return
     if (!locationState) return
     if (locationState.type === 'entries' && entries.length > 0) return
-    ;(async () => {
+    ;(async (element: HTMLElement) => {
       const worker = await getWorker(getDatabaseConfig(basePath), basePath)
       switch (locationState.type) {
         case 'categories': {
@@ -94,6 +94,8 @@ const EntryList = ({
           ])
           setEntries(entries)
           setTotalEntry(totalEntry)
+          setPage(0)
+          element.scrollTo(0, 0)
           return
         }
         case 'sites': {
@@ -110,6 +112,8 @@ const EntryList = ({
                 ])
           setEntries(entries)
           setTotalEntry(totalEntry)
+          setPage(0)
+          element.scrollTo(0, 0)
           return
         }
         case 'entries':
@@ -121,9 +125,11 @@ const EntryList = ({
           ])
           setEntries(entries)
           setTotalEntry(totalEntry)
+          setPage(0)
+          element.scrollTo(0, 0)
           return
       }
-    })()
+    })(element)
   }, [locationState])
 
   const loadNextPage = async (page: number): Promise<void> => {
