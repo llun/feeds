@@ -18,8 +18,8 @@ interface EntryItemProps {
   index: number
   entry: SiteEntry
   selectedEntryHash: string
-  selectEntry?: (entryHash: string) => void
-  selectSite?: (siteHash: string) => void
+  selectEntry?: (entryKey: string) => void
+  selectSite?: (siteKey: string) => void
 }
 
 const EntryItem = ({
@@ -60,8 +60,12 @@ interface EntryListProps {
   className?: string
   basePath: string
   locationState: LocationState
-  selectEntry?: (entryHash: string) => void
-  selectSite?: (siteHash: string) => void
+  selectEntry?: (
+    parentType: string,
+    parentKey: string,
+    entryKey: string
+  ) => void
+  selectSite?: (siteKey: string) => void
   selectBack?: () => void
 }
 
@@ -90,7 +94,7 @@ const EntryList = ({
   ) => {
     const worker = await getWorker(getDatabaseConfig(basePath), basePath)
     switch (locationState.type) {
-      case 'categories': {
+      case 'category': {
         const category = locationState.category
         const [entries, totalEntry] = await Promise.all([
           getCategoryEntries(worker, category, page),
@@ -98,27 +102,41 @@ const EntryList = ({
         ])
         return { entries, totalEntry }
       }
-      case 'sites': {
-        const { siteHash } = locationState
+      case 'site': {
+        const { siteKey } = locationState
         const [entries, totalEntry] =
-          siteHash === 'all'
+          siteKey === 'all'
             ? await Promise.all([
                 getAllEntries(worker, page),
                 countAllEntries(worker)
               ])
             : await Promise.all([
-                getSiteEntries(worker, siteHash, page),
-                countSiteEntries(worker, siteHash)
+                getSiteEntries(worker, siteKey, page),
+                countSiteEntries(worker, siteKey)
               ])
         return { entries, totalEntry }
       }
-      case 'entries':
-        const { entryHash } = locationState
-        const content = await getContent(worker, entryHash)
-        const [entries, totalEntry] = await Promise.all([
-          getSiteEntries(worker, content.siteKey, page),
-          countSiteEntries(worker, content.siteKey)
-        ])
+      case 'entry':
+        const { parent } = locationState
+        const { key } = parent
+        if (parent.type === 'category') {
+          const [entries, totalEntry] = await Promise.all([
+            getCategoryEntries(worker, key, page),
+            countCategoryEntries(worker, key)
+          ])
+          return { entries, totalEntry }
+        }
+
+        const [entries, totalEntry] =
+          key === 'all'
+            ? await Promise.all([
+                getAllEntries(worker, page),
+                countAllEntries(worker)
+              ])
+            : await Promise.all([
+                getSiteEntries(worker, key, page),
+                countSiteEntries(worker, key)
+              ])
         return { entries, totalEntry }
     }
   }
@@ -126,7 +144,7 @@ const EntryList = ({
   useEffect(() => {
     if (!element) return
     if (!locationState) return
-    if (locationState.type === 'entries' && entries.length > 0) return
+    if (locationState.type === 'entry' && entries.length > 0) return
     ;(async (element: HTMLElement) => {
       const { entries, totalEntry } = await loadEntries(basePath, locationState)
       setPageState('loaded')
@@ -165,6 +183,17 @@ const EntryList = ({
     })
   }
 
+  const parentType =
+    locationState.type === 'entry'
+      ? locationState.parent.type
+      : locationState.type
+  const parentKey =
+    locationState.type === 'entry'
+      ? locationState.parent.key
+      : locationState.type === 'category'
+      ? locationState.category
+      : locationState.siteKey
+
   return (
     <section
       ref={(section) => {
@@ -182,10 +211,10 @@ const EntryList = ({
           key={entry.key}
           entry={entry}
           selectedEntryHash={selectedEntryHash}
-          selectEntry={async (entryHash: string) => {
-            setSelectedEntryHash(entryHash)
+          selectEntry={async (entryKey: string) => {
+            setSelectedEntryHash(entryKey)
             if (!selectEntry) return
-            selectEntry(entryHash)
+            selectEntry(parentType, parentKey, entryKey)
           }}
           selectSite={selectSite}
         />

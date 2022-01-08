@@ -85,12 +85,30 @@ export default function Home() {
               locationState={parseLocation(router.asPath)}
               selectBack={() => setPageState('categories')}
               selectSite={(site: string) => router.push(`/sites/${site}`)}
-              selectEntry={(entry: string) => router.push(`/entries/${entry}`)}
+              selectEntry={(
+                parentType: string,
+                parentKey: string,
+                entryKey: string
+              ) =>
+                router.push(
+                  `${
+                    parentType === 'category' ? 'categories' : 'sites'
+                  }/${parentKey}/entries/${entryKey}`
+                )
+              }
             />
             <Entry
               className={articleClassName(pageState)}
               content={content}
-              selectBack={() => setPageState('entries')}
+              selectBack={() => {
+                const locationState = parseLocation(router.asPath)
+                if (locationState.type !== 'entry') return
+                const { parent } = locationState
+                const { type, key } = parent
+                router.push(
+                  `${type === 'category' ? 'categories' : 'sites'}/${key}`
+                )
+              }}
             />
           </>
         )}
