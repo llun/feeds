@@ -149,10 +149,12 @@ const EntryList = ({
   const onScroll = async (event: UIEvent<HTMLElement>) => {
     const target = event.currentTarget
     const threshold = Math.floor(target.scrollHeight * 0.8)
+    console.log('on scroll')
     if (
       target.scrollTop + target.clientHeight > threshold &&
       pageState !== 'loading'
     ) {
+      console.log('load next page')
       setPageState('loading')
       await loadNextPage(page + 1)
       setPage(page + 1)
@@ -166,7 +168,7 @@ const EntryList = ({
         element = section
       }}
       onScroll={onScroll}
-      className={`pb-4 w-full sm:w-2/3 xl:w-2/6 flex-shrink-0 p-6 sm:overflow-auto ${className}`}
+      className={`pb-4 w-full sm:w-2/3 xl:w-2/6 flex-shrink-0 p-6 overflow-auto ${className}`}
     >
       <a className="cursor-pointer sm:hidden" onClick={selectBack}>
         ← Back
