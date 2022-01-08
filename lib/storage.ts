@@ -1,6 +1,8 @@
 import { createDbWorker, WorkerHttpvfs } from 'sql.js-httpvfs'
 import { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
 
+const CONTENT_PER_PAGE = 30
+
 let worker: WorkerHttpvfs | null = null
 export async function getWorker(
   config: SplitFileConfig,
@@ -97,9 +99,10 @@ export async function getCategoryEntries(
   category: string,
   page: number = 0
 ): Promise<SiteEntry[]> {
+  const offset = page * CONTENT_PER_PAGE
   const list = (await worker.db.query(
-    `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc limit 30`,
-    [category]
+    `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc limit ? offset ?`,
+    [category, CONTENT_PER_PAGE, offset]
   )) as {
     category: string
     entryContentTime: number
@@ -124,9 +127,10 @@ export async function getSiteEntries(
   siteKey: string,
   page: number = 0
 ) {
+  const offset = page * CONTENT_PER_PAGE
   const list = (await worker.db.query(
-    `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where siteKey = ? order by entryContentTime desc limit 30`,
-    [siteKey]
+    `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where siteKey = ? order by entryContentTime desc limit ? offset ?`,
+    [siteKey, CONTENT_PER_PAGE, offset]
   )) as {
     entryKey: string
     siteKey: string
@@ -172,11 +176,10 @@ export async function countCategoryEntries(
 }
 
 export async function getAllEntries(worker: WorkerHttpvfs, page: number = 0) {
-  const perPage = 30
-  const offset = page * perPage
+  const offset = page * CONTENT_PER_PAGE
   const list = (await worker.db.query(
     `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where entryContentTime is not null order by entryContentTime desc limit ? offset ?`,
-    [perPage, offset]
+    [CONTENT_PER_PAGE, offset]
   )) as {
     entryKey: string
     siteKey: string

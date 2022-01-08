@@ -71,7 +71,7 @@ const EntryList = ({
   selectSite,
   selectBack
 }: EntryListProps) => {
-  const [pageState, setPageState] = useState<'loaded' | 'loading'>('loaded')
+  const [pageState, setPageState] = useState<'loaded' | 'loading'>('loading')
 
   const [entries, setEntries] = useState<SiteEntry[]>([])
   const [totalEntry, setTotalEntry] = useState<number>(0)
@@ -79,56 +79,58 @@ const EntryList = ({
   const [page, setPage] = useState<number>(0)
 
   let element: HTMLElement | null = null
+
+  const loadEntries = async (
+    basePath: string,
+    locationState: LocationState,
+    page: number = 0
+  ) => {
+    const worker = await getWorker(getDatabaseConfig(basePath), basePath)
+    switch (locationState.type) {
+      case 'categories': {
+        const category = locationState.category
+        const [entries, totalEntry] = await Promise.all([
+          getCategoryEntries(worker, category, page),
+          countCategoryEntries(worker, category)
+        ])
+        return { entries, totalEntry }
+      }
+      case 'sites': {
+        const { siteHash } = locationState
+        const [entries, totalEntry] =
+          siteHash === 'all'
+            ? await Promise.all([
+                getAllEntries(worker, page),
+                countAllEntries(worker)
+              ])
+            : await Promise.all([
+                getSiteEntries(worker, siteHash, page),
+                countSiteEntries(worker, siteHash)
+              ])
+        return { entries, totalEntry }
+      }
+      case 'entries':
+        const { entryHash } = locationState
+        const content = await getContent(worker, entryHash)
+        const [entries, totalEntry] = await Promise.all([
+          getSiteEntries(worker, content.siteKey, page),
+          countSiteEntries(worker, content.siteKey)
+        ])
+        return { entries, totalEntry }
+    }
+  }
+
   useEffect(() => {
     if (!element) return
     if (!locationState) return
     if (locationState.type === 'entries' && entries.length > 0) return
     ;(async (element: HTMLElement) => {
-      const worker = await getWorker(getDatabaseConfig(basePath), basePath)
-      switch (locationState.type) {
-        case 'categories': {
-          const category = locationState.category
-          const [entries, totalEntry] = await Promise.all([
-            getCategoryEntries(worker, category),
-            countCategoryEntries(worker, category)
-          ])
-          setEntries(entries)
-          setTotalEntry(totalEntry)
-          setPage(0)
-          element.scrollTo(0, 0)
-          return
-        }
-        case 'sites': {
-          const { siteHash } = locationState
-          const [entries, totalEntry] =
-            siteHash === 'all'
-              ? await Promise.all([
-                  getAllEntries(worker),
-                  countAllEntries(worker)
-                ])
-              : await Promise.all([
-                  getSiteEntries(worker, siteHash),
-                  countSiteEntries(worker, siteHash)
-                ])
-          setEntries(entries)
-          setTotalEntry(totalEntry)
-          setPage(0)
-          element.scrollTo(0, 0)
-          return
-        }
-        case 'entries':
-          const { entryHash } = locationState
-          const content = await getContent(worker, entryHash)
-          const [entries, totalEntry] = await Promise.all([
-            getSiteEntries(worker, content.siteKey),
-            countSiteEntries(worker, content.siteKey)
-          ])
-          setEntries(entries)
-          setTotalEntry(totalEntry)
-          setPage(0)
-          element.scrollTo(0, 0)
-          return
-      }
+      const { entries, totalEntry } = await loadEntries(basePath, locationState)
+      setPageState('loaded')
+      setEntries(entries)
+      setTotalEntry(totalEntry)
+      setPage(0)
+      element.scrollTo(0, 0)
     })(element)
   }, [locationState])
 
@@ -136,8 +138,12 @@ const EntryList = ({
     if (pageState === 'loading') return
     if (entries.length === totalEntry) return
 
-    const worker = await getWorker(getDatabaseConfig(basePath), basePath)
-    console.log('load page', page)
+    const { entries: newEntries } = await loadEntries(
+      basePath,
+      locationState,
+      page
+    )
+    setEntries(entries.concat(newEntries))
   }
 
   const onScroll = async (event: UIEvent<HTMLElement>) => {
@@ -150,9 +156,7 @@ const EntryList = ({
       setPageState('loading')
       await loadNextPage(page + 1)
       setPage(page + 1)
-      setTimeout(() => {
-        setPageState('loaded')
-      }, 2000)
+      setPageState('loaded')
     }
   }
 
@@ -167,7 +171,7 @@ const EntryList = ({
       <a className="cursor-pointer sm:hidden" onClick={selectBack}>
         ← Back
       </a>
-      {entries.map((entry) => (
+      {entries.map((entry, index) => (
         <EntryItem
           key={`entry-${entry.key}`}
           entry={entry}
