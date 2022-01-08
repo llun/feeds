@@ -44,6 +44,7 @@ const EntryItem = ({
 
 interface EntryListProps {
   className?: string
+  totalEntries: number | null
   entries: SiteEntry[]
   selectEntry?: (entryHash: string) => void
   selectSite?: (siteHash: string) => void
@@ -52,6 +53,7 @@ interface EntryListProps {
 
 const EntryList = ({
   className,
+  totalEntries,
   entries,
   selectEntry,
   selectSite,
@@ -60,6 +62,7 @@ const EntryList = ({
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
   const [page, setPage] = useState<number>(0)
   const [pageState, setPageState] = useState<'loaded' | 'loading'>('loaded')
+  const [localEntries, setLocalEntries] = useState<SiteEntry[]>(entries)
 
   let element: HTMLElement | null = null
   useEffect(() => {
@@ -67,15 +70,17 @@ const EntryList = ({
     element.scrollTo(0, 0)
   }, [entries])
 
-  const onScroll = (event: UIEvent<HTMLElement>) => {
+  const loadNextPage = async (page: number): Promise<void> => {}
+
+  const onScroll = async (event: UIEvent<HTMLElement>) => {
     const target = event.currentTarget
     const threshold = Math.floor(target.scrollHeight * 0.8)
     if (
       target.scrollTop + target.clientHeight > threshold &&
       pageState !== 'loading'
     ) {
-      console.log('load next page')
       setPageState('loading')
+      await loadNextPage(page + 1)
       setPage(page + 1)
       setTimeout(() => {
         setPageState('loaded')

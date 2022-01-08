@@ -30,6 +30,9 @@ export default function Home() {
   const [entries, setEntries] = useState<SiteEntry[]>([])
   const [content, setContent] = useState<Content | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
+  const [selectionTotalEntries, setSelectionTotalEntries] = useState<
+    number | null
+  >(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -53,7 +56,8 @@ export default function Home() {
           entries,
           setEntries,
           setContent,
-          setPageState
+          setPageState,
+          setSelectionTotalEntries
         )
       ])
       setTotalEntries(totalEntries)
@@ -85,6 +89,7 @@ export default function Home() {
             <EntryList
               className={entriesClassName(pageState)}
               entries={entries}
+              totalEntries={selectionTotalEntries}
               selectBack={() => setPageState('categories')}
               selectSite={(site: string) => router.push(`/sites/${site}`)}
               selectEntry={(entry: string) => router.push(`/entries/${entry}`)}

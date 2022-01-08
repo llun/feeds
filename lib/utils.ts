@@ -1,5 +1,9 @@
+import React from 'react'
 import {
   Content,
+  countAllEntries,
+  countCategoryEntries,
+  countSiteEntries,
   getAllEntries,
   getCategoryEntries,
   getContent,
@@ -90,26 +94,37 @@ export const locationController = async (
   entries: SiteEntry[],
   setEntries: React.Dispatch<React.SetStateAction<SiteEntry[]>>,
   setContent: React.Dispatch<React.SetStateAction<Content | null>>,
-  setPageState: React.Dispatch<React.SetStateAction<PageState>>
+  setPageState: React.Dispatch<React.SetStateAction<PageState>>,
+  setSelectionTotalEntriesState: React.Dispatch<
+    React.SetStateAction<number | null>
+  >
 ) => {
   if (!locationState) return null
   const worker = await getWorker(getDatabaseConfig(basePath), basePath)
   switch (locationState.type) {
     case 'categories': {
       const category = locationState.category
-      const entries = await getCategoryEntries(worker, category)
+      const [entries, totalEntry] = await Promise.all([
+        getCategoryEntries(worker, category),
+        countCategoryEntries(worker, category)
+      ])
       setEntries(entries)
+      setSelectionTotalEntriesState(totalEntry)
       setContent(null)
       setPageState('entries')
       return
     }
     case 'sites': {
       const { siteHash } = locationState
-      const entries =
+      const [entries, totalEntry] =
         siteHash === 'all'
-          ? await getAllEntries(worker)
-          : await getSiteEntries(worker, siteHash)
+          ? await Promise.all([getAllEntries(worker), countAllEntries(worker)])
+          : await Promise.all([
+              getSiteEntries(worker, siteHash),
+              countSiteEntries(worker, siteHash)
+            ])
       setEntries(entries)
+      setSelectionTotalEntriesState(totalEntry)
       setContent(null)
       setPageState('entries')
       return
@@ -119,8 +134,12 @@ export const locationController = async (
       const content = await getContent(worker, entryHash)
       if (!content) return
       if (entries.length === 0) {
-        const entries = await getSiteEntries(worker, content.siteKey)
+        const [entries, totalEntry] = await Promise.all([
+          getSiteEntries(worker, content.siteKey),
+          countSiteEntries(worker, content.siteKey)
+        ])
         setEntries(entries)
+        setSelectionTotalEntriesState(totalEntry)
       }
 
       setContent(content)
