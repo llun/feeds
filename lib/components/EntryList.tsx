@@ -15,6 +15,7 @@ import {
 import { LocationState } from '../utils'
 
 interface EntryItemProps {
+  index: number
   entry: SiteEntry
   selectedEntryHash: string
   selectEntry?: (entryHash: string) => void
@@ -22,6 +23,7 @@ interface EntryItemProps {
 }
 
 const EntryItem = ({
+  index,
   entry,
   selectedEntryHash,
   selectEntry,
@@ -37,7 +39,7 @@ const EntryItem = ({
         className="font-serif no-underline hover:underline cursor-pointer"
         onClick={() => selectEntry && selectEntry(entry.key)}
       >
-        {entry.title}
+        {index + 1}. {entry.title}
       </a>
     </h3>
     <small>
@@ -175,7 +177,8 @@ const EntryList = ({
       </a>
       {entries.map((entry, index) => (
         <EntryItem
-          key={`entry-${entry.key}`}
+          index={index}
+          key={entry.key}
           entry={entry}
           selectedEntryHash={selectedEntryHash}
           selectEntry={async (entryHash: string) => {
