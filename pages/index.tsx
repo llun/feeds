@@ -27,12 +27,8 @@ export default function Home() {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
   const [pageState, setPageState] = useState<PageState>('categories')
   const [categories, setCategories] = useState<Category[]>([])
-  const [entries, setEntries] = useState<SiteEntry[]>([])
   const [content, setContent] = useState<Content | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
-  const [selectionTotalEntries, setSelectionTotalEntries] = useState<
-    number | null
-  >(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -53,11 +49,8 @@ export default function Home() {
         locationController(
           stateLocation,
           router.basePath,
-          entries,
-          setEntries,
           setContent,
-          setPageState,
-          setSelectionTotalEntries
+          setPageState
         )
       ])
       setTotalEntries(totalEntries)
@@ -88,8 +81,8 @@ export default function Home() {
             />
             <EntryList
               className={entriesClassName(pageState)}
-              entries={entries}
-              totalEntries={selectionTotalEntries}
+              basePath={router.basePath}
+              locationState={parseLocation(router.asPath)}
               selectBack={() => setPageState('categories')}
               selectSite={(site: string) => router.push(`/sites/${site}`)}
               selectEntry={(entry: string) => router.push(`/entries/${entry}`)}

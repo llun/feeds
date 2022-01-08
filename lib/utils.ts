@@ -91,40 +91,18 @@ export const parseLocation = (url: string): LocationState => {
 export const locationController = async (
   locationState: LocationState,
   basePath: string,
-  entries: SiteEntry[],
-  setEntries: React.Dispatch<React.SetStateAction<SiteEntry[]>>,
   setContent: React.Dispatch<React.SetStateAction<Content | null>>,
-  setPageState: React.Dispatch<React.SetStateAction<PageState>>,
-  setSelectionTotalEntriesState: React.Dispatch<
-    React.SetStateAction<number | null>
-  >
+  setPageState: React.Dispatch<React.SetStateAction<PageState>>
 ) => {
   if (!locationState) return null
   const worker = await getWorker(getDatabaseConfig(basePath), basePath)
   switch (locationState.type) {
     case 'categories': {
-      const category = locationState.category
-      const [entries, totalEntry] = await Promise.all([
-        getCategoryEntries(worker, category),
-        countCategoryEntries(worker, category)
-      ])
-      setEntries(entries)
-      setSelectionTotalEntriesState(totalEntry)
       setContent(null)
       setPageState('entries')
       return
     }
     case 'sites': {
-      const { siteHash } = locationState
-      const [entries, totalEntry] =
-        siteHash === 'all'
-          ? await Promise.all([getAllEntries(worker), countAllEntries(worker)])
-          : await Promise.all([
-              getSiteEntries(worker, siteHash),
-              countSiteEntries(worker, siteHash)
-            ])
-      setEntries(entries)
-      setSelectionTotalEntriesState(totalEntry)
       setContent(null)
       setPageState('entries')
       return
@@ -133,15 +111,6 @@ export const locationController = async (
       const { entryHash } = locationState
       const content = await getContent(worker, entryHash)
       if (!content) return
-      if (entries.length === 0) {
-        const [entries, totalEntry] = await Promise.all([
-          getSiteEntries(worker, content.siteKey),
-          countSiteEntries(worker, content.siteKey)
-        ])
-        setEntries(entries)
-        setSelectionTotalEntriesState(totalEntry)
-      }
-
       setContent(content)
       setPageState('article')
       return

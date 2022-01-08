@@ -1,6 +1,18 @@
 import React, { UIEvent, useEffect, useState } from 'react'
 import formatDistance from 'date-fns/formatDistance'
-import { SiteEntry } from '../storage'
+import {
+  countAllEntries,
+  countCategoryEntries,
+  countSiteEntries,
+  getAllEntries,
+  getCategoryEntries,
+  getContent,
+  getDatabaseConfig,
+  getSiteEntries,
+  getWorker,
+  SiteEntry
+} from '../storage'
+import { LocationState } from '../utils'
 
 interface EntryItemProps {
   entry: SiteEntry
@@ -44,8 +56,8 @@ const EntryItem = ({
 
 interface EntryListProps {
   className?: string
-  totalEntries: number | null
-  entries: SiteEntry[]
+  basePath: string
+  locationState: LocationState
   selectEntry?: (entryHash: string) => void
   selectSite?: (siteHash: string) => void
   selectBack?: () => void
@@ -53,24 +65,74 @@ interface EntryListProps {
 
 const EntryList = ({
   className,
-  totalEntries,
-  entries,
+  basePath,
+  locationState,
   selectEntry,
   selectSite,
   selectBack
 }: EntryListProps) => {
+  const [pageState, setPageState] = useState<'loaded' | 'loading'>('loaded')
+
+  const [entries, setEntries] = useState<SiteEntry[]>([])
+  const [totalEntry, setTotalEntry] = useState<number>(0)
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
   const [page, setPage] = useState<number>(0)
-  const [pageState, setPageState] = useState<'loaded' | 'loading'>('loaded')
-  const [localEntries, setLocalEntries] = useState<SiteEntry[]>(entries)
 
   let element: HTMLElement | null = null
   useEffect(() => {
     if (!element) return
-    element.scrollTo(0, 0)
-  }, [entries])
+    if (!locationState) return
+    if (locationState.type === 'entries' && entries.length > 0) return
+    ;(async () => {
+      const worker = await getWorker(getDatabaseConfig(basePath), basePath)
+      switch (locationState.type) {
+        case 'categories': {
+          const category = locationState.category
+          const [entries, totalEntry] = await Promise.all([
+            getCategoryEntries(worker, category),
+            countCategoryEntries(worker, category)
+          ])
+          setEntries(entries)
+          setTotalEntry(totalEntry)
+          return
+        }
+        case 'sites': {
+          const { siteHash } = locationState
+          const [entries, totalEntry] =
+            siteHash === 'all'
+              ? await Promise.all([
+                  getAllEntries(worker),
+                  countAllEntries(worker)
+                ])
+              : await Promise.all([
+                  getSiteEntries(worker, siteHash),
+                  countSiteEntries(worker, siteHash)
+                ])
+          setEntries(entries)
+          setTotalEntry(totalEntry)
+          return
+        }
+        case 'entries':
+          const { entryHash } = locationState
+          const content = await getContent(worker, entryHash)
+          const [entries, totalEntry] = await Promise.all([
+            getSiteEntries(worker, content.siteKey),
+            countSiteEntries(worker, content.siteKey)
+          ])
+          setEntries(entries)
+          setTotalEntry(totalEntry)
+          return
+      }
+    })()
+  }, [locationState])
 
-  const loadNextPage = async (page: number): Promise<void> => {}
+  const loadNextPage = async (page: number): Promise<void> => {
+    if (pageState === 'loading') return
+    if (entries.length === totalEntry) return
+
+    const worker = await getWorker(getDatabaseConfig(basePath), basePath)
+    console.log('load page', page)
+  }
 
   const onScroll = async (event: UIEvent<HTMLElement>) => {
     const target = event.currentTarget
