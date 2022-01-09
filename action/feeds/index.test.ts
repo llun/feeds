@@ -1,7 +1,8 @@
 import test from 'ava'
-import fs from 'fs'
+import fs from 'fs/promises'
 import path from 'path'
 import sinon from 'sinon'
+import axios from 'axios'
 import { knex } from 'knex'
 import {
   createOrUpdateDatabase,
@@ -24,9 +25,9 @@ import { Entry, Site } from './parsers'
 import { SiteLoaderMap } from '../puppeteer/sites'
 
 test('#readOpml returns categories and sites in OPML file', async (t) => {
-  const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'opml.xml'))
-    .toString('utf8')
+  const data = (
+    await fs.readFile(path.join(__dirname, 'tests', 'opml.xml'))
+  ).toString('utf-8')
   const feeds = await readOpml(data)
   sinon.assert.match(feeds, [
     { category: 'Category1', items: sinon.match.array },
@@ -44,9 +45,9 @@ test('#readOpml returns categories and sites in OPML file', async (t) => {
 })
 
 test('#readOpml returns default category for flat opml', async (t) => {
-  const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'opml.flat.xml'))
-    .toString('utf8')
+  const data = (
+    await fs.readFile(path.join(__dirname, 'tests', 'opml.flat.xml'))
+  ).toString('utf8')
   const feeds = await readOpml(data)
   sinon.assert.match(feeds, [{ category: 'default', items: sinon.match.array }])
   sinon.assert.match(feeds[0].items[0], {
@@ -60,9 +61,9 @@ test('#readOpml returns default category for flat opml', async (t) => {
 })
 
 test('#readOpml returns default category with feed under category for mixed opml', async (t) => {
-  const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'opml.mixed.xml'))
-    .toString('utf8')
+  const data = (
+    await fs.readFile(path.join(__dirname, 'tests', 'opml.mixed.xml'))
+  ).toString('utf8')
   const feeds = await readOpml(data)
   sinon.assert.match(feeds, [
     { category: 'default', items: sinon.match.array },
@@ -80,9 +81,9 @@ test('#readOpml returns default category with feed under category for mixed opml
 })
 
 test('#readOpml ignore sub-category', async (t) => {
-  const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'opml.subcategory.xml'))
-    .toString('utf8')
+  const data = (
+    await fs.readFile(path.join(__dirname, 'tests', 'opml.subcategory.xml'))
+  ).toString('utf8')
   const feeds = await readOpml(data)
   sinon.assert.match(feeds, [
     { category: 'default', items: sinon.match.array },
@@ -109,9 +110,9 @@ test('#removeOldCategories do nothing for category exists in opml', async (t) =>
   await insertCategory(db, 'Category1')
   await insertCategory(db, 'Category2')
 
-  const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'opml.xml'))
-    .toString('utf8')
+  const data = (
+    await fs.readFile(path.join(__dirname, 'tests', 'opml.xml'))
+  ).toString('utf8')
   const opml = await readOpml(data)
   await removeOldCategories(db, opml)
 
@@ -130,9 +131,9 @@ test('#removeOldCategories delete category not exists in opml', async (t) => {
   await insertCategory(db, 'Category2')
   await insertCategory(db, 'Category3')
 
-  const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'opml.xml'))
-    .toString('utf8')
+  const data = (
+    await fs.readFile(path.join(__dirname, 'tests', 'opml.xml'))
+  ).toString('utf8')
   const opml = await readOpml(data)
   await removeOldCategories(db, opml)
   const categories = await getAllCategories(db)
@@ -172,9 +173,9 @@ test('#removeOldSites delete sites not exists in opml', async (t) => {
     updatedAt: Math.floor(Date.now() / 1000)
   })
 
-  const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'opml.xml'))
-    .toString('utf8')
+  const data = (
+    await fs.readFile(path.join(__dirname, 'tests', 'opml.xml'))
+  ).toString('utf8')
   const opml = await readOpml(data)
   await removeOldSites(db, opml[1])
   const sites = await getCategorySites(db, 'Category2')
@@ -242,9 +243,9 @@ test('#createOrUpdateDatabase add fresh data for empty database', async (t) => {
     connection: ':memory:',
     useNullAsDefault: true
   })
-  const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'opml.single.xml'))
-    .toString('utf8')
+  const data = (
+    await fs.readFile(path.join(__dirname, 'tests', 'opml.single.xml'))
+  ).toString('utf8')
   const opml = await readOpml(data)
   const entry1: Entry = {
     author: 'llun',
@@ -311,9 +312,9 @@ test('#createOrUpdateDatabase with old contents in database', async (t) => {
     connection: ':memory:',
     useNullAsDefault: true
   })
-  const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'opml.single.xml'))
-    .toString('utf8')
+  const data = (
+    await fs.readFile(path.join(__dirname, 'tests', 'opml.single.xml'))
+  ).toString('utf8')
   const opml = await readOpml(data)
   const entry1: Entry = {
     author: 'llun',
@@ -407,9 +408,9 @@ test('#createOrUpdateDatabase only load content for new entry', async (t) => {
     connection: ':memory:',
     useNullAsDefault: true
   })
-  const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'opml.single.xml'))
-    .toString('utf8')
+  const data = (
+    await fs.readFile(path.join(__dirname, 'tests', 'opml.single.xml'))
+  ).toString('utf8')
   const opml = await readOpml(data)
   const entry1: Entry = {
     author: 'llun',
