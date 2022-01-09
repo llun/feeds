@@ -32,9 +32,12 @@ export async function loadFeed(title: string, url: string) {
       headers: { 'User-Agent': 'llun/feeds' }
     })
     const xml = await parseXML(response.data)
-    if (xml.rss) return parseRss(title, xml)
-    if (xml.feed) return parseAtom(title, xml)
-    return null
+    if (!('rss' in xml || 'feed' in xml)) {
+      return null
+    }
+
+    const site = 'rss' in xml ? parseRss(title, xml) : parseAtom(title, 'xml')
+    return site
   } catch (error) {
     console.error(error.message)
     console.error(error.stack)
