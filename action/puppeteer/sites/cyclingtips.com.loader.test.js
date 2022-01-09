@@ -1,7 +1,9 @@
 // @ts-check
 const puppeteer = require('puppeteer')
-const test = /** @type {import('ava').TestInterface<{ browser: import('puppeteer').Browser }>} */ (require('ava')
-  .default)
+const test =
+  /** @type {import('ava').TestFn<{ browser: import('puppeteer').Browser }>} */ (
+    require('ava').default
+  )
 const sinon = require('sinon')
 const { JSDOM } = require('jsdom')
 const loader = require('./cyclingtips.com.loader')

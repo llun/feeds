@@ -1,6 +1,5 @@
 // @ts-check
-const test = /** @type {import('ava').TestInterface<{}>} */ (require('ava')
-  .default)
+const test = /** @type {import('ava').TestFn<{}>} */ (require('ava').default)
 const sinon = require('sinon')
 const fs = require('fs')
 const path = require('path')
