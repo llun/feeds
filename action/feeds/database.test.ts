@@ -1,4 +1,4 @@
-import anyTest, { TestInterface } from 'ava'
+import anyTest, { TestFn } from 'ava'
 import { knex, Knex } from 'knex'
 import sinon from 'sinon'
 import {
@@ -14,7 +14,7 @@ import {
 } from './database'
 import { Entry, Site } from './parsers'
 
-const test = anyTest as TestInterface<{
+const test = anyTest as TestFn<{
   db: Knex
   fixtures: {
     site: Site

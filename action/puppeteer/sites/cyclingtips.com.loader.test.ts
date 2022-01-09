@@ -1,9 +1,9 @@
 import puppeteer, { Browser } from 'puppeteer'
-import anyTest, { TestInterface } from 'ava'
+import anyTest, { TestFn } from 'ava'
 import { JSDOM } from 'jsdom'
 import loader from './cyclingtips.com.loader'
 
-const test = anyTest as TestInterface<{ browser: Browser }>
+const test = anyTest as TestFn<{ browser: Browser }>
 
 test.before(async (t) => {
   const browser = await puppeteer.launch()
