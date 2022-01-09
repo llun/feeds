@@ -8,6 +8,7 @@ const map: { [key in string]: ContentParser } = {
 }
 
 const parseContent = async (site: Site) => {
+  if (!('link' in site)) return
   if (!map[site.link]) return
   const parser = map[site.link]
   for (const entry of site.entries) {
