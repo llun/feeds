@@ -481,5 +481,5 @@ test('#loadFeed parse feed content if content parser available', async (t) => {
   const contents = site.entries.map((entry) => new JSDOM(entry.content))
   const content = contents[0]
   const links = Array.from(content.window.document.querySelectorAll('img'))
-  links.every((item) => item.src.startsWith(site.link))
+  t.true(links.every((item) => item.src.startsWith(site.link)))
 })

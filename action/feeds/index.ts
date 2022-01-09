@@ -25,6 +25,7 @@ import { getWorkspacePath } from '../repository'
 import { Knex } from 'knex'
 import { SiteLoaderMap } from '../puppeteer/sites'
 import { constants } from 'fs'
+import parseContent from './sites'
 
 export async function loadFeed(title: string, url: string) {
   try {
@@ -37,6 +38,7 @@ export async function loadFeed(title: string, url: string) {
     }
 
     const site = 'rss' in xml ? parseRss(title, xml) : parseAtom(title, 'xml')
+    parseContent(site)
     return site
   } catch (error) {
     console.error(error.message)
