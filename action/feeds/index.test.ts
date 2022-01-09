@@ -3,9 +3,11 @@ import fs from 'fs/promises'
 import path from 'path'
 import sinon from 'sinon'
 import axios from 'axios'
+import { JSDOM } from 'jsdom'
 import { knex } from 'knex'
 import {
   createOrUpdateDatabase,
+  loadFeed,
   readOpml,
   removeOldCategories,
   removeOldEntries,
@@ -464,4 +466,20 @@ test('#createOrUpdateDatabase only load content for new entry', async (t) => {
     contentLoaderStub.calledWith('https://www.llun.me/posts/2021-12-30-2021/')
   )
   t.is(contentLoaderStub.callCount, 1)
+})
+
+test('#loadFeed parse feed content if content parser available', async (t) => {
+  const axiosGetStub = sinon.stub(axios, 'get')
+  axiosGetStub.resolves({
+    data: await fs.readFile(path.join(__dirname, 'tests', 'neizod.rss'), {
+      encoding: 'utf-8'
+    })
+  })
+
+  const site = await loadFeed('neizod', 'https://neizod.dev/feed.xml')
+  t.truthy(site)
+  const contents = site.entries.map((entry) => new JSDOM(entry.content))
+  const content = contents[0]
+  const links = Array.from(content.window.document.querySelectorAll('img'))
+  links.every((item) => item.src.startsWith(site.link))
 })
