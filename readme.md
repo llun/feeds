@@ -20,7 +20,7 @@ jobs:
     name: Test
     steps:
       - name: Run Action
-        uses: llun/feeds@2.0.0
+        uses: llun/feeds@2.2
 ```
 
 After this, enable github page on `contents` branch and content should be available on that page
