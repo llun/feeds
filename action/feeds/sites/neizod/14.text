@@ -1,0 +1,3 @@
+\[\frac1{r^2}\begin{bmatrix} x & y \\ -y & x \end{bmatrix}
+\begin{bmatrix} a \\ b \end{bmatrix} =
+\begin{bmatrix} c \\ d \end{bmatrix}\]
