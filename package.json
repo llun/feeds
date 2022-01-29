@@ -29,6 +29,7 @@
     "@mozilla/readability": "^0.4.1",
     "@octokit/rest": "^18.12.0",
     "@tailwindcss/typography": "^0.5.1",
+    "@vscode/sqlite3": "^5.0.7",
     "autoprefixer": "^10.4.2",
     "ava": "^4.0.1",
     "axios": "^0.25.0",
@@ -46,7 +47,6 @@
     "react-dom": "^17.0.2",
     "sanitize-html": "^2.6.1",
     "sql.js-httpvfs": "^0.8.11",
-    "sqlite3": "^5.0.2",
     "tailwindcss": "^3.0.18",
     "tailwindcss-cli": "^0.1.2",
     "xml2js": "^0.4.23"
@@ -67,8 +67,5 @@
     "@types/xml2js": "^0.4.9",
     "sinon": "^13.0.0",
     "swc-node": "^1.0.0"
-  },
-  "resolutions": {
-    "sqlite3/node-gyp/tar": "^4.4.19"
   }
 }
