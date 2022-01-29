@@ -25,11 +25,51 @@ jobs:
 
 After this, enable github page on `contents` branch and content should be available on that page
 
-Sample site
+## Version 1
+
+Version 2 is base on Next.js and using sqlite3 database, which makes it a bit larger. However,
+version 1 which is using 11ty and no sqlite, is still available on branch `v1`. Use below
+configuration if you want to use previous version.
+
+```
+name: Schedule
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  playground:
+    runs-on: ubuntu-latest
+    name: Test
+    steps:
+      - name: Run Action
+        uses: llun/feeds@v1
+```
+
+or with latest v1 tag
+
+```
+name: Schedule
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  playground:
+    runs-on: ubuntu-latest
+    name: Test
+    steps:
+      - name: Run Action
+        uses: llun/feeds@1.3.1
+```
+
+## Sample site
 
 - https://feeds.llun.dev
 - https://llun.github.io/feeds/
 
-Sample repo
+## Sample repo
 
 - https://github.com/llunbot/personal-feeds
