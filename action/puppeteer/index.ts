@@ -41,7 +41,6 @@ export async function loadContent(
   console.log('Load site', link)
   return siteLoader(_browser, link)
 }
-exports.loadContent = loadContent
 
 export async function close() {
   if (!_browser) return
