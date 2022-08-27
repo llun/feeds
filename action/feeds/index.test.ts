@@ -470,12 +470,11 @@ test('#createOrUpdateDatabase only load content for new entry', async (t) => {
 
 test('#loadFeed parse feed content if content parser available', async (t) => {
   const axiosGetStub = sinon.stub(axios, 'get')
-  axiosGetStub.resolves({
-    data: await fs.readFile(path.join(__dirname, 'tests', 'neizod.rss'), {
-      encoding: 'utf-8'
-    })
-  })
-
+  const data = await fs.readFile(
+    path.join(__dirname, 'tests', 'neizod.rss'),
+    'utf-8'
+  )
+  axiosGetStub.resolves({ data })
   const site = await loadFeed('neizod', 'https://neizod.dev/feed.xml')
   t.truthy(site)
   const contents = site.entries.map((entry) => new JSDOM(entry.content))
