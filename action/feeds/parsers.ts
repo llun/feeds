@@ -81,6 +81,7 @@ export function parseRss(feedTitle: string, xml: any): Site {
 }
 
 export function parseAtom(feedTitle: string, xml: any): Site {
+  console.log('xml ===> ', xml)
   if (!xml.feed) return null
   const { title, subtitle, link, updated, generator, entry, author } = xml.feed
   const siteLink = link && link.find((item) => item.$.rel === 'alternate')

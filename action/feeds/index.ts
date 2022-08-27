@@ -37,7 +37,7 @@ export async function loadFeed(title: string, url: string) {
       return null
     }
 
-    const site = 'rss' in xml ? parseRss(title, xml) : parseAtom(title, 'xml')
+    const site = 'rss' in xml ? parseRss(title, xml) : parseAtom(title, xml)
     parseContent(site)
     return site
   } catch (error) {

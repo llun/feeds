@@ -1,6 +1,6 @@
 {
   "name": "feeds-fetcher",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Websites feed fetcher and static feeds aggregator",
   "main": "index.js",
   "author": "Maythee Anegboonlap <null@llun.dev>",
@@ -31,7 +31,7 @@
     "@tailwindcss/typography": "^0.5.4",
     "@vscode/sqlite3": "^5.0.8",
     "autoprefixer": "^10.4.8",
-    "ava": "^4.3.1",
+    "ava": "^4.3.3",
     "axios": "^0.27.2",
     "date-fns": "^2.29.2",
     "history": "^5.3.0",
@@ -59,7 +59,7 @@
     "@types/jsdom": "^20.0.0",
     "@types/katex": "^0.14.0",
     "@types/mozilla-readability": "^0.2.1",
-    "@types/node": "^18.7.8",
+    "@types/node": "^18.7.13",
     "@types/puppeteer": "^5.4.6",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
@@ -68,6 +68,6 @@
     "@types/xml2js": "^0.4.11",
     "sinon": "^14.0.0",
     "swc-node": "^1.0.0",
-    "typescript": "^4.7.4"
+    "typescript": "^4.8.2"
   }
 }
