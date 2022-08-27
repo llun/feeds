@@ -89,18 +89,38 @@ test('#deleteCategory', async (t) => {
 
   await deleteCategory(db, 'category2')
 
-  t.is((await db('Entries').count('* as total').first()).total, 1)
-  t.is((await db('Sites').count('* as total').first()).total, 1)
-  t.is((await db('EntryCategories').count('* as total').first()).total, 1)
-  t.is((await db('SiteCategories').count('* as total').first()).total, 1)
-  t.is((await db('Categories').count('* as total').first()).total, 1)
+  const entriesCount = await db('Entries').count('* as total').first()
+  const sitesCount = await db('Sites').count('* as total').first()
+  const entryCategoriesCount = await db('EntryCategories')
+    .count('* as total')
+    .first()
+  const siteCategoriesCount = await db('SiteCategories')
+    .count('* as total')
+    .first()
+  const categoriesCount = await db('Categories').count('* as total').first()
+
+  t.is(entriesCount.total, 1)
+  t.is(sitesCount.total, 1)
+  t.is(entryCategoriesCount.total, 1)
+  t.is(siteCategoriesCount.total, 1)
+  t.is(categoriesCount.total, 1)
 
   await deleteCategory(db, 'category1')
-  t.is((await db('Entries').count('* as total').first()).total, 0)
-  t.is((await db('Sites').count('* as total').first()).total, 0)
-  t.is((await db('EntryCategories').count('* as total').first()).total, 0)
-  t.is((await db('SiteCategories').count('* as total').first()).total, 0)
-  t.is((await db('Categories').count('* as total').first()).total, 0)
+
+  const entriesCount2 = await db('Entries').count('* as total').first()
+  const sitesCount2 = await db('Sites').count('* as total').first()
+  const entryCategoriesCount2 = await db('EntryCategories')
+    .count('* as total')
+    .first()
+  const siteCategoriesCount2 = await db('SiteCategories')
+    .count('* as total')
+    .first()
+  const categoriesCount2 = await db('Categories').count('* as total').first()
+  t.is(entriesCount2.total, 0)
+  t.is(sitesCount2.total, 0)
+  t.is(entryCategoriesCount2.total, 0)
+  t.is(siteCategoriesCount2.total, 0)
+  t.is(categoriesCount2.total, 0)
 })
 
 test('#insertSite', async (t) => {
@@ -127,15 +147,19 @@ test('#insertSite', async (t) => {
 
   // Ignore insertion when category is not exists
   await insertSite(db, 'category2', site)
-  t.is((await db('SiteCategories').count('* as total').first()).total, 1)
-  t.is((await db('Sites').count('* as total').first()).total, 1)
+  const categoryCount = await db('SiteCategories').count('* as total').first()
+  t.is(categoryCount.total, 1)
+  const siteCount = await db('Sites').count('* as total').first()
+  t.is(siteCount.total, 1)
 
   // Multiple category but same site
   await insertCategory(db, 'category2')
   const siteKey2 = await insertSite(db, 'category2', site)
   t.is(siteKey, siteKey2)
-  t.is((await db('SiteCategories').count('* as total').first()).total, 2)
-  t.is((await db('Sites').count('* as total').first()).total, 1)
+  const categoryCount2 = await db('SiteCategories').count('* as total').first()
+  t.is(categoryCount2.total, 2)
+  const siteCount2 = await db('Sites').count('* as total').first()
+  t.is(siteCount2.total, 1)
 })
 
 test('#deleteSiteCategory', async (t) => {
@@ -151,16 +175,34 @@ test('#deleteSiteCategory', async (t) => {
   await insertEntry(db, siteKey, site.title, 'category2', entry)
   await deleteSiteCategory(db, 'category2', siteKey)
 
-  t.is((await db('Entries').count('* as total').first()).total, 1)
-  t.is((await db('Sites').count('* as total').first()).total, 1)
-  t.is((await db('EntryCategories').count('* as total').first()).total, 1)
-  t.is((await db('SiteCategories').count('* as total').first()).total, 1)
+  const entryCount = await db('Entries').count('* as total').first()
+  const siteCount = await db('Sites').count('* as total').first()
+  const entryCategoryCount = await db('EntryCategories')
+    .count('* as total')
+    .first()
+  const siteCategoryCount = await db('SiteCategories')
+    .count('* as total')
+    .first()
+
+  t.is(entryCount.total, 1)
+  t.is(siteCount.total, 1)
+  t.is(entryCategoryCount.total, 1)
+  t.is(siteCategoryCount.total, 1)
 
   await deleteSiteCategory(db, 'category1', siteKey)
-  t.is((await db('SiteCategories').count('* as total').first()).total, 0)
-  t.is((await db('EntryCategories').count('* as total').first()).total, 0)
-  t.is((await db('Sites').count('* as total').first()).total, 0)
-  t.is((await db('Entries').count('* as total').first()).total, 0)
+
+  const siteCategoryCount2 = await db('SiteCategories')
+    .count('* as total')
+    .first()
+  const entryCategoryCount2 = await db('EntryCategories')
+    .count('* as total')
+    .first()
+  const siteCount2 = await db('Sites').count('* as total').first()
+  const entryCount2 = await db('Entries').count('* as total').first()
+  t.is(siteCategoryCount2.total, 0)
+  t.is(entryCategoryCount2.total, 0)
+  t.is(siteCount2.total, 0)
+  t.is(entryCount2.total, 0)
 })
 
 test('#deleteSite', async (t) => {
@@ -176,10 +218,19 @@ test('#deleteSite', async (t) => {
   await insertEntry(db, siteKey, site.title, 'category2', entry)
   await deleteSite(db, siteKey)
 
-  t.is((await db('SiteCategories').count('* as total').first()).total, 0)
-  t.is((await db('EntryCategories').count('* as total').first()).total, 0)
-  t.is((await db('Sites').count('* as total').first()).total, 0)
-  t.is((await db('Entries').count('* as total').first()).total, 0)
+  const siteCategoryCount = await db('SiteCategories')
+    .count('* as total')
+    .first()
+  const entryCategoryCount = await db('EntryCategories')
+    .count('* as total')
+    .first()
+  const sitesCount = await db('Sites').count('* as total').first()
+  const entriesCount = await db('Entries').count('* as total').first()
+
+  t.is(siteCategoryCount.total, 0)
+  t.is(entryCategoryCount.total, 0)
+  t.is(sitesCount.total, 0)
+  t.is(entriesCount.total, 0)
 })
 
 test('#insertEntry single entry', async (t) => {
@@ -187,11 +238,13 @@ test('#insertEntry single entry', async (t) => {
   const { entry, site } = fixtures
   await insertCategory(db, 'category1')
   await insertEntry(db, 'nonexist', 'nonexists', 'category1', entry)
-  t.is((await db('Entries').count('* as total').first()).total, 0)
+  const countResult = await db('Entries').count('* as total').first()
+  t.is(countResult.total, 0)
 
   const siteKey = await insertSite(db, 'category1', site)
   await insertEntry(db, siteKey, site.title, 'category2', entry)
-  t.is((await db('Entries').count('* as total').first()).total, 0)
+  const countResult2 = await db('Entries').count('* as total').first()
+  t.is(countResult2.total, 0)
 
   const entryKey = await insertEntry(
     db,
@@ -201,8 +254,12 @@ test('#insertEntry single entry', async (t) => {
     entry
   )
   t.is(entryKey, hash(`${entry.title}${entry.link}`))
-  t.is((await db('Entries').count('* as total').first()).total, 1)
-  t.is((await db('EntryCategories').count('* as total').first()).total, 1)
+  const countResult3 = await db('Entries').count('* as total').first()
+  t.is(countResult3.total, 1)
+  const categoryResults = await db('EntryCategories')
+    .count('* as total')
+    .first()
+  t.is(categoryResults.total, 1)
   const persistedEntry = await db('Entries').first()
   sinon.assert.match(persistedEntry, {
     key: hash(`${entry.title}${entry.link}`),
@@ -226,8 +283,10 @@ test('#insertEntry with site in multiple categories', async (t) => {
 
   await insertEntry(db, siteKey, site.title, 'category1', entry)
   await insertEntry(db, siteKey, site.title, 'category2', entry)
-  t.is((await db('Entries').count('* as total').first()).total, 1)
-  t.is((await db('EntryCategories').count('* as total').first()).total, 2)
+  const count1 = await db('Entries').count('* as total').first()
+  t.is(count1.total, 1)
+  const count2 = await db('EntryCategories').count('* as total').first()
+  t.is(count2.total, 2)
 })
 
 test('#insertEntry with empty date', async (t) => {
@@ -238,8 +297,14 @@ test('#insertEntry with empty date', async (t) => {
   const siteKey = hash(site.title)
 
   await insertEntry(db, siteKey, site.title, 'category1', entryWithoutDate)
-  t.is((await db('Entries').count('* as total').first()).total, 1)
-  t.is((await db('EntryCategories').count('* as total').first()).total, 1)
+
+  const entriesCount = await db('Entries').count('* as total').first()
+  const entryCategoryCount = await db('EntryCategories')
+    .count('* as total')
+    .first()
+
+  t.is(entriesCount.total, 1)
+  t.is(entryCategoryCount.total, 1)
 
   const entry = await db('Entries').first()
   const entryCategory = await db('EntryCategories').first()
