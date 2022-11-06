@@ -4,11 +4,12 @@ import {
   buildSite,
   getGithubActionPath
 } from './action/repository'
-import { createFeedDatabase } from './action/feeds'
+import { createFeedDatabase, createFeedFiles } from './action/feeds'
 
 async function run() {
   await setup()
   await createFeedDatabase(getGithubActionPath())
+  await createFeedFiles()
   buildSite()
   await publish()
 }

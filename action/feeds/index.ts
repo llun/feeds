@@ -178,6 +178,9 @@ export async function copyExistingDatabase(publicPath: string) {
 
 export async function createFeedDatabase(githubActionPath: string) {
   try {
+    const contentDirectory = core.getInput('outputDirectory')
+    // This feed site uses files
+    if (contentDirectory) return
     const feedsFile = core.getInput('opmlFile', { required: true })
     const opmlContent = (
       await fs.readFile(path.join(getWorkspacePath(), feedsFile))
@@ -220,9 +223,9 @@ async function createCategoryDirectory(
 
 export async function createFeedFiles() {
   try {
-    const contentDirectory = core.getInput('outputDirectory', {
-      required: true
-    })
+    const contentDirectory = core.getInput('outputDirectory')
+    // This feed site uses database
+    if (!contentDirectory) return
     const feedsFile = core.getInput('opmlFile', { required: true })
     const opmlContent = (
       await fs.readFile(path.join(getWorkspacePath(), feedsFile))
