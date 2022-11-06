@@ -179,7 +179,7 @@ const EntryList = ({
       if (entry.isIntersecting) {
         setPageState('loading')
         loadNextPage(page + 1).then(() => {
-          setPage(page + 1)
+          setPage((current) => current + 1)
           setPageState('loaded')
         })
       }
