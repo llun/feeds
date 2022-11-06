@@ -200,7 +200,7 @@ const EntryList = ({
         element = section
       }}
       onScroll={onScroll}
-      className={`pb-4 w-full sm:w-2/3 xl:w-2/6 flex-shrink-0 p-6 overflow-auto ${className}`}
+      className={`pb-4 w-full sm:w-2/3 xl:w-2/6 flex-shrink-0 p-6 overflow-auto overscroll-contain ${className}`}
     >
       <a className="cursor-pointer sm:hidden" onClick={selectBack}>
         ← Back

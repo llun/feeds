@@ -19,7 +19,7 @@ const CategoryList = ({
 
   return (
     <aside
-      className={`w-full sm:w-1/3 xl:w-1/5 flex-shrink-0 p-6 sm:overflow-auto ${className}`}
+      className={`w-full sm:w-1/3 xl:w-1/5 flex-shrink-0 p-6 sm:overflow-auto overscroll-contain ${className}`}
     >
       <h1 className="font-serif">Feeds</h1>
       <h2 className="cursor-pointer">
