@@ -1,4 +1,4 @@
-import React, { UIEvent, useEffect, useState } from 'react'
+import React, { UIEvent, useEffect, useRef, useState, Ref } from 'react'
 import formatDistance from 'date-fns/formatDistance'
 import {
   countAllEntries,
@@ -6,7 +6,6 @@ import {
   countSiteEntries,
   getAllEntries,
   getCategoryEntries,
-  getContent,
   getDatabaseConfig,
   getSiteEntries,
   getWorker,
@@ -20,6 +19,7 @@ interface EntryItemProps {
   selectedEntryHash: string
   selectEntry?: (entryKey: string) => void
   selectSite?: (siteKey: string) => void
+  entryRef?: Ref<HTMLDivElement>
 }
 
 const EntryItem = ({
@@ -27,9 +27,11 @@ const EntryItem = ({
   entry,
   selectedEntryHash,
   selectEntry,
-  selectSite
+  selectSite,
+  entryRef
 }: EntryItemProps) => (
   <div
+    ref={entryRef}
     className={`rounded px-4 ${
       (selectedEntryHash === entry.key && 'bg-gray-200') || ''
     }`.trim()}
@@ -83,7 +85,8 @@ const EntryList = ({
   const [totalEntry, setTotalEntry] = useState<number>(0)
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
   const [page, setPage] = useState<number>(0)
-  const [lastScrolling, setLastScrolling] = useState<number>(0)
+
+  const nextBatchEntry = useRef<HTMLDivElement>()
 
   let element: HTMLElement | null = null
 
@@ -141,6 +144,18 @@ const EntryList = ({
     }
   }
 
+  const loadNextPage = async (page: number): Promise<void> => {
+    if (pageState === 'loading') return
+    if (entries.length === totalEntry) return
+
+    const { entries: newEntries } = await loadEntries(
+      basePath,
+      locationState,
+      page
+    )
+    setEntries(entries.concat(newEntries))
+  }
+
   useEffect(() => {
     if (!element) return
     if (!locationState) return
@@ -155,33 +170,25 @@ const EntryList = ({
     })(element)
   }, [locationState])
 
-  const loadNextPage = async (page: number): Promise<void> => {
-    if (pageState === 'loading') return
-    if (entries.length === totalEntry) return
+  useEffect(() => {
+    if (!nextBatchEntry?.current) return
 
-    const { entries: newEntries } = await loadEntries(
-      basePath,
-      locationState,
-      page
-    )
-    setEntries(entries.concat(newEntries))
-  }
-
-  const onScroll = (event: UIEvent<HTMLElement>) => {
-    const target = event.currentTarget
-    const threshold = Math.floor(target.scrollHeight * 0.8)
-    if (target.scrollTop + target.clientHeight < threshold) return
-    if (pageState === 'loading') return
-    if (event.timeStamp - lastScrolling < 2000) return
-
-    setLastScrolling(event.timeStamp)
-    window.requestAnimationFrame(async () => {
-      setPageState('loading')
-      await loadNextPage(page + 1)
-      setPage(page + 1)
-      setPageState('loaded')
+    const observer = new IntersectionObserver((entries) => {
+      const [entry] = entries
+      if (pageState === 'loading') return
+      if (entry.isIntersecting) {
+        setPageState('loading')
+        loadNextPage(page + 1).then(() => {
+          setPage(page + 1)
+          setPageState('loaded')
+        })
+      }
     })
-  }
+    observer.observe(nextBatchEntry.current)
+    return () => {
+      observer.disconnect()
+    }
+  }, [nextBatchEntry, totalEntry, entries])
 
   const parentType =
     locationState.type === 'entry'
@@ -199,7 +206,6 @@ const EntryList = ({
       ref={(section) => {
         element = section
       }}
-      onScroll={onScroll}
       className={`pb-4 w-full sm:w-2/3 xl:w-2/6 flex-shrink-0 p-6 overflow-auto overscroll-contain ${className}`}
     >
       <a className="cursor-pointer sm:hidden" onClick={selectBack}>
@@ -217,6 +223,11 @@ const EntryList = ({
             selectEntry(parentType, parentKey, entryKey)
           }}
           selectSite={selectSite}
+          entryRef={
+            entries.length - 5 === index && entries.length < totalEntry
+              ? nextBatchEntry
+              : null
+          }
         />
       ))}
       {entries.length === 0 && (
