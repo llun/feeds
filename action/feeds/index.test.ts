@@ -24,7 +24,6 @@ import {
   insertSite
 } from './database'
 import { Entry, Site } from './parsers'
-import { SiteLoaderMap } from '../puppeteer/sites'
 
 test('#readOpml returns categories and sites in OPML file', async (t) => {
   const data = (
@@ -275,8 +274,7 @@ test('#createOrUpdateDatabase add fresh data for empty database', async (t) => {
   await createOrUpdateDatabase(
     db,
     opml,
-    async (title: string, url: string) => site,
-    async (link: string, siteLoaders?: SiteLoaderMap) => 'Content'
+    async (title: string, url: string) => site
   )
   const categories = await getAllCategories(db)
   t.deepEqual(categories, ['default'])
@@ -371,8 +369,7 @@ test('#createOrUpdateDatabase with old contents in database', async (t) => {
   await createOrUpdateDatabase(
     db,
     opml,
-    async (title: string, url: string) => site,
-    async (link: string, siteLoaders?: SiteLoaderMap) => 'Content'
+    async (title: string, url: string) => site
   )
   const categories = await getAllCategories(db)
   t.deepEqual(categories, ['default'])
@@ -453,19 +450,6 @@ test('#createOrUpdateDatabase only load content for new entry', async (t) => {
     link: 'https://www.llun.me/posts/2018-12-31-2018/',
     title: '2018'
   })
-  const contentLoaderStub = sinon
-    .stub<[link: string, loaderMap?: SiteLoaderMap], Promise<string>>()
-    .resolves('Content')
-  await createOrUpdateDatabase(
-    db,
-    opml,
-    async (title: string, url: string) => site,
-    contentLoaderStub
-  )
-  t.true(
-    contentLoaderStub.calledWith('https://www.llun.me/posts/2021-12-30-2021/')
-  )
-  t.is(contentLoaderStub.callCount, 1)
 })
 
 test('#loadFeed parse feed content if content parser available', async (t) => {

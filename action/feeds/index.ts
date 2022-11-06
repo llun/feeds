@@ -3,7 +3,6 @@ import fs from 'fs/promises'
 import path from 'path'
 import axios from 'axios'
 import { parseXML, parseAtom, parseRss, Site } from './parsers'
-import { loadContent, close } from '../puppeteer'
 import {
   getDatabase,
   createTables,
@@ -23,7 +22,6 @@ import {
 } from './database'
 import { getWorkspacePath } from '../repository'
 import { Knex } from 'knex'
-import { SiteLoaderMap } from '../puppeteer/sites'
 import { constants } from 'fs'
 import parseContent from './sites'
 
@@ -131,8 +129,7 @@ export async function removeOldEntries(db: Knex, site: Site) {
 export async function createOrUpdateDatabase(
   db: Knex,
   opmlCategories: OpmlCategory[],
-  feedLoader: (title: string, url: string) => Promise<Site>,
-  contentLoader: (link: string, siteLoaders?: SiteLoaderMap) => Promise<string>
+  feedLoader: (title: string, url: string) => Promise<Site>
 ) {
   await removeOldCategories(db, opmlCategories)
   for (const category of opmlCategories) {
@@ -152,20 +149,6 @@ export async function createOrUpdateDatabase(
         if (await isEntryExists(db, entry)) {
           continue
         }
-
-        const link = entry.link
-        try {
-          const content = await contentLoader(link)
-          if (content) {
-            entry.content = content
-          }
-        } catch (error) {
-          // Puppeteer timeout
-          console.error(error.message)
-        } finally {
-          await close()
-        }
-
         await insertEntry(db, siteKey, site.title, categoryName, entry)
       }
     }
@@ -205,7 +188,7 @@ export async function createFeedDatabase(githubActionPath: string) {
     await copyExistingDatabase(publicPath)
     const database = getDatabase(publicPath)
     await createTables(database)
-    await createOrUpdateDatabase(database, opml, loadFeed, loadContent)
+    await createOrUpdateDatabase(database, opml, loadFeed)
     await cleanup(database)
     await database.destroy()
   } catch (error) {
