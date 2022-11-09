@@ -159,7 +159,7 @@ const EntryList = ({
   useEffect(() => {
     if (!element) return
     if (!locationState) return
-    if (locationState.type === 'entry' && entries.length > 0) return
+    if (entries.length > 0) return
     ;(async (element: HTMLElement) => {
       const { entries, totalEntry } = await loadEntries(basePath, locationState)
       setPageState('loaded')
