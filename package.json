@@ -1,6 +1,6 @@
 {
   "name": "feeds-fetcher",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "description": "Websites feed fetcher and static feeds aggregator",
   "main": "index.js",
   "author": "Maythee Anegboonlap <null@llun.dev>",

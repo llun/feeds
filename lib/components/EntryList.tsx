@@ -80,7 +80,7 @@ const EntryList = ({
   selectBack
 }: EntryListProps) => {
   const [pageState, setPageState] = useState<'loaded' | 'loading'>('loading')
-
+  const [currentCategoryOrSite, setCurrentCategoryOrSite] = useState<string>('')
   const [entries, setEntries] = useState<SiteEntry[]>([])
   const [totalEntry, setTotalEntry] = useState<number>(0)
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
@@ -157,9 +157,20 @@ const EntryList = ({
   }
 
   useEffect(() => {
+    switch (locationState.type) {
+      case 'category': {
+        if (currentCategoryOrSite === locationState.category) return
+        return setCurrentCategoryOrSite(locationState.category)
+      }
+      case 'site': {
+        if (currentCategoryOrSite === locationState.siteKey) return
+        return setCurrentCategoryOrSite(locationState.siteKey)
+      }
+    }
+  }, [locationState])
+
+  useEffect(() => {
     if (!element) return
-    if (!locationState) return
-    if (entries.length > 0) return
     ;(async (element: HTMLElement) => {
       const { entries, totalEntry } = await loadEntries(basePath, locationState)
       setPageState('loaded')
@@ -168,7 +179,7 @@ const EntryList = ({
       setPage(0)
       element.scrollTo(0, 0)
     })(element)
-  }, [locationState])
+  }, [currentCategoryOrSite])
 
   useEffect(() => {
     if (!nextBatchEntry?.current) return
