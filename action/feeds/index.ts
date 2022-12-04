@@ -2,7 +2,6 @@ import * as core from '@actions/core'
 import fs from 'fs/promises'
 import crypto from 'crypto'
 import path from 'path'
-import axios from 'axios'
 import { parseXML, parseAtom, parseRss, Site } from './parsers'
 import {
   getDatabase,
@@ -28,10 +27,11 @@ import parseContent from './sites'
 
 export async function loadFeed(title: string, url: string) {
   try {
-    const response = await axios.get(url, {
-      headers: { 'User-Agent': 'llun/feeds' }
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'llun/feed' }
     })
-    const xml = await parseXML(response.data)
+    const text = await response.text()
+    const xml = await parseXML(text)
     if (!('rss' in xml || 'feed' in xml)) {
       return null
     }

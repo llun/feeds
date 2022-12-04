@@ -2,7 +2,7 @@ import test from 'ava'
 import fs from 'fs/promises'
 import path from 'path'
 import sinon from 'sinon'
-import axios from 'axios'
+import fetchMock from 'fetch-mock'
 import { JSDOM } from 'jsdom'
 import { knex } from 'knex'
 import {
@@ -402,12 +402,11 @@ test('#createOrUpdateDatabase with old contents in database', async (t) => {
 })
 
 test('#loadFeed parse feed content if content parser available', async (t) => {
-  const axiosGetStub = sinon.stub(axios, 'get')
   const data = await fs.readFile(
     path.join(__dirname, 'tests', 'neizod.rss'),
     'utf-8'
   )
-  axiosGetStub.resolves({ data })
+  fetchMock.get('https://neizod.dev/feed.xml', data)
   const site = await loadFeed('neizod', 'https://neizod.dev/feed.xml')
   t.truthy(site)
   const contents = site.entries.map((entry) => new JSDOM(entry.content))

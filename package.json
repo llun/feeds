@@ -11,6 +11,7 @@
     "build": "next build && next export",
     "start": "next start",
     "load": "INPUT_OPMLFILE='feeds.opml' swc-node index.ts",
+    "loadFile": "INPUT_OPMLFILE='feeds.opml' INPUT_OUTPUTDIRECTORY='contents' swc-node index.ts",
     "test": "ava"
   },
   "ava": {
@@ -32,7 +33,6 @@
     "@vscode/sqlite3": "^5.1.2",
     "autoprefixer": "^10.4.13",
     "ava": "^5.1.0",
-    "axios": "^1.2.0",
     "date-fns": "^2.29.3",
     "history": "^5.3.0",
     "html-minifier": "^4.0.0",
@@ -65,6 +65,7 @@
     "@types/sanitize-html": "^2.6.2",
     "@types/sinon": "^10.0.13",
     "@types/xml2js": "^0.4.11",
+    "fetch-mock": "^9.11.0",
     "sinon": "^15.0.0",
     "swc-node": "^1.0.0",
     "typescript": "^4.9.3"
