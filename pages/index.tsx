@@ -12,7 +12,7 @@ import {
   getCategories,
   getDatabaseConfig,
   getWorker
-} from '../lib/storage'
+} from '../lib/storage/sqlite'
 import {
   articleClassName,
   categoriesClassName,

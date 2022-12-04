@@ -10,7 +10,7 @@ import {
   getSiteEntries,
   getWorker,
   SiteEntry
-} from '../storage'
+} from '../storage/sqlite'
 import { LocationState } from '../utils'
 
 interface EntryItemProps {

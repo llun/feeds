@@ -1,5 +1,5 @@
 import React, { Fragment, useState } from 'react'
-import { Category } from '../storage'
+import { Category } from '../storage/sqlite'
 
 interface Props {
   className?: string

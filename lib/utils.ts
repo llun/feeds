@@ -1,5 +1,10 @@
 import React from 'react'
-import { Content, getContent, getDatabaseConfig, getWorker } from './storage'
+import {
+  Content,
+  getContent,
+  getDatabaseConfig,
+  getWorker
+} from './storage/sqlite'
 
 export type PageState = 'categories' | 'entries' | 'article'
 
