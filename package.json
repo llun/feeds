@@ -20,6 +20,7 @@
       "tsx",
       "js"
     ],
+    "failWithoutAssertions": false,
     "require": [
       "@swc-node/register"
     ]
