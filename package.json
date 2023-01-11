@@ -1,6 +1,6 @@
 {
   "name": "feeds-fetcher",
-  "version": "2.3.6",
+  "version": "2.3.7",
   "description": "Websites feed fetcher and static feeds aggregator",
   "main": "index.js",
   "author": "Maythee Anegboonlap <null@llun.dev>",
@@ -10,7 +10,7 @@
     "dev": "next dev",
     "build": "next build && next export",
     "start": "next start",
-    "load": "INPUT_OPMLFILE='feeds.opml' swc-node index.ts",
+    "load": "INPUT_OPMLFILE='feeds.opml' node -r @swc-node/register index.ts",
     "loadFile": "INPUT_OPMLFILE='feeds.opml' INPUT_OUTPUTDIRECTORY='contents' swc-node index.ts",
     "test": "ava"
   },
@@ -42,6 +42,7 @@
     "knex": "^2.4.0",
     "lodash": "^4.17.21",
     "next": "^13.1.1",
+    "node-fetch": "2",
     "postcss": "^8.4.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

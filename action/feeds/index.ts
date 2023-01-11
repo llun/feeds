@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import fs from 'fs/promises'
+import fetch from 'node-fetch'
 import crypto from 'crypto'
 import path from 'path'
 import { parseXML, parseAtom, parseRss, Site } from './parsers'
