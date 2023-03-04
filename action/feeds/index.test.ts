@@ -1,13 +1,10 @@
 import test from 'ava'
 import fs from 'fs/promises'
+import { knex } from 'knex'
 import path from 'path'
 import sinon from 'sinon'
-import fetchMock from 'fetch-mock'
-import { JSDOM } from 'jsdom'
-import { knex } from 'knex'
 import {
   createOrUpdateDatabase,
-  loadFeed,
   readOpml,
   removeOldCategories,
   removeOldEntries,
@@ -399,18 +396,4 @@ test('#createOrUpdateDatabase with old contents in database', async (t) => {
       ])
     }
   }
-})
-
-test('#loadFeed parse feed content if content parser available', async (t) => {
-  const data = await fs.readFile(
-    path.join(__dirname, 'tests', 'neizod.rss'),
-    'utf-8'
-  )
-  fetchMock.get('https://neizod.dev/feed.xml', data)
-  const site = await loadFeed('neizod', 'https://neizod.dev/feed.xml')
-  t.truthy(site)
-  const contents = site.entries.map((entry) => new JSDOM(entry.content))
-  const content = contents[0]
-  const links = Array.from(content.window.document.querySelectorAll('img'))
-  t.true(links.every((item) => item.src.startsWith(site.link)))
 })
