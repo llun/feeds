@@ -1,30 +1,29 @@
 import * as core from '@actions/core'
-import fs from 'fs/promises'
-import fetch from 'node-fetch'
 import crypto from 'crypto'
-import path from 'path'
-import { parseXML, parseAtom, parseRss, Site } from './parsers'
-import {
-  getDatabase,
-  createTables,
-  insertCategory,
-  insertSite,
-  cleanup,
-  insertEntry,
-  isEntryExists,
-  getAllCategories,
-  deleteCategory,
-  getCategorySites,
-  hash,
-  deleteSiteCategory,
-  getAllSiteEntries,
-  deleteEntry,
-  DATABASE_FILE
-} from './database'
-import { getWorkspacePath } from '../repository'
-import { Knex } from 'knex'
 import { constants } from 'fs'
-import parseContent from './sites'
+import fs from 'fs/promises'
+import { Knex } from 'knex'
+import fetch from 'node-fetch'
+import path from 'path'
+import { getWorkspacePath } from '../repository'
+import {
+  DATABASE_FILE,
+  cleanup,
+  createTables,
+  deleteCategory,
+  deleteEntry,
+  deleteSiteCategory,
+  getAllCategories,
+  getAllSiteEntries,
+  getCategorySites,
+  getDatabase,
+  hash,
+  insertCategory,
+  insertEntry,
+  insertSite,
+  isEntryExists
+} from './database'
+import { Site, parseAtom, parseRss, parseXML } from './parsers'
 
 export async function loadFeed(title: string, url: string) {
   try {
@@ -38,7 +37,6 @@ export async function loadFeed(title: string, url: string) {
     }
 
     const site = 'rss' in xml ? parseRss(title, xml) : parseAtom(title, xml)
-    parseContent(site)
     return site
   } catch (error) {
     console.error(error.message)

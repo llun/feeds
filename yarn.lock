@@ -75,11 +75,6 @@
     semver "^7.3.5"
     tar "^6.1.11"
 
-"@mozilla/readability@^0.4.2":
-  version "0.4.2"
-  resolved "https://registry.yarnpkg.com/@mozilla/readability/-/readability-0.4.2.tgz#a425f3dccdbe777d45a4e791bd703ebe633ebb87"
-  integrity sha512-48MJXzi4Dhy2fJ3lGjmwdEJKoMmn3oiYew9n/1OW6cZy78hAzRIyDJDBCGrg4PBFDyY4xos+H4LCFn5QVRDcfw==
-
 "@next/env@13.2.3":
   version "13.2.3"
   resolved "https://registry.yarnpkg.com/@next/env/-/env-13.2.3.tgz#77ca49edb3c1d7c5263bb8f2ebe686080e98279e"
@@ -407,7 +402,7 @@
   resolved "https://registry.yarnpkg.com/@swc-node/core/-/core-1.10.1.tgz#fa1c5730353217936903b78086786b1285f3a167"
   integrity sha512-4aiqLb5Uz+zDt7oIMAtH69+l1BvKV3k7fMYNNLjgdSM7qmFwrpHwu+Ss9nOYPTCFlbKCUMP/70aD5Gt2skmJaw==
 
-"@swc-node/register@^1.4.0", "@swc-node/register@^1.6.2":
+"@swc-node/register@^1.6.2":
   version "1.6.2"
   resolved "https://registry.yarnpkg.com/@swc-node/register/-/register-1.6.2.tgz#51735130a0bcbd60322a3cd71f77739ed7b34a79"
   integrity sha512-7kzUOrw5RhSW23VU9RtEOlH71MQZ4cfUPgu245f3tKjYIu1CkxNJVX48FAiGJ6+3QgJMXLr1anT9FeeCmX12xw==
@@ -545,16 +540,6 @@
     "@types/node" "*"
     "@types/tough-cookie" "*"
     parse5 "^7.0.0"
-
-"@types/katex@^0.16.0":
-  version "0.16.0"
-  resolved "https://registry.yarnpkg.com/@types/katex/-/katex-0.16.0.tgz#0e640df3647fe237212be863e1f5111eb9754f93"
-  integrity sha512-hz+S3nV6Mym5xPbT9fnO8dDhBFQguMYpY0Ipxv06JMi1ORgnEM4M1ymWDUhUNer3ElLmT583opRo4RzxKmh9jw==
-
-"@types/mozilla-readability@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@types/mozilla-readability/-/mozilla-readability-0.2.1.tgz#3c92215157f2d36d117c2676389887f530ccafd5"
-  integrity sha512-RjLpe3MIpj53L+q50DTNlhv6KjHjgajFQwAF4KuxVZTa2+6Cs2UNAxS5awxABfZEHRYjGKeRDB21Zrtnsi911w==
 
 "@types/node@*", "@types/node@^18.14.6":
   version "18.14.6"
@@ -2089,13 +2074,6 @@ just-extend@^4.0.2:
   resolved "https://registry.yarnpkg.com/just-extend/-/just-extend-4.2.1.tgz#ef5e589afb61e5d66b24eca749409a8939a8c744"
   integrity sha512-g3UB796vUFIY90VIv/WX3L2c8CS2MdWUww3CNrYmqza1Fg0DURc2K/O4YrnklBdQarSJ/y8JnJYDGc+1iumQjg==
 
-katex@^0.16.4:
-  version "0.16.4"
-  resolved "https://registry.yarnpkg.com/katex/-/katex-0.16.4.tgz#87021bc3bbd80586ef715aeb476794cba6a49ad4"
-  integrity sha512-WudRKUj8yyBeVDI4aYMNxhx5Vhh2PjpzQw1GRu/LVGqL4m1AxwD1GcUp0IMbdJaf5zsjtj8ghP0DOQRYhroNkw==
-  dependencies:
-    commander "^8.0.0"
-
 knex@^2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/knex/-/knex-2.4.2.tgz#a34a289d38406dc19a0447a78eeaf2d16ebedd61"
@@ -3247,13 +3225,6 @@ supports-preserve-symlinks-flag@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz#6eda4bd344a3c94aea376d4cc31bc77311039e09"
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
-
-swc-node@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/swc-node/-/swc-node-1.0.0.tgz#73729b2ff68e1e7fad11fc04b84d3acf21982c3c"
-  integrity sha512-4+kibROq06E7Yj3kEcCRN1Ki2C/5i+5P1B7An9iS9PO1BQY5VzWFuLhV7y7xNxkZjc8FEaLCh97NGzs/XBfOMQ==
-  dependencies:
-    "@swc-node/register" "^1.4.0"
 
 symbol-tree@^3.2.4:
   version "3.2.4"
