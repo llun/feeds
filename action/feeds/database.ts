@@ -1,7 +1,7 @@
-import fs from 'fs'
-import path from 'path'
 import crypto from 'crypto'
+import fs from 'fs'
 import { knex, Knex } from 'knex'
+import path from 'path'
 
 import type { Entry, Site } from './parsers'
 
@@ -165,7 +165,7 @@ export async function isEntryExists(knex: Knex, entry: Entry) {
   const key = hash(`${entry.title}${entry.link}`)
   const count = await knex('Entries')
     .where('key', key)
-    .count('* as total')
+    .count<{ total: number }>('* as total')
     .first()
   return count.total > 0
 }
@@ -173,7 +173,7 @@ export async function isEntryExists(knex: Knex, entry: Entry) {
 async function isSiteExists(knex: Knex, siteKey: string) {
   const count = await knex('Sites')
     .where('key', siteKey)
-    .count('* as total')
+    .count<{ total: number }>('* as total')
     .first()
   return count.total > 0
 }
@@ -186,7 +186,7 @@ async function isSiteCategoryExists(
   const count = await knex('SiteCategories')
     .where('category', category)
     .andWhere('siteKey', siteKey)
-    .count('* as total')
+    .count<{ total: number }>('* as total')
     .first()
   return count.total > 0
 }
@@ -194,7 +194,7 @@ async function isSiteCategoryExists(
 async function isCategoryExists(knex: Knex, category: string) {
   const count = await knex('Categories')
     .where('name', category)
-    .count('* as total')
+    .count<{ total: number }>('* as total')
     .first()
   return count.total > 0
 }
@@ -309,7 +309,7 @@ export async function deleteSiteCategory(
 
   const siteCategoryCount = await knex('SiteCategories')
     .where('siteKey', siteKey)
-    .count('* as total')
+    .count<{ total: number }>('* as total')
     .first()
   if (siteCategoryCount.total > 0) return
   await knex('Sites').where('key', siteKey).delete()
