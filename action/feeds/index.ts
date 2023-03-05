@@ -1,5 +1,4 @@
 import * as core from '@actions/core'
-import crypto from 'crypto'
 import fs from 'fs/promises'
 import path from 'path'
 import { getWorkspacePath } from '../repository'
@@ -10,7 +9,7 @@ import {
   createTables,
   getDatabase
 } from './database'
-import { createCategoryDirectory } from './file'
+import { loadOPMLAndWriteFiles } from './file'
 import { loadFeed, readOpml } from './opml'
 
 export async function createFeedDatabase(githubActionPath: string) {
@@ -45,30 +44,10 @@ export async function createFeedFiles(githubActionPath: string) {
     // This feed site uses database
     if (!contentDirectory) return
     const feedsFile = core.getInput('opmlFile', { required: true })
-    const opmlContent = (
-      await fs.readFile(path.join(getWorkspacePath(), feedsFile))
-    ).toString('utf8')
-    const opml = await readOpml(opmlContent)
-    for (const category of opml) {
-      const { category: title, items } = category
-      await createCategoryDirectory(contentDirectory, title)
-      if (!items) continue
-      console.log(`Load category ${title}`)
-      for (const item of items) {
-        const feedData = await loadFeed(item.title, item.xmlUrl)
-        if (!feedData) {
-          continue
-        }
-        console.log(`Load ${feedData.title}`)
-        const sha256 = crypto.createHash('sha256')
-        sha256.update(feedData.title)
-        const hexTitle = sha256.digest('hex')
-        await fs.writeFile(
-          path.join(contentDirectory, title, `${hexTitle}.json`),
-          JSON.stringify(feedData)
-        )
-      }
-    }
+    await loadOPMLAndWriteFiles(
+      contentDirectory,
+      path.join(getWorkspacePath(), feedsFile)
+    )
   } catch (error) {
     console.error(error.message)
     console.error(error.stack)
