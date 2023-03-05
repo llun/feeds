@@ -220,7 +220,7 @@ async function createCategoryDirectory(
   }
 }
 
-export async function createFeedFiles() {
+export async function createFeedFiles(githubActionPath: string) {
   try {
     const contentDirectory = core.getInput('outputDirectory')
     // This feed site uses database
