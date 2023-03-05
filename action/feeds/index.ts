@@ -9,7 +9,14 @@ import {
   createTables,
   getDatabase
 } from './database'
-import { loadOPMLAndWriteFiles } from './file'
+import {
+  DEFAULT_PATHS,
+  createAllEntriesData,
+  createCategoryData,
+  createRepositoryData,
+  loadOPMLAndWriteFiles,
+  prepareDirectories
+} from './file'
 import { loadFeed, readOpml } from './opml'
 
 export async function createFeedDatabase(githubActionPath: string) {
@@ -51,6 +58,13 @@ export async function createFeedFiles(githubActionPath: string) {
     const publicPath = githubActionPath
       ? path.join(githubActionPath, 'public')
       : 'public'
+    const customDomainName = core.getInput('customDomain')
+    const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
+
+    await prepareDirectories(DEFAULT_PATHS)
+    await createRepositoryData(DEFAULT_PATHS, githubRootName, customDomainName)
+    await createCategoryData(DEFAULT_PATHS)
+    await createAllEntriesData()
   } catch (error) {
     console.error(error.message)
     console.error(error.stack)

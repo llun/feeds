@@ -18,9 +18,7 @@
 # misc
 .DS_Store
 *.pem
-contents
 tsconfig.tsbuildinfo
-*.sqlite3
 target
 
 # debug
@@ -39,3 +37,8 @@ yarn-error.log*
 
 # personal test file
 lab.js
+
+# feeds content
+*.sqlite3
+public/data
+contents

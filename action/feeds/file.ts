@@ -8,7 +8,6 @@ import { Entry, Site } from './parsers'
 interface Paths {
   feedsContentPath: string
   categoryDataPath: string
-  embeddedDataPath: string
   sitesDataPath: string
   entriesDataPath: string
   dataPath: string
@@ -105,31 +104,32 @@ export const FEEDS_CONTENT_PATH = path.join(
   process.env['GITHUB_WORKSPACE'] || '',
   'contents'
 )
-export const EMBEDDED_DATA_PATH = path.join(
-  (process.env['GITHUB_WORKSPACE'] && GITHUB_ACTION_PATH) || '',
-  'pages',
-  '_data'
-)
 export const DATA_PATH = path.join(
   (process.env['GITHUB_WORKSPACE'] && GITHUB_ACTION_PATH) || '',
-  'pages',
+  'public',
   'data'
 )
 export const CATEGORY_DATA_PATH = path.join(DATA_PATH, 'categories')
 export const SITES_DATA_PATH = path.join(DATA_PATH, 'sites')
 export const ENTRIES_DATA_PATH = path.join(DATA_PATH, 'entries')
-export const REPOSITORY_DATA_PATH = path.join(EMBEDDED_DATA_PATH, 'github.json')
+export const REPOSITORY_DATA_PATH = path.join(DATA_PATH, 'github.json')
+
+export const DEFAULT_PATHS = {
+  feedsContentPath: path.join(
+    process.env['GITHUB_WORKSPACE'] || '',
+    'contents'
+  ),
+  categoryDataPath: CATEGORY_DATA_PATH,
+  sitesDataPath: SITES_DATA_PATH,
+  entriesDataPath: ENTRIES_DATA_PATH,
+  dataPath: DATA_PATH,
+  repositoryDataPath: REPOSITORY_DATA_PATH
+}
 
 export async function prepareDirectories(paths: Paths) {
-  const {
-    feedsContentPath,
-    embeddedDataPath,
-    categoryDataPath,
-    sitesDataPath,
-    entriesDataPath
-  } = paths
+  const { feedsContentPath, categoryDataPath, sitesDataPath, entriesDataPath } =
+    paths
   await fs.stat(feedsContentPath)
-  await fs.mkdir(embeddedDataPath, { recursive: true })
   await fs.mkdir(categoryDataPath, { recursive: true })
   await fs.mkdir(sitesDataPath, { recursive: true })
   await fs.mkdir(entriesDataPath, { recursive: true })
@@ -262,4 +262,38 @@ export async function createAllEntriesData() {
   ).sort((a, b) => b.date - a.date)
   const text = JSON.stringify(entriesData)
   await fs.writeFile(path.join(DATA_PATH, 'all.json'), text)
+}
+
+export async function createCategoryData(paths: Paths) {
+  const { feedsContentPath, categoryDataPath, dataPath } = paths
+  const categories = await fs.readdir(feedsContentPath)
+  /** @type {CategoryData[]} */
+  const categoriesData = []
+  for (const category of categories) {
+    const sites = await fs.readdir(path.join(feedsContentPath, category))
+    const sitesData = await createSitesData(paths, category, sites)
+    /** @type {CategoryData} */
+    const categoryData = {
+      name: category,
+      sites: sitesData.map((data) => ({
+        title: data.title,
+        link: data.link,
+        updatedAt: data.updatedAt,
+        siteHash: data.siteHash
+      }))
+    }
+    categoriesData.push(categoryData)
+
+    const categoryEntries = sitesData.reduce(
+      (entries, site) => [...entries, ...site.entries],
+      /** @type {SiteEntryData[]} */ []
+    )
+    categoryEntries.sort((a, b) => b.date - a.date)
+    await fs.writeFile(
+      path.join(categoryDataPath, `${category}.json`),
+      JSON.stringify(categoryEntries)
+    )
+  }
+  const text = JSON.stringify(categoriesData)
+  await fs.writeFile(path.join(dataPath, 'categories.json'), text)
 }
