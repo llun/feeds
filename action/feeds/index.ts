@@ -48,6 +48,9 @@ export async function createFeedFiles(githubActionPath: string) {
       contentDirectory,
       path.join(getWorkspacePath(), feedsFile)
     )
+    const publicPath = githubActionPath
+      ? path.join(githubActionPath, 'public')
+      : 'public'
   } catch (error) {
     console.error(error.message)
     console.error(error.stack)
