@@ -1,12 +1,12 @@
 import test from 'ava'
-import sinon from 'sinon'
 import fs from 'fs'
 import path from 'path'
-import { parseXML, parseAtom } from './parsers'
+import sinon from 'sinon'
+import { parseAtom, parseXML } from './parsers'
 
 test('#parseAtom returns site information with empty string for fields that does not have information', async (t) => {
   const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'atom1.xml'))
+    .readFileSync(path.join(__dirname, 'stubs', 'atom1.xml'))
     .toString('utf8')
   const xml = await parseXML(data)
   const site = parseAtom('llun site', xml)
@@ -40,7 +40,7 @@ test('#parseAtom returns site information with empty string for fields that does
 
 test('#parseAtom uses summary when entry does not have content', async (t) => {
   const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'atom2.xml'))
+    .readFileSync(path.join(__dirname, 'stubs', 'atom2.xml'))
     .toString('utf8')
   const xml = await parseXML(data)
   const site = parseAtom('cheeaun blog', xml)

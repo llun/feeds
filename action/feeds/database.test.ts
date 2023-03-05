@@ -1,17 +1,26 @@
 import anyTest, { TestFn } from 'ava'
+import fs from 'fs'
 import { knex, Knex } from 'knex'
+import path from 'path'
 import sinon from 'sinon'
 import {
+  createOrUpdateDatabase,
   createTables,
   deleteCategory,
   deleteEntry,
   deleteSite,
   deleteSiteCategory,
+  getAllCategories,
+  getAllSiteEntries,
+  getCategorySites,
   hash,
   insertCategory,
   insertEntry,
-  insertSite
+  insertSite,
+  removeOldEntries,
+  removeOldSites
 } from './database'
+import { readOpml } from './opml'
 import { Entry, Site } from './parsers'
 
 const test = anyTest as TestFn<{
@@ -336,4 +345,264 @@ test('#deleteEntry', async (t) => {
     .count('* as total')
     .first()
   t.is(entryCategoryCount.total, 0)
+})
+
+test('#removeOldSites delete sites not exists in opml', async (t) => {
+  const db = knex({
+    client: 'sqlite3',
+    connection: ':memory:',
+    useNullAsDefault: true
+  })
+  await createTables(db)
+  await insertCategory(db, 'Category2')
+  await insertSite(db, 'Category2', {
+    title: '@llun story',
+    description: '',
+    entries: [],
+    generator: '',
+    link: 'https://www.llun.me',
+    updatedAt: Math.floor(Date.now() / 1000)
+  })
+  const site2 = await insertSite(db, 'Category2', {
+    title: 'cheeaunblog',
+    description: '',
+    entries: [],
+    generator: '',
+    link: 'https://cheeaun.com/blog',
+    updatedAt: Math.floor(Date.now() / 1000)
+  })
+  const site3 = await insertSite(db, 'Category2', {
+    title: 'icez network',
+    description: '',
+    entries: [],
+    generator: '',
+    link: 'https://www.icez.net/blog',
+    updatedAt: Math.floor(Date.now() / 1000)
+  })
+
+  const data = fs
+    .readFileSync(path.join(__dirname, 'stubs', 'opml.xml'))
+    .toString('utf8')
+  const opml = await readOpml(data)
+  await removeOldSites(db, opml[1])
+  const sites = await getCategorySites(db, 'Category2')
+  t.deepEqual(sites, [
+    { siteKey: site2, siteTitle: 'cheeaunblog', category: 'Category2' },
+    { siteKey: site3, siteTitle: 'icez network', category: 'Category2' }
+  ])
+})
+
+test('#removeOldEntries delete entries not exists in feed site anymore', async (t) => {
+  const db = knex({
+    client: 'sqlite3',
+    connection: ':memory:',
+    useNullAsDefault: true
+  })
+  await createTables(db)
+  await insertCategory(db, 'Category1')
+
+  const site: Site = {
+    title: '@llun story',
+    description: '',
+    entries: [
+      {
+        author: 'llun',
+        content: 'content1',
+        date: Math.floor(Date.now() / 1000),
+        link: 'https://www.llun.me/posts/2021-12-30-2021/',
+        title: '2021'
+      },
+      {
+        author: 'llun',
+        content: 'content2',
+        date: Math.floor(Date.now() / 1000),
+        link: 'https://www.llun.me/posts/2020-12-31-2020/',
+        title: '2020'
+      }
+    ],
+    generator: '',
+    link: 'https://www.llun.me',
+    updatedAt: Math.floor(Date.now() / 1000)
+  }
+  const siteKey = await insertSite(db, 'Category1', site)
+  await insertEntry(db, siteKey, '@llun story', 'Category1', {
+    author: 'llun',
+    content: 'content3',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2018-12-31-2018/',
+    title: '2018'
+  })
+  const entryKey = await insertEntry(db, siteKey, '@llun story', 'Category1', {
+    author: 'llun',
+    content: 'content2',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2020-12-31-2020/',
+    title: '2020'
+  })
+  await removeOldEntries(db, site)
+  const entries = await getAllSiteEntries(db, siteKey)
+  t.deepEqual(entries, [{ entryKey, siteKey, category: 'Category1' }])
+})
+
+test('#createOrUpdateDatabase add fresh data for empty database', async (t) => {
+  const db = knex({
+    client: 'sqlite3',
+    connection: ':memory:',
+    useNullAsDefault: true
+  })
+  const data = fs
+    .readFileSync(path.join(__dirname, 'stubs', 'opml.single.xml'))
+    .toString('utf8')
+  const opml = await readOpml(data)
+  const entry1: Entry = {
+    author: 'llun',
+    content: 'content1',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2021-12-30-2021/',
+    title: '2021'
+  }
+  const entry2: Entry = {
+    author: 'llun',
+    content: 'content2',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2020-12-31-2020/',
+    title: '2020'
+  }
+  const site: Site = {
+    title: '@llun story',
+    description: '',
+    entries: [entry1, entry2],
+    generator: '',
+    link: 'https://www.llun.me',
+    updatedAt: Math.floor(Date.now() / 1000)
+  }
+  await createTables(db)
+  await createOrUpdateDatabase(
+    db,
+    opml,
+    async (title: string, url: string) => site
+  )
+  const categories = await getAllCategories(db)
+  t.deepEqual(categories, ['default'])
+  for (const category of categories) {
+    const sites = await getCategorySites(db, category)
+    t.deepEqual(sites, [
+      {
+        siteKey: hash(site.title),
+        siteTitle: site.title,
+        category: 'default'
+      }
+    ])
+
+    for (const site of sites) {
+      const entries = await getAllSiteEntries(db, site.siteKey)
+      t.deepEqual(entries, [
+        {
+          entryKey: hash(`${entry2.title}${entry2.link}`),
+          siteKey: site.siteKey,
+          category: 'default'
+        },
+        {
+          entryKey: hash(`${entry1.title}${entry1.link}`),
+          siteKey: site.siteKey,
+          category: 'default'
+        }
+      ])
+    }
+  }
+})
+
+test('#createOrUpdateDatabase with old contents in database', async (t) => {
+  const db = knex({
+    client: 'sqlite3',
+    connection: ':memory:',
+    useNullAsDefault: true
+  })
+  const data = fs
+    .readFileSync(path.join(__dirname, 'stubs', 'opml.single.xml'))
+    .toString('utf8')
+  const opml = await readOpml(data)
+  const entry1: Entry = {
+    author: 'llun',
+    content: 'content1',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2021-12-30-2021/',
+    title: '2021'
+  }
+  const entry2: Entry = {
+    author: 'llun',
+    content: 'content2',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2020-12-31-2020/',
+    title: '2020'
+  }
+  const site: Site = {
+    title: '@llun story',
+    description: '',
+    entries: [entry1, entry2],
+    generator: '',
+    link: 'https://www.llun.me',
+    updatedAt: Math.floor(Date.now() / 1000)
+  }
+  await createTables(db)
+  await insertCategory(db, 'default')
+  await insertCategory(db, 'Category1')
+  await insertSite(db, 'default', site)
+  await insertSite(db, 'default', {
+    title: 'Other site',
+    description: '',
+    entries: [],
+    generator: '',
+    link: 'https://google.com',
+    updatedAt: Math.floor(Date.now() / 1000)
+  })
+  await insertSite(db, 'Category1', {
+    title: 'Other site2',
+    description: '',
+    entries: [],
+    generator: '',
+    link: 'https://youtube.com',
+    updatedAt: Math.floor(Date.now() / 1000)
+  })
+  await insertEntry(db, hash(site.title), site.title, 'default', {
+    author: 'llun',
+    content: 'content3',
+    date: Math.floor(Date.now() / 1000),
+    link: 'https://www.llun.me/posts/2018-12-31-2018/',
+    title: '2018'
+  })
+
+  await createOrUpdateDatabase(
+    db,
+    opml,
+    async (title: string, url: string) => site
+  )
+  const categories = await getAllCategories(db)
+  t.deepEqual(categories, ['default'])
+  for (const category of categories) {
+    const sites = await getCategorySites(db, category)
+    t.deepEqual(sites, [
+      {
+        siteKey: hash(site.title),
+        siteTitle: site.title,
+        category: 'default'
+      }
+    ])
+
+    for (const site of sites) {
+      const entries = await getAllSiteEntries(db, site.siteKey)
+      t.deepEqual(entries, [
+        {
+          entryKey: hash(`${entry2.title}${entry2.link}`),
+          siteKey: site.siteKey,
+          category: 'default'
+        },
+        {
+          entryKey: hash(`${entry1.title}${entry1.link}`),
+          siteKey: site.siteKey,
+          category: 'default'
+        }
+      ])
+    }
+  }
 })
