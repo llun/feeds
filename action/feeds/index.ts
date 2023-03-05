@@ -10,6 +10,7 @@ import {
   createTables,
   getDatabase
 } from './database'
+import { createCategoryDirectory } from './file'
 import { loadFeed, readOpml } from './opml'
 
 export async function createFeedDatabase(githubActionPath: string) {
@@ -35,25 +36,6 @@ export async function createFeedDatabase(githubActionPath: string) {
     console.error(error.message)
     console.error(error.stack)
     core.setFailed(error)
-  }
-}
-
-async function createCategoryDirectory(
-  rootDirectory: string,
-  category: string
-) {
-  try {
-    const stats = await fs.stat(path.join(rootDirectory, category))
-    if (!stats.isDirectory()) {
-      throw new Error(
-        `${path.join(rootDirectory, category)} is not a directory`
-      )
-    }
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      throw new Error(`Fail to access ${rootDirectory}`)
-    }
-    await fs.mkdir(path.join(rootDirectory, category), { recursive: true })
   }
 }
 
