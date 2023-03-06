@@ -24,16 +24,45 @@ export class FileStorage implements Storage {
   }
 
   async getCategoryEntries(category: string, page = 0) {
-    return []
+    const response = await fetch(
+      `${this.basePath}/data/categories/${category}.json`
+    )
+    if (response.status !== 200)
+      throw new Error('Fail to load category entries')
+
+    const json = await response.json()
+    return json.map((entry) => ({
+      key: entry.entryHash,
+      title: entry.title,
+      site: {
+        key: entry.siteHash,
+        title: entry.siteTitle
+      },
+      timestamp: entry.date
+    }))
   }
 
   async getSiteEntries(siteKey: string, page = 0) {
-    return []
+    const response = await fetch(`${this.basePath}/data/sites/${siteKey}.json`)
+    if (response.status !== 200) throw new Error('Fail to load site entries')
+
+    const json = await response.json()
+    const entries = json.entries
+    return entries.map((entry) => ({
+      key: entry.entryHash,
+      title: entry.title,
+      site: {
+        key: entry.siteHash,
+        title: entry.siteTitle
+      },
+      timestamp: entry.date
+    }))
   }
 
   async countAllEntries() {
     const response = await fetch(`${this.basePath}/data/categories.json`)
-    if (response.status !== 200) throw new Error('Fail to load categories')
+    if (response.status !== 200)
+      throw new Error('Fail to load count all entries')
 
     const categories = await response.json()
     return categories.reduce((sum, category) => sum + category.totalEntries, 0)
@@ -48,7 +77,19 @@ export class FileStorage implements Storage {
   }
 
   async getAllEntries(page = 0) {
-    return []
+    const response = await fetch(`${this.basePath}/data/all.json`)
+    if (response.status !== 200) throw new Error('Fail to load all entries')
+
+    const json = await response.json()
+    return json.map((entry) => ({
+      key: entry.entryHash,
+      title: entry.title,
+      site: {
+        key: entry.siteHash,
+        title: entry.siteTitle
+      },
+      timestamp: entry.date
+    }))
   }
 
   async getContent(key: string) {
