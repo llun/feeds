@@ -69,11 +69,22 @@ export class FileStorage implements Storage {
   }
 
   async countSiteEntries(siteKey: string) {
-    return 0
+    const response = await fetch(`${this.basePath}/data/sites/${siteKey}.json`)
+    if (response.status !== 200) throw new Error('Fail to load site entries')
+    const json = await response.json()
+    const entries = json.entries
+    return entries.length
   }
 
   async countCategoryEntries(category: string) {
-    return 0
+    const response = await fetch(
+      `${this.basePath}/data/categories/${category}.json`
+    )
+    if (response.status !== 200)
+      throw new Error('Fail to load category entries')
+
+    const json = await response.json()
+    return json.length
   }
 
   async getAllEntries(page = 0) {
