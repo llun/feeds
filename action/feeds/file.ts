@@ -23,11 +23,13 @@ interface SiteData {
   link: string
   updatedAt: number
   siteHash: string
+  totalEntries: number
 }
 
 interface CategoryData {
   name: string
   sites: SiteData[]
+  totalEntries: number
 }
 
 interface SiteEntryData {
@@ -225,7 +227,8 @@ export async function createSitesData(
       link: json.link,
       updatedAt: json.updatedAt,
       siteHash,
-      entries: entries.sort((a, b) => b.date - a.date)
+      entries: entries.sort((a, b) => b.date - a.date),
+      totalEntries: entries.length
     }
     await fs.writeFile(
       path.join(sitesDataPath, `${siteHash}.json`),
@@ -271,14 +274,20 @@ export async function createCategoryData(paths: Paths) {
   for (const category of categories) {
     const sites = await fs.readdir(path.join(feedsContentPath, category))
     const sitesData = await createSitesData(paths, category, sites)
+    const totalCategoriesEntries = sitesData.reduce(
+      (sum, item) => sum + item.entries.length,
+      0
+    )
     const categoryData: CategoryData = {
       name: category,
       sites: sitesData.map((data) => ({
         title: data.title,
         link: data.link,
         updatedAt: data.updatedAt,
-        siteHash: data.siteHash
-      }))
+        siteHash: data.siteHash,
+        totalEntries: data.entries.length
+      })),
+      totalEntries: totalCategoriesEntries
     }
     categoriesData.push(categoryData)
 
