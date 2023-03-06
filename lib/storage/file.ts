@@ -104,6 +104,17 @@ export class FileStorage implements Storage {
   }
 
   async getContent(key: string) {
-    return null
+    const response = await fetch(`${this.basePath}/data/entries/${key}.json`)
+    if (response.status !== 200) throw new Error('Fail to load content')
+
+    const json = await response.json()
+    return {
+      title: json.title,
+      content: json.content,
+      url: json.link,
+      siteKey: json.siteHash,
+      siteTitle: json.siteTitle,
+      timestamp: json.date
+    }
   }
 }
