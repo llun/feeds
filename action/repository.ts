@@ -45,8 +45,8 @@ export function buildSite() {
     runCommand(['touch', '.nojekyll'], workSpace)
 
     const core = require('@actions/core')
-    const contentDirectory = core.getInput('outputDirectory')
-    if (contentDirectory) process.env.NEXT_PUBLIC_STORAGE = 'file'
+    const storageType = core.getInput('storageType')
+    if (storageType === 'files') process.env.NEXT_PUBLIC_STORAGE = 'files'
 
     const result = runCommand(['npm', 'run', 'build'], getGithubActionPath())
     runCommand(['cp', '-rT', 'out', workSpace], getGithubActionPath())

@@ -103,7 +103,8 @@ export async function loadOPMLAndWriteFiles(
 
 export const GITHUB_ACTION_PATH = getGithubActionPath()
 export const FEEDS_CONTENT_PATH = path.join(
-  process.env['GITHUB_WORKSPACE'] || '',
+  (process.env['GITHUB_WORKSPACE'] && GITHUB_ACTION_PATH) || '',
+  'public',
   'contents'
 )
 export const DATA_PATH = path.join(

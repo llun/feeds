@@ -7,7 +7,7 @@ let storage: Storage | null = null
 export const getStorage = (basePath: string) => {
   if (!storage) {
     switch (process.env.NEXT_PUBLIC_STORAGE) {
-      case 'file': {
+      case 'files': {
         storage = new FileStorage(basePath)
         break
       }

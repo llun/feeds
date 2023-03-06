@@ -21,9 +21,9 @@ import { loadFeed, readOpml } from './opml'
 
 export async function createFeedDatabase(githubActionPath: string) {
   try {
-    const contentDirectory = core.getInput('outputDirectory')
+    const storageType = core.getInput('storageType')
     // This feed site uses files
-    if (contentDirectory) return
+    if (storageType === 'file') return
     const feedsFile = core.getInput('opmlFile', { required: true })
     const opmlContent = (
       await fs.readFile(path.join(getWorkspacePath(), feedsFile))
@@ -47,17 +47,17 @@ export async function createFeedDatabase(githubActionPath: string) {
 
 export async function createFeedFiles(githubActionPath: string) {
   try {
-    const contentDirectory = core.getInput('outputDirectory')
+    const storageType = core.getInput('storageType')
     // This feed site uses database
-    if (!contentDirectory) return
+    if (storageType !== 'file') return
     const feedsFile = core.getInput('opmlFile', { required: true })
+    const publicPath = githubActionPath
+      ? path.join(githubActionPath, 'public', 'contents')
+      : path.join('public', 'contents')
     await loadOPMLAndWriteFiles(
-      contentDirectory,
+      publicPath,
       path.join(getWorkspacePath(), feedsFile)
     )
-    const publicPath = githubActionPath
-      ? path.join(githubActionPath, 'public')
-      : 'public'
     const customDomainName = core.getInput('customDomain')
     const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
 
