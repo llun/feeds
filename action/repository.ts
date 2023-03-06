@@ -5,7 +5,8 @@ import path from 'path'
 export function runCommand(commands: string[], cwd?: string) {
   return spawnSync(commands[0], commands.slice(1), {
     stdio: 'inherit',
-    cwd
+    cwd,
+    env: process.env
   })
 }
 
@@ -42,6 +43,11 @@ export function buildSite() {
     runCommand(['rm', '-rf', '_next'], workSpace)
     // Bypass Jekyll
     runCommand(['touch', '.nojekyll'], workSpace)
+
+    const core = require('@actions/core')
+    const contentDirectory = core.getInput('outputDirectory')
+    if (contentDirectory) process.env.NEXT_PUBLIC_STORAGE = 'file'
+
     const result = runCommand(['npm', 'run', 'build'], getGithubActionPath())
     runCommand(['cp', '-rT', 'out', workSpace], getGithubActionPath())
     if (result.error) {
