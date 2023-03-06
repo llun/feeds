@@ -267,13 +267,11 @@ export async function createAllEntriesData() {
 export async function createCategoryData(paths: Paths) {
   const { feedsContentPath, categoryDataPath, dataPath } = paths
   const categories = await fs.readdir(feedsContentPath)
-  /** @type {CategoryData[]} */
-  const categoriesData = []
+  const categoriesData: CategoryData[] = []
   for (const category of categories) {
     const sites = await fs.readdir(path.join(feedsContentPath, category))
     const sitesData = await createSitesData(paths, category, sites)
-    /** @type {CategoryData} */
-    const categoryData = {
+    const categoryData: CategoryData = {
       name: category,
       sites: sitesData.map((data) => ({
         title: data.title,
@@ -286,7 +284,7 @@ export async function createCategoryData(paths: Paths) {
 
     const categoryEntries = sitesData.reduce(
       (entries, site) => [...entries, ...site.entries],
-      /** @type {SiteEntryData[]} */ []
+      [] as SiteEntryData[]
     )
     categoryEntries.sort((a, b) => b.date - a.date)
     await fs.writeFile(
