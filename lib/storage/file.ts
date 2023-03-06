@@ -1,8 +1,26 @@
 import { Storage } from './types'
 
 export class FileStorage implements Storage {
+  private basePath: string
+
+  constructor(basePath: string) {
+    this.basePath = basePath
+  }
+
   async getCategories() {
-    return []
+    const response = await fetch(`${this.basePath}/data/categories.json`)
+    if (response.status !== 200) throw new Error('Fail to load categories')
+
+    const categories = await response.json()
+    return categories.map((category) => ({
+      title: category.name,
+      totalEntries: category.totalEntries,
+      sites: category.sites.map((site) => ({
+        key: site.siteHash,
+        title: site.title,
+        totalEntries: site.totalEntries
+      }))
+    }))
   }
 
   async getCategoryEntries(category: string, page = 0) {
@@ -14,7 +32,11 @@ export class FileStorage implements Storage {
   }
 
   async countAllEntries() {
-    return 0
+    const response = await fetch(`${this.basePath}/data/categories.json`)
+    if (response.status !== 200) throw new Error('Fail to load categories')
+
+    const categories = await response.json()
+    return categories.reduce((sum, category) => sum + category.totalEntries, 0)
   }
 
   async countSiteEntries(siteKey: string) {
