@@ -39,17 +39,6 @@ export class SqliteStorage implements Storage {
     return this.worker
   }
 
-  static getDatabaseConfig(basePath: string): SplitFileConfig {
-    return {
-      from: 'inline',
-      config: {
-        serverMode: 'full',
-        requestChunkSize: 4096,
-        url: `${basePath}/data.sqlite3`
-      }
-    }
-  }
-
   async getCategories(): Promise<Category[]> {
     const worker = await this.getWorker(this.config, this.basePath)
     const categories = (await worker.db.query(
