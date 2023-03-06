@@ -1,6 +1,6 @@
 import { formatDistance } from 'date-fns'
-import React, { useEffect } from 'react'
-import { Content } from '../storage/sqlite'
+import { useEffect } from 'react'
+import { Content } from '../storage/types'
 
 interface Props {
   className?: string

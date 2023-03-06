@@ -1,10 +1,6 @@
 import React from 'react'
-import {
-  Content,
-  getContent,
-  getDatabaseConfig,
-  getWorker
-} from './storage/sqlite'
+import { getStorage } from './storage'
+import { Content } from './storage/types'
 
 export type PageState = 'categories' | 'entries' | 'article'
 
@@ -111,7 +107,8 @@ export const locationController = async (
   setPageState: React.Dispatch<React.SetStateAction<PageState>>
 ) => {
   if (!locationState) return null
-  const worker = await getWorker(getDatabaseConfig(basePath), basePath)
+
+  const storage = getStorage(basePath)
   switch (locationState.type) {
     case 'category': {
       setContent(null)
@@ -125,7 +122,7 @@ export const locationController = async (
     }
     case 'entry': {
       const { entryKey } = locationState
-      const content = await getContent(worker, entryKey)
+      const content = await storage.getContent(entryKey)
       if (!content) return
       setContent(content)
       setPageState('article')
