@@ -4,7 +4,7 @@ export class FileStorage implements Storage {
   private basePath: string
 
   constructor(basePath: string) {
-    this.basePath = basePath
+    this.basePath = `${basePath}/public/data`
   }
 
   async getCategories() {
@@ -24,9 +24,7 @@ export class FileStorage implements Storage {
   }
 
   async getCategoryEntries(category: string, page = 0) {
-    const response = await fetch(
-      `${this.basePath}/data/categories/${category}.json`
-    )
+    const response = await fetch(`${this.basePath}/categories/${category}.json`)
     if (response.status !== 200)
       throw new Error('Fail to load category entries')
 
@@ -43,7 +41,7 @@ export class FileStorage implements Storage {
   }
 
   async getSiteEntries(siteKey: string, page = 0) {
-    const response = await fetch(`${this.basePath}/data/sites/${siteKey}.json`)
+    const response = await fetch(`${this.basePath}/sites/${siteKey}.json`)
     if (response.status !== 200) throw new Error('Fail to load site entries')
 
     const json = await response.json()
@@ -60,7 +58,7 @@ export class FileStorage implements Storage {
   }
 
   async countAllEntries() {
-    const response = await fetch(`${this.basePath}/data/categories.json`)
+    const response = await fetch(`${this.basePath}/categories.json`)
     if (response.status !== 200)
       throw new Error('Fail to load count all entries')
 
@@ -69,7 +67,7 @@ export class FileStorage implements Storage {
   }
 
   async countSiteEntries(siteKey: string) {
-    const response = await fetch(`${this.basePath}/data/sites/${siteKey}.json`)
+    const response = await fetch(`${this.basePath}/sites/${siteKey}.json`)
     if (response.status !== 200) throw new Error('Fail to load site entries')
     const json = await response.json()
     const entries = json.entries
@@ -77,9 +75,7 @@ export class FileStorage implements Storage {
   }
 
   async countCategoryEntries(category: string) {
-    const response = await fetch(
-      `${this.basePath}/data/categories/${category}.json`
-    )
+    const response = await fetch(`${this.basePath}/categories/${category}.json`)
     if (response.status !== 200)
       throw new Error('Fail to load category entries')
 
@@ -88,7 +84,7 @@ export class FileStorage implements Storage {
   }
 
   async getAllEntries(page = 0) {
-    const response = await fetch(`${this.basePath}/data/all.json`)
+    const response = await fetch(`${this.basePath}/all.json`)
     if (response.status !== 200) throw new Error('Fail to load all entries')
 
     const json = await response.json()
@@ -104,7 +100,7 @@ export class FileStorage implements Storage {
   }
 
   async getContent(key: string) {
-    const response = await fetch(`${this.basePath}/data/entries/${key}.json`)
+    const response = await fetch(`${this.basePath}/entries/${key}.json`)
     if (response.status !== 200) throw new Error('Fail to load content')
 
     const json = await response.json()
