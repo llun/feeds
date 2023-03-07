@@ -52,10 +52,10 @@ export async function createFeedFiles(githubActionPath: string) {
     if (storageType !== 'files') return
     const feedsFile = core.getInput('opmlFile', { required: true })
     const publicPath = githubActionPath
-      ? path.join(githubActionPath, 'public', 'contents')
-      : path.join('public', 'contents')
+      ? path.join(githubActionPath, 'contents')
+      : path.join('contents')
     await loadOPMLAndWriteFiles(
-      path.join(getWorkspacePath(), publicPath),
+      publicPath,
       path.join(getWorkspacePath(), feedsFile)
     )
     const customDomainName = core.getInput('customDomain')

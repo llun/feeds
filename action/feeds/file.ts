@@ -102,11 +102,9 @@ export async function loadOPMLAndWriteFiles(
 }
 
 export const GITHUB_ACTION_PATH = getGithubActionPath()
-export const FEEDS_CONTENT_PATH = path.join(
-  getWorkspacePath(),
-  'public',
-  'contents'
-)
+export const FEEDS_CONTENT_PATH = GITHUB_ACTION_PATH
+  ? path.join(GITHUB_ACTION_PATH, 'contents')
+  : path.join('contents')
 export const DATA_PATH = path.join(getWorkspacePath(), 'public', 'data')
 export const CATEGORY_DATA_PATH = path.join(DATA_PATH, 'categories')
 export const SITES_DATA_PATH = path.join(DATA_PATH, 'sites')
@@ -114,7 +112,7 @@ export const ENTRIES_DATA_PATH = path.join(DATA_PATH, 'entries')
 export const REPOSITORY_DATA_PATH = path.join(DATA_PATH, 'github.json')
 
 export const DEFAULT_PATHS = {
-  feedsContentPath: path.join(getWorkspacePath(), 'contents'),
+  feedsContentPath: FEEDS_CONTENT_PATH,
   categoryDataPath: CATEGORY_DATA_PATH,
   sitesDataPath: SITES_DATA_PATH,
   entriesDataPath: ENTRIES_DATA_PATH,
