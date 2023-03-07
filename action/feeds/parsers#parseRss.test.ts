@@ -1,12 +1,12 @@
 import test from 'ava'
-import sinon from 'sinon'
 import fs from 'fs'
 import path from 'path'
-import { parseXML, parseRss } from './parsers'
+import sinon from 'sinon'
+import { parseRss, parseXML } from './parsers'
 
 test('#parseAtom returns site information with empty string for fields that does not have information', async (t) => {
   const data = fs
-    .readFileSync(path.join(__dirname, 'tests', 'rss1.xml'))
+    .readFileSync(path.join(__dirname, 'stubs', 'rss1.xml'))
     .toString('utf8')
   const xml = await parseXML(data)
   const site = parseRss('icez blog', xml)

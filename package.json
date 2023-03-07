@@ -1,17 +1,17 @@
 {
   "name": "feeds-fetcher",
-  "version": "2.3.8",
+  "version": "2.4.0",
   "description": "Websites feed fetcher and static feeds aggregator",
   "main": "index.js",
   "author": "Maythee Anegboonlap <null@llun.dev>",
-  "repository": "github:llun/test-action",
+  "repository": "github:llun/feeds",
   "license": "ISC",
   "scripts": {
     "dev": "next dev",
     "build": "next build && next export",
     "start": "next start",
     "load": "INPUT_OPMLFILE='feeds.opml' node -r @swc-node/register index.ts",
-    "loadFile": "INPUT_OPMLFILE='feeds.opml' INPUT_OUTPUTDIRECTORY='contents' node -r @swc-node/register index.ts",
+    "loadFile": "INPUT_OPMLFILE='feeds.opml' INPUT_STORAGETYPE='files' node -r @swc-node/register index.ts",
     "test": "ava"
   },
   "ava": {
@@ -54,7 +54,7 @@
   "devDependencies": {
     "@swc-node/core": "^1.10.1",
     "@swc-node/register": "^1.6.2",
-    "@swc/core": "^1.3.37",
+    "@swc/core": "^1.3.38",
     "@types/html-minifier": "^4.0.2",
     "@types/jsdom": "^21.1.0",
     "@types/node": "^18.14.6",

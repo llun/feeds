@@ -8,9 +8,10 @@ inputs:
     description: >
       OPML file with list of feeds and category
     default: 'feeds.opml'
-  outputDirectory:
+  storageType:
     description: >
-      Static feeds output directory
+      Feed storage type, database or files
+    default: 'database'
   branch:
     description: >
       Output branch

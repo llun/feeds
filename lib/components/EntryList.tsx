@@ -1,16 +1,7 @@
-import React, { UIEvent, useEffect, useRef, useState, Ref } from 'react'
 import formatDistance from 'date-fns/formatDistance'
-import {
-  countAllEntries,
-  countCategoryEntries,
-  countSiteEntries,
-  getAllEntries,
-  getCategoryEntries,
-  getDatabaseConfig,
-  getSiteEntries,
-  getWorker,
-  SiteEntry
-} from '../storage/sqlite'
+import { Ref, useEffect, useRef, useState } from 'react'
+import { getStorage } from '../storage'
+import { SiteEntry } from '../storage/types'
 import { LocationState } from '../utils'
 
 interface EntryItemProps {
@@ -95,13 +86,13 @@ const EntryList = ({
     locationState: LocationState,
     page: number = 0
   ) => {
-    const worker = await getWorker(getDatabaseConfig(basePath), basePath)
+    const storage = getStorage(basePath)
     switch (locationState.type) {
       case 'category': {
         const category = locationState.category
         const [entries, totalEntry] = await Promise.all([
-          getCategoryEntries(worker, category, page),
-          countCategoryEntries(worker, category)
+          storage.getCategoryEntries(category, page),
+          storage.countCategoryEntries(category)
         ])
         return { entries, totalEntry }
       }
@@ -110,12 +101,12 @@ const EntryList = ({
         const [entries, totalEntry] =
           siteKey === 'all'
             ? await Promise.all([
-                getAllEntries(worker, page),
-                countAllEntries(worker)
+                storage.getAllEntries(page),
+                storage.countAllEntries()
               ])
             : await Promise.all([
-                getSiteEntries(worker, siteKey, page),
-                countSiteEntries(worker, siteKey)
+                storage.getSiteEntries(siteKey, page),
+                storage.countSiteEntries(siteKey)
               ])
         return { entries, totalEntry }
       }
@@ -124,8 +115,8 @@ const EntryList = ({
         const { key } = parent
         if (parent.type === 'category') {
           const [entries, totalEntry] = await Promise.all([
-            getCategoryEntries(worker, key, page),
-            countCategoryEntries(worker, key)
+            storage.getCategoryEntries(key, page),
+            storage.countCategoryEntries(key)
           ])
           return { entries, totalEntry }
         }
@@ -133,12 +124,12 @@ const EntryList = ({
         const [entries, totalEntry] =
           key === 'all'
             ? await Promise.all([
-                getAllEntries(worker, page),
-                countAllEntries(worker)
+                storage.getAllEntries(page),
+                storage.countAllEntries()
               ])
             : await Promise.all([
-                getSiteEntries(worker, key, page),
-                countSiteEntries(worker, key)
+                storage.getSiteEntries(key, page),
+                storage.countSiteEntries(key)
               ])
         return { entries, totalEntry }
     }

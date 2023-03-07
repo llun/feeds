@@ -1,13 +1,13 @@
 import test from 'ava'
-import fs from 'fs'
-import sinon from 'sinon'
+import fs from 'fs/promises'
 import path from 'path'
+import sinon from 'sinon'
 
 import {
-  createRepositoryData,
-  prepareDirectories,
   createEntryData,
-  createHash
+  createHash,
+  createRepositoryData,
+  prepareDirectories
 } from './file'
 
 function randomPaths() {
@@ -27,36 +27,36 @@ function randomPaths() {
   return paths
 }
 
-test('#createRepositoryData generate repository information in repository file', (t) => {
+test('#createRepositoryData generate repository information in repository file', async (t) => {
   const paths = randomPaths()
-  fs.mkdirSync(paths.dataPath, { recursive: true })
-  t.deepEqual(createRepositoryData(paths, '', 'feeds.llun.dev'), {
+  await fs.mkdir(paths.dataPath, { recursive: true })
+  t.deepEqual(await createRepositoryData(paths, '', 'feeds.llun.dev'), {
     repository: ''
   })
   t.deepEqual(
-    JSON.parse(fs.readFileSync(paths.repositoryDataPath).toString('utf8')),
+    JSON.parse(await fs.readFile(paths.repositoryDataPath, 'utf-8')),
     { repository: '' }
   )
 
   t.deepEqual(
-    createRepositoryData(paths, 'octocat/Hello-World', 'feeds.llun.dev'),
+    await createRepositoryData(paths, 'octocat/Hello-World', 'feeds.llun.dev'),
     {
       repository: ''
     }
   )
-  t.deepEqual(createRepositoryData(paths, 'octocat/Hello-World', ''), {
+  t.deepEqual(await createRepositoryData(paths, 'octocat/Hello-World', ''), {
     repository: '/Hello-World'
   })
   t.deepEqual(
-    JSON.parse(fs.readFileSync(paths.repositoryDataPath).toString('utf8')),
+    JSON.parse(await fs.readFile(paths.repositoryDataPath, 'utf-8')),
     { repository: '/Hello-World' }
   )
 })
 
-test('#createEntryData create entry hash and persist entry information in entry hash file', (t) => {
+test('#createEntryData create entry hash and persist entry information in entry hash file', async (t) => {
   const paths = randomPaths()
-  fs.mkdirSync(paths.feedsContentPath, { recursive: true })
-  prepareDirectories(paths)
+  await fs.mkdir(paths.feedsContentPath, { recursive: true })
+  await prepareDirectories(paths)
 
   const expected = {
     author: 'Site Author',
@@ -70,7 +70,7 @@ test('#createEntryData create entry hash and persist entry information in entry 
     category: 'category1'
   }
   sinon.assert.match(
-    createEntryData(paths, 'category1', 'Sample Site', '123456', {
+    await createEntryData(paths, 'category1', 'Sample Site', '123456', {
       author: 'Site Author',
       content: 'Sample Content',
       date: Date.now(),
@@ -81,11 +81,10 @@ test('#createEntryData create entry hash and persist entry information in entry 
   )
   sinon.assert.match(
     JSON.parse(
-      fs
-        .readFileSync(
-          path.join(paths.entriesDataPath, `${expected.entryHash}.json`)
-        )
-        .toString('utf8')
+      await fs.readFile(
+        path.join(paths.entriesDataPath, `${expected.entryHash}.json`),
+        'utf-8'
+      )
     ),
     expected
   )

@@ -48,7 +48,7 @@ if (
   }
 
   const executeResult = runCommand(
-    ['yarn', 'run', 'swc-node', 'index.ts'],
+    ['node', '-r', '@swc-node/register', 'index.ts'],
     getGithubActionPath()
   )
   if (executeResult.error) {

@@ -1,18 +1,12 @@
-import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
 import Entry from '../lib/components/Entry'
 import EntryList from '../lib/components/EntryList'
 
-import Meta from '../lib/components/Meta'
 import CategoryList from '../lib/components/CategoryList'
-import {
-  Category,
-  Content,
-  countAllEntries,
-  getCategories,
-  getDatabaseConfig,
-  getWorker
-} from '../lib/storage/sqlite'
+import Meta from '../lib/components/Meta'
+import { getStorage } from '../lib/storage'
+import { Category, Content } from '../lib/storage/types'
 import {
   articleClassName,
   categoriesClassName,
@@ -39,13 +33,10 @@ export default function Home() {
       }
 
       if (status === 'loading') {
-        const worker = await getWorker(
-          getDatabaseConfig(router.basePath),
-          router.basePath
-        )
+        const storage = getStorage(router.basePath)
         const [categories, totalEntries] = await Promise.all([
-          getCategories(worker),
-          countAllEntries(worker)
+          storage.getCategories(),
+          storage.countAllEntries()
         ])
         setTotalEntries(totalEntries)
         setCategories(categories)

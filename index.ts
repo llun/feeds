@@ -1,15 +1,15 @@
-import {
-  setup,
-  publish,
-  buildSite,
-  getGithubActionPath
-} from './action/repository'
 import { createFeedDatabase, createFeedFiles } from './action/feeds'
+import {
+  buildSite,
+  getGithubActionPath,
+  publish,
+  setup
+} from './action/repository'
 
 async function run() {
   await setup()
   await createFeedDatabase(getGithubActionPath())
-  await createFeedFiles()
+  await createFeedFiles(getGithubActionPath())
   buildSite()
   await publish()
 }
@@ -17,6 +17,7 @@ async function run() {
 run()
   .then(() => {
     console.log('Done')
+    process.exit(0)
   })
   .catch((error) => {
     console.error(error.message)

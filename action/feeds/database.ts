@@ -1,8 +1,10 @@
 import crypto from 'crypto'
-import fs from 'fs'
+import fs, { constants } from 'fs'
 import { knex, Knex } from 'knex'
 import path from 'path'
 
+import { getWorkspacePath } from '../repository'
+import { OpmlCategory } from './opml'
 import type { Entry, Site } from './parsers'
 
 export const DATABASE_FILE = 'data.sqlite3'
@@ -330,4 +332,84 @@ export async function cleanup(knex: Knex) {
   await knex.raw('pragma journal_mode = delete')
   await knex.raw('pragma page_size = 4096')
   await knex.raw('vacuum')
+}
+
+export async function removeOldCategories(db: Knex, opml: OpmlCategory[]) {
+  const existingCategories = await getAllCategories(db)
+  const opmlCategories = opml.map((item) => item.category)
+  const removedCategory = existingCategories.filter(
+    (category) => !opmlCategories.includes(category)
+  )
+  await Promise.all(
+    removedCategory.map((category) => deleteCategory(db, category))
+  )
+}
+
+export async function removeOldSites(db: Knex, opmlCategory: OpmlCategory) {
+  const existingSites = await getCategorySites(db, opmlCategory.category)
+  const opmlSites = opmlCategory.items.map((item) => hash(`${item.title}`))
+  const removedCategorySites = existingSites
+    .map((item) => item.siteKey)
+    .filter((key) => !opmlSites.includes(key))
+  await Promise.all(
+    removedCategorySites.map((siteKey) =>
+      deleteSiteCategory(db, opmlCategory.category, siteKey)
+    )
+  )
+}
+
+export async function removeOldEntries(db: Knex, site: Site) {
+  const existingEntries = await getAllSiteEntries(db, hash(site.title))
+  const siteEntries = site.entries.map((item) =>
+    hash(`${item.title}${item.link}`)
+  )
+  const removedEntries = existingEntries
+    .map((item) => item.entryKey)
+    .filter((key) => !siteEntries.includes(key))
+  await Promise.all(removedEntries.map((key) => deleteEntry(db, key)))
+}
+
+export async function createOrUpdateDatabase(
+  db: Knex,
+  opmlCategories: OpmlCategory[],
+  feedLoader: (title: string, url: string) => Promise<Site>
+) {
+  await removeOldCategories(db, opmlCategories)
+  for (const category of opmlCategories) {
+    const { category: categoryName, items } = category
+    if (!items) continue
+    await insertCategory(db, categoryName)
+    await removeOldSites(db, category)
+    for (const item of items) {
+      const site = await feedLoader(item.title, item.xmlUrl)
+      if (!site) {
+        continue
+      }
+      console.log(`Load ${site.title}`)
+      const siteKey = await insertSite(db, categoryName, site)
+      await removeOldEntries(db, site)
+      for (const entry of site.entries) {
+        if (await isEntryExists(db, entry)) {
+          continue
+        }
+        await insertEntry(db, siteKey, site.title, categoryName, entry)
+      }
+    }
+  }
+}
+
+export async function copyExistingDatabase(publicPath: string) {
+  const workSpace = getWorkspacePath()
+  if (workSpace) {
+    const existingDatabase = path.join(workSpace, DATABASE_FILE)
+    const targetDatabase = path.join(publicPath, DATABASE_FILE)
+    try {
+      fs.statSync(existingDatabase)
+      console.log(`Copying ${existingDatabase} to ${targetDatabase}`)
+      fs.copyFileSync(existingDatabase, targetDatabase, constants.COPYFILE_EXCL)
+    } catch (error) {
+      // Fail to read old database, ignore it
+      console.log('Skip copy old database because of error: ', error.message)
+    }
+  }
 }
