@@ -55,7 +55,7 @@ export async function createFeedFiles(githubActionPath: string) {
       ? path.join(githubActionPath, 'public', 'contents')
       : path.join('public', 'contents')
     await loadOPMLAndWriteFiles(
-      publicPath,
+      path.join(getWorkspacePath(), publicPath),
       path.join(getWorkspacePath(), feedsFile)
     )
     const customDomainName = core.getInput('customDomain')
