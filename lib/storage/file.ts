@@ -8,7 +8,7 @@ export class FileStorage implements Storage {
   }
 
   async getCategories() {
-    const response = await fetch(`${this.basePath}/data/categories.json`)
+    const response = await fetch(`${this.basePath}/categories.json`)
     if (response.status !== 200) throw new Error('Fail to load categories')
 
     const categories = await response.json()
