@@ -20,10 +20,10 @@ jobs:
   sample:
     runs-on: ubuntu-latest
     needs: [test]
-    if: github.ref == 'refs/heads/refactor-storage'
+    if: github.ref == 'refs/heads/main'
     name: Sample
     steps:
       - name: Run Action
-        uses: llun/feeds@refactor-storage
+        uses: llun/feeds@main
         with:
           storageType: files
