@@ -106,7 +106,7 @@ export const FEEDS_CONTENT_PATH = GITHUB_ACTION_PATH
   ? path.join(GITHUB_ACTION_PATH, 'contents')
   : path.join('contents')
 export const DATA_PATH = getWorkspacePath()
-  ? path.join(getWorkspacePath(), 'data')
+  ? path.join(getWorkspacePath(), 'public', 'data')
   : path.join('public', 'data')
 export const CATEGORY_DATA_PATH = path.join(DATA_PATH, 'categories')
 export const SITES_DATA_PATH = path.join(DATA_PATH, 'sites')

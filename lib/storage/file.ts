@@ -4,7 +4,7 @@ export class FileStorage implements Storage {
   private basePath: string
 
   constructor(basePath: string) {
-    this.basePath = `${basePath}/data`
+    this.basePath = `${basePath}/public/data`
   }
 
   async getCategories() {
