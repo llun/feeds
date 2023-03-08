@@ -27,3 +27,4 @@ jobs:
         uses: llun/feeds@action-public-data
         with:
           storageType: files
+          branch: contents-test

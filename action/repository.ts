@@ -16,7 +16,6 @@ export function getGithubActionPath() {
     return ''
   }
 
-  console.log(process.cwd())
   const actionPath = '/home/runner/work/_actions/llun/feeds'
   try {
     const files = fs.readdirSync(actionPath)
@@ -148,7 +147,6 @@ export async function publish() {
         'browser',
         // Old eleventy structure
         'css',
-        'data',
         'js'
       ],
       workSpace
