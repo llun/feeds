@@ -151,6 +151,7 @@ export async function publish() {
         'yarn.lock',
         'feeds.opml',
         'action.js',
+        'index.ts',
         // NextJS files
         'next-env.d.ts',
         'next.config.js',
