@@ -149,7 +149,6 @@ export async function publish() {
         'lib',
         '.gitlab-ci.yml',
         'yarn.lock',
-        'feeds.opml',
         'action.js',
         'index.ts',
         // NextJS files
