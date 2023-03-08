@@ -15,6 +15,7 @@ export function getGithubActionPath() {
   if (!workSpace) {
     return ''
   }
+
   const actionPath = '/home/runner/work/_actions/llun/feeds'
   try {
     const files = fs.readdirSync(actionPath)
@@ -144,9 +145,19 @@ export async function publish() {
         'pages',
         'contents',
         'browser',
+        'public',
+        'lib',
+        '.gitlab-ci.yml',
+        'yarn.lock',
+        'feeds.opml',
+        'action.js',
+        'index.ts',
+        // NextJS files
+        'next-env.d.ts',
+        'next.config.js',
+        'postcss.config.js',
         // Old eleventy structure
         'css',
-        'data',
         'js'
       ],
       workSpace
