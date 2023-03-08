@@ -25,5 +25,3 @@ jobs:
     steps:
       - name: Run Action
         uses: llun/feeds@action-public-data
-        with:
-          branch: contents-test
