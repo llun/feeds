@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import fs from 'fs/promises'
 import path from 'path'
-import { getGithubActionPath } from '../repository'
+import { getGithubActionPath, getWorkspacePath } from '../repository'
 import { loadFeed, readOpml } from './opml'
 import { Entry, Site } from './parsers'
 
@@ -105,7 +105,9 @@ export const GITHUB_ACTION_PATH = getGithubActionPath()
 export const FEEDS_CONTENT_PATH = GITHUB_ACTION_PATH
   ? path.join(GITHUB_ACTION_PATH, 'contents')
   : path.join('contents')
-export const DATA_PATH = path.join(getGithubActionPath(), 'public', 'data')
+export const DATA_PATH = getWorkspacePath()
+  ? path.join(getWorkspacePath(), 'data')
+  : path.join('public', 'data')
 export const CATEGORY_DATA_PATH = path.join(DATA_PATH, 'categories')
 export const SITES_DATA_PATH = path.join(DATA_PATH, 'sites')
 export const ENTRIES_DATA_PATH = path.join(DATA_PATH, 'entries')
