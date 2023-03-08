@@ -77,6 +77,7 @@ export async function loadOPMLAndWriteFiles(
   contentDirectory: string,
   opmlPath: string
 ) {
+  console.log('OPML file', opmlPath)
   const opmlContent = (await fs.readFile(opmlPath)).toString('utf8')
   const opml = await readOpml(opmlContent)
   for (const category of opml) {
