@@ -15,6 +15,8 @@ export function getGithubActionPath() {
   if (!workSpace) {
     return ''
   }
+
+  console.log(process.cwd())
   const actionPath = '/home/runner/work/_actions/llun/feeds'
   try {
     const files = fs.readdirSync(actionPath)

@@ -20,10 +20,10 @@ jobs:
   sample:
     runs-on: ubuntu-latest
     needs: [test]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/action-public-data'
     name: Sample
     steps:
       - name: Run Action
-        uses: llun/feeds@main
+        uses: llun/feeds@action-public-data
         with:
           storageType: files
