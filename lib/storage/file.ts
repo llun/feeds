@@ -36,7 +36,7 @@ export class FileStorage implements Storage {
         key: entry.siteHash,
         title: entry.siteTitle
       },
-      timestamp: entry.date
+      timestamp: Math.floor(entry.date / 1000)
     }))
   }
 
@@ -53,7 +53,7 @@ export class FileStorage implements Storage {
         key: entry.siteHash,
         title: entry.siteTitle
       },
-      timestamp: entry.date
+      timestamp: Math.floor(entry.date / 1000)
     }))
   }
 
@@ -63,7 +63,10 @@ export class FileStorage implements Storage {
       throw new Error('Fail to load count all entries')
 
     const categories = await response.json()
-    return categories.reduce((sum, category) => sum + category.totalEntries, 0)
+    return categories.reduce(
+      (sum: number, category) => sum + category.totalEntries,
+      0
+    )
   }
 
   async countSiteEntries(siteKey: string) {
@@ -95,7 +98,7 @@ export class FileStorage implements Storage {
         key: entry.siteHash,
         title: entry.siteTitle
       },
-      timestamp: entry.date
+      timestamp: Math.floor(entry.date / 1000)
     }))
   }
 
@@ -110,7 +113,7 @@ export class FileStorage implements Storage {
       url: json.link,
       siteKey: json.siteHash,
       siteTitle: json.siteTitle,
-      timestamp: json.date
+      timestamp: Math.floor(json.date / 1000)
     }
   }
 }
