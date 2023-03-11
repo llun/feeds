@@ -23,7 +23,7 @@ export async function createFeedDatabase(githubActionPath: string) {
   try {
     const storageType = core.getInput('storageType')
     // This feed site uses files
-    if (storageType === 'files') return
+    if (storageType !== 'sqlite') return
     const feedsFile = core.getInput('opmlFile', { required: true })
     const opmlContent = (
       await fs.readFile(path.join(getWorkspacePath(), feedsFile))
@@ -49,7 +49,7 @@ export async function createFeedFiles(githubActionPath: string) {
   try {
     const storageType = core.getInput('storageType')
     // This feed site uses database
-    if (storageType !== 'files') return
+    if (storageType === 'sqlite') return
     const feedsFile = core.getInput('opmlFile', { required: true })
     const publicPath = githubActionPath
       ? path.join(githubActionPath, 'contents')

@@ -7,12 +7,13 @@ let storage: Storage | null = null
 export const getStorage = (basePath: string) => {
   if (!storage) {
     switch (process.env.NEXT_PUBLIC_STORAGE) {
-      case 'files': {
-        storage = new FileStorage(basePath)
+      case 'sqlite': {
+        storage = new SqliteStorage(basePath)
         break
       }
+      case 'files':
       default: {
-        storage = new SqliteStorage(basePath)
+        storage = new FileStorage(basePath)
         break
       }
     }
