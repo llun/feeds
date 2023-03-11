@@ -31,7 +31,7 @@ This action can setup to use under domain name and different type of storage, he
 
 - `customDomain`, telling action to generate the feeds site under custom domain. This is required when generate static site because the action requires this to generate `CNAME` file.
 - `branch`, branch that this action will generate the static site into. The default value is `contents`. This is a branch that you will need to point the repository static site branch to.
-- `storageType`, **(Default is files)** content storage type, currently support `files` and `sqlite`. `files` is storing all feed contents in JSON tree structure while `sqlite` will store in sqlite database that client will use http chunk to download the content.
+- `storageType`, **(Default is `files`)** content storage type, currently support `files` and `sqlite`. `files` is storing all feed contents in JSON tree structure while `sqlite` will store in sqlite database that client will use http chunk to download the content.
 - `opmlFile`, OPML file name that store list of sites that you want to generate feed site.
 
 #### Sample
