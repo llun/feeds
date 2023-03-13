@@ -134,7 +134,7 @@ export async function prepareDirectories(paths: Paths) {
 export function createHash(input: string) {
   const hash = crypto.createHash('sha256')
   hash.update(input)
-  return hash.digest('hex').slice(10)
+  return hash.digest('hex')
 }
 
 export async function createRepositoryData(
@@ -242,21 +242,27 @@ export async function createAllEntriesData() {
           path.join(ENTRIES_DATA_PATH, entryHashFile),
           'utf-8'
         )
-        const json: EntryData = JSON.parse(entry)
-        const data: SiteEntryData = {
-          title: json.title,
-          link: json.link,
-          date: json.date,
-          author: json.author,
-          siteTitle: json.siteTitle,
-          siteHash: json.siteHash,
-          entryHash: json.entryHash,
-          category: json.category
+        try {
+          const json: EntryData = JSON.parse(entry)
+          const data: SiteEntryData = {
+            title: json.title,
+            link: json.link,
+            date: json.date,
+            author: json.author,
+            siteTitle: json.siteTitle,
+            siteHash: json.siteHash,
+            entryHash: json.entryHash,
+            category: json.category
+          }
+          return data
+        } catch {
+          return null
         }
-        return data
       })
     )
-  ).sort((a, b) => b.date - a.date)
+  )
+    .filter((item) => item)
+    .sort((a, b) => b.date - a.date)
   const text = JSON.stringify(entriesData)
   await fs.writeFile(path.join(DATA_PATH, 'all.json'), text)
 }
