@@ -20,34 +20,44 @@ const EntryItem = ({
   selectEntry,
   selectSite,
   entryRef
-}: EntryItemProps) => (
-  <div
-    ref={entryRef}
-    className={`rounded px-4 ${
-      (selectedEntryHash === entry.key && 'bg-gray-200') || ''
-    }`.trim()}
-  >
-    <h3>
-      <a
-        className="font-serif no-underline hover:underline cursor-pointer"
-        onClick={() => selectEntry && selectEntry(entry.key)}
-      >
-        {index + 1}. {entry.title}
-      </a>
-    </h3>
-    <small>
-      <a
-        className="cursor-pointer"
-        onClick={() => selectSite && selectSite(entry.site.key)}
-      >
-        {entry.site.title}
-      </a>
-      {entry.timestamp && (
-        <span>, {formatDistance(entry.timestamp * 1000, new Date())}</span>
-      )}
-    </small>
-  </div>
-)
+}: EntryItemProps) => {
+  const ref = useRef(null)
+  if (selectedEntryHash === entry.key) {
+    ref?.current.scrollIntoView({
+      block: 'center',
+      inline: 'start'
+    })
+  }
+
+  return (
+    <div
+      ref={entryRef}
+      className={`rounded px-4 ${
+        (selectedEntryHash === entry.key && 'bg-gray-200') || ''
+      }`.trim()}
+    >
+      <h3 ref={ref}>
+        <a
+          className="font-serif no-underline hover:underline cursor-pointer"
+          onClick={() => selectEntry && selectEntry(entry.key)}
+        >
+          {index + 1}. {entry.title}
+        </a>
+      </h3>
+      <small>
+        <a
+          className="cursor-pointer"
+          onClick={() => selectSite && selectSite(entry.site.key)}
+        >
+          {entry.site.title}
+        </a>
+        {entry.timestamp && (
+          <span>, {formatDistance(entry.timestamp * 1000, new Date())}</span>
+        )}
+      </small>
+    </div>
+  )
+}
 
 interface EntryListProps {
   className?: string
