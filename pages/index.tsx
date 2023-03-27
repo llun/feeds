@@ -8,11 +8,11 @@ import Meta from '../lib/components/Meta'
 import { getStorage } from '../lib/storage'
 import { Category, Content } from '../lib/storage/types'
 import {
+  PageState,
   articleClassName,
   categoriesClassName,
   entriesClassName,
   locationController,
-  PageState,
   parseLocation
 } from '../lib/utils'
 

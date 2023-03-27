@@ -147,6 +147,12 @@ const EntryList = ({
     setEntries(entries.concat(newEntries))
   }
 
+  const selectEntryHash = (entryKey: string) => {
+    setSelectedEntryHash(entryKey)
+    if (!selectEntry) return
+    selectEntry(parentType, parentKey, entryKey)
+  }
+
   useEffect(() => {
     switch (locationState.type) {
       case 'category': {
@@ -192,6 +198,45 @@ const EntryList = ({
     }
   }, [nextBatchEntry, totalEntry, entries])
 
+  useEffect(() => {
+    const handler: EventListener = (event: KeyboardEvent) => {
+      switch (event.code) {
+        case 'ArrowUp':
+        case 'KeyW': {
+          if (!selectedEntryHash) {
+            selectEntryHash(entries[0].key)
+            return
+          }
+
+          const index = entries.findIndex(
+            (entry) => entry.key === selectedEntryHash
+          )
+          if (index <= 0) return
+          selectEntryHash(entries[index - 1].key)
+          return
+        }
+        case 'ArrowDown':
+        case 'KeyS': {
+          if (!selectedEntryHash) {
+            selectEntryHash(entries[0].key)
+            return
+          }
+
+          const index = entries.findIndex(
+            (entry) => entry.key === selectedEntryHash
+          )
+          if (index >= entries.length - 1) return
+          selectEntryHash(entries[index + 1].key)
+          return
+        }
+      }
+    }
+    globalThis.document.addEventListener('keyup', handler)
+    return () => {
+      globalThis.document.removeEventListener('keyup', handler)
+    }
+  })
+
   const parentType =
     locationState.type === 'entry'
       ? locationState.parent.type
@@ -219,11 +264,7 @@ const EntryList = ({
           key={entry.key}
           entry={entry}
           selectedEntryHash={selectedEntryHash}
-          selectEntry={async (entryKey: string) => {
-            setSelectedEntryHash(entryKey)
-            if (!selectEntry) return
-            selectEntry(parentType, parentKey, entryKey)
-          }}
+          selectEntry={selectEntryHash}
           selectSite={selectSite}
           entryRef={
             entries.length - 5 === index && entries.length < totalEntry
