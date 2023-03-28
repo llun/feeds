@@ -21,22 +21,15 @@ const EntryItem = ({
   selectSite,
   entryRef
 }: EntryItemProps) => {
-  const ref = useRef(null)
-  if (selectedEntryHash === entry.key) {
-    ref?.current.scrollIntoView({
-      block: 'center',
-      inline: 'start'
-    })
-  }
-
   return (
     <div
+      id={`entry-${entry.key}`}
       ref={entryRef}
       className={`rounded px-4 ${
         (selectedEntryHash === entry.key && 'bg-gray-200') || ''
       }`.trim()}
     >
-      <h3 ref={ref}>
+      <h3>
         <a
           className="font-serif no-underline hover:underline cursor-pointer"
           onClick={() => selectEntry && selectEntry(entry.key)}
@@ -157,8 +150,15 @@ const EntryList = ({
     setEntries(entries.concat(newEntries))
   }
 
-  const selectEntryHash = (entryKey: string) => {
+  const selectEntryHash = (entryKey: string, scrollIntoView?: boolean) => {
     setSelectedEntryHash(entryKey)
+    if (scrollIntoView) {
+      const dom = globalThis.document.querySelector(`#entry-${entryKey}`)
+      dom?.scrollIntoView({
+        block: 'center',
+        inline: 'start'
+      })
+    }
     if (!selectEntry) return
     selectEntry(parentType, parentKey, entryKey)
   }
@@ -222,7 +222,7 @@ const EntryList = ({
             (entry) => entry.key === selectedEntryHash
           )
           if (index <= 0) return
-          selectEntryHash(entries[index - 1].key)
+          selectEntryHash(entries[index - 1].key, true)
           return
         }
         case 'ArrowDown':
@@ -236,7 +236,7 @@ const EntryList = ({
             (entry) => entry.key === selectedEntryHash
           )
           if (index >= entries.length - 1) return
-          selectEntryHash(entries[index + 1].key)
+          selectEntryHash(entries[index + 1].key, true)
           return
         }
       }
