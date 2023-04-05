@@ -1,6 +1,15 @@
 import { formatDistance } from 'date-fns'
+import parse from 'html-react-parser'
 import { useEffect } from 'react'
+
 import { Content } from '../storage/types'
+
+interface ReactParserNode {
+  name: string
+  attribs?: {
+    [key in string]: string
+  }
+}
 
 interface Props {
   className?: string
@@ -42,7 +51,18 @@ const Entry = ({ className, content, selectBack }: Props) => {
               , {formatDistance(content.timestamp * 1000, new Date())}
             </span>
           </div>
-          <div dangerouslySetInnerHTML={{ __html: content.content }} />
+          <div>
+            {parse(content.content, {
+              replace: (domNode) => {
+                const node = domNode as ReactParserNode
+                if (node.attribs && node.name === 'a') {
+                  node.attribs.target = '_blank'
+                  return node
+                }
+                return domNode
+              }
+            })}
+          </div>
         </div>
       )}
       <div className="pb-8"></div>
