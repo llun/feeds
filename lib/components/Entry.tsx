@@ -41,6 +41,7 @@ const Entry = ({ className, content, selectBack }: Props) => {
               className="font-serif font-bold no-underline hover:underline"
               href={content.url}
               target="_blank"
+              rel="noopener noreferrer"
             >
               {content.title}
             </a>
@@ -57,6 +58,7 @@ const Entry = ({ className, content, selectBack }: Props) => {
                 const node = domNode as ReactParserNode
                 if (node.attribs && node.name === 'a') {
                   node.attribs.target = '_blank'
+                  node.attribs.rel = 'noopener noreferrer'
                   return node
                 }
                 return domNode
