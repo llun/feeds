@@ -64,7 +64,7 @@
     "@types/sanitize-html": "^2.9.0",
     "@types/sinon": "^10.0.14",
     "@types/xml2js": "^0.4.11",
-    "sinon": "^15.0.3",
+    "sinon": "^15.0.4",
     "typescript": "^5.0.4"
   }
 }
