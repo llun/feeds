@@ -444,17 +444,17 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.2.tgz#5981a8db18b56ba38ef0efb7d995b12aa7b51918"
   integrity sha512-sXXKG+uL9IrKqViTtao2Ws6dy0znu9sOaP1di/jKGW1M6VssO8vlpXCQcpZ+jisQ1tTFAC5Jo/EOzFbggBagFQ==
 
-"@swc-node/core@^1.10.2", "@swc-node/core@^1.10.3":
-  version "1.10.3"
-  resolved "https://registry.yarnpkg.com/@swc-node/core/-/core-1.10.3.tgz#dbc37c6d8d28ce59bd1bc55b300fb92bd3876152"
-  integrity sha512-8rpv1DXzsQjN/C8ZXuaTSmJ4M/lRr6geUlbOQ861DLC+sKWcEEvxRjK9cXQ28GserHuEcFDA3wlF9rD1YD0x+Q==
+"@swc-node/core@^1.10.2", "@swc-node/core@^1.10.4":
+  version "1.10.4"
+  resolved "https://registry.yarnpkg.com/@swc-node/core/-/core-1.10.4.tgz#3cb5ddb0171bbf541c17c713c91423799e67e0ec"
+  integrity sha512-ixZCb4LsSUPflnOxj4a8T5yTPzKbgvP+tF0N59Rk2+68ikFRt9Qci2qy9xfuDIQbuiONzXersrNpd+p598uH0A==
 
-"@swc-node/register@^1.6.5":
-  version "1.6.5"
-  resolved "https://registry.yarnpkg.com/@swc-node/register/-/register-1.6.5.tgz#6ff5f98605c143e161a6712b2046ce1e6216409a"
-  integrity sha512-yMxXlzthI0aMadYYKDhx7xvtjljB1qoD8Tv0djqSJ1ttTkoDxg6MhG5A5pIahiUT2neVrkWb9lCavoUwXAe/zQ==
+"@swc-node/register@^1.6.6":
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/@swc-node/register/-/register-1.6.6.tgz#dfcf092b45c76d76d45949b1be8e17561566e2d9"
+  integrity sha512-KgnQrWLgtJzEgPpxvhOPUDonv1xreVumGdzXDQlDVIqU3vH+spW8ZYxxyjJVMh3G/mQG8E3bFvUMHIS+E3FL2w==
   dependencies:
-    "@swc-node/core" "^1.10.3"
+    "@swc-node/core" "^1.10.4"
     "@swc-node/sourcemap-support" "^0.3.0"
     colorette "^2.0.19"
     debug "^4.3.4"
