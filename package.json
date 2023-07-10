@@ -38,7 +38,7 @@
     "html-minifier": "^4.0.0",
     "html-react-parser": "^4.0.0",
     "jsdom": "^22.1.0",
-    "knex": "^2.4.2",
+    "knex": "^2.5.0",
     "lodash": "^4.17.21",
     "next": "^13.4.9",
     "node-fetch": "2",
