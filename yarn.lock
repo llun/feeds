@@ -1810,10 +1810,10 @@ html-minifier@^4.0.0:
     relateurl "^0.2.7"
     uglify-js "^3.5.1"
 
-html-react-parser@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/html-react-parser/-/html-react-parser-4.0.0.tgz#a727be4539ad85b133a5071f97b8c2f835a55bdf"
-  integrity sha512-OzlOavs9lLyBxoRiXbXfODIX/nSShukMtdx3+WSMjon/FF1gJZRq0rBELoR5OswfbN56C0oKpAii7i3yzO/uVQ==
+html-react-parser@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/html-react-parser/-/html-react-parser-4.2.0.tgz#9168eda80dbfe0335a87fde3fb3ed6c2e91b1188"
+  integrity sha512-gzU55AS+FI6qD7XaKe5BLuLFM2Xw0/LodfMWZlxV9uOHe7LCD5Lukx/EgYuBI3c0kLu0XlgFXnSzO0qUUn3Vrg==
   dependencies:
     domhandler "5.0.3"
     html-dom-parser "4.0.0"
