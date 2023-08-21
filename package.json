@@ -58,7 +58,7 @@
     "@swc/core": "^1.3.74",
     "@types/html-minifier": "^4.0.2",
     "@types/jsdom": "^21.1.1",
-    "@types/node": "^20.5.0",
+    "@types/node": "^20.5.1",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@types/sanitize-html": "^2.9.0",
