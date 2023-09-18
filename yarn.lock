@@ -577,10 +577,10 @@
     "@types/node" "*"
     source-map "^0.6.0"
 
-"@types/html-minifier@^4.0.2":
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/@types/html-minifier/-/html-minifier-4.0.2.tgz#ea0b927ad0019821a2e9d14ba9c57d105b63cecc"
-  integrity sha512-4IkmkXJP/25R2fZsCHDX2abztXuQRzUAZq39PfCMz2loLFj8vS9y7aF6vDl58koXSTpsF+eL4Lc5Y4Aww/GCTQ==
+"@types/html-minifier@^4.0.3":
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/@types/html-minifier/-/html-minifier-4.0.3.tgz#614ad1112ea2fa41a1af1eb02ea3e43f3ddfff9f"
+  integrity sha512-e55KfPv+cXjd2AXwkuVfMw/hcJipNoS+JML+z3ijqzMHgc6F2iviWSEUx5tXQ6Yu5UtYtLH35ae2ftFsRJTmLA==
   dependencies:
     "@types/clean-css" "*"
     "@types/relateurl" "*"
