@@ -62,7 +62,7 @@
     "@types/react": "^18.2.22",
     "@types/react-dom": "^18.2.8",
     "@types/sanitize-html": "^2.9.1",
-    "@types/sinon": "^10.0.16",
+    "@types/sinon": "^10.0.17",
     "@types/xml2js": "^0.4.12",
     "sinon": "^16.0.0",
     "typescript": "^5.2.2"
