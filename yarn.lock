@@ -649,10 +649,10 @@
   resolved "https://registry.yarnpkg.com/@types/scheduler/-/scheduler-0.16.3.tgz#cef09e3ec9af1d63d2a6cc5b383a737e24e6dcf5"
   integrity sha512-5cJ8CB4yAx7BH1oMvdU0Jh9lrEXyPkar6F9G/ERswkCuvP4KQZfZkSjcMbAICCpQTN4OuZn8tz0HiKv9TGZgrQ==
 
-"@types/sinon@^10.0.17":
-  version "10.0.17"
-  resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-10.0.17.tgz#97592d7c73ded11907f9121a2837f5ab5f9ccaa0"
-  integrity sha512-+6ILpcixQ0Ma3dHMTLv4rSycbDXkDljgKL+E0nI2RUxxhYTFyPSjt6RVMxh7jUshvyVcBvicb0Ktj+lAJcjgeA==
+"@types/sinon@^10.0.19":
+  version "10.0.19"
+  resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-10.0.19.tgz#752b752bc40bb5af0bb1aec29bde49b139b91d35"
+  integrity sha512-MWZNGPSchIdDfb5FL+VFi4zHsHbNOTQEgjqFQk7HazXSXwUU9PAX3z9XBqb3AJGYr9YwrtCtaSMsT3brYsN/jQ==
   dependencies:
     "@types/sinonjs__fake-timers" "*"
 
