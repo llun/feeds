@@ -637,10 +637,10 @@
   resolved "https://registry.yarnpkg.com/@types/relateurl/-/relateurl-0.2.29.tgz#68ccecec3d4ffdafb9c577fe764f912afc050fe6"
   integrity sha512-QSvevZ+IRww2ldtfv1QskYsqVVVwCKQf1XbwtcyyoRvLIQzfyPhj/C+3+PKzSDRdiyejaiLgnq//XTkleorpLg==
 
-"@types/sanitize-html@^2.9.1":
-  version "2.9.1"
-  resolved "https://registry.yarnpkg.com/@types/sanitize-html/-/sanitize-html-2.9.1.tgz#6e4b232916cfb3ec0c4733c9899c99e1697ef953"
-  integrity sha512-XSLD0a9P8c+rKUM09KIi5Nd8mOHLHNgXb1G04rpXWa/GqQVpM+knrS9KR9ptj1CeC3gXWGZn75ApH3H6qNbhYA==
+"@types/sanitize-html@^2.9.2":
+  version "2.9.2"
+  resolved "https://registry.yarnpkg.com/@types/sanitize-html/-/sanitize-html-2.9.2.tgz#d7b7560b51d59ddd481d41ff28f09b62d7f24b57"
+  integrity sha512-7TAQFoXdwjSvebOl0oKh5QXGrI+uyTc8Here+WcR9vpLEE7wxpoK6Vuvw++dsmL+Yw8K91x76tLoWchD5pqpRg==
   dependencies:
     htmlparser2 "^8.0.0"
 
