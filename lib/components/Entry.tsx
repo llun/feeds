@@ -47,9 +47,12 @@ const Entry = ({ className, content, selectBack }: Props) => {
             </a>
           </h2>
           <div className="xl:hidden">
-            <strong>{content.siteTitle}</strong>
+            <strong>From {content.siteTitle}</strong>
             <span>
-              , {formatDistance(content.timestamp * 1000, new Date())}
+              ,{' '}
+              {formatDistance(content.timestamp * 1000, new Date(), {
+                addSuffix: true
+              })}
             </span>
           </div>
           <div>
