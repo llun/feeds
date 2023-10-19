@@ -49,7 +49,10 @@ const Entry = ({ className, content, selectBack }: Props) => {
           <div className="xl:hidden">
             <strong>{content.siteTitle}</strong>
             <span>
-              , {formatDistance(content.timestamp * 1000, new Date())}
+              ,{' '}
+              {formatDistance(content.timestamp * 1000, new Date(), {
+                addSuffix: true
+              })}
             </span>
           </div>
           <div>
