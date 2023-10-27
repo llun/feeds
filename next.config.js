@@ -1,4 +1,5 @@
 const core = require('@actions/core')
+const { PHASE_DEVELOPMENT_SERVER } = require('next/constants')
 
 module.exports = (phase, { defaultConfig }) => {
   const customDomainName = core.getInput('customDomain')
@@ -13,15 +14,20 @@ module.exports = (phase, { defaultConfig }) => {
    * @type {import('next').NextConfig}
    */
   const nextConfig = {
+    output: 'export',
     basePath,
-    async rewrites() {
-      return [
-        {
-          source: '/:any*',
-          destination: '/'
+    ...(phase === PHASE_DEVELOPMENT_SERVER
+      ? {
+          async rewrites() {
+            return [
+              {
+                source: '/:any*',
+                destination: '/'
+              }
+            ]
+          }
         }
-      ]
-    }
+      : null)
   }
   return nextConfig
 }
