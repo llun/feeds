@@ -55,7 +55,7 @@ export type LocationState =
   | null
 
 export const parseLocation = (url: string): LocationState => {
-  const parts = url.slice('/#'.length).split('/')
+  const parts = url.slice(url.indexOf('#')).split('/')
   parts.shift()
 
   /**
