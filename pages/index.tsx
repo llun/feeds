@@ -28,7 +28,7 @@ export default function Home() {
     ;(async () => {
       const stateLocation = parseLocation(router.asPath)
       if (!stateLocation) {
-        router.push('/sites/all')
+        router.push('#/sites/all')
         return
       }
 
@@ -68,23 +68,23 @@ export default function Home() {
               categories={categories}
               totalEntries={totalEntries}
               selectCategory={(category: string) =>
-                router.push(`/categories/${category}`)
+                router.push(`#/categories/${category}`)
               }
-              selectSite={(site: string) => router.push(`/sites/${site}`)}
+              selectSite={(site: string) => router.push(`#/sites/${site}`)}
             />
             <EntryList
               className={entriesClassName(pageState)}
               basePath={router.basePath}
               locationState={parseLocation(router.asPath)}
               selectBack={() => setPageState('categories')}
-              selectSite={(site: string) => router.push(`/sites/${site}`)}
+              selectSite={(site: string) => router.push(`#/sites/${site}`)}
               selectEntry={(
                 parentType: string,
                 parentKey: string,
                 entryKey: string
               ) =>
                 router.push(
-                  `${
+                  `#/${
                     parentType === 'category' ? 'categories' : 'sites'
                   }/${parentKey}/entries/${entryKey}`
                 )
@@ -99,7 +99,7 @@ export default function Home() {
                 const { parent } = locationState
                 const { type, key } = parent
                 router.push(
-                  `${type === 'category' ? 'categories' : 'sites'}/${key}`
+                  `#/${type === 'category' ? 'categories' : 'sites'}/${key}`
                 )
               }}
             />
