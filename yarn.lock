@@ -495,10 +495,10 @@
     "@types/node" "*"
     source-map "^0.6.0"
 
-"@types/html-minifier@^4.0.4":
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/@types/html-minifier/-/html-minifier-4.0.4.tgz#4d8501885918af2f74d9fbfb86acabca44af7306"
-  integrity sha512-kvzPbhN6CM+zFdOmLaGKF1DUnn9oYZteTiltHRFhsnj3vcnCZj1qVA0x1E7FTZvLT8e4WsHTSXk/0YV2NgOWOw==
+"@types/html-minifier@^4.0.5":
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/@types/html-minifier/-/html-minifier-4.0.5.tgz#d6f64ffcf884f6c53ceb2f6ddbd8188f9badb6e9"
+  integrity sha512-LfE7f7MFd+YUfZnlBz8W43P4NgSObWiqyKapANsWCj63Aqeqli8/9gVsGP4CwC8jPpTTYlTopKCk9rJSuht/ew==
   dependencies:
     "@types/clean-css" "*"
     "@types/relateurl" "*"
