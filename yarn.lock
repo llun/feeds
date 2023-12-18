@@ -1712,10 +1712,10 @@ hsla-regex@^1.0.0:
   resolved "https://registry.yarnpkg.com/hsla-regex/-/hsla-regex-1.0.0.tgz#c1ce7a3168c8c6614033a4b5f7877f3b225f9c38"
   integrity sha512-7Wn5GMLuHBjZCb2bTmnDOycho0p/7UVaAeqXZGbHrBCl6Yd/xDhQJAXe6Ga9AXJH2I5zY1dEdYw2u1UptnSBJA==
 
-html-dom-parser@5.0.4:
-  version "5.0.4"
-  resolved "https://registry.yarnpkg.com/html-dom-parser/-/html-dom-parser-5.0.4.tgz#2941a762317d088e747db31c8cf290987ec30a55"
-  integrity sha512-azy8THLKd4Ar0OVJpEgX+MSjYvKdNDWlGiRBIlovMqEQYMAnLLXBhhiSwjylDD3RDdcCYT8Utg6uoRDeLHUyHg==
+html-dom-parser@5.0.5:
+  version "5.0.5"
+  resolved "https://registry.yarnpkg.com/html-dom-parser/-/html-dom-parser-5.0.5.tgz#2cd66b59b4c30e80bd7b3f21987eabb2d621e840"
+  integrity sha512-5mySZPNpPOtahOggt/40JjXu55EW4LR/ZjArloUavF1HUkM+D1k41W3IuXOjBd96U0A8OY51jpSbr83LSggBFQ==
   dependencies:
     domhandler "5.0.3"
     htmlparser2 "9.0.0"
@@ -1740,13 +1740,13 @@ html-minifier@^4.0.0:
     relateurl "^0.2.7"
     uglify-js "^3.5.1"
 
-html-react-parser@^5.0.7:
-  version "5.0.7"
-  resolved "https://registry.yarnpkg.com/html-react-parser/-/html-react-parser-5.0.7.tgz#3ada0420c0ae05dce2915fff78aad2b9d678041f"
-  integrity sha512-00ve/0B7ukLUAcAbmD6Vh74EicB+ktLvAM4APeXJjiBsRiPz2ouochTvyUhOJB8apP2t40xAXvpmd+t50aVnJg==
+html-react-parser@^5.0.9:
+  version "5.0.9"
+  resolved "https://registry.yarnpkg.com/html-react-parser/-/html-react-parser-5.0.9.tgz#059e882551c52eeb52c5456a184db2c836d29fb7"
+  integrity sha512-QIaL+tKqeRmKKPmDMGrX0eRKvNlcAKt4sm+jR02w9p1aD1smfb9Mkvr4ruVYmrhpVLgjJSme7SWRdkvcfPTMnQ==
   dependencies:
     domhandler "5.0.3"
-    html-dom-parser "5.0.4"
+    html-dom-parser "5.0.5"
     react-property "2.0.2"
     style-to-js "1.1.10"
 
