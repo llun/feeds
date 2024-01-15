@@ -32,7 +32,7 @@
     "@tailwindcss/typography": "^0.5.10",
     "@vscode/sqlite3": "^5.1.2",
     "autoprefixer": "^10.4.16",
-    "ava": "^5.3.1",
+    "ava": "^6.0.1",
     "date-fns": "^3.2.0",
     "history": "^5.3.0",
     "html-minifier": "^4.0.0",
