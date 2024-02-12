@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@swc-node/core": "^1.10.6",
-    "@swc-node/register": "^1.6.8",
+    "@swc-node/register": "^1.8.0",
     "@swc/core": "^1.4.0",
     "@types/html-minifier": "^4.0.5",
     "@types/jsdom": "^21.1.6",
