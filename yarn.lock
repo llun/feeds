@@ -517,7 +517,7 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react@*", "@types/react@17 || 18", "@types/react@^18.2.66":
+"@types/react@*", "@types/react@^18.2.66":
   version "18.2.66"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-18.2.66.tgz#d2eafc8c4e70939c5432221adb23d32d76bfe451"
   integrity sha512-OYTmMI4UigXeFMF/j4uv0lBBEbongSgptPrHBxqME44h9+yNov+oL6Z3ocJKo0WyXR84sQUNeyIp9MRfckvZpg==
@@ -1779,12 +1779,11 @@ html-minifier@^4.0.0:
     relateurl "^0.2.7"
     uglify-js "^3.5.1"
 
-html-react-parser@^5.1.7:
-  version "5.1.7"
-  resolved "https://registry.yarnpkg.com/html-react-parser/-/html-react-parser-5.1.7.tgz#f0bf1ac476a54a5d3554b65734c710949505e4ea"
-  integrity sha512-clDscCPYxpZbKLAXJVw3DIiuklZejb5ChK+yXMaA7KKuc0c74ep8jY40pUvMo2WnUU7GB3/hAike/ZAfQ+Ybkw==
+html-react-parser@^5.1.8:
+  version "5.1.8"
+  resolved "https://registry.yarnpkg.com/html-react-parser/-/html-react-parser-5.1.8.tgz#b8a294854845bce96627aa4f2ba738362c0ebcf8"
+  integrity sha512-oAXgUB4JYHFg4le3RQZtoge1TGMkwXSZPiWiexwdx3AuldgG+QEvbwMrscSViu90JNje3V4Zq5gCUSoTxa0W0A==
   dependencies:
-    "@types/react" "17 || 18"
     domhandler "5.0.3"
     html-dom-parser "5.0.8"
     react-property "2.0.2"
