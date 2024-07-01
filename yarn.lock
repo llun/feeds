@@ -427,10 +427,10 @@
   resolved "https://registry.yarnpkg.com/@swc-node/core/-/core-1.13.1.tgz#d8f72653e8e35cc4d6b881c60aea661e728dc350"
   integrity sha512-emB5l2nZsXjUEAuusqjYvWnQMLWZp6K039Mv8aq5SX1rsNM/N7DNhw1i4/DX7AyzNZ0tT+ASWyTvqEURldp5HA==
 
-"@swc-node/register@^1.9.2":
-  version "1.9.2"
-  resolved "https://registry.yarnpkg.com/@swc-node/register/-/register-1.9.2.tgz#314b86e32ed1f742d2e025d66f84c2f528082b70"
-  integrity sha512-BBjg0QNuEEmJSoU/++JOXhrjWdu3PTyYeJWsvchsI0Aqtj8ICkz/DqlwtXbmZVZ5vuDPpTfFlwDBZe81zgShMA==
+"@swc-node/register@^1.10.0":
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/@swc-node/register/-/register-1.10.0.tgz#5629d97f0f9e7c3dfe7459f0b35c1a1fd65364f6"
+  integrity sha512-38w10C3fWLi5nd1BltCjj75p5JUn35o8Qvp9yg4y59WrOMLqJ2vzjUva/v7E5IxpY7irE9RMovoxI6uF8/QXJg==
   dependencies:
     "@swc-node/core" "^1.13.1"
     "@swc-node/sourcemap-support" "^0.5.0"
