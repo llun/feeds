@@ -422,10 +422,10 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.2.tgz#5981a8db18b56ba38ef0efb7d995b12aa7b51918"
   integrity sha512-sXXKG+uL9IrKqViTtao2Ws6dy0znu9sOaP1di/jKGW1M6VssO8vlpXCQcpZ+jisQ1tTFAC5Jo/EOzFbggBagFQ==
 
-"@swc-node/core@^1.13.0", "@swc-node/core@^1.13.1":
-  version "1.13.1"
-  resolved "https://registry.yarnpkg.com/@swc-node/core/-/core-1.13.1.tgz#d8f72653e8e35cc4d6b881c60aea661e728dc350"
-  integrity sha512-emB5l2nZsXjUEAuusqjYvWnQMLWZp6K039Mv8aq5SX1rsNM/N7DNhw1i4/DX7AyzNZ0tT+ASWyTvqEURldp5HA==
+"@swc-node/core@^1.13.1", "@swc-node/core@^1.13.2":
+  version "1.13.2"
+  resolved "https://registry.yarnpkg.com/@swc-node/core/-/core-1.13.2.tgz#0b3b563edd2a8c951dbaeecfa1795b8cd1b29a30"
+  integrity sha512-skceAbeKUmEK8z1nxStJTTsbIInKqW4n4+ZCYFexy6UsHjsc7MAfR2v5QqNJr/Fl/j+yLY6UkXY2VUU63nEC/Q==
 
 "@swc-node/register@^1.10.0":
   version "1.10.0"
