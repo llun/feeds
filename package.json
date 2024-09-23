@@ -37,7 +37,7 @@
     "history": "^5.3.0",
     "html-minifier": "^4.0.0",
     "html-react-parser": "^5.1.16",
-    "jsdom": "^25.0.0",
+    "jsdom": "^25.0.1",
     "knex": "^3.1.0",
     "lodash": "^4.17.21",
     "next": "^14.2.10",
