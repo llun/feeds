@@ -52,7 +52,7 @@ if (
   }
 
   const executeResult = runCommand(
-    ['node', '-r', '@swc-node/register', 'index.ts'],
+    ['node', '--loader', '@swc-node/register/esm', 'index.ts'],
     getGithubActionPath()
   )
   if (executeResult.error) {
