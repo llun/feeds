@@ -1,4 +1,5 @@
-const core = require('@actions/core')
+import core from '@actions/core'
+import { NextConfig } from 'next'
 
 const customDomainName = core.getInput('customDomain')
 const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
@@ -8,11 +9,8 @@ const basePath = customDomainName
       `/${githubRootName.split('/')[1]}`) ||
     ''
 
-/**
- * @type {import('next').NextConfig}
- */
-const nextConfig = {
+const nextConfig: NextConfig = {
   basePath,
   output: 'export'
 }
-return nextConfig
+export default nextConfig
