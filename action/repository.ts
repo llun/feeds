@@ -1,9 +1,6 @@
 import { spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import core from '@actions/core'
-import github from '@actions/github'
-import { Octokit } from '@octokit/rest'
 
 export function runCommand(commands: string[], cwd?: string) {
   return spawnSync(commands[0], commands.slice(1), {
@@ -48,6 +45,7 @@ export async function buildSite() {
     // Bypass Jekyll
     runCommand(['touch', '.nojekyll'], workSpace)
 
+    const core = await import('@actions/core')
     const storageType = core.getInput('storageType')
     if (storageType === 'files') process.env.NEXT_PUBLIC_STORAGE = 'files'
 
@@ -63,6 +61,9 @@ export async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
   const workSpace = getWorkspacePath()
   if (workSpace) {
+    const core = await import('@actions/core')
+    const github = await import('@actions/github')
+    const { Octokit } = await import('@octokit/rest')
     const user = process.env['GITHUB_ACTOR']
     const token = core.getInput('token', { required: true })
     const branch = core.getInput('branch', { required: true })
@@ -111,6 +112,8 @@ export async function setup() {
 export async function publish() {
   const workSpace = getWorkspacePath()
   if (workSpace) {
+    const core = await import('@actions/core')
+    const github = await import('@actions/github')
     const branch = core.getInput('branch', { required: true })
     const token = core.getInput('token', { required: true })
     const user = process.env['GITHUB_ACTOR']
