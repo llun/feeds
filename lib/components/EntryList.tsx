@@ -1,4 +1,4 @@
-import formatDistance from 'date-fns/formatDistance'
+import { formatDistance } from 'date-fns'
 import { Ref, useEffect, useRef, useState } from 'react'
 import { getStorage } from '../storage'
 import { SiteEntry } from '../storage/types'
@@ -85,7 +85,7 @@ const EntryList = ({
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
   const [page, setPage] = useState<number>(0)
 
-  const nextBatchEntry = useRef<HTMLDivElement>()
+  const nextBatchEntry = useRef<HTMLDivElement>(null)
 
   let element: HTMLElement | null = null
 
