@@ -13,14 +13,6 @@ const basePath = customDomainName
  */
 const nextConfig = {
   basePath,
-  output: 'export',
-  async rewrites() {
-    return [
-      {
-        source: '/:any*',
-        destination: '/'
-      }
-    ]
-  }
+  output: 'export'
 }
 return nextConfig
