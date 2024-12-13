@@ -37,7 +37,7 @@ export function getWorkspacePath() {
   return workSpace
 }
 
-export function buildSite() {
+export async function buildSite() {
   const workSpace = getWorkspacePath()
   if (workSpace) {
     // Remove old static resources
@@ -45,7 +45,7 @@ export function buildSite() {
     // Bypass Jekyll
     runCommand(['touch', '.nojekyll'], workSpace)
 
-    const core = require('@actions/core')
+    const core = await import('@actions/core')
     const storageType = core.getInput('storageType')
     if (storageType === 'files') process.env.NEXT_PUBLIC_STORAGE = 'files'
 
@@ -61,9 +61,9 @@ export async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
   const workSpace = getWorkspacePath()
   if (workSpace) {
-    const core = require('@actions/core')
-    const github = require('@actions/github')
-    const { Octokit } = require('@octokit/rest')
+    const core = await import('@actions/core')
+    const github = await import('@actions/github')
+    const { Octokit } = await import('@octokit/rest')
     const user = process.env['GITHUB_ACTOR']
     const token = core.getInput('token', { required: true })
     const branch = core.getInput('branch', { required: true })
@@ -112,8 +112,8 @@ export async function setup() {
 export async function publish() {
   const workSpace = getWorkspacePath()
   if (workSpace) {
-    const core = require('@actions/core')
-    const github = require('@actions/github')
+    const core = await import('@actions/core')
+    const github = await import('@actions/github')
     const branch = core.getInput('branch', { required: true })
     const token = core.getInput('token', { required: true })
     const user = process.env['GITHUB_ACTOR']

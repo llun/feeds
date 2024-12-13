@@ -10,7 +10,7 @@ async function run() {
   await setup()
   await createFeedDatabase(getGithubActionPath())
   await createFeedFiles(getGithubActionPath())
-  buildSite()
+  await buildSite()
   await publish()
 }
 
