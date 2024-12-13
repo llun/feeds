@@ -6,7 +6,6 @@
   "author": "Maythee Anegboonlap <null@llun.dev>",
   "repository": "github:llun/feeds",
   "license": "ISC",
-  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build && next export",
