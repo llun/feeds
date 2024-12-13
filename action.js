@@ -55,7 +55,7 @@ if (
     throw new Error('Fail to run setup')
   }
   const executeResult = runCommand(
-    ['node', '--import', '@swc-node/register/esm-register', 'index.ts'],
+    ['node', '-r', '@swc-node/register', 'index.ts'],
     getGithubActionPath()
   )
   if (executeResult.error) {
