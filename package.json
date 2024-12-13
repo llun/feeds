@@ -8,7 +8,7 @@
   "license": "ISC",
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export",
+    "build": "next build",
     "start": "next start",
     "load": "INPUT_OPMLFILE='feeds.opml' node -r @swc-node/register index.ts",
     "loadFile": "INPUT_OPMLFILE='feeds.opml' INPUT_STORAGETYPE='files' node -r @swc-node/register index.ts",
