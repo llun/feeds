@@ -29,6 +29,9 @@
     "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.0",
     "@octokit/rest": "^21.0.2",
+    "@swc-node/core": "^1.13.3",
+    "@swc-node/register": "^1.10.9",
+    "@swc/core": "^1.10.1",
     "@tailwindcss/typography": "^0.5.15",
     "@vscode/sqlite3": "^5.1.2",
     "autoprefixer": "^10.4.20",
@@ -52,9 +55,6 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "@swc-node/core": "^1.13.3",
-    "@swc-node/register": "^1.10.9",
-    "@swc/core": "^1.10.1",
     "@types/html-minifier": "^4.0.5",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.10.2",

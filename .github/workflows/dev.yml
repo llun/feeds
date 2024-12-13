@@ -24,6 +24,13 @@ jobs:
     if: github.ref == 'refs/heads/main'
     name: Sample
     steps:
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Corepack setup
+        run: |
+          corepack enable
       - name: Run Action
         uses: llun/feeds@main
         with:
