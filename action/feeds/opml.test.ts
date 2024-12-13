@@ -105,6 +105,7 @@ test('#removeOldCategories do nothing for category exists in opml', async (t) =>
 
   const categories = await getAllCategories(db)
   t.deepEqual(categories, ['Category1', 'Category2'])
+  await db.destroy()
 })
 
 test('#removeOldCategories delete category not exists in opml', async (t) => {
@@ -125,4 +126,5 @@ test('#removeOldCategories delete category not exists in opml', async (t) => {
   await removeOldCategories(db, opml)
   const categories = await getAllCategories(db)
   t.deepEqual(categories, ['Category1', 'Category2'])
+  await db.destroy()
 })

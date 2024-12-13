@@ -73,6 +73,11 @@ test.beforeEach(async (t) => {
   }
 })
 
+test.afterEach(async (t) => {
+  const db = t.context.db
+  await db.destroy()
+})
+
 test('#insertCategory', async (t) => {
   const { db } = t.context
   await insertCategory(db, 'category1')
@@ -390,6 +395,7 @@ test('#removeOldSites delete sites not exists in opml', async (t) => {
     { siteKey: site2, siteTitle: 'cheeaunblog', category: 'Category2' },
     { siteKey: site3, siteTitle: 'icez network', category: 'Category2' }
   ])
+  await db.destroy()
 })
 
 test('#removeOldEntries delete entries not exists in feed site anymore', async (t) => {
@@ -442,6 +448,7 @@ test('#removeOldEntries delete entries not exists in feed site anymore', async (
   await removeOldEntries(db, site)
   const entries = await getAllSiteEntries(db, siteKey)
   t.deepEqual(entries, [{ entryKey, siteKey, category: 'Category1' }])
+  await db.destroy()
 })
 
 test('#createOrUpdateDatabase add fresh data for empty database', async (t) => {
@@ -510,6 +517,7 @@ test('#createOrUpdateDatabase add fresh data for empty database', async (t) => {
       ])
     }
   }
+  await db.destroy()
 })
 
 test('#createOrUpdateDatabase with old contents in database', async (t) => {
@@ -571,7 +579,6 @@ test('#createOrUpdateDatabase with old contents in database', async (t) => {
     link: 'https://www.llun.me/posts/2018-12-31-2018/',
     title: '2018'
   })
-
   await createOrUpdateDatabase(
     db,
     opml,
@@ -588,7 +595,6 @@ test('#createOrUpdateDatabase with old contents in database', async (t) => {
         category: 'default'
       }
     ])
-
     for (const site of sites) {
       const entries = await getAllSiteEntries(db, site.siteKey)
       t.deepEqual(entries, [
@@ -605,4 +611,5 @@ test('#createOrUpdateDatabase with old contents in database', async (t) => {
       ])
     }
   }
+  await db.destroy()
 })
