@@ -32,7 +32,6 @@
     "@tailwindcss/typography": "^0.5.15",
     "@vscode/sqlite3": "^5.1.2",
     "autoprefixer": "^10.4.20",
-    "ava": "^6.2.0",
     "date-fns": "^4.1.0",
     "history": "^5.3.0",
     "html-minifier": "^4.0.0",
@@ -64,6 +63,7 @@
     "@types/sanitize-html": "^2.13.0",
     "@types/sinon": "^17.0.3",
     "@types/xml2js": "^0.4.14",
+    "ava": "^6.2.0",
     "sinon": "^19.0.2",
     "typescript": "^5.7.2"
   },
