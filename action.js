@@ -39,7 +39,11 @@ if (
   process.env['GITHUB_ACTION'] === 'llunfeeds' ||
   process.env['GITHUB_ACTION'] === '__llun_feeds'
 ) {
-  const enableCorepackResult = runCommand(['corepack', 'enable'])
+  runCommand(['node', '--version'], getGithubActionPath())
+  const enableCorepackResult = runCommand(
+    ['corepack', 'enable'],
+    getGithubActionPath()
+  )
   if (enableCorepackResult.error) {
     throw new Error('Fail to enable corepack')
   }
@@ -50,7 +54,6 @@ if (
   if (dependenciesResult.error) {
     throw new Error('Fail to run setup')
   }
-
   const executeResult = runCommand(
     ['node', '--loader', '@swc-node/register/esm', 'index.ts'],
     getGithubActionPath()
