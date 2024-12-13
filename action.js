@@ -39,6 +39,10 @@ if (
   process.env['GITHUB_ACTION'] === 'llunfeeds' ||
   process.env['GITHUB_ACTION'] === '__llun_feeds'
 ) {
+  const enableCorepackResult = runCommand(['corepack', 'enable'])
+  if (enableCorepackResult.error) {
+    throw new Error('Fail to enable corepack')
+  }
   const dependenciesResult = runCommand(
     ['yarn', 'install'],
     getGithubActionPath()
