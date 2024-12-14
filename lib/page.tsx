@@ -1,10 +1,11 @@
-import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+'use client'
+
+import { FC, useState, useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import Entry from '../lib/components/Entry'
 import EntryList from '../lib/components/EntryList'
 
 import CategoryList from '../lib/components/CategoryList'
-import Meta from '../lib/components/Meta'
 import { getStorage } from '../lib/storage'
 import { Category, Content } from '../lib/storage/types'
 import {
@@ -16,24 +17,25 @@ import {
   parseLocation
 } from '../lib/utils'
 
-export default function Home() {
+export const Page: FC = () => {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
   const [pageState, setPageState] = useState<PageState>('categories')
   const [categories, setCategories] = useState<Category[]>([])
   const [content, setContent] = useState<Content | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     ;(async () => {
-      const stateLocation = parseLocation(router.asPath)
+      const stateLocation = parseLocation(pathname)
       if (!stateLocation) {
         router.push('/sites/all')
         return
       }
 
       if (status === 'loading') {
-        const storage = getStorage(router.basePath)
+        const storage = getStorage(process.env.NEXT_PUBLIC_BASE_PATH ?? '')
         const [categories, totalEntries] = await Promise.all([
           storage.getCategories(),
           storage.countAllEntries()
@@ -45,16 +47,15 @@ export default function Home() {
 
       await locationController(
         stateLocation,
-        router.basePath,
+        pathname,
         setContent,
         setPageState
       )
     })()
-  }, [status, router.asPath])
+  }, [status, pathname, router])
 
   return (
     <>
-      <Meta />
       <div className="prose max-w-none container mx-auto flex flex-row w-screen h-screen">
         {status === 'loading' && (
           <div className="p-6">
@@ -67,40 +68,44 @@ export default function Home() {
               className={categoriesClassName(pageState)}
               categories={categories}
               totalEntries={totalEntries}
-              selectCategory={(category: string) =>
+              selectCategory={(category: string) => {
+                const targetPath = `/categories/${category}`
+                if (pathname === targetPath) return
                 router.push(`/categories/${category}`)
-              }
+              }}
               selectSite={(site: string) => router.push(`/sites/${site}`)}
             />
             <EntryList
               className={entriesClassName(pageState)}
-              basePath={router.basePath}
-              locationState={parseLocation(router.asPath)}
+              basePath={pathname}
+              locationState={parseLocation(pathname)}
               selectBack={() => setPageState('categories')}
               selectSite={(site: string) => router.push(`/sites/${site}`)}
               selectEntry={(
                 parentType: string,
                 parentKey: string,
                 entryKey: string
-              ) =>
-                router.push(
-                  `${
-                    parentType === 'category' ? 'categories' : 'sites'
-                  }/${parentKey}/entries/${entryKey}`
-                )
-              }
+              ) => {
+                const targetPath = `/${
+                  parentType === 'category' ? 'categories' : 'sites'
+                }/${parentKey}/entries/${entryKey}`
+                if (pathname === targetPath) return
+                router.push(targetPath)
+              }}
             />
             <Entry
               className={articleClassName(pageState)}
               content={content}
               selectBack={() => {
-                const locationState = parseLocation(router.asPath)
+                const locationState = parseLocation(pathname)
                 if (locationState.type !== 'entry') return
                 const { parent } = locationState
                 const { type, key } = parent
-                router.push(
-                  `${type === 'category' ? 'categories' : 'sites'}/${key}`
-                )
+                const targetPath = `${
+                  type === 'category' ? 'categories' : 'sites'
+                }/${key}`
+                if (pathname === targetPath) return
+                router.push(targetPath)
               }}
             />
           </>
