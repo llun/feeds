@@ -67,9 +67,11 @@ export default function Home() {
               className={categoriesClassName(pageState)}
               categories={categories}
               totalEntries={totalEntries}
-              selectCategory={(category: string) =>
+              selectCategory={(category: string) => {
+                const targetPath = `/categories/${category}`
+                if (router.asPath === targetPath) return
                 router.push(`/categories/${category}`)
-              }
+              }}
               selectSite={(site: string) => router.push(`/sites/${site}`)}
             />
             <EntryList
@@ -82,13 +84,13 @@ export default function Home() {
                 parentType: string,
                 parentKey: string,
                 entryKey: string
-              ) =>
-                router.push(
-                  `${
-                    parentType === 'category' ? 'categories' : 'sites'
-                  }/${parentKey}/entries/${entryKey}`
-                )
-              }
+              ) => {
+                const targetPath = `/${
+                  parentType === 'category' ? 'categories' : 'sites'
+                }/${parentKey}/entries/${entryKey}`
+                if (router.asPath === targetPath) return
+                router.push(targetPath)
+              }}
             />
             <Entry
               className={articleClassName(pageState)}
@@ -98,9 +100,11 @@ export default function Home() {
                 if (locationState.type !== 'entry') return
                 const { parent } = locationState
                 const { type, key } = parent
-                router.push(
-                  `${type === 'category' ? 'categories' : 'sites'}/${key}`
-                )
+                const targetPath = `${
+                  type === 'category' ? 'categories' : 'sites'
+                }/${key}`
+                if (router.asPath === targetPath) return
+                router.push(targetPath)
               }}
             />
           </>
