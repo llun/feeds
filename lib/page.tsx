@@ -1,10 +1,11 @@
+'use client'
+
+import { FC, useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
 import Entry from '../lib/components/Entry'
 import EntryList from '../lib/components/EntryList'
 
 import CategoryList from '../lib/components/CategoryList'
-import Meta from '../lib/components/Meta'
 import { getStorage } from '../lib/storage'
 import { Category, Content } from '../lib/storage/types'
 import {
@@ -16,7 +17,7 @@ import {
   parseLocation
 } from '../lib/utils'
 
-export default function Home() {
+export const Page: FC = () => {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
   const [pageState, setPageState] = useState<PageState>('categories')
   const [categories, setCategories] = useState<Category[]>([])
@@ -54,7 +55,6 @@ export default function Home() {
 
   return (
     <>
-      <Meta />
       <div className="prose max-w-none container mx-auto flex flex-row w-screen h-screen">
         {status === 'loading' && (
           <div className="p-6">
