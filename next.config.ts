@@ -9,6 +9,8 @@ export default async () => {
     : (githubRootName.split('/').length > 1 &&
         `/${githubRootName.split('/')[1]}`) ||
       ''
+  process.env.NEXT_PUBLIC_BASE_PATH = basePath ?? '/'
+
   const nextConfig: NextConfig = {
     basePath,
     output: 'export'

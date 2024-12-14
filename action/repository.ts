@@ -49,7 +49,7 @@ export async function buildSite() {
     const storageType = core.getInput('storageType')
     if (storageType === 'files') process.env.NEXT_PUBLIC_STORAGE = 'files'
 
-    const result = runCommand(['npm', 'run', 'build'], getGithubActionPath())
+    const result = runCommand(['yarn', 'build'], getGithubActionPath())
     runCommand(['cp', '-rT', 'out', workSpace], getGithubActionPath())
     if (result.error) {
       throw new Error('Fail to build site')
@@ -142,6 +142,7 @@ export async function publish() {
         '.github',
         'action',
         'readme.md',
+        'app',
         'pages',
         'contents',
         'browser',

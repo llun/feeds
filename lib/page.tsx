@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
+import { usePathname, useRouter } from 'next/navigation'
 import Entry from '../lib/components/Entry'
 import EntryList from '../lib/components/EntryList'
 
@@ -24,17 +24,18 @@ export const Page: FC = () => {
   const [content, setContent] = useState<Content | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     ;(async () => {
-      const stateLocation = parseLocation(router.asPath)
+      const stateLocation = parseLocation(pathname)
       if (!stateLocation) {
         router.push('/sites/all')
         return
       }
 
       if (status === 'loading') {
-        const storage = getStorage(router.basePath)
+        const storage = getStorage(process.env.NEXT_PUBLIC_BASE_PATH ?? '')
         const [categories, totalEntries] = await Promise.all([
           storage.getCategories(),
           storage.countAllEntries()
@@ -46,12 +47,12 @@ export const Page: FC = () => {
 
       await locationController(
         stateLocation,
-        router.basePath,
+        pathname,
         setContent,
         setPageState
       )
     })()
-  }, [status, router.asPath])
+  }, [status, pathname, router])
 
   return (
     <>
@@ -69,15 +70,15 @@ export const Page: FC = () => {
               totalEntries={totalEntries}
               selectCategory={(category: string) => {
                 const targetPath = `/categories/${category}`
-                if (router.asPath === targetPath) return
+                if (pathname === targetPath) return
                 router.push(`/categories/${category}`)
               }}
               selectSite={(site: string) => router.push(`/sites/${site}`)}
             />
             <EntryList
               className={entriesClassName(pageState)}
-              basePath={router.basePath}
-              locationState={parseLocation(router.asPath)}
+              basePath={pathname}
+              locationState={parseLocation(pathname)}
               selectBack={() => setPageState('categories')}
               selectSite={(site: string) => router.push(`/sites/${site}`)}
               selectEntry={(
@@ -88,7 +89,7 @@ export const Page: FC = () => {
                 const targetPath = `/${
                   parentType === 'category' ? 'categories' : 'sites'
                 }/${parentKey}/entries/${entryKey}`
-                if (router.asPath === targetPath) return
+                if (pathname === targetPath) return
                 router.push(targetPath)
               }}
             />
@@ -96,14 +97,14 @@ export const Page: FC = () => {
               className={articleClassName(pageState)}
               content={content}
               selectBack={() => {
-                const locationState = parseLocation(router.asPath)
+                const locationState = parseLocation(pathname)
                 if (locationState.type !== 'entry') return
                 const { parent } = locationState
                 const { type, key } = parent
                 const targetPath = `${
                   type === 'category' ? 'categories' : 'sites'
                 }/${key}`
-                if (router.asPath === targetPath) return
+                if (pathname === targetPath) return
                 router.push(targetPath)
               }}
             />
