@@ -21,6 +21,10 @@ export const PathReducer: Reducer<PathState, Actions> = (
   switch (action.type) {
     case 'UPDATE_PATH':
       const pathname = action.value
+      if (pathname === state.pathname) {
+        return state
+      }
+
       window.history.pushState({}, '', pathname)
       return {
         ...state,

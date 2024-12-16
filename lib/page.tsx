@@ -73,14 +73,10 @@ export const Page: FC = () => {
               categories={categories}
               totalEntries={totalEntries}
               selectCategory={(category: string) => {
-                const targetPath = `/categories/${category}`
-                if (state.pathname === targetPath) return
-                dispatch(updatePath(targetPath))
+                dispatch(updatePath(`/categories/${category}`))
               }}
               selectSite={(site: string) => {
-                const targetPath = `/sites/${site}`
-                if (state.pathname === targetPath) return
-                dispatch(updatePath(targetPath))
+                dispatch(updatePath(`/sites/${site}`))
               }}
             />
             <EntryList
@@ -88,7 +84,9 @@ export const Page: FC = () => {
               basePath={state.pathname}
               locationState={state.location}
               selectBack={() => setPageState('categories')}
-              selectSite={(site: string) => router.push(`/sites/${site}`)}
+              selectSite={(site: string) => {
+                dispatch(updatePath(`/sites/${site}`))
+              }}
               selectEntry={(
                 parentType: string,
                 parentKey: string,
@@ -97,7 +95,6 @@ export const Page: FC = () => {
                 const targetPath = `/${
                   parentType === 'category' ? 'categories' : 'sites'
                 }/${parentKey}/entries/${entryKey}`
-                if (state.pathname === targetPath) return
                 dispatch(updatePath(targetPath))
               }}
             />
@@ -109,11 +106,11 @@ export const Page: FC = () => {
                 if (location.type !== 'entry') return
                 const { parent } = location
                 const { type, key } = parent
-                const targetPath = `/${
-                  type === 'category' ? 'categories' : 'sites'
-                }/${key}`
-                if (state.pathname === targetPath) return
-                dispatch(updatePath(targetPath))
+                dispatch(
+                  updatePath(
+                    `/${type === 'category' ? 'categories' : 'sites'}/${key}`
+                  )
+                )
               }}
             />
           </>
