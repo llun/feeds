@@ -20,7 +20,7 @@ jobs:
     name: Test
     steps:
       - name: Run Action
-        uses: llun/feeds@2.6.2
+        uses: llun/feeds@2.6.3
 ```
 
 After this, enable github page on `contents` branch and content should be available on that page
@@ -49,7 +49,7 @@ jobs:
     name: Generate Feeds
     steps:
       - name: Run Action
-        uses: llun/feeds@2.6.2
+        uses: llun/feeds@2.6.3
         with:
           storageType: files
           opmlFile: site.opml
