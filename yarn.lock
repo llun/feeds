@@ -2490,7 +2490,7 @@ __metadata:
     date-fns: "npm:^4.1.0"
     history: "npm:^5.3.0"
     html-minifier: "npm:^4.0.0"
-    html-react-parser: "npm:^5.2.0"
+    html-react-parser: "npm:^5.2.1"
     jsdom: "npm:^25.0.1"
     knex: "npm:^3.1.0"
     lodash: "npm:^4.17.21"
@@ -2840,13 +2840,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-dom-parser@npm:5.0.11":
-  version: 5.0.11
-  resolution: "html-dom-parser@npm:5.0.11"
+"html-dom-parser@npm:5.0.12":
+  version: 5.0.12
+  resolution: "html-dom-parser@npm:5.0.12"
   dependencies:
     domhandler: "npm:5.0.3"
     htmlparser2: "npm:9.1.0"
-  checksum: 10c0/752c962663d9873d90d15d1c0b5721dd16816b2ee307b660e5d579d962674d9aec10d7b532607349df21a6ee8c0f308821480b1fe664fbefad76fe94ca96d086
+  checksum: 10c0/935f4e0e3c98fd545f7b9a3cad5df32eb5a5b76ad4484113e3b7ea8e75d82c2ea6d732ffc4fc7e5ed8414a96bf3993960e011f65ca30fb80311b00d2486332ed
   languageName: node
   linkType: hard
 
@@ -2876,12 +2876,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-react-parser@npm:^5.2.0":
-  version: 5.2.0
-  resolution: "html-react-parser@npm:5.2.0"
+"html-react-parser@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "html-react-parser@npm:5.2.1"
   dependencies:
     domhandler: "npm:5.0.3"
-    html-dom-parser: "npm:5.0.11"
+    html-dom-parser: "npm:5.0.12"
     react-property: "npm:2.0.2"
     style-to-js: "npm:1.1.16"
   peerDependencies:
@@ -2890,7 +2890,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/7c70ce8c5557a32c944a6408ef058f47369923e7d618c6713b7c3f2b90ace39bcdae52e6728119383c3ee582969e779189a4f3ea0116f2451f87f446ef476553
+  checksum: 10c0/79d687d5d3c70c91add24208ad088fd340b20611aa07a737c575fc9a05080a759a1991eec8af0fd8a97b9b08e3db962505386b18bb69620d08c97907e6c2c578
   languageName: node
   linkType: hard
 

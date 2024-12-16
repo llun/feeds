@@ -11,7 +11,7 @@ type Actions = ActionUpdatePath
 
 interface PathState {
   pathname: string
-  location?: LocationState
+  location: LocationState
 }
 
 export const PathReducer: Reducer<PathState, Actions> = (

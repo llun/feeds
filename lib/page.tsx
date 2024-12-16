@@ -14,7 +14,8 @@ import {
   articleClassName,
   categoriesClassName,
   entriesClassName,
-  locationController
+  locationController,
+  parseLocation
 } from '../lib/utils'
 import { PathReducer, updatePath } from './reducers/path'
 
@@ -27,7 +28,8 @@ export const Page: FC = () => {
   const router = useRouter()
   const originalPath = usePathname()
   const [state, dispatch] = useReducer(PathReducer, {
-    pathname: originalPath
+    pathname: originalPath,
+    location: parseLocation(originalPath)
   })
 
   useEffect(() => {
