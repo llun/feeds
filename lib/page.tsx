@@ -1,7 +1,8 @@
 'use client'
 
-import { FC, useState, useEffect } from 'react'
+import { FC, useState, useEffect, useContext, useReducer } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+
 import Entry from '../lib/components/Entry'
 import EntryList from '../lib/components/EntryList'
 
@@ -13,9 +14,9 @@ import {
   articleClassName,
   categoriesClassName,
   entriesClassName,
-  locationController,
-  parseLocation
+  locationController
 } from '../lib/utils'
+import { PathReducer, updatePath } from './reducers/path'
 
 export const Page: FC = () => {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
@@ -24,13 +25,16 @@ export const Page: FC = () => {
   const [content, setContent] = useState<Content | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
   const router = useRouter()
-  const pathname = usePathname()
+  const originalPath = usePathname()
+  const [state, dispatch] = useReducer(PathReducer, {
+    pathname: originalPath
+  })
 
   useEffect(() => {
     ;(async () => {
-      const stateLocation = parseLocation(pathname)
-      if (!stateLocation) {
-        router.push('/sites/all')
+      if (!state.location) {
+        const targetPath = '/sites/all'
+        dispatch(updatePath(targetPath))
         return
       }
 
@@ -46,13 +50,13 @@ export const Page: FC = () => {
       }
 
       await locationController(
-        stateLocation,
-        pathname,
+        state.location,
+        state.pathname,
         setContent,
         setPageState
       )
     })()
-  }, [status, pathname, router])
+  }, [status, state, router])
 
   return (
     <>
@@ -70,15 +74,19 @@ export const Page: FC = () => {
               totalEntries={totalEntries}
               selectCategory={(category: string) => {
                 const targetPath = `/categories/${category}`
-                if (pathname === targetPath) return
-                router.push(`/categories/${category}`)
+                if (state.pathname === targetPath) return
+                dispatch(updatePath(targetPath))
               }}
-              selectSite={(site: string) => router.push(`/sites/${site}`)}
+              selectSite={(site: string) => {
+                const targetPath = `/sites/${site}`
+                if (state.pathname === targetPath) return
+                dispatch(updatePath(targetPath))
+              }}
             />
             <EntryList
               className={entriesClassName(pageState)}
-              basePath={pathname}
-              locationState={parseLocation(pathname)}
+              basePath={state.pathname}
+              locationState={state.location}
               selectBack={() => setPageState('categories')}
               selectSite={(site: string) => router.push(`/sites/${site}`)}
               selectEntry={(
@@ -89,23 +97,23 @@ export const Page: FC = () => {
                 const targetPath = `/${
                   parentType === 'category' ? 'categories' : 'sites'
                 }/${parentKey}/entries/${entryKey}`
-                if (pathname === targetPath) return
-                router.push(targetPath)
+                if (state.pathname === targetPath) return
+                dispatch(updatePath(targetPath))
               }}
             />
             <Entry
               className={articleClassName(pageState)}
               content={content}
               selectBack={() => {
-                const locationState = parseLocation(pathname)
-                if (locationState.type !== 'entry') return
-                const { parent } = locationState
+                const location = state.location
+                if (location.type !== 'entry') return
+                const { parent } = location
                 const { type, key } = parent
-                const targetPath = `${
+                const targetPath = `/${
                   type === 'category' ? 'categories' : 'sites'
                 }/${key}`
-                if (pathname === targetPath) return
-                router.push(targetPath)
+                if (state.pathname === targetPath) return
+                dispatch(updatePath(targetPath))
               }}
             />
           </>
