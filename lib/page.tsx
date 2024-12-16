@@ -58,6 +58,14 @@ export const Page: FC = () => {
         setPageState
       )
     })()
+
+    const historyPopHandler = (event: PopStateEvent) => {
+      dispatch(updatePath(originalPath))
+    }
+    window.addEventListener('popstate', historyPopHandler)
+    return () => {
+      window.removeEventListener('popstate', historyPopHandler)
+    }
   }, [status, state, router])
 
   return (
