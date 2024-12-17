@@ -25,11 +25,12 @@ export const PathReducer: Reducer<PathState, Actions> = (
         return state
       }
 
-      window.history.pushState({}, '', pathname)
+      const location = parseLocation(pathname)
+      window.history.pushState({ location }, '', pathname)
       return {
         ...state,
         pathname,
-        location: parseLocation(pathname)
+        location
       }
     default:
       return state
