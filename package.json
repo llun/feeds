@@ -1,6 +1,6 @@
 {
   "name": "feeds-fetcher",
-  "version": "2.6.4",
+  "version": "2.6.5",
   "description": "Websites feed fetcher and static feeds aggregator",
   "main": "index.js",
   "author": "Maythee Anegboonlap <null@llun.dev>",
@@ -67,5 +67,5 @@
     "sinon": "^19.0.2",
     "typescript": "^5.7.2"
   },
-  "packageManager": "yarn@4.5.3"
+  "packageManager": "yarn@4.6.0"
 }
