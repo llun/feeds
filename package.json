@@ -67,5 +67,8 @@
     "sinon": "^19.0.2",
     "typescript": "^5.7.2"
   },
+  "resolutions": {
+    "@octokit/rest": "20.1.1"
+  },
   "packageManager": "yarn@4.6.0"
 }
