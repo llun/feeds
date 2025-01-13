@@ -59,7 +59,7 @@
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.6",
-    "@types/react-dom": "^19.0.2",
+    "@types/react-dom": "^19.0.3",
     "@types/sanitize-html": "^2.13.0",
     "@types/sinon": "^17.0.3",
     "@types/xml2js": "^0.4.14",
