@@ -68,7 +68,7 @@
     "typescript": "^5.7.2"
   },
   "resolutions": {
-    "@octokit/rest": "20.1.1"
+    "@octokit/rest": "21.1.0"
   },
   "packageManager": "yarn@4.6.0"
 }
