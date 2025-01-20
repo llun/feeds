@@ -65,7 +65,7 @@
     "@types/xml2js": "^0.4.14",
     "ava": "^6.2.0",
     "sinon": "^19.0.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.3"
   },
   "resolutions": {
     "@octokit/rest": "21.1.0"
