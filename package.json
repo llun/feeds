@@ -31,7 +31,7 @@
     "@octokit/rest": "^21",
     "@swc-node/core": "^1.13.3",
     "@swc-node/register": "^1.10.9",
-    "@swc/core": "^1.11.5",
+    "@swc/core": "^1.11.8",
     "@tailwindcss/postcss": "^4.0.12",
     "@tailwindcss/typography": "^0.5.16",
     "@vscode/sqlite3": "^5.1.2",
