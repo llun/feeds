@@ -48,7 +48,7 @@
     "postcss": "^8.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sanitize-html": "^2.14.0",
+    "sanitize-html": "^2.15.0",
     "sql.js-httpvfs": "^0.8.12",
     "sqlite3": "^5.1.7",
     "tailwindcss": "^4.0.14",
