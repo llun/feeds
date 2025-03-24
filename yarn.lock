@@ -908,7 +908,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/fake-timers@npm:^13.0.1, @sinonjs/fake-timers@npm:^13.0.2":
+"@sinonjs/fake-timers@npm:^13.0.1, @sinonjs/fake-timers@npm:^13.0.5":
   version: 13.0.5
   resolution: "@sinonjs/fake-timers@npm:13.0.5"
   dependencies:
@@ -2795,7 +2795,7 @@ __metadata:
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
     sanitize-html: "npm:^2.15.0"
-    sinon: "npm:^19.0.2"
+    sinon: "npm:^19.0.4"
     sql.js-httpvfs: "npm:^0.8.12"
     sqlite3: "npm:^5.1.7"
     tailwindcss: "npm:^4.0.15"
@@ -5377,17 +5377,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sinon@npm:^19.0.2":
-  version: 19.0.2
-  resolution: "sinon@npm:19.0.2"
+"sinon@npm:^19.0.4":
+  version: 19.0.4
+  resolution: "sinon@npm:19.0.4"
   dependencies:
     "@sinonjs/commons": "npm:^3.0.1"
-    "@sinonjs/fake-timers": "npm:^13.0.2"
+    "@sinonjs/fake-timers": "npm:^13.0.5"
     "@sinonjs/samsam": "npm:^8.0.1"
     diff: "npm:^7.0.0"
     nise: "npm:^6.1.1"
     supports-color: "npm:^7.2.0"
-  checksum: 10c0/a5d988d55643677e55bbc70c3aa6c9977f8a7cf55d157278ea8e4474d9acbec16d9c44056bd763e4f5988daf0fb75370099cf90105243dbb8742978478d53c40
+  checksum: 10c0/a1f56fcb52811cc55423069036afb6a8cba21ac6099f0805f4c01807d390fbb52aca291c91615df6a874f725d20ba275621e6c1dab0bc8ba3ebe4d2ac62bd2a4
   languageName: node
   linkType: hard
 

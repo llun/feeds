@@ -65,7 +65,7 @@
     "@types/sinon": "^17.0.4",
     "@types/xml2js": "^0.4.14",
     "ava": "^6.2.0",
-    "sinon": "^19.0.2",
+    "sinon": "^19.0.4",
     "typescript": "^5.8.2"
   },
   "resolutions": {
