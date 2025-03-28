@@ -70,7 +70,6 @@ export const Page: FC = () => {
 
   useEffect(() => {
     const storage = getStorage(process.env.NEXT_PUBLIC_BASE_PATH ?? '')
-    console.log('state.location', state.location)
     switch (state.location?.type) {
       case 'category':
         setListTitle(state.location.category)
