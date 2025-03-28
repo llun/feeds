@@ -70,7 +70,7 @@ export const Page: FC = () => {
 
   useEffect(() => {
     const storage = getStorage(process.env.NEXT_PUBLIC_BASE_PATH ?? '')
-    switch (state.location.type) {
+    switch (state.location?.type) {
       case 'category':
         setListTitle(state.location.category)
         break
