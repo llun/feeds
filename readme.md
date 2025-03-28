@@ -1,11 +1,10 @@
 # Github Action for building static feed aggregator site
 
-Use this action to fetch feeds from OPML file and build static site
-with all feeds information
+A GitHub Action that fetches RSS/Atom feeds from an OPML file and builds a static site aggregating all the feed content. This project creates a modern, responsive feed reader as a static site.
 
-To use it, create a new repository and add opml file name it as `feeds.opml` with list of
-website rss/atom feeds. Create a github workflow like below to make this fetch data and
-put it in contents branch
+## Usage
+
+To use it, create a new repository and add an OPML file named `feeds.opml` with your list of website RSS/Atom feeds. Create a GitHub workflow like the one below to fetch data and store it in a contents branch:
 
 ```
 name: Schedule
@@ -20,21 +19,23 @@ jobs:
     name: Test
     steps:
       - name: Run Action
-        uses: llun/feeds@2.6.4
+        uses: llun/feeds@3.0.0
 ```
 
-After this, enable github page on `contents` branch and content should be available on that page
+After this, enable GitHub Pages on the `contents` branch and the content will be available on that page.
 
-### Configurations
+## Configurations
 
-This action can setup to use under domain name and different type of storage, here are the configuration that can set in github action configuration.
+This action can be configured to use a custom domain and different types of storage. Here are the available configuration options:
 
-- `customDomain`, telling action to generate the feeds site under custom domain. This is required when generate static site because the action requires this to generate `CNAME` file.
-- `branch`, branch that this action will generate the static site into. The default value is `contents`. This is a branch that you will need to point the repository static site branch to.
-- `storageType`, **(Default is `files`)** content storage type, currently support `files` and `sqlite`. `files` is storing all feed contents in JSON tree structure while `sqlite` will store in sqlite database that client will use http chunk to download the content.
-- `opmlFile`, OPML file name that store list of sites that you want to generate feed site.
+- `customDomain`: Specifies the custom domain for the feeds site. Required when generating a static site as it's needed to generate the `CNAME` file.
+- `branch`: Branch where the static site will be generated. The default value is `contents`. This is the branch you'll need to point the repository's GitHub Pages to.
+- `storageType`: **(Default is `files`)** Content storage type, currently supports `files` and `sqlite`. 
+  - `files`: Stores all feed contents in a JSON tree structure
+  - `sqlite`: Stores content in a SQLite database that the client will download using HTTP chunks
+- `opmlFile`: Name of the OPML file containing the list of sites you want to include in your feed site.
 
-#### Sample
+### Sample Configuration
 
 ```
 name: Schedule
@@ -49,18 +50,18 @@ jobs:
     name: Generate Feeds
     steps:
       - name: Run Action
-        uses: llun/feeds@2.6.4
+        uses: llun/feeds@3.0.0
         with:
           storageType: files
           opmlFile: site.opml
           branch: public
 ```
 
-## Sample site
+## Sample Sites
 
 - https://feeds.llun.dev
 - https://llun.github.io/feeds/
 
-## Sample repo
+## Sample Repository
 
 - https://github.com/llunbot/personal-feeds
