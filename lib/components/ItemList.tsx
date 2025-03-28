@@ -1,65 +1,13 @@
-import { formatDistance } from 'date-fns'
-import { Ref, useEffect, useRef, useState } from 'react'
-import { getStorage } from '../storage'
+import React, { useEffect, useRef, useState } from 'react'
 import { SiteEntry } from '../storage/types'
+import { formatDistance, formatDistanceToNow } from 'date-fns'
 import { LocationState } from '../utils'
+import { getStorage } from '../storage'
+import { BackButton } from './BackButton'
 
-interface EntryItemProps {
-  index: number
-  entry: SiteEntry
-  selectedEntryHash: string
-  selectEntry?: (entryKey: string) => void
-  selectSite?: (siteKey: string) => void
-  entryRef?: Ref<HTMLDivElement>
-}
-
-const EntryItem = ({
-  index,
-  entry,
-  selectedEntryHash,
-  selectEntry,
-  selectSite,
-  entryRef
-}: EntryItemProps) => {
-  return (
-    <div
-      id={`entry-${entry.key}`}
-      ref={entryRef}
-      className={`rounded px-4 ${
-        (selectedEntryHash === entry.key && 'bg-gray-200') || ''
-      }`.trim()}
-    >
-      <h3>
-        <a
-          className="font-serif no-underline hover:underline cursor-pointer"
-          onClick={() => selectEntry && selectEntry(entry.key)}
-        >
-          {index + 1}. {entry.title}
-        </a>
-      </h3>
-      <small>
-        <a
-          className="cursor-pointer"
-          onClick={() => selectSite && selectSite(entry.site.key)}
-        >
-          {entry.site.title}
-        </a>
-        {entry.timestamp && (
-          <span>
-            ,{' '}
-            {formatDistance(entry.timestamp * 1000, new Date(), {
-              addSuffix: true
-            })}
-          </span>
-        )}
-      </small>
-    </div>
-  )
-}
-
-interface EntryListProps {
-  className?: string
+interface ItemListProps {
   basePath: string
+  title: string
   locationState: LocationState
   selectEntry?: (
     parentType: string,
@@ -70,14 +18,14 @@ interface EntryListProps {
   selectBack?: () => void
 }
 
-const EntryList = ({
-  className,
+export const ItemList = ({
   basePath,
+  title,
   locationState,
-  selectEntry,
   selectSite,
+  selectEntry,
   selectBack
-}: EntryListProps) => {
+}: ItemListProps) => {
   const [pageState, setPageState] = useState<'loaded' | 'loading'>('loading')
   const [currentCategoryOrSite, setCurrentCategoryOrSite] = useState<string>('')
   const [entries, setEntries] = useState<SiteEntry[]>([])
@@ -85,7 +33,7 @@ const EntryList = ({
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
   const [page, setPage] = useState<number>(0)
 
-  const nextBatchEntry = useRef<HTMLDivElement>(null)
+  const nextBatchEntry = useRef<HTMLLIElement>(null)
 
   let element: HTMLElement | null = null
 
@@ -265,36 +213,94 @@ const EntryList = ({
 
   return (
     <section
+      className="border-r border-gray-200 dark:border-gray-700 h-full overflow-hidden flex flex-col"
       ref={(section) => {
         element = section
       }}
-      className={`pb-4 w-full sm:w-2/3 xl:w-2/6 flex-shrink-0 p-6 overflow-auto overscroll-contain ${className}`}
     >
-      <a className="cursor-pointer sm:hidden" onClick={selectBack}>
-        ← Back
-      </a>
-      {entries.map((entry, index) => (
-        <EntryItem
-          index={index}
-          key={entry.key}
-          entry={entry}
-          selectedEntryHash={selectedEntryHash}
-          selectEntry={selectEntryHash}
-          selectSite={selectSite}
-          entryRef={
-            entries.length - 5 === index && entries.length < totalEntry
-              ? nextBatchEntry
-              : null
-          }
-        />
-      ))}
-      {entries.length === 0 && (
-        <div key="none">
-          <h3>No contents</h3>
+      <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <div className="md:hidden p-4 border-b border-gray-200 dark:border-gray-700">
+          <BackButton onClickBack={selectBack} />
         </div>
-      )}
-      <div className="pb-8"></div>
+        <div className="p-4">
+          <h2 className="text-lg font-semibold">{title}</h2>
+        </div>
+      </div>
+
+      <div className="overflow-y-auto flex-1">
+        {pageState === 'loading' ? (
+          <div className="flex flex-col items-center justify-center h-96 p-4">
+            <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-500 dark:text-gray-400 text-center">
+              Loading items...
+            </p>
+          </div>
+        ) : entries.length > 0 ? (
+          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+            {entries.map((entry, index) => (
+              <li
+                key={entry.key}
+                className={`py-2 px-3 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                  entry.key === selectedEntryHash
+                    ? 'bg-gray-100 dark:bg-gray-800'
+                    : ''
+                }`}
+                ref={
+                  entries.length - 5 === index && entries.length < totalEntry
+                    ? nextBatchEntry
+                    : null
+                }
+              >
+                <div className="block">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1 pr-2">
+                      <button>
+                        <h3
+                          onClick={() =>
+                            selectEntry?.('parentType', 'parentKey', entry.key)
+                          }
+                          className={`font-medium text-sm text-start ${
+                            entry.key === selectedEntryHash
+                              ? 'text-blue-700 dark:text-blue-500'
+                              : ''
+                          }`}
+                        >
+                          {entry.title}
+                        </h3>
+                      </button>
+                      <div className="flex items-center mt-1">
+                        <button
+                          className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400"
+                          onClick={() => {
+                            selectSite?.(entry.site.key)
+                          }}
+                        >
+                          {entry.site.title}
+                        </button>
+                        <span className="mx-1 text-gray-400 dark:text-gray-500 text-xs">
+                          •
+                        </span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
+                          {formatDistance(entry.timestamp * 1000, new Date(), {
+                            addSuffix: true
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="p-4 text-center text-gray-500">
+            <p>No items to display.</p>
+            <p className="text-sm">
+              Select a category or site from the left panel.
+            </p>
+          </div>
+        )}
+      </div>
     </section>
   )
 }
-export default EntryList

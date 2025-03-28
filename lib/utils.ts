@@ -1,4 +1,5 @@
 import React from 'react'
+
 import { getStorage } from './storage'
 import { Content } from './storage/types'
 
