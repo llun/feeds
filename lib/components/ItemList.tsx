@@ -251,21 +251,21 @@ export const ItemList = ({
                     : null
                 }
               >
-                <button
-                  onClick={() => selectEntryHash(entry.key)}
-                  className="block"
-                >
+                <div className="block">
                   <div className="flex justify-between items-start">
                     <div className="flex-1 pr-2">
-                      <h3
-                        className={`font-medium text-sm ${
-                          entry.key === selectedEntryHash
-                            ? 'text-blue-700 dark:text-blue-500'
-                            : ''
-                        }`}
-                      >
-                        {entry.title}
-                      </h3>
+                      <button>
+                        <h3
+                          onClick={() => selectEntryHash(entry.key)}
+                          className={`font-medium text-sm text-start ${
+                            entry.key === selectedEntryHash
+                              ? 'text-blue-700 dark:text-blue-500'
+                              : ''
+                          }`}
+                        >
+                          {entry.title}
+                        </h3>
+                      </button>
                       <div className="flex items-center mt-1">
                         <button
                           className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400"
@@ -287,7 +287,7 @@ export const ItemList = ({
                       </div>
                     </div>
                   </div>
-                </button>
+                </div>
               </li>
             ))}
           </ul>
