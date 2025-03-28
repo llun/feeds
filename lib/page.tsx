@@ -1,12 +1,13 @@
 'use client'
 
-import { FC, useState, useEffect, useContext, useReducer } from 'react'
+import { FC, useState, useEffect, useReducer } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
 import Entry from '../lib/components/Entry'
 import EntryList from '../lib/components/EntryList'
 
 import CategoryList from '../lib/components/CategoryList'
+import { CategoryList as CategoryList2 } from '../lib/components2/CategoryList'
 import { getStorage } from '../lib/storage'
 import { Category, Content } from '../lib/storage/types'
 import {
@@ -18,11 +19,14 @@ import {
   parseLocation
 } from '../lib/utils'
 import { PathReducer, updatePath } from './reducers/path'
+import { ItemList } from './components2/ItemList'
+import { ItemContent } from './components2/ItemContent'
 
 export const Page: FC = () => {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
   const [pageState, setPageState] = useState<PageState>('categories')
   const [categories, setCategories] = useState<Category[]>([])
+  const [listTitle, setListTitle] = useState<string>('')
   const [content, setContent] = useState<Content | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
   const router = useRouter()
@@ -81,6 +85,72 @@ export const Page: FC = () => {
       </div>
     )
   }
+
+  return (
+    <main className="flex flex-col md:flex-row h-screen overflow-hidden">
+      <div className={`w-full md:w-1/4 xl:w-1/5 flex-shrink-0 md:block`}>
+        <CategoryList2
+          categories={categories}
+          totalEntries={totalEntries}
+          selectCategory={(category: string) => {
+            setListTitle(category)
+            dispatch(updatePath(`/categories/${category}`))
+          }}
+          selectSite={(siteKey: string, siteTitle: string) => {
+            setListTitle(siteTitle)
+            dispatch(updatePath(`/sites/${siteKey}`))
+          }}
+        />
+      </div>
+
+      <div className={`w-full md:w-1/3 xl:w-2/5 flex-shrink-0 md:block`}>
+        {listTitle ? (
+          <ItemList
+            basePath={state.pathname}
+            locationState={state.location}
+            title={listTitle}
+            selectBack={() => setPageState('categories')}
+            selectSite={(site: string) => {
+              dispatch(updatePath(`/sites/${site}`))
+            }}
+            selectEntry={(
+              parentType: string,
+              parentKey: string,
+              entryKey: string
+            ) => {
+              const targetPath = `/${
+                parentType === 'category' ? 'categories' : 'sites'
+              }/${parentKey}/entries/${entryKey}`
+              dispatch(updatePath(targetPath))
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 p-8 text-center border-r border-gray-200 dark:border-gray-700">
+            <p>
+              Select a category or site from the left panel to see feed items.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className={`w-full flex-1 ${!content ? 'hidden md:block' : ''}`}>
+        <ItemContent
+          content={content}
+          selectBack={() => {
+            const location = state.location
+            if (location.type !== 'entry') return
+            const { parent } = location
+            const { type, key } = parent
+            dispatch(
+              updatePath(
+                `/${type === 'category' ? 'categories' : 'sites'}/${key}`
+              )
+            )
+          }}
+        />
+      </div>
+    </main>
+  )
 
   return (
     <>

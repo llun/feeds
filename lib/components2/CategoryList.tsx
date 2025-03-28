@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
 import { Category } from '../storage/types'
 import { ThemeToggle } from './ThemeToggle'
@@ -8,7 +7,7 @@ interface CategoryListProps {
   categories: Category[]
   totalEntries: number | null
   selectCategory?: (category: string) => void
-  selectSite?: (site: string) => void
+  selectSite?: (siteKey: string, siteTitle: string) => void
 }
 
 export const CategoryList = ({
@@ -33,15 +32,17 @@ export const CategoryList = ({
         <ThemeToggle />
       </div>
       <div className="mb-4">
-        <Link
-          href="#all"
+        <button
+          onClick={() => {
+            selectSite?.('all', 'All Items')
+          }}
           className={`block font-medium hover:text-blue-600 dark:hover:text-blue-400`}
         >
           All Items
           <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
             ({totalEntries ?? 0})
           </span>
-        </Link>
+        </button>
       </div>
       {categories.map((category) => (
         <div key={category.title} className="mb-4">
@@ -67,7 +68,7 @@ export const CategoryList = ({
                 <li key={site.key}>
                   <button
                     onClick={() => {
-                      selectSite?.(site.key)
+                      selectSite?.(site.key, site.title)
                     }}
                     className={`block text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400`}
                   >
