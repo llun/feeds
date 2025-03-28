@@ -1,83 +1,93 @@
-import { Fragment, useState } from 'react'
+import React, { useState } from 'react'
+import Image from 'next/image'
 import { Category } from '../storage/types'
+import { ThemeToggle } from './ThemeToggle'
 
-interface Props {
-  className?: string
+interface CategoryListProps {
   categories: Category[]
   totalEntries: number | null
   selectCategory?: (category: string) => void
-  selectSite?: (site: string) => void
+  selectSite?: (siteKey: string, siteTitle: string) => void
 }
-const CategoryList = ({
-  className,
+
+export const CategoryList = ({
   categories,
   totalEntries,
   selectCategory,
   selectSite
-}: Props) => {
+}: CategoryListProps) => {
   const [currentCategory, setCurrentCategory] = useState<string | undefined>()
-
   return (
-    <aside
-      className={`w-full sm:w-1/3 xl:w-1/5 flex-shrink-0 p-6 sm:overflow-auto overscroll-contain ${className}`}
-    >
-      <h1 className="font-serif">Feeds</h1>
-      <h2 className="cursor-pointer">
-        <a
-          className="font-serif no-underline hover:underline mr-2"
-          onClick={() => selectSite && selectSite('all')}
+    <nav className="space-y-4 p-4 border-r border-gray-200 dark:border-gray-700 h-full overflow-y-auto">
+      <div className="mb-6 flex items-center justify-between">
+        <span className="inline-flex items-center">
+          <Image
+            src="/logo.svg"
+            alt="RSS Feed Icon"
+            width={32}
+            height={32}
+            className="dark:invert"
+            priority
+          />
+          <h1 className="text-xl font-bold ml-2">FEEDS</h1>
+        </span>
+        <ThemeToggle />
+      </div>
+      <div className="mb-4">
+        <button
+          onClick={() => {
+            selectSite?.('all', 'All Items')
+          }}
+          className={`block font-medium hover:text-blue-600 dark:hover:text-blue-400`}
         >
-          All sites
-        </a>
-        {totalEntries !== null && (
-          <small className="text-sm font-light">({totalEntries})</small>
-        )}
-      </h2>
+          All Items
+          <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+            ({totalEntries ?? 0})
+          </span>
+        </button>
+      </div>
       {categories.map((category) => (
-        <Fragment key={category.title}>
-          <h2 className="cursor-pointer">
-            <a
-              className="font-serif no-underline hover:underline mr-2"
-              onClick={() => setCurrentCategory(category.title)}
-            >
-              {category.title}
-            </a>
-            <small className="text-sm font-light">
+        <div key={category.title} className="mb-4">
+          <button
+            onClick={() => {
+              setCurrentCategory(category.title)
+              selectCategory?.(category.title)
+            }}
+            className={`block font-medium hover:text-blue-600 dark:hover:text-blue-400 ${
+              category.title === currentCategory
+                ? 'text-blue-700 dark:text-blue-500'
+                : ''
+            }`}
+          >
+            {category.title}
+            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
               ({category.totalEntries})
-            </small>
-          </h2>
-          {category.title === currentCategory && (
-            <ul>
-              <li className="cursor-pointer">
-                <a
-                  className="font-serif no-underline hover:underline"
-                  onClick={() =>
-                    selectCategory && selectCategory(currentCategory)
-                  }
-                >
-                  All sites
-                </a>
-              </li>
+            </span>
+          </button>
+          {currentCategory === category.title && (
+            <ul className="ml-4 mt-2 space-y-1">
               {category.sites.map((site) => (
-                <li key={site.key} className="cursor-pointer">
-                  <a
-                    className="font-serif no-underline hover:underline mr-2"
-                    onClick={() => selectSite && selectSite(site.key)}
+                <li key={site.key}>
+                  <button
+                    onClick={() => {
+                      selectSite?.(site.key, site.title)
+                    }}
+                    className={`block text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400`}
                   >
                     {site.title}
-                  </a>
-                  <small className="text-sm font-light">
-                    ({site.totalEntries})
-                  </small>
+                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                      ({site.totalEntries})
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
           )}
-        </Fragment>
+        </div>
       ))}
-      <div className="pb-8"></div>
-    </aside>
+      {!categories.length && (
+        <p className="text-sm text-gray-500">No categories found.</p>
+      )}
+    </nav>
   )
 }
-
-export default CategoryList

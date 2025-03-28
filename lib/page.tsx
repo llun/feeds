@@ -3,11 +3,9 @@
 import { FC, useState, useEffect, useReducer } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
-import Entry from '../lib/components/Entry'
-import EntryList from '../lib/components/EntryList'
-
-import CategoryList from '../lib/components/CategoryList'
-import { CategoryList as CategoryList2 } from '../lib/components2/CategoryList'
+import { ItemList } from './components/ItemList'
+import { ItemContent } from './components/ItemContent'
+import { CategoryList } from '../lib/components/CategoryList'
 import { getStorage } from '../lib/storage'
 import { Category, Content } from '../lib/storage/types'
 import {
@@ -19,8 +17,6 @@ import {
   parseLocation
 } from '../lib/utils'
 import { PathReducer, updatePath } from './reducers/path'
-import { ItemList } from './components2/ItemList'
-import { ItemContent } from './components2/ItemContent'
 
 export const Page: FC = () => {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
@@ -122,7 +118,7 @@ export const Page: FC = () => {
           pageState
         )}`}
       >
-        <CategoryList2
+        <CategoryList
           categories={categories}
           totalEntries={totalEntries}
           selectCategory={(category: string) => {
@@ -191,61 +187,5 @@ export const Page: FC = () => {
         />
       </div>
     </main>
-  )
-
-  return (
-    <>
-      <div className="prose max-w-none container mx-auto flex flex-row w-screen h-screen">
-        {status === 'loaded' && (
-          <>
-            <CategoryList
-              className={categoriesClassName(pageState)}
-              categories={categories}
-              totalEntries={totalEntries}
-              selectCategory={(category: string) => {
-                dispatch(updatePath(`/categories/${category}`))
-              }}
-              selectSite={(site: string) => {
-                dispatch(updatePath(`/sites/${site}`))
-              }}
-            />
-            <EntryList
-              className={entriesClassName(pageState)}
-              basePath={state.pathname}
-              locationState={state.location}
-              selectBack={() => setPageState('categories')}
-              selectSite={(site: string) => {
-                dispatch(updatePath(`/sites/${site}`))
-              }}
-              selectEntry={(
-                parentType: string,
-                parentKey: string,
-                entryKey: string
-              ) => {
-                const targetPath = `/${
-                  parentType === 'category' ? 'categories' : 'sites'
-                }/${parentKey}/entries/${entryKey}`
-                dispatch(updatePath(targetPath))
-              }}
-            />
-            <Entry
-              className={articleClassName(pageState)}
-              content={content}
-              selectBack={() => {
-                const location = state.location
-                if (location.type !== 'entry') return
-                const { parent } = location
-                const { type, key } = parent
-                dispatch(
-                  updatePath(
-                    `/${type === 'category' ? 'categories' : 'sites'}/${key}`
-                  )
-                )
-              }}
-            />
-          </>
-        )}
-      </div>
-    </>
   )
 }
