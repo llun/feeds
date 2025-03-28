@@ -72,6 +72,35 @@ export const Page: FC = () => {
     }
   }, [status, state, router])
 
+  useEffect(() => {
+    const storage = getStorage(process.env.NEXT_PUBLIC_BASE_PATH ?? '')
+    switch (state.location.type) {
+      case 'category':
+        setListTitle(state.location.category)
+        break
+      case 'site': {
+        storage.getSiteEntries(state.location.siteKey).then((entries) => {
+          if (entries.length === 0) return
+          setListTitle(entries[0].site.title)
+        })
+        break
+      }
+      case 'entry': {
+        const parentType = state.location.parent.type
+        if (parentType === 'category') {
+          setListTitle(state.location.parent.key)
+          break
+        }
+
+        storage.getSiteEntries(state.location.parent.key).then((entries) => {
+          if (entries.length === 0) return
+          setListTitle(entries[0].site.title)
+        })
+        break
+      }
+    }
+  }, [state])
+
   if (status === 'loading') {
     return (
       <div className="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">

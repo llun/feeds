@@ -18,23 +18,12 @@ interface ItemListProps {
   selectBack?: () => void
 }
 
-// Helper to format date safely
-const formatDate = (isoDate?: string): string => {
-  if (!isoDate) return ''
-  try {
-    return formatDistanceToNow(new Date(isoDate), { addSuffix: true })
-  } catch (error) {
-    console.error('Error formatting date:', error)
-    return ''
-  }
-}
-
 export const ItemList = ({
   basePath,
   title,
   locationState,
-  selectEntry,
   selectSite,
+  selectEntry,
   selectBack
 }: ItemListProps) => {
   const [pageState, setPageState] = useState<'loaded' | 'loading'>('loading')
@@ -223,7 +212,12 @@ export const ItemList = ({
       : locationState.siteKey
 
   return (
-    <div className="border-r border-gray-200 dark:border-gray-700 h-full overflow-hidden flex flex-col">
+    <section
+      className="border-r border-gray-200 dark:border-gray-700 h-full overflow-hidden flex flex-col"
+      ref={(section) => {
+        element = section
+      }}
+    >
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="md:hidden p-4 border-b border-gray-200 dark:border-gray-700">
           <BackButton onClickBack={selectBack} />
@@ -246,7 +240,7 @@ export const ItemList = ({
             {entries.map((entry, index) => (
               <li
                 key={entry.key}
-                className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                className={`py-2 px-3 hover:bg-gray-50 dark:hover:bg-gray-800 ${
                   entry.key === selectedEntryHash
                     ? 'bg-gray-100 dark:bg-gray-800'
                     : ''
@@ -261,23 +255,38 @@ export const ItemList = ({
                   onClick={() => selectEntryHash(entry.key)}
                   className="block"
                 >
-                  <h3
-                    className={`font-medium mb-1 ${
-                      entry.key === selectedEntryHash
-                        ? 'text-blue-700 dark:text-blue-500'
-                        : ''
-                    }`}
-                  >
-                    {entry.title}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-1">
-                    {entry.site.title}
-                  </p>
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
-                    {formatDistance(entry.timestamp * 1000, new Date(), {
-                      addSuffix: true
-                    })}
-                  </span>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1 pr-2">
+                      <h3
+                        className={`font-medium text-sm ${
+                          entry.key === selectedEntryHash
+                            ? 'text-blue-700 dark:text-blue-500'
+                            : ''
+                        }`}
+                      >
+                        {entry.title}
+                      </h3>
+                      <div className="flex items-center mt-1">
+                        <button
+                          className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            selectSite?.(entry.site.key)
+                          }}
+                        >
+                          {entry.site.title}
+                        </button>
+                        <span className="mx-1 text-gray-400 dark:text-gray-500 text-xs">
+                          •
+                        </span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
+                          {formatDistance(entry.timestamp * 1000, new Date(), {
+                            addSuffix: true
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </button>
               </li>
             ))}
@@ -291,6 +300,6 @@ export const ItemList = ({
           </div>
         )}
       </div>
-    </div>
+    </section>
   )
 }
