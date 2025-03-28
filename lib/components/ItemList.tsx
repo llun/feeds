@@ -256,9 +256,7 @@ export const ItemList = ({
                     <div className="flex-1 pr-2">
                       <button>
                         <h3
-                          onClick={() =>
-                            selectEntry?.('parentType', 'parentKey', entry.key)
-                          }
+                          onClick={() => selectEntryHash(entry.key)}
                           className={`font-medium text-sm text-start ${
                             entry.key === selectedEntryHash
                               ? 'text-blue-700 dark:text-blue-500'
