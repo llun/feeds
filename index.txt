@@ -1,16 +1,19 @@
 1:"$Sreact.fragment"
-2:I[7555,[],""]
-3:I[1295,[],""]
-6:I[9665,[],"OutletBoundary"]
-9:I[9665,[],"ViewportBoundary"]
-b:I[9665,[],"MetadataBoundary"]
-d:I[6614,[],""]
-:HL["/feeds/_next/static/css/ed95f60ce337d348.css","style"]
-0:{"P":null,"b":"QgGifUBNxE3tbdcmJWb_c","p":"/feeds","c":["",""],"i":false,"f":[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/feeds/_next/static/css/ed95f60ce337d348.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":["$","body",null,{"children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":["$L4",[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]}]]}],{"children":["__PAGE__",["$","$1","c",{"children":["$L5","$undefined",null,["$","$L6",null,{"children":["$L7","$L8",null]}]]}],{},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","SmIMCiIAuzLZxWpv1gIkr",{"children":[["$","$L9",null,{"children":"$La"}],null]}],["$","$Lb",null,{"children":"$Lc"}]]}],false]],"m":"$undefined","G":["$d","$undefined"],"s":false,"S":true}
-e:I[8363,["633","static/chunks/633-48dfd8b96624f0ff.js","484","static/chunks/484-e6c9fab2a30bc410.js","974","static/chunks/app/page-86feecf6fe3c2d3e.js"],"Page"]
-4:["$","$Le",null,{}]
-5:["$","$Le",null,{}]
-a:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
-7:null
+2:I[1362,["177","static/chunks/app/layout-2d67ffa4e20d8de4.js"],"ThemeProvider"]
+3:I[7555,[],""]
+4:I[1295,[],""]
+7:I[9665,[],"OutletBoundary"]
+a:I[9665,[],"ViewportBoundary"]
+c:I[9665,[],"MetadataBoundary"]
+e:I[6614,[],""]
+:HL["/feeds/_next/static/media/569ce4b8f30dc480-s.p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/feeds/_next/static/media/93f479601ee12b01-s.p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/feeds/_next/static/css/3212bf168cc43b03.css","style"]
+0:{"P":null,"b":"vvvWhOfrHeIlUcxrawxxO","p":"/feeds","c":["",""],"i":false,"f":[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/feeds/_next/static/css/3212bf168cc43b03.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","suppressHydrationWarning":true,"children":["$","body",null,{"className":"__variable_37f6c1 __variable_9e54b7 antialiased","children":["$","$L2",null,{"attribute":"class","defaultTheme":"system","enableSystem":true,"children":["$","$L3",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L4",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":["$L5",[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]}]}]]}],{"children":["__PAGE__",["$","$1","c",{"children":["$L6","$undefined",null,["$","$L7",null,{"children":["$L8","$L9",null]}]]}],{},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","zIf0r1mtM3FzBm88UPlrc",{"children":[["$","$La",null,{"children":"$Lb"}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],["$","$Lc",null,{"children":"$Ld"}]]}],false]],"m":"$undefined","G":["$e","$undefined"],"s":false,"S":true}
+f:I[346,["601","static/chunks/601-7a214527fdd9cbb3.js","484","static/chunks/484-4204aa72852bf9ee.js","974","static/chunks/app/page-bebdc465256bfba7.js"],"Page"]
+5:["$","$Lf",null,{}]
+6:["$","$Lf",null,{}]
+b:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","media":"(prefers-color-scheme: light)","content":"#ffffff"}],["$","meta","3",{"name":"theme-color","media":"(prefers-color-scheme: dark)","content":"#000000"}]]
 8:null
-c:[["$","title","0",{"children":"Feeds"}],["$","meta","1",{"name":"description","content":"Static Feeds Aggregator"}]]
+9:null
+d:[["$","title","0",{"children":"Feeds"}],["$","meta","1",{"name":"description","content":"Static Feeds Aggregator"}]]
