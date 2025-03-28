@@ -1,6 +1,4 @@
 import React from 'react'
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
 
 import { getStorage } from './storage'
 import { Content } from './storage/types'

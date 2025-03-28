@@ -2654,13 +2654,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clsx@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "clsx@npm:2.1.1"
-  checksum: 10c0/c4c8eb865f8c82baab07e71bfa8897c73454881c4f99d6bc81585aecd7c441746c1399d08363dc096c550cceaf97bd4ce1e8854e1771e9998d9f94c4fe075839
-  languageName: node
-  linkType: hard
-
 "code-block-writer@npm:^12.0.0":
   version: 12.0.0
   resolution: "code-block-writer@npm:12.0.0"
@@ -3394,7 +3387,6 @@ __metadata:
     "@vscode/sqlite3": "npm:^5.1.2"
     autoprefixer: "npm:^10.4.21"
     ava: "npm:^6.2.0"
-    clsx: "npm:^2.1.1"
     date-fns: "npm:^4.1.0"
     history: "npm:^5.3.0"
     html-minifier: "npm:^4.0.0"
@@ -3414,7 +3406,6 @@ __metadata:
     sinon: "npm:^20.0.0"
     sql.js-httpvfs: "npm:^0.8.12"
     sqlite3: "npm:^5.1.7"
-    tailwind-merge: "npm:^3.0.2"
     tailwindcss: "npm:^4.0.17"
     tailwindcss-cli: "npm:^0.1.2"
     tw-animate-css: "npm:^1.2.5"
@@ -6779,13 +6770,6 @@ __metadata:
   version: 3.2.4
   resolution: "symbol-tree@npm:3.2.4"
   checksum: 10c0/dfbe201ae09ac6053d163578778c53aa860a784147ecf95705de0cd23f42c851e1be7889241495e95c37cabb058edb1052f141387bef68f705afc8f9dd358509
-  languageName: node
-  linkType: hard
-
-"tailwind-merge@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "tailwind-merge@npm:3.0.2"
-  checksum: 10c0/73f528345e5130e7690c5c57701155849ae4f0834e0a4bf56bc03e25d4563d45d4905ff9c487a7dce9efdfa18689a223e78365962105ad0e2f2d1226216c66ef
   languageName: node
   linkType: hard
 
