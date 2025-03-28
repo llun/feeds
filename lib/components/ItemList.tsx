@@ -257,7 +257,7 @@ export const ItemList = ({
                       <button>
                         <h3
                           onClick={() => selectEntryHash(entry.key)}
-                          className={`font-medium text-sm text-start ${
+                          className={`font-medium text-sm text-left ${
                             entry.key === selectedEntryHash
                               ? 'text-blue-700 dark:text-blue-500'
                               : ''
