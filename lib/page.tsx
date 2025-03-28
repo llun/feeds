@@ -70,11 +70,16 @@ export const Page: FC = () => {
 
   useEffect(() => {
     const storage = getStorage(process.env.NEXT_PUBLIC_BASE_PATH ?? '')
+    console.log('state.location', state.location)
     switch (state.location?.type) {
       case 'category':
         setListTitle(state.location.category)
         break
       case 'site': {
+        if (state.location.siteKey === 'all') {
+          setListTitle('All Items')
+          break
+        }
         storage.getSiteEntries(state.location.siteKey).then((entries) => {
           if (entries.length === 0) return
           setListTitle(entries[0].site.title)
@@ -94,6 +99,9 @@ export const Page: FC = () => {
         })
         break
       }
+      default:
+        setListTitle('All Items')
+        break
     }
   }, [state])
 
