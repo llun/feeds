@@ -87,8 +87,12 @@ export const Page: FC = () => {
   }
 
   return (
-    <main className="flex flex-col md:flex-row h-screen overflow-hidden">
-      <div className={`w-full md:w-1/4 xl:w-1/5 flex-shrink-0 md:block`}>
+    <main className="flex flex-col md:flex-row h-screen">
+      <div
+        className={`w-full md:w-1/4 xl:w-1/5 flex-shrink-0 md:block ${categoriesClassName(
+          pageState
+        )}`}
+      >
         <CategoryList2
           categories={categories}
           totalEntries={totalEntries}
@@ -103,7 +107,11 @@ export const Page: FC = () => {
         />
       </div>
 
-      <div className={`w-full md:w-1/3 xl:w-2/5 flex-shrink-0 md:block`}>
+      <div
+        className={`w-full md:w-1/3 xl:w-2/5 flex-shrink-0 md:block ${entriesClassName(
+          pageState
+        )}`}
+      >
         {listTitle ? (
           <ItemList
             basePath={state.pathname}
@@ -133,7 +141,11 @@ export const Page: FC = () => {
         )}
       </div>
 
-      <div className={`w-full flex-1 ${!content ? 'hidden md:block' : ''}`}>
+      <div
+        className={`w-full flex-1 ${
+          !content ? 'hidden md:block' : ''
+        } ${articleClassName(pageState)}`}
+      >
         <ItemContent
           content={content}
           selectBack={() => {
