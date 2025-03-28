@@ -271,7 +271,7 @@ export const ItemList = ({
                       <div className="flex items-center mt-1">
                         <button
                           className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400"
-                          onClick={(e) => {
+                          onClick={() => {
                             selectSite?.(entry.site.key)
                           }}
                         >
