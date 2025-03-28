@@ -20,15 +20,17 @@ export const CategoryList = ({
   return (
     <nav className="space-y-4 p-4 border-r border-gray-200 dark:border-gray-700 h-full overflow-y-auto">
       <div className="mb-6 flex items-center justify-between">
-        <Image
-          src="/logo.svg"
-          alt="RSS Feed Icon"
-          width={32}
-          height={32}
-          className="dark:invert"
-          priority
-        />
-        <h1 className="text-xl font-bold ml-2">FEEDS</h1>
+        <span className="inline-flex items-center">
+          <Image
+            src="/logo.svg"
+            alt="RSS Feed Icon"
+            width={32}
+            height={32}
+            className="dark:invert"
+            priority
+          />
+          <h1 className="text-xl font-bold ml-2">FEEDS</h1>
+        </span>
         <ThemeToggle />
       </div>
       <div className="mb-4">
