@@ -53,7 +53,7 @@ export const CategoryList = ({
               setCurrentCategory(category.title)
               selectCategory?.(category.title)
             }}
-            className={`block font-medium hover:text-blue-600 dark:hover:text-blue-400 ${
+            className={`block font-medium hover:text-blue-600 dark:hover:text-blue-400 text-start ${
               category.title === currentCategory
                 ? 'text-blue-700 dark:text-blue-500'
                 : ''
