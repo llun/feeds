@@ -41,7 +41,7 @@ if (
 ) {
   runCommand(['node', '--version'], getGithubActionPath())
   const enableCorepackResult = runCommand(
-    ['corepack', 'enable'],
+    ['npm', 'install', '-g', 'corepack'],
     getGithubActionPath()
   )
   if (enableCorepackResult.error) {
