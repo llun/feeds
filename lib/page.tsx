@@ -68,14 +68,23 @@ export const Page: FC = () => {
     }
   }, [status, state, router])
 
+  if (status === 'loading') {
+    return (
+      <div className="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg font-semibold">Loading content...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            This will take a few seconds
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="prose max-w-none container mx-auto flex flex-row w-screen h-screen">
-        {status === 'loading' && (
-          <div className="p-6">
-            <strong className="font-serif text-4xl">Loading database</strong>
-          </div>
-        )}
         {status === 'loaded' && (
           <>
             <CategoryList
