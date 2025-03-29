@@ -32,12 +32,7 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
   }
 
   return (
-    <article
-      className="h-full overflow-hidden flex flex-col"
-      ref={(article) => {
-        element = article
-      }}
-    >
+    <article className="h-full overflow-hidden flex flex-col">
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="md:hidden p-4 border-b border-gray-200 dark:border-gray-700">
           <BackButton onClickBack={selectBack} />
@@ -63,7 +58,12 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
           </div>
         </div>
       </div>
-      <div className="p-6 pt-4 prose dark:prose-invert lg:prose-xl max-w-none overflow-y-auto flex-1">
+      <div
+        className="p-6 pt-4 prose dark:prose-invert lg:prose-xl max-w-full overflow-y-auto flex-1"
+        ref={(contentPane) => {
+          element = contentPane
+        }}
+      >
         {parse(content.content, {
           replace: (domNode) => {
             const node = domNode as ReactParserNode

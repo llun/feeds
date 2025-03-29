@@ -121,7 +121,7 @@ export const Page: FC = () => {
   return (
     <main className="flex flex-col md:flex-row h-screen">
       <div
-        className={`w-full md:w-1/4 xl:w-1/5 flex-shrink-0 md:block ${categoriesClassName(
+        className={`w-full md:w-1/4 xl:w-1/5 flex-shrink-0 ${categoriesClassName(
           pageState
         )}`}
       >
@@ -140,7 +140,7 @@ export const Page: FC = () => {
       </div>
 
       <div
-        className={`w-full md:w-1/3 xl:w-2/5 flex-shrink-0 md:block ${entriesClassName(
+        className={`w-full md:w-1/3 xl:w-2/5 flex-shrink-0 ${entriesClassName(
           pageState
         )}`}
       >
