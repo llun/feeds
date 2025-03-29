@@ -268,7 +268,7 @@ export const ItemList = ({
                       </button>
                       <div className="flex items-center mt-1">
                         <button
-                          className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400"
+                          className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400 truncate"
                           onClick={() => {
                             selectSite?.(entry.site.key)
                           }}
@@ -278,7 +278,7 @@ export const ItemList = ({
                         <span className="mx-1 text-gray-400 dark:text-gray-500 text-xs">
                           •
                         </span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500">
+                        <span className="text-xs text-gray-400 dark:text-gray-500 text-nowrap">
                           {formatDistance(entry.timestamp * 1000, new Date(), {
                             addSuffix: true
                           })}
