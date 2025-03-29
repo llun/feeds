@@ -10,29 +10,27 @@ export const articleClassName = (pageState: PageState): string => {
     case 'article':
       return 'block'
     default:
-      return 'hidden xl:block'
+      return 'hidden md:block'
   }
 }
 
 export const entriesClassName = (pageState: PageState): string => {
   switch (pageState) {
-    case 'article':
-      return 'hidden xl:block'
     case 'entries':
-      return 'block'
+      return 'md:block'
+    case 'article':
     default:
-      return 'hidden sm:block'
+      return 'hidden md:block'
   }
 }
 
 export const categoriesClassName = (pageState: PageState): string => {
   switch (pageState) {
     case 'article':
-      return 'hidden xl:block'
     case 'entries':
-      return 'hidden sm:block'
+      return 'hidden md:block'
     default:
-      return 'block'
+      return 'md:block'
   }
 }
 
