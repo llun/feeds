@@ -16,7 +16,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Feeds',
-  description: 'Static Feeds Aggregator'
+  description: 'Static Feeds Aggregator',
+  icons: {
+    icon: '/favicon.ico'
+  }
 }
 
 export const viewport: Viewport = {
