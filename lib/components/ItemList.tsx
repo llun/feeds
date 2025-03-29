@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { SiteEntry } from '../storage/types'
-import { formatDistance, formatDistanceToNow } from 'date-fns'
+import { formatDistance } from 'date-fns'
 import { LocationState } from '../utils'
 import { getStorage } from '../storage'
 import { BackButton } from './BackButton'
@@ -212,17 +212,17 @@ export const ItemList = ({
       : locationState.siteKey
 
   return (
-    <section
-      className="border-r border-gray-200 dark:border-gray-700 h-full overflow-hidden flex flex-col"
-      ref={(section) => {
-        element = section
-      }}
-    >
+    <section className="border-r border-gray-200 dark:border-gray-700 h-full overflow-hidden flex flex-col">
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="md:hidden p-4 border-b border-gray-200 dark:border-gray-700">
           <BackButton onClickBack={selectBack} />
         </div>
-        <div className="p-4">
+        <div
+          className="p-4"
+          ref={(section) => {
+            element = section
+          }}
+        >
           <h2 className="text-lg font-semibold">{title}</h2>
         </div>
       </div>
