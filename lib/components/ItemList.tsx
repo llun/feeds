@@ -169,10 +169,10 @@ export const ItemList = ({
 
   useEffect(() => {
     const handler: EventListener = (event: KeyboardEvent) => {
-      event.preventDefault()
       switch (event.code) {
         case 'ArrowUp':
         case 'KeyW': {
+          event.preventDefault()
           if (!selectedEntryHash) {
             selectEntryHash(entries[0].key)
             return
@@ -187,6 +187,7 @@ export const ItemList = ({
         }
         case 'ArrowDown':
         case 'KeyS': {
+          event.preventDefault()
           if (!selectedEntryHash) {
             selectEntryHash(entries[0].key)
             return
