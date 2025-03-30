@@ -19,6 +19,7 @@ interface ItemContentProps {
 export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
   let element: HTMLElement | null = null
   useEffect(() => {
+    console.log('Element', element)
     if (!element) return
     element.scrollTo(0, 0)
   }, [content])

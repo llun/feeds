@@ -132,14 +132,32 @@ export const ItemList = ({
   useEffect(() => {
     if (!element) return
     ;(async (element: HTMLElement) => {
-      const { entries, totalEntry } = await loadEntries(basePath, locationState)
+      const { entries: newEntries, totalEntry } = await loadEntries(
+        basePath,
+        locationState
+      )
       setPageState('loaded')
-      setEntries(entries)
+      setEntries(newEntries)
       setTotalEntry(totalEntry)
       setPage(0)
       element.scrollTo(0, 0)
     })(element)
   }, [currentCategoryOrSite])
+
+  useEffect(() => {
+    if (
+      locationState.type === 'category' ||
+      (locationState.type === 'site' && selectedEntryHash)
+    ) {
+      const dom = globalThis.document.querySelector(
+        `#entry-${selectedEntryHash}`
+      )
+      dom?.scrollIntoView({
+        block: 'center',
+        inline: 'start'
+      })
+    }
+  }, [locationState])
 
   useEffect(() => {
     if (!nextBatchEntry?.current) return
@@ -241,6 +259,7 @@ export const ItemList = ({
             {entries.map((entry, index) => (
               <li
                 key={entry.key}
+                id={`entry-${entry.key}`}
                 className={`py-2 px-3 hover:bg-gray-50 dark:hover:bg-gray-800 ${
                   entry.key === selectedEntryHash
                     ? 'bg-gray-100 dark:bg-gray-800'
