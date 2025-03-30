@@ -33,6 +33,7 @@ export const ItemList = ({
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
   const [page, setPage] = useState<number>(0)
 
+  const itemsRef = useRef<HTMLUListElement>(null)
   const nextBatchEntry = useRef<HTMLLIElement>(null)
 
   let element: HTMLElement | null = null
@@ -117,6 +118,8 @@ export const ItemList = ({
   }
 
   useEffect(() => {
+    if (locationState.type === 'entry') return
+
     switch (locationState.type) {
       case 'category': {
         if (currentCategoryOrSite === locationState.category) return
@@ -142,22 +145,7 @@ export const ItemList = ({
       setPage(0)
       element.scrollTo(0, 0)
     })(element)
-  }, [currentCategoryOrSite])
-
-  useEffect(() => {
-    if (
-      locationState.type === 'category' ||
-      (locationState.type === 'site' && selectedEntryHash)
-    ) {
-      const dom = globalThis.document.querySelector(
-        `#entry-${selectedEntryHash}`
-      )
-      dom?.scrollIntoView({
-        block: 'center',
-        inline: 'start'
-      })
-    }
-  }, [locationState])
+  }, [currentCategoryOrSite, element])
 
   useEffect(() => {
     if (!nextBatchEntry?.current) return
@@ -255,7 +243,10 @@ export const ItemList = ({
             </p>
           </div>
         ) : entries.length > 0 ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+          <ul
+            ref={itemsRef}
+            className="divide-y divide-gray-200 dark:divide-gray-700"
+          >
             {entries.map((entry, index) => (
               <li
                 key={entry.key}
@@ -274,7 +265,9 @@ export const ItemList = ({
                 <div className="w-full pr-2">
                   <button>
                     <h3
-                      onClick={() => selectEntryHash(entry.key)}
+                      onClick={() => {
+                        selectEntryHash(entry.key)
+                      }}
                       className={`font-medium text-sm text-left ${
                         entry.key === selectedEntryHash
                           ? 'text-blue-700 dark:text-blue-500'
