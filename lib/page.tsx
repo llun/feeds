@@ -92,6 +92,11 @@ export const Page: FC = () => {
           break
         }
 
+        if (state.location.parent.key === 'all') {
+          setListTitle('All Items')
+          break
+        }
+
         storage.getSiteEntries(state.location.parent.key).then((entries) => {
           if (entries.length === 0) return
           setListTitle(entries[0].site.title)
