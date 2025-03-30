@@ -253,7 +253,7 @@ export const ItemList = ({
               >
                 <div className="block">
                   <div className="flex justify-between items-start">
-                    <div className="flex-1 pr-2">
+                    <div className="flex-1 pr-2 w-full">
                       <button>
                         <h3
                           onClick={() => selectEntryHash(entry.key)}
@@ -266,7 +266,7 @@ export const ItemList = ({
                           {entry.title}
                         </h3>
                       </button>
-                      <div className="flex items-center mt-1">
+                      <div className="flex items-center mt-1 whitespace-nowrap">
                         <button
                           className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400 truncate"
                           onClick={() => {
