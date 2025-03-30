@@ -72,7 +72,7 @@ export const CategoryList = ({
                     onClick={() => {
                       selectSite?.(site.key, site.title)
                     }}
-                    className={`block text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400`}
+                    className={`block text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-left`}
                   >
                     {site.title}
                     <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">

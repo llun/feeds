@@ -33,6 +33,7 @@ export const ItemList = ({
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>('')
   const [page, setPage] = useState<number>(0)
 
+  const itemsRef = useRef<HTMLUListElement>(null)
   const nextBatchEntry = useRef<HTMLLIElement>(null)
 
   let element: HTMLElement | null = null
@@ -117,6 +118,8 @@ export const ItemList = ({
   }
 
   useEffect(() => {
+    if (locationState.type === 'entry') return
+
     switch (locationState.type) {
       case 'category': {
         if (currentCategoryOrSite === locationState.category) return
@@ -132,14 +135,17 @@ export const ItemList = ({
   useEffect(() => {
     if (!element) return
     ;(async (element: HTMLElement) => {
-      const { entries, totalEntry } = await loadEntries(basePath, locationState)
+      const { entries: newEntries, totalEntry } = await loadEntries(
+        basePath,
+        locationState
+      )
       setPageState('loaded')
-      setEntries(entries)
+      setEntries(newEntries)
       setTotalEntry(totalEntry)
       setPage(0)
       element.scrollTo(0, 0)
     })(element)
-  }, [currentCategoryOrSite])
+  }, [currentCategoryOrSite, element])
 
   useEffect(() => {
     if (!nextBatchEntry?.current) return
@@ -166,6 +172,7 @@ export const ItemList = ({
       switch (event.code) {
         case 'ArrowUp':
         case 'KeyW': {
+          event.preventDefault()
           if (!selectedEntryHash) {
             selectEntryHash(entries[0].key)
             return
@@ -180,6 +187,7 @@ export const ItemList = ({
         }
         case 'ArrowDown':
         case 'KeyS': {
+          event.preventDefault()
           if (!selectedEntryHash) {
             selectEntryHash(entries[0].key)
             return
@@ -194,11 +202,11 @@ export const ItemList = ({
         }
       }
     }
-    globalThis.document.addEventListener('keyup', handler)
+    globalThis.document.addEventListener('keydown', handler)
     return () => {
-      globalThis.document.removeEventListener('keyup', handler)
+      globalThis.document.removeEventListener('keydown', handler)
     }
-  })
+  }, [entries, selectedEntryHash])
 
   const parentType =
     locationState.type === 'entry'
@@ -223,7 +231,7 @@ export const ItemList = ({
             element = section
           }}
         >
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="text-lg font-semibold line-clamp-2">{title}</h2>
         </div>
       </div>
 
@@ -236,10 +244,14 @@ export const ItemList = ({
             </p>
           </div>
         ) : entries.length > 0 ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+          <ul
+            ref={itemsRef}
+            className="divide-y divide-gray-200 dark:divide-gray-700"
+          >
             {entries.map((entry, index) => (
               <li
                 key={entry.key}
+                id={`entry-${entry.key}`}
                 className={`py-2 px-3 hover:bg-gray-50 dark:hover:bg-gray-800 ${
                   entry.key === selectedEntryHash
                     ? 'bg-gray-100 dark:bg-gray-800'
@@ -251,40 +263,38 @@ export const ItemList = ({
                     : null
                 }
               >
-                <div className="block">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1 pr-2">
-                      <button>
-                        <h3
-                          onClick={() => selectEntryHash(entry.key)}
-                          className={`font-medium text-sm text-left ${
-                            entry.key === selectedEntryHash
-                              ? 'text-blue-700 dark:text-blue-500'
-                              : ''
-                          }`}
-                        >
-                          {entry.title}
-                        </h3>
-                      </button>
-                      <div className="flex items-center mt-1">
-                        <button
-                          className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400 truncate"
-                          onClick={() => {
-                            selectSite?.(entry.site.key)
-                          }}
-                        >
-                          {entry.site.title}
-                        </button>
-                        <span className="mx-1 text-gray-400 dark:text-gray-500 text-xs">
-                          •
-                        </span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 text-nowrap">
-                          {formatDistance(entry.timestamp * 1000, new Date(), {
-                            addSuffix: true
-                          })}
-                        </span>
-                      </div>
-                    </div>
+                <div className="w-full pr-2">
+                  <button>
+                    <h3
+                      onClick={() => {
+                        selectEntryHash(entry.key)
+                      }}
+                      className={`font-medium text-sm text-left ${
+                        entry.key === selectedEntryHash
+                          ? 'text-blue-700 dark:text-blue-500'
+                          : ''
+                      }`}
+                    >
+                      {entry.title}
+                    </h3>
+                  </button>
+                  <div className="flex items-center mt-1 whitespace-nowrap">
+                    <button
+                      className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400 truncate"
+                      onClick={() => {
+                        selectSite?.(entry.site.key)
+                      }}
+                    >
+                      {entry.site.title}
+                    </button>
+                    <span className="mx-1 text-gray-400 dark:text-gray-500 text-xs">
+                      •
+                    </span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 text-nowrap">
+                      {formatDistance(entry.timestamp * 1000, new Date(), {
+                        addSuffix: true
+                      })}
+                    </span>
                   </div>
                 </div>
               </li>
