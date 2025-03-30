@@ -223,7 +223,7 @@ export const ItemList = ({
             element = section
           }}
         >
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="text-lg font-semibold line-clamp-2">{title}</h2>
         </div>
       </div>
 
