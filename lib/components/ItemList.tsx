@@ -251,38 +251,36 @@ export const ItemList = ({
                     : null
                 }
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 pr-2 w-full">
-                    <button>
-                      <h3
-                        onClick={() => selectEntryHash(entry.key)}
-                        className={`font-medium text-sm text-left ${
-                          entry.key === selectedEntryHash
-                            ? 'text-blue-700 dark:text-blue-500'
-                            : ''
-                        }`}
-                      >
-                        {entry.title}
-                      </h3>
+                <div className="w-full pr-2">
+                  <button>
+                    <h3
+                      onClick={() => selectEntryHash(entry.key)}
+                      className={`font-medium text-sm text-left ${
+                        entry.key === selectedEntryHash
+                          ? 'text-blue-700 dark:text-blue-500'
+                          : ''
+                      }`}
+                    >
+                      {entry.title}
+                    </h3>
+                  </button>
+                  <div className="flex items-center mt-1 whitespace-nowrap">
+                    <button
+                      className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400 truncate"
+                      onClick={() => {
+                        selectSite?.(entry.site.key)
+                      }}
+                    >
+                      {entry.site.title}
                     </button>
-                    <div className="flex items-center mt-1 whitespace-nowrap">
-                      <button
-                        className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400 truncate"
-                        onClick={() => {
-                          selectSite?.(entry.site.key)
-                        }}
-                      >
-                        {entry.site.title}
-                      </button>
-                      <span className="mx-1 text-gray-400 dark:text-gray-500 text-xs">
-                        •
-                      </span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500 text-nowrap">
-                        {formatDistance(entry.timestamp * 1000, new Date(), {
-                          addSuffix: true
-                        })}
-                      </span>
-                    </div>
+                    <span className="mx-1 text-gray-400 dark:text-gray-500 text-xs">
+                      •
+                    </span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 text-nowrap">
+                      {formatDistance(entry.timestamp * 1000, new Date(), {
+                        addSuffix: true
+                      })}
+                    </span>
                   </div>
                 </div>
               </li>
