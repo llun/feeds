@@ -163,6 +163,7 @@ export const ItemList = ({
 
   useEffect(() => {
     const handler: EventListener = (event: KeyboardEvent) => {
+      event.preventDefault()
       switch (event.code) {
         case 'ArrowUp':
         case 'KeyW': {
@@ -194,11 +195,11 @@ export const ItemList = ({
         }
       }
     }
-    globalThis.document.addEventListener('keyup', handler)
+    globalThis.document.addEventListener('keydown', handler)
     return () => {
-      globalThis.document.removeEventListener('keyup', handler)
+      globalThis.document.removeEventListener('keydown', handler)
     }
-  })
+  }, [entries, selectedEntryHash])
 
   const parentType =
     locationState.type === 'entry'
