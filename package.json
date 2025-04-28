@@ -50,7 +50,7 @@
     "postcss": "^8.5.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "sanitize-html": "^2.15.0",
+    "sanitize-html": "^2.16.0",
     "shadcn": "2.4.1",
     "sql.js-httpvfs": "^0.8.12",
     "sqlite3": "^5.1.7",
