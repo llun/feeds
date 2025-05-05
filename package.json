@@ -68,7 +68,7 @@
     "@types/sanitize-html": "^2.15.0",
     "@types/sinon": "^17.0.4",
     "@types/xml2js": "^0.4.14",
-    "ava": "^6.2.0",
+    "ava": "^6.3.0",
     "sinon": "^20.0.0",
     "typescript": "^5.8.3"
   },
