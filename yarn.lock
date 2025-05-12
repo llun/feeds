@@ -3478,7 +3478,7 @@ __metadata:
     sqlite3: "npm:^5.1.7"
     tailwindcss: "npm:^4.1.3"
     tailwindcss-cli: "npm:^0.1.2"
-    tw-animate-css: "npm:^1.2.8"
+    tw-animate-css: "npm:^1.2.9"
     typescript: "npm:^5.8.3"
     xml2js: "npm:^0.6.2"
   languageName: unknown
@@ -7128,10 +7128,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tw-animate-css@npm:^1.2.8":
-  version: 1.2.8
-  resolution: "tw-animate-css@npm:1.2.8"
-  checksum: 10c0/395b0a10e6f9a0e3522e5c065d20af20bdf1eddebc6502dbde7ffd4123117c8015ebb91c4e18887282b44e4f5c3c8a9dc087802ee44569ef81e6e1e6d0fabfdb
+"tw-animate-css@npm:^1.2.9":
+  version: 1.2.9
+  resolution: "tw-animate-css@npm:1.2.9"
+  checksum: 10c0/ffbd6dfbb34490a8752b185b40192168ce4bfa69949d153dc831d9471dec2758501f27f1784b6615de7da73a546d01d7201ed691f5220fe3e0a53694cb275a3a
   languageName: node
   linkType: hard
 
