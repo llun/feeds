@@ -1892,12 +1892,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19.1.2":
-  version: 19.1.2
-  resolution: "@types/react@npm:19.1.2"
+"@types/react@npm:^19.1.5":
+  version: 19.1.5
+  resolution: "@types/react@npm:19.1.5"
   dependencies:
     csstype: "npm:^3.0.2"
-  checksum: 10c0/76ffe71395c713d4adc3c759465012d3c956db00af35ab7c6d0d91bd07b274b7ce69caa0478c0760311587bd1e38c78ffc9688ebc629f2b266682a19d8750947
+  checksum: 10c0/e0811aadc65cf4030e2418c7975b524f126db806bacb85cffdbe5e50c3606e9a5ffe89ffe6bf9c945e03f5e8d5ed992686bc6bb478db1f3127cc50933f648e1e
   languageName: node
   linkType: hard
 
@@ -3452,7 +3452,7 @@ __metadata:
     "@types/html-minifier": "npm:^4.0.5"
     "@types/jsdom": "npm:^21.1.7"
     "@types/node": "npm:^22.15.3"
-    "@types/react": "npm:^19.1.2"
+    "@types/react": "npm:^19.1.5"
     "@types/react-dom": "npm:^19.1.5"
     "@types/sanitize-html": "npm:^2.16.0"
     "@types/sinon": "npm:^17.0.4"
