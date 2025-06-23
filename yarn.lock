@@ -3745,7 +3745,7 @@ __metadata:
     sinon: "npm:^20.0.0"
     sql.js-httpvfs: "npm:^0.8.12"
     sqlite3: "npm:^5.1.7"
-    tailwindcss: "npm:^4.1.8"
+    tailwindcss: "npm:^4.1.10"
     tailwindcss-cli: "npm:^0.1.2"
     tw-animate-css: "npm:^1.3.4"
     typescript: "npm:^5.8.3"
@@ -7455,7 +7455,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwindcss@npm:4.1.10":
+"tailwindcss@npm:4.1.10, tailwindcss@npm:^4.1.10":
   version: 4.1.10
   resolution: "tailwindcss@npm:4.1.10"
   checksum: 10c0/9da74ee1f25d6065150f132a3eb18caad82cd9902b7c552278eb627266c68b12990a22bb4b6169d04ce775c058a8d2638a5051be905be99961889c572e2aeab8
@@ -7505,13 +7505,6 @@ __metadata:
     tailwind: lib/cli.js
     tailwindcss: lib/cli.js
   checksum: 10c0/eaa0f6e251483271db28b67305f0ab6b1be6b39472ce5ec2baf0795cbe0b05fd4ec2009315e76890b9fcdadd605c12eb6dddcb659a14d993c54f2373dfd4519d
-  languageName: node
-  linkType: hard
-
-"tailwindcss@npm:^4.1.8":
-  version: 4.1.8
-  resolution: "tailwindcss@npm:4.1.8"
-  checksum: 10c0/a566d049ee313f9c1638fd2a5fe95ae7e40bb35b58e92ed8d7c51880e71dff2a423dd430ff97444e2496c9c77b3f44ad4df48110b11484133019c1a8520d7bce
   languageName: node
   linkType: hard
 
