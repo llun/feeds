@@ -18,6 +18,9 @@ interface ItemListProps {
   selectBack?: () => void
 }
 
+// Store scroll positions for different locations
+const scrollPositions = new Map<string, number>()
+
 export const ItemList = ({
   basePath,
   title,
@@ -35,8 +38,44 @@ export const ItemList = ({
 
   const itemsRef = useRef<HTMLUListElement>(null)
   const nextBatchEntry = useRef<HTMLLIElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   let element: HTMLElement | null = null
+
+  // Generate a unique key for the current location
+  const getLocationKey = (locationState: LocationState): string => {
+    switch (locationState.type) {
+      case 'category':
+        return `category:${locationState.category}`
+      case 'site':
+        return `site:${locationState.siteKey}`
+      case 'entry':
+        return `${locationState.parent.type}:${locationState.parent.key}`
+      default:
+        return 'unknown'
+    }
+  }
+
+  // Save current scroll position before changing location
+  const saveScrollPosition = () => {
+    if (scrollContainerRef.current) {
+      const currentKey = getLocationKey(locationState)
+      scrollPositions.set(currentKey, scrollContainerRef.current.scrollTop)
+    }
+  }
+
+  // Restore scroll position for the current location
+  const restoreScrollPosition = () => {
+    if (scrollContainerRef.current) {
+      const currentKey = getLocationKey(locationState)
+      const savedPosition = scrollPositions.get(currentKey)
+      if (savedPosition !== undefined) {
+        scrollContainerRef.current.scrollTop = savedPosition
+      } else {
+        scrollContainerRef.current.scrollTop = 0
+      }
+    }
+  }
 
   const loadEntries = async (
     basePath: string,
@@ -120,6 +159,14 @@ export const ItemList = ({
   useEffect(() => {
     if (locationState.type === 'entry') return
 
+    const newLocationKey = getLocationKey(locationState)
+    const currentLocationKey = currentCategoryOrSite
+
+    // Save scroll position when changing location
+    if (currentLocationKey && currentLocationKey !== newLocationKey) {
+      saveScrollPosition()
+    }
+
     switch (locationState.type) {
       case 'category': {
         if (currentCategoryOrSite === locationState.category) return
@@ -130,7 +177,35 @@ export const ItemList = ({
         return setCurrentCategoryOrSite(locationState.siteKey)
       }
     }
-  }, [locationState])
+  }, [locationState, currentCategoryOrSite])
+
+  // Save scroll position when component unmounts
+  useEffect(() => {
+    return () => {
+      saveScrollPosition()
+    }
+  }, [])
+
+  // Add scroll event listener to save position during scrolling
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current
+    if (!scrollContainer) return
+
+    let scrollTimeout: number
+    const handleScroll = () => {
+      // Debounce the scroll position saving
+      clearTimeout(scrollTimeout)
+      scrollTimeout = window.setTimeout(() => {
+        saveScrollPosition()
+      }, 100)
+    }
+
+    scrollContainer.addEventListener('scroll', handleScroll)
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll)
+      clearTimeout(scrollTimeout)
+    }
+  }, [scrollContainerRef.current])
 
   useEffect(() => {
     if (!element) return
@@ -143,7 +218,11 @@ export const ItemList = ({
       setEntries(newEntries)
       setTotalEntry(totalEntry)
       setPage(0)
-      element.scrollTo(0, 0)
+      
+      // Use setTimeout to ensure the DOM is updated before restoring scroll position
+      setTimeout(() => {
+        restoreScrollPosition()
+      }, 0)
     })(element)
   }, [currentCategoryOrSite, element])
 
@@ -235,7 +314,7 @@ export const ItemList = ({
         </div>
       </div>
 
-      <div className="overflow-y-auto flex-1">
+      <div className="overflow-y-auto flex-1" ref={scrollContainerRef}>
         {pageState === 'loading' ? (
           <div className="flex flex-col items-center justify-center h-96 p-4">
             <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-4"></div>
