@@ -62,7 +62,7 @@
   "devDependencies": {
     "@types/html-minifier": "^4.0.5",
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^24.0.3",
+    "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/sanitize-html": "^2.16.0",
