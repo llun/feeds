@@ -57,6 +57,19 @@ jobs:
           branch: public
 ```
 
+## Features
+
+### Scroll Position Memory
+
+The feed reader now remembers your scroll position when navigating between different categories and sites. This prevents the disruptive experience of having the page scroll back to the top every time you switch between feeds.
+
+- **Automatic Saving**: Scroll positions are automatically saved when you navigate away from a feed
+- **Smart Restoration**: When you return to a previously visited feed, your scroll position is restored
+- **Session-Based**: Scroll positions are remembered for your current browsing session (up to 1 hour)
+- **Graceful Fallback**: If browser storage is unavailable, the feature gracefully falls back to the default behavior
+
+This feature works across all feed types: categories, individual sites, and the "All Items" view.
+
 ## Sample Sites
 
 - https://feeds.llun.dev
