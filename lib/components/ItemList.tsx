@@ -4,6 +4,12 @@ import { formatDistance } from 'date-fns'
 import { LocationState } from '../utils'
 import { getStorage } from '../storage'
 import { BackButton } from './BackButton'
+import { 
+  getLocationKey, 
+  saveScrollPosition, 
+  getScrollPosition, 
+  cleanupOldScrollPositions 
+} from '../utils/scrollMemory'
 
 interface ItemListProps {
   basePath: string
@@ -35,6 +41,11 @@ export const ItemList = ({
 
   const itemsRef = useRef<HTMLUListElement>(null)
   const nextBatchEntry = useRef<HTMLLIElement>(null)
+  const scrollableRef = useRef<HTMLDivElement>(null)
+
+  // Track the current location key for scroll position memory
+  const currentLocationKey = getLocationKey(locationState)
+  const [previousLocationKey, setPreviousLocationKey] = useState<string>(currentLocationKey)
 
   let element: HTMLElement | null = null
 
@@ -135,6 +146,12 @@ export const ItemList = ({
   useEffect(() => {
     if (!element) return
     ;(async (element: HTMLElement) => {
+      // Save scroll position of the previous location before loading new data
+      if (previousLocationKey !== currentLocationKey && scrollableRef.current) {
+        saveScrollPosition(previousLocationKey, scrollableRef.current.scrollTop)
+        setPreviousLocationKey(currentLocationKey)
+      }
+
       const { entries: newEntries, totalEntry } = await loadEntries(
         basePath,
         locationState
@@ -143,9 +160,36 @@ export const ItemList = ({
       setEntries(newEntries)
       setTotalEntry(totalEntry)
       setPage(0)
-      element.scrollTo(0, 0)
+      
+      // Restore scroll position for this location, or scroll to top if no saved position
+      if (scrollableRef.current) {
+        const savedScrollPosition = getScrollPosition(currentLocationKey)
+        scrollableRef.current.scrollTo(0, savedScrollPosition)
+      }
     })(element)
-  }, [currentCategoryOrSite, element])
+  }, [currentCategoryOrSite, element, currentLocationKey, previousLocationKey])
+
+  // Clean up old scroll positions on component mount
+  useEffect(() => {
+    cleanupOldScrollPositions()
+  }, [])
+
+  // Save scroll position when the location is about to change or component unmounts
+  useEffect(() => {
+    return () => {
+      if (scrollableRef.current && currentLocationKey) {
+        saveScrollPosition(currentLocationKey, scrollableRef.current.scrollTop)
+      }
+    }
+  }, [currentLocationKey])
+
+  // Also save scroll position when location state changes (before the new data loads)
+  useEffect(() => {
+    if (previousLocationKey && previousLocationKey !== currentLocationKey && scrollableRef.current) {
+      saveScrollPosition(previousLocationKey, scrollableRef.current.scrollTop)
+    }
+    setPreviousLocationKey(currentLocationKey)
+  }, [currentLocationKey])
 
   useEffect(() => {
     if (!nextBatchEntry?.current) return
@@ -235,7 +279,7 @@ export const ItemList = ({
         </div>
       </div>
 
-      <div className="overflow-y-auto flex-1">
+      <div className="overflow-y-auto flex-1" ref={scrollableRef}>
         {pageState === 'loading' ? (
           <div className="flex flex-col items-center justify-center h-96 p-4">
             <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-4"></div>
