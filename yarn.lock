@@ -3733,7 +3733,7 @@ __metadata:
     jsdom: "npm:^26.1.0"
     knex: "npm:^3.1.0"
     lodash: "npm:^4.17.21"
-    lucide-react: "npm:^0.522.0"
+    lucide-react: "npm:^0.525.0"
     next: "npm:^15.3.3"
     next-themes: "npm:^0.4.6"
     node-fetch: "npm:3"
@@ -5100,12 +5100,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lucide-react@npm:^0.522.0":
-  version: 0.522.0
-  resolution: "lucide-react@npm:0.522.0"
+"lucide-react@npm:^0.525.0":
+  version: 0.525.0
+  resolution: "lucide-react@npm:0.525.0"
   peerDependencies:
     react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/92f18da5ade753c7955a3d0fe3779b62831bf1d6ab15396b6024ef66efe7df7b78e19728e3cf59d1bd01bbee16de0c474a5d6b2741e6b5c97d8374d02f776898
+  checksum: 10c0/81c4438e2cf1c86ea2ebe0a97b378201512450894283cccce766a89bc6a4e47c8df1d9115d845d98f582bb0a10be31c454aa232520fea35018dac1cd8466ea9b
   languageName: node
   linkType: hard
 
