@@ -1,5 +1,6 @@
 import { parseString } from 'xml2js'
 import sanitizeHtml from 'sanitize-html'
+import { parseBlognoneContent } from './custom/blognone'
 
 export interface Entry {
   title: string
@@ -55,28 +56,32 @@ export function parseRss(feedTitle: string, xml: any): Site {
       joinValuesOrEmptyString(lastBuildDate || channels[0]['dc:date'])
     ).getTime(),
     generator: joinValuesOrEmptyString(generator || channels[0]['dc:creator']),
-    entries:
-      (items &&
-        items.map((item) => {
-          const { title, link, pubDate, description } = item
-          return {
-            title: joinValuesOrEmptyString(title).trim(),
-            link: joinValuesOrEmptyString(link),
+    entries: []
+  }
+  feed.entries =
+    (items &&
+      items.map((item) => {
+        const { title, link, pubDate, description } = item
+        const originalContent = joinValuesOrEmptyString(
+          item['content:encoded'] || description
+        )
+        const content =
+          feed.link === 'https://www.blognone.com/'
+            ? parseBlognoneContent(originalContent)
+            : originalContent
+        return {
+          title: joinValuesOrEmptyString(title).trim(),
+          link: joinValuesOrEmptyString(link),
             date: new Date(
               joinValuesOrEmptyString(pubDate || item['dc:date'])
             ).getTime(),
-            content: sanitizeHtml(
-              joinValuesOrEmptyString(item['content:encoded'] || description),
-              {
-                allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
-              }
-            ),
+            content: sanitizeHtml(content, {
+              allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
+            }),
             author: joinValuesOrEmptyString(item['dc:creator'])
           }
         })) ||
       []
-  }
-
   return feed
 }
 
