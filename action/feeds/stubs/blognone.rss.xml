@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+  xmlns:slash="http://purl.org/rss/1.0/modules/slash/">
+
+  <channel>
+    <title>Blognone</title>
+    <atom:link href="https://www.blognone.com/node/feed" rel="self" type="application/rss+xml" />
+    <link>https://www.blognone.com</link>
+    <description>Thai Tech Blog</description>
+    <lastBuildDate>Mon, 15 Jan 2024 10:00:00 +0000</lastBuildDate>
+    <language>th-TH</language>
+    <generator>Drupal</generator>
+    
+    <item>
+      <title>การใช้ AI ในการพัฒนา Software</title>
+      <link>https://www.blognone.com/node/123456</link>
+      <pubDate>Mon, 15 Jan 2024 10:00:00 +0000</pubDate>
+      <dc:creator><![CDATA[admin]]></dc:creator>
+      <category><![CDATA[Software Development]]></category>
+      <guid isPermaLink="false">https://www.blognone.com/node/123456</guid>
+      <description><![CDATA[บทความเกี่ยวกับการใช้ AI ในการพัฒนา Software]]></description>
+      <content:encoded><![CDATA[
+        <h1>การใช้ AI ในการพัฒนา Software</h1>
+        <p>ในยุคปัจจุบัน การใช้ประโยชน์จาก AI ในการพัฒนา Software กำลังเป็นที่นิยมมากขึ้น</p>
+        <h2>ข้อดีของการใช้ AI</h2>
+        <ul>
+          <li>ประหยัดเวลาในการเขียนโค้ด</li>
+          <li>ลดข้อผิดพลาด</li>
+          <li>เพิ่มประสิทธิภาพในการทำงาน</li>
+        </ul>
+        <p>AI สามารถช่วยนักพัฒนาในหลายด้าน เช่น การเขียนโค้ด การทดสอบ และการดีบัก</p>
+      ]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>เทคโนโลยี Blockchain ล่าสุด</title>
+      <link>https://www.blognone.com/node/123457</link>
+      <pubDate>Sun, 14 Jan 2024 15:30:00 +0000</pubDate>
+      <dc:creator><![CDATA[author2]]></dc:creator>
+      <category><![CDATA[Blockchain]]></category>
+      <guid isPermaLink="false">https://www.blognone.com/node/123457</guid>
+      <description><![CDATA[อัพเดทเทคโนโลยี Blockchain ล่าสุด]]></description>
+      <content:encoded><![CDATA[
+        <h1>เทคโนโลยี Blockchain ล่าสุด</h1>
+        <p>Blockchain เป็นเทคโนโลยีที่มีการพัฒนาอย่างต่อเนื่อง</p>
+        <h2>การประยุกต์ใช้</h2>
+        <p>สามารถใช้ในหลายสาขา เช่น การเงิน การจัดการโซ่อุปทาน และอื่นๆ</p>
+      ]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>วิธีการเรียนรู้ Programming</title>
+      <link>https://www.blognone.com/node/123458</link>
+      <pubDate>Sat, 13 Jan 2024 12:00:00 +0000</pubDate>
+      <dc:creator><![CDATA[author3]]></dc:creator>
+      <category><![CDATA[Programming]]></category>
+      <guid isPermaLink="false">https://www.blognone.com/node/123458</guid>
+      <description><![CDATA[คู่มือการเรียนรู้ Programming สำหรับผู้เริ่มต้น]]></description>
+      <content:encoded><![CDATA[
+        <p>การเรียนรู้ Programming เป็นทักษะที่สำคัญในยุคดิจิทัล</p>
+        <h2>เริ่มต้นอย่างไร</h2>
+        <ol>
+          <li>เลือกภาษาที่ต้องการเรียน</li>
+          <li>หาแหล่งเรียนรู้ที่เชื่อถือได้</li>
+          <li>ฝึกฝนอย่างสม่ำเสมอ</li>
+        </ol>
+      ]]></content:encoded>
+    </item>
+    
+  </channel>
+</rss>
