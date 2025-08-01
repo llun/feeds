@@ -16,6 +16,40 @@ interface ItemContentProps {
   selectBack?: () => void
 }
 
+export function parseBlognoneContent(
+  title: string,
+  url: string,
+  content: string
+) {
+  let host = ''
+  try {
+    host = new URL(url).hostname
+  } catch {
+    return content
+  }
+  if (!host.endsWith('blognone.com')) return content
+
+  let doc: Document | null = null
+  if (typeof DOMParser !== 'undefined') {
+    doc = new DOMParser().parseFromString(`<div>${content}</div>`, 'text/html')
+  } else {
+    const { JSDOM } = require('jsdom')
+    doc = new JSDOM(`<div>${content}</div>`).window.document
+  }
+
+  const container = doc.querySelector('div')
+  if (!container) return content
+
+  let first = container.firstElementChild
+  while (first && first.textContent?.trim() === title.trim()) {
+    const next = first.nextElementSibling
+    first.remove()
+    first = next
+  }
+
+  return container.innerHTML
+}
+
 export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
   let element: HTMLElement | null = null
   useEffect(() => {
@@ -64,7 +98,7 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
           element = contentPane
         }}
       >
-        {parse(content.content, {
+        {parse(parseBlognoneContent(content.title, content.url, content.content), {
           replace: (domNode) => {
             const node = domNode as ReactParserNode
             if (node.attribs && node.name === 'a') {
