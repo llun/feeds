@@ -3,6 +3,7 @@ import { Content } from '../storage/types'
 import { format, formatDistance } from 'date-fns'
 import { BackButton } from './BackButton'
 import parse from 'html-react-parser'
+import { processBlognoneContent, isBlognoneContent } from '../utils'
 
 interface ReactParserNode {
   name: string
@@ -64,17 +65,22 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
           element = contentPane
         }}
       >
-        {parse(content.content, {
-          replace: (domNode) => {
-            const node = domNode as ReactParserNode
-            if (node.attribs && node.name === 'a') {
-              node.attribs.target = '_blank'
-              node.attribs.rel = 'noopener noreferrer'
-              return node
+        {parse(
+          isBlognoneContent(content.siteKey, content.url)
+            ? processBlognoneContent(content.content, content.title)
+            : content.content,
+          {
+            replace: (domNode) => {
+              const node = domNode as ReactParserNode
+              if (node.attribs && node.name === 'a') {
+                node.attribs.target = '_blank'
+                node.attribs.rel = 'noopener noreferrer'
+                return node
+              }
+              return domNode
             }
-            return domNode
           }
-        })}
+        )}
       </div>
     </article>
   )
