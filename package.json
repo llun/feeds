@@ -54,7 +54,7 @@
     "shadcn": "2.10.0",
     "sql.js-httpvfs": "^0.8.12",
     "sqlite3": "^5.1.7",
-    "tailwindcss": "^4.1.11",
+    "tailwindcss": "^4.1.12",
     "tailwindcss-cli": "^0.1.2",
     "tw-animate-css": "^1.3.6",
     "xml2js": "^0.6.2"
