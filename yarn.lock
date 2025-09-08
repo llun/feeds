@@ -1529,16 +1529,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc-node/core@npm:^1.13.3":
-  version: 1.13.3
-  resolution: "@swc-node/core@npm:1.13.3"
-  peerDependencies:
-    "@swc/core": ">= 1.4.13"
-    "@swc/types": ">= 0.1"
-  checksum: 10c0/01f69d6124691569cedd2e6d0c6d3e33ab96d8fca6607780d64359c884750cfd77541e112e545cf37d9f0ee5fdccd57fbf9eb07cfd0ae26f8cca88c974e82e08
-  languageName: node
-  linkType: hard
-
 "@swc-node/core@npm:^1.14.1":
   version: 1.14.1
   resolution: "@swc-node/core@npm:1.14.1"
@@ -3796,7 +3786,7 @@ __metadata:
     "@actions/core": "npm:^1.11.1"
     "@actions/github": "npm:^6.0.1"
     "@octokit/rest": "npm:^22"
-    "@swc-node/core": "npm:^1.13.3"
+    "@swc-node/core": "npm:^1.14.1"
     "@swc-node/register": "npm:^1.11.1"
     "@swc/core": "npm:^1.13.3"
     "@tailwindcss/postcss": "npm:^4.1.12"
