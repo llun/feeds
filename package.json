@@ -33,7 +33,7 @@
     "@swc-node/register": "^1.11.1",
     "@swc/core": "^1.13.5",
     "@tailwindcss/postcss": "^4.1.13",
-    "@tailwindcss/typography": "^0.5.18",
+    "@tailwindcss/typography": "^0.5.19",
     "@vscode/sqlite3": "^5.1.2",
     "autoprefixer": "^10.4.21",
     "date-fns": "^4.1.0",
