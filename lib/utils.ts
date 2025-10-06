@@ -129,3 +129,40 @@ export const locationController = async (
     }
   }
 }
+
+/**
+ * Process content from blognone.com to remove duplicate headers
+ * blognone.com feed often includes the article title both in RSS title and within content HTML
+ */
+export function processBlognoneContent(content: string, title: string): string {
+  if (!content || !title) return content
+
+  const normalizedTitle = title.trim().toLowerCase()
+  
+  // Match header tags with their content, including nested HTML
+  const headerRegex = /<(h[1-6])[^>]*>(.*?)<\/h[1-6]>/gi
+  
+  return content.replace(headerRegex, (match, tag, headerContent) => {
+    // Extract plain text from HTML content
+    const textContent = headerContent.replace(/<[^>]+>/g, '').trim().toLowerCase()
+    
+    // If header text matches the title, remove the entire header tag
+    if (textContent === normalizedTitle) {
+      return ''
+    }
+    return match
+  })
+}
+
+/**
+ * Check if a site is blognone.com based on its URL or siteKey
+ */
+export function isBlognoneContent(siteKey: string, url?: string): boolean {
+  if (siteKey && siteKey.toLowerCase().includes('blognone')) {
+    return true
+  }
+  if (url && url.toLowerCase().includes('blognone.com')) {
+    return true
+  }
+  return false
+}
