@@ -2178,12 +2178,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19.1.13":
-  version: 19.1.13
-  resolution: "@types/react@npm:19.1.13"
+"@types/react@npm:^19.2.2":
+  version: 19.2.2
+  resolution: "@types/react@npm:19.2.2"
   dependencies:
     csstype: "npm:^3.0.2"
-  checksum: 10c0/75e35b54883f5ed07d3b5cb16a4711b6dbb7ec6b74301bcb9bfa697c9d9fff022ec508e1719e7b2c69e2e8b042faac1125be7717b5e5e084f816a2c88e136920
+  checksum: 10c0/f830b1204aca4634ce3c6cb3477b5d3d066b80a4dd832a4ee0069acb504b6debd2416548a43a11c1407c12bc60e2dc6cf362934a18fe75fe06a69c0a98cba8ab
   languageName: node
   linkType: hard
 
@@ -4095,7 +4095,7 @@ __metadata:
     "@types/html-minifier": "npm:^4.0.5"
     "@types/jsdom": "npm:^27.0.0"
     "@types/node": "npm:^24.8.1"
-    "@types/react": "npm:^19.1.13"
+    "@types/react": "npm:^19.2.2"
     "@types/react-dom": "npm:^19.2.0"
     "@types/sanitize-html": "npm:^2.16.0"
     "@types/sinon": "npm:^17.0.4"
@@ -4115,7 +4115,7 @@ __metadata:
     next-themes: "npm:^0.4.6"
     node-fetch: "npm:3"
     postcss: "npm:^8.5.6"
-    react: "npm:^19.1.1"
+    react: "npm:^19.2.0"
     react-dom: "npm:^19.2.0"
     sanitize-html: "npm:^2.17.0"
     shadcn: "npm:3.4.0"
@@ -6931,10 +6931,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:^19.1.1":
-  version: 19.1.1
-  resolution: "react@npm:19.1.1"
-  checksum: 10c0/8c9769a2dfd02e603af6445058325e6c8a24b47b185d0e461f66a6454765ddcaecb3f0a90184836c68bb509f3c38248359edbc42f0d07c23eb500a5c30c87b4e
+"react@npm:^19.2.0":
+  version: 19.2.0
+  resolution: "react@npm:19.2.0"
+  checksum: 10c0/1b6d64eacb9324725bfe1e7860cb7a6b8a34bc89a482920765ebff5c10578eb487e6b46b2f0df263bd27a25edbdae2c45e5ea5d81ae61404301c1a7192c38330
   languageName: node
   linkType: hard
 
