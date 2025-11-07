@@ -59,7 +59,7 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
         </div>
       </div>
       <div
-        className="p-6 pt-4 prose dark:prose-invert lg:prose-xl max-w-full overflow-y-auto flex-1"
+        className="p-6 pt-4 prose dark:prose-invert lg:prose-xl max-w-full overflow-y-auto flex-1 [&_a]:underline [&_a:hover]:text-blue-600 [&_a:hover]:dark:text-blue-400"
         ref={(contentPane) => {
           element = contentPane
         }}
