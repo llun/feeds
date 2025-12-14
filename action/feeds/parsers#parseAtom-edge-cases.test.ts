@@ -87,3 +87,54 @@ test('#parseAtom handles empty entry array', async (t) => {
   t.truthy(site)
   t.is(site.entries.length, 0)
 })
+
+test('#parseAtom handles missing link in entry', async (t) => {
+  const xml = {
+    feed: {
+      title: ['Test Feed'],
+      subtitle: ['Test subtitle'],
+      link: [{ $: { rel: 'alternate', href: 'https://example.com' } }],
+      updated: ['2024-01-01T00:00:00Z'],
+      generator: ['test'],
+      entry: [
+        {
+          title: ['Test Entry'],
+          // Note: link field is missing
+          published: ['2024-01-01T00:00:00Z'],
+          content: [{ _: 'Test content' }]
+        }
+      ]
+    }
+  }
+  
+  const site = parseAtom('Test Feed', xml)
+  t.truthy(site)
+  t.is(site.entries.length, 1)
+  t.is(site.entries[0].link, '')
+})
+
+test('#parseAtom handles empty link array in entry', async (t) => {
+  const xml = {
+    feed: {
+      title: ['Test Feed'],
+      subtitle: ['Test subtitle'],
+      link: [{ $: { rel: 'alternate', href: 'https://example.com' } }],
+      updated: ['2024-01-01T00:00:00Z'],
+      generator: ['test'],
+      entry: [
+        {
+          title: ['Test Entry'],
+          link: [], // Empty link array
+          published: ['2024-01-01T00:00:00Z'],
+          content: [{ _: 'Test content' }]
+        }
+      ]
+    }
+  }
+  
+  const site = parseAtom('Test Feed', xml)
+  t.truthy(site)
+  t.is(site.entries.length, 1)
+  t.is(site.entries[0].link, '')
+})
+

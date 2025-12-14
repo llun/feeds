@@ -112,7 +112,7 @@ export function parseAtom(feedTitle: string, xml: any): Site {
               : ''
           return {
             title: joinValuesOrEmptyString(title).trim(),
-            link: itemLink.$.href,
+            link: (itemLink && itemLink.$.href) || '',
             date: parseDate(
               joinValuesOrEmptyString(published || updated)
             ),
