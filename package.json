@@ -26,13 +26,13 @@
     ]
   },
   "dependencies": {
-    "@actions/core": "^1.11.1",
+    "@actions/core": "^2.0.1",
     "@actions/github": "^6.0.1",
     "@octokit/rest": "^22",
     "@swc-node/core": "^1.14.1",
     "@swc-node/register": "^1.11.1",
-    "@swc/core": "^1.15.3",
-    "@tailwindcss/postcss": "^4.1.17",
+    "@swc/core": "^1.15.4",
+    "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",
     "@vscode/sqlite3": "^5.1.2",
     "autoprefixer": "^10.4.22",
@@ -40,21 +40,21 @@
     "history": "^5.3.0",
     "html-minifier": "^4.0.0",
     "html-react-parser": "^5.2.10",
-    "jsdom": "^27.2.0",
+    "jsdom": "^27.3.0",
     "knex": "^3.1.0",
     "lodash": "^4.17.21",
-    "lucide-react": "^0.556.0",
-    "next": "^16.0.9",
+    "lucide-react": "^0.561.0",
+    "next": "^16.0.10",
     "next-themes": "^0.4.6",
     "node-fetch": "3",
     "postcss": "^8.5.6",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "sanitize-html": "^2.17.0",
-    "shadcn": "3.5.1",
+    "shadcn": "3.6.1",
     "sql.js-httpvfs": "^0.8.12",
     "sqlite3": "^5.1.7",
-    "tailwindcss": "^4.1.17",
+    "tailwindcss": "^4.1.18",
     "tailwindcss-cli": "^0.1.2",
     "tw-animate-css": "^1.4.0",
     "xml2js": "^0.6.2"
@@ -62,7 +62,7 @@
   "devDependencies": {
     "@types/html-minifier": "^4.0.6",
     "@types/jsdom": "^27.0.0",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.0.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/sanitize-html": "^2.16.0",
@@ -75,5 +75,5 @@
   "resolutions": {
     "@octokit/rest": "22.0.1"
   },
-  "packageManager": "yarn@4.8.1"
+  "packageManager": "yarn@4.12.0"
 }
