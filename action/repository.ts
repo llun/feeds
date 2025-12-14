@@ -122,7 +122,7 @@ export async function publish() {
     // Fix custom domain getting disable after run
     const customDomain = core.getInput('customDomain')
     if (customDomain) {
-      fs.writeFileSync('CNAME', customDomain)
+      fs.writeFileSync(path.join(workSpace, 'CNAME'), customDomain)
     }
 
     runCommand(

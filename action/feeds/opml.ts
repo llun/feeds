@@ -35,15 +35,22 @@ export interface OpmlCategory {
 
 export async function readOpml(opmlContent: string): Promise<OpmlCategory[]> {
   const input = await parseXML(opmlContent)
+  if (!input.opml || !input.opml.body || !input.opml.body[0] || !input.opml.body[0].outline) {
+    throw new Error('Invalid OPML format: missing required structure')
+  }
+  
   const body = input.opml.body
   const outlines = body[0].outline
 
   const rootSubscriptions = outlines
-    .filter((item: any) => item.$.type === 'rss')
+    .filter((item: any) => item.$ && item.$.type === 'rss')
     .map((item: any) => item.$)
   const categories = outlines
-    .filter((item: any) => item.$.type !== 'rss')
+    .filter((item: any) => item.$ && item.$.type !== 'rss')
     .reduce((out: OpmlCategory[], outline: any) => {
+      if (!outline.$ || !outline.$.title) {
+        return out
+      }
       const category = outline.$.title
       const items = outline.outline
       out.push({
@@ -52,7 +59,7 @@ export async function readOpml(opmlContent: string): Promise<OpmlCategory[]> {
           items &&
           items
             .map((item: any) => item.$)
-            .filter((item: any) => item.type === 'rss')
+            .filter((item: any) => item && item.type === 'rss')
       })
       return out
     }, [])
