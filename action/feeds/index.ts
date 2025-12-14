@@ -38,7 +38,7 @@ export async function createFeedDatabase(githubActionPath: string) {
     await createOrUpdateDatabase(database, opml, loadFeed)
     await cleanup(database)
     await database.destroy()
-  } catch (error) {
+  } catch (error: any) {
     console.error(error.message)
     console.error(error.stack)
     core.setFailed(error)
@@ -65,7 +65,7 @@ export async function createFeedFiles(githubActionPath: string) {
     await createRepositoryData(DEFAULT_PATHS, githubRootName, customDomainName)
     await createCategoryData(DEFAULT_PATHS)
     await createAllEntriesData()
-  } catch (error) {
+  } catch (error: any) {
     console.error(error.message)
     console.error(error.stack)
     core.setFailed(error)

@@ -13,7 +13,7 @@ export async function loadFeed(title: string, url: string) {
 
     const site = 'rss' in xml ? parseRss(title, xml) : parseAtom(title, xml)
     return site
-  } catch (error) {
+  } catch (error: any) {
     console.error(
       `Fail to load - ${title} (${url}) because of ${error.message}`
     )

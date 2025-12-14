@@ -19,7 +19,8 @@ run()
     console.log('Done')
     process.exit(0)
   })
-  .catch((error) => {
+  .catch((error: any) => {
     console.error(error.message)
     console.error(error.stack)
+    process.exit(1)
   })

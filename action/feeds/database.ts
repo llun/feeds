@@ -19,7 +19,7 @@ export function getDatabase(contentDirectory: string) {
     if (!stats.isDirectory()) {
       throw new Error(`${contentDirectory} is not a directory`)
     }
-  } catch (error) {
+  } catch (error: any) {
     if (error.code !== 'ENOENT') {
       throw new Error(`Fail to access ${contentDirectory}`)
     }
@@ -131,7 +131,7 @@ export async function insertCategory(knex: Knex, category: string) {
       if (record) return
       await trx('Categories').insert({ name: category })
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Fail to insert ${category}`)
   }
 }
@@ -288,7 +288,7 @@ export async function insertSite(knex: Knex, category: string, site: Site) {
       return key
     })
     return key
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Fail to insert site ${site.title}`)
     console.error(error.message)
     return null
@@ -407,7 +407,7 @@ export async function copyExistingDatabase(publicPath: string) {
       fs.statSync(existingDatabase)
       console.log(`Copying ${existingDatabase} to ${targetDatabase}`)
       fs.copyFileSync(existingDatabase, targetDatabase, constants.COPYFILE_EXCL)
-    } catch (error) {
+    } catch (error: any) {
       // Fail to read old database, ignore it
       console.log('Skip copy old database because of error: ', error.message)
     }

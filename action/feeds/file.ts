@@ -65,7 +65,7 @@ export async function createCategoryDirectory(
         `${path.join(rootDirectory, category)} is not a directory`
       )
     }
-  } catch (error) {
+  } catch (error: any) {
     if (error.code !== 'ENOENT') {
       throw new Error(`Fail to access ${rootDirectory}`)
     }
