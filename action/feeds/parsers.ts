@@ -27,6 +27,14 @@ function joinValuesOrEmptyString(values: Values) {
   return (values && values.join('').trim()) || ''
 }
 
+function parseDate(dateString: string): number {
+  if (!dateString || dateString.trim() === '') {
+    return Date.now()
+  }
+  const timestamp = new Date(dateString).getTime()
+  return isNaN(timestamp) ? Date.now() : timestamp
+}
+
 export async function parseXML(data: string): Promise<any> {
   const xml = await new Promise((resolve, reject) =>
     parseString(data, (error, result) => {
@@ -51,9 +59,9 @@ export function parseRss(feedTitle: string, xml: any): Site {
     title: feedTitle,
     link: joinValuesOrEmptyString(link),
     description: joinValuesOrEmptyString(description),
-    updatedAt: new Date(
+    updatedAt: parseDate(
       joinValuesOrEmptyString(lastBuildDate || channels[0]['dc:date'])
-    ).getTime(),
+    ),
     generator: joinValuesOrEmptyString(generator || channels[0]['dc:creator']),
     entries:
       (items &&
@@ -62,9 +70,9 @@ export function parseRss(feedTitle: string, xml: any): Site {
           return {
             title: joinValuesOrEmptyString(title).trim(),
             link: joinValuesOrEmptyString(link),
-            date: new Date(
+            date: parseDate(
               joinValuesOrEmptyString(pubDate || item['dc:date'])
-            ).getTime(),
+            ),
             content: sanitizeHtml(
               joinValuesOrEmptyString(item['content:encoded'] || description),
               {
@@ -89,24 +97,33 @@ export function parseAtom(feedTitle: string, xml: any): Site {
     title: feedTitle,
     description: joinValuesOrEmptyString(subtitle),
     link: siteLink && siteLink.$.href,
-    updatedAt: new Date(joinValuesOrEmptyString(updated)).getTime(),
+    updatedAt: parseDate(joinValuesOrEmptyString(updated)),
     generator: joinValuesOrEmptyString(generator),
-    entries: entry.map((item) => {
-      const { title, link, published, updated, content, author, summary } = item
-      const itemLink =
-        link && (link.find((item) => item.$.rel === 'alternate') || link[0])
-      const feedContent = content ? content[0]._ : summary ? summary[0]._ : ''
-      return {
-        title: joinValuesOrEmptyString(title).trim(),
-        link: itemLink.$.href,
-        date: new Date(joinValuesOrEmptyString(published || updated)).getTime(),
-        content: sanitizeHtml(feedContent, {
-          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
-        }),
-        author:
-          (author && joinValuesOrEmptyString(author[0].name)) || siteAuthor
-      }
-    })
+    entries: entry
+      ? entry.map((item) => {
+          const { title, link, published, updated, content, author, summary } =
+            item
+          const itemLink =
+            link && (link.find((item) => item.$.rel === 'alternate') || link[0])
+          const feedContent = content
+            ? content[0]._
+            : summary
+              ? summary[0]._
+              : ''
+          return {
+            title: joinValuesOrEmptyString(title).trim(),
+            link: (itemLink && itemLink.$.href) || '',
+            date: parseDate(
+              joinValuesOrEmptyString(published || updated)
+            ),
+            content: sanitizeHtml(feedContent, {
+              allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
+            }),
+            author:
+              (author && joinValuesOrEmptyString(author[0].name)) || siteAuthor
+          }
+        })
+      : []
   }
 
   return feed
