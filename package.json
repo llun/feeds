@@ -51,7 +51,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "sanitize-html": "^2.17.0",
-    "shadcn": "3.6.1",
+    "shadcn": "3.6.2",
     "sql.js-httpvfs": "^0.8.12",
     "sqlite3": "^5.1.7",
     "tailwindcss": "^4.1.18",
