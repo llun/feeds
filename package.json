@@ -39,7 +39,7 @@
     "date-fns": "^4.1.0",
     "history": "^5.3.0",
     "html-minifier": "^4.0.0",
-    "html-react-parser": "^5.2.10",
+    "html-react-parser": "^5.2.11",
     "jsdom": "^27.3.0",
     "knex": "^3.1.0",
     "lodash": "^4.17.21",
