@@ -2296,6 +2296,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/validate-npm-package-name@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "@types/validate-npm-package-name@npm:4.0.2"
+  checksum: 10c0/5a109fe12570b7125740fdac8678970e3caf7de0cbd6e15cf93dad67a427a3a83e0759b5d4b64fd75bce6cdf43b0569275456a35183059046cba6c25d096b916
+  languageName: node
+  linkType: hard
+
 "@types/xml2js@npm:^0.4.14":
   version: 0.4.14
   resolution: "@types/xml2js@npm:0.4.14"
@@ -4264,7 +4271,7 @@ __metadata:
     react: "npm:^19.2.3"
     react-dom: "npm:^19.2.3"
     sanitize-html: "npm:^2.17.0"
-    shadcn: "npm:3.6.2"
+    shadcn: "npm:3.6.3"
     sinon: "npm:^21.0.1"
     sql.js-httpvfs: "npm:^0.8.12"
     sqlite3: "npm:^5.1.7"
@@ -7574,9 +7581,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shadcn@npm:3.6.2":
-  version: 3.6.2
-  resolution: "shadcn@npm:3.6.2"
+"shadcn@npm:3.6.3":
+  version: 3.6.3
+  resolution: "shadcn@npm:3.6.3"
   dependencies:
     "@antfu/ni": "npm:^25.0.0"
     "@babel/core": "npm:^7.28.0"
@@ -7585,6 +7592,7 @@ __metadata:
     "@babel/preset-typescript": "npm:^7.27.1"
     "@dotenvx/dotenvx": "npm:^1.48.4"
     "@modelcontextprotocol/sdk": "npm:^1.17.2"
+    "@types/validate-npm-package-name": "npm:^4.0.2"
     browserslist: "npm:^4.26.2"
     commander: "npm:^14.0.0"
     cosmiconfig: "npm:^9.0.0"
@@ -7608,11 +7616,12 @@ __metadata:
     stringify-object: "npm:^5.0.0"
     ts-morph: "npm:^26.0.0"
     tsconfig-paths: "npm:^4.2.0"
+    validate-npm-package-name: "npm:^7.0.1"
     zod: "npm:^3.24.1"
     zod-to-json-schema: "npm:^3.24.6"
   bin:
     shadcn: dist/index.js
-  checksum: 10c0/b532cb95f35d20b2e5939b2dc5960e2075c713f38a921380c732caadcdb1f4d01f2412c278c570496064e3a727f8ac23d8a762a951708f32a8677e7a31682283
+  checksum: 10c0/9698a79239edc1de490cb368b910e9c1665f2faec92b2480de060962f7ad3dfd8465062e0bd628e134ef433eecb920fff74c54c28a3b51530c85d8bbc01306f8
   languageName: node
   linkType: hard
 
@@ -8673,6 +8682,13 @@ __metadata:
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
   checksum: 10c0/41a5bdd214df2f6c3ecf8622745e4a366c4adced864bc3c833739791aeeeb1838119af7daed4ba36428114b5c67dcda034a79c882e97e43c03e66a4dd7389942
+  languageName: node
+  linkType: hard
+
+"validate-npm-package-name@npm:^7.0.1":
+  version: 7.0.2
+  resolution: "validate-npm-package-name@npm:7.0.2"
+  checksum: 10c0/adf32e943148e13e8df13d06b855493908e6ae7a847610e8543c6291cbf42f40e653249a5b2275e2e615e3224c574ade5a9064a9e2d1ab629386284ea99e8f39
   languageName: node
   linkType: hard
 
