@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@actions/core": "^2.0.2",
-    "@actions/github": "^6.0.1",
+    "@actions/github": "^7.0.0",
     "@octokit/rest": "^22",
     "@swc-node/core": "^1.14.1",
     "@swc-node/register": "^1.11.1",
