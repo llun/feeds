@@ -63,7 +63,7 @@
     "@types/html-minifier": "^4.0.6",
     "@types/jsdom": "^27.0.0",
     "@types/node": "^25.0.6",
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@types/sanitize-html": "^2.16.0",
     "@types/sinon": "^21.0.0",
