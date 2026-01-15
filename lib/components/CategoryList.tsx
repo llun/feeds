@@ -42,10 +42,10 @@ export const CategoryList = ({
           onClick={() => {
             selectSite?.('all', 'All Items')
           }}
-          className="block w-full text-left font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1"
+          className="flex items-center w-full text-left font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1"
         >
-          <span className="truncate block">All Items</span>
-          <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+          <span className="truncate">All Items</span>
+          <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
             ({totalEntries ?? 0})
           </span>
         </button>
@@ -58,15 +58,15 @@ export const CategoryList = ({
               setCurrentCategory(category.title)
               selectCategory?.(category.title)
             }}
-            className={`block w-full text-left font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1 ${
+            className={`flex items-center w-full text-left font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1 ${
               category.title === currentCategory
                 ? 'text-blue-700 dark:text-blue-500'
                 : ''
             }`}
             aria-expanded={currentCategory === category.title}
           >
-            <span className="truncate block">{category.title}</span>
-            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+            <span className="truncate">{category.title}</span>
+            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
               ({category.totalEntries})
             </span>
           </button>
@@ -79,10 +79,10 @@ export const CategoryList = ({
                     onClick={() => {
                       selectSite?.(site.key, site.title)
                     }}
-                    className="block w-full text-left text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1"
+                    className="flex items-center w-full text-left text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1"
                   >
-                    <span className="truncate block">{site.title}</span>
-                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="truncate">{site.title}</span>
+                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
                       ({site.totalEntries})
                     </span>
                   </button>
