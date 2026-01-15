@@ -216,8 +216,8 @@ export const ItemList = ({
     locationState.type === 'entry'
       ? locationState.parent.key
       : locationState.type === 'category'
-      ? locationState.category
-      : locationState.siteKey
+        ? locationState.category
+        : locationState.siteKey
 
   return (
     <section
@@ -234,7 +234,9 @@ export const ItemList = ({
             element = section
           }}
         >
-          <h2 className="text-lg font-semibold line-clamp-2 break-words">{title}</h2>
+          <h2 className="text-lg font-semibold line-clamp-2 break-words">
+            {title}
+          </h2>
         </div>
       </div>
 

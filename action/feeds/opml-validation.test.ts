@@ -18,7 +18,7 @@ test('#readOpml handles malformed OPML with missing attributes', async (t) => {
   const result = await readOpml(opml)
   t.truthy(result)
   // Should only include valid feeds and categories
-  const category1 = result.find(cat => cat.category === 'Category 1')
+  const category1 = result.find((cat) => cat.category === 'Category 1')
   t.truthy(category1)
   t.is(category1?.items.length, 1) // Should only include Feed 1
 })
@@ -31,10 +31,9 @@ test('#readOpml throws error for invalid OPML structure', async (t) => {
   </head>
 </opml>`
 
-  await t.throwsAsync(
-    async () => await readOpml(opml),
-    { message: /Invalid OPML format/ }
-  )
+  await t.throwsAsync(async () => await readOpml(opml), {
+    message: /Invalid OPML format/
+  })
 })
 
 test('#readOpml throws error for completely empty OPML', async (t) => {
@@ -42,8 +41,7 @@ test('#readOpml throws error for completely empty OPML', async (t) => {
 <opml version="2.0">
 </opml>`
 
-  await t.throwsAsync(
-    async () => await readOpml(opml),
-    { message: /Invalid OPML format/ }
-  )
+  await t.throwsAsync(async () => await readOpml(opml), {
+    message: /Invalid OPML format/
+  })
 })

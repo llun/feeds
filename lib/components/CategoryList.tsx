@@ -58,10 +58,11 @@ export const CategoryList = ({
               setCurrentCategory(category.title)
               selectCategory?.(category.title)
             }}
-            className={`flex items-center w-full text-left font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1 ${category.title === currentCategory
-              ? 'text-blue-700 dark:text-blue-500'
-              : ''
-              }`}
+            className={`flex items-center w-full text-left font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1 ${
+              category.title === currentCategory
+                ? 'text-blue-700 dark:text-blue-500'
+                : ''
+            }`}
             aria-expanded={currentCategory === category.title}
           >
             <span className="truncate">{category.title}</span>
@@ -92,7 +93,9 @@ export const CategoryList = ({
         </div>
       ))}
       {!categories.length && (
-        <p className="text-sm text-gray-500" role="status">No categories found.</p>
+        <p className="text-sm text-gray-500" role="status">
+          No categories found.
+        </p>
       )}
     </nav>
   )

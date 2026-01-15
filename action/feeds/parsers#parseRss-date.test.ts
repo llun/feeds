@@ -22,7 +22,7 @@ test('#parseRss handles empty date fields gracefully', async (t) => {
       ]
     }
   }
-  
+
   const site = parseRss('Test Feed', xml)
   t.truthy(site)
   t.false(isNaN(site.updatedAt))
@@ -51,7 +51,7 @@ test('#parseRss handles invalid date fields gracefully', async (t) => {
       ]
     }
   }
-  
+
   const site = parseRss('Test Feed', xml)
   t.truthy(site)
   t.false(isNaN(site.updatedAt))
@@ -78,7 +78,7 @@ test('#parseRss handles missing date fields gracefully', async (t) => {
       ]
     }
   }
-  
+
   const site = parseRss('Test Feed', xml)
   t.truthy(site)
   t.false(isNaN(site.updatedAt))

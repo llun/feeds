@@ -125,7 +125,9 @@ export const Page: FC = () => {
             role="status"
             aria-label="Loading"
           ></div>
-          <p className="text-lg font-semibold" aria-live="polite">Loading content...</p>
+          <p className="text-lg font-semibold" aria-live="polite">
+            Loading content...
+          </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             This will take a few seconds
           </p>
@@ -146,7 +148,11 @@ export const Page: FC = () => {
       >
         Skip to main content
       </button>
-      <main className="flex flex-col md:flex-row h-screen" id="main-content" tabIndex={-1}>
+      <main
+        className="flex flex-col md:flex-row h-screen"
+        id="main-content"
+        tabIndex={-1}
+      >
         <div
           className={`w-full md:w-1/4 xl:w-1/5 flex-shrink-0 ${categoriesClassName(
             pageState
