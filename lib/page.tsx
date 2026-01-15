@@ -130,6 +130,7 @@ export const Page: FC = () => {
   return (
     <>
       <button
+        type="button"
         onClick={(e) => {
           e.preventDefault()
           document.getElementById('main-content')?.focus()
