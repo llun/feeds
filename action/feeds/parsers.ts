@@ -76,7 +76,17 @@ export function parseRss(feedTitle: string, xml: any): Site {
             content: sanitizeHtml(
               joinValuesOrEmptyString(item['content:encoded'] || description),
               {
-                allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
+                allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+                allowedAttributes: {
+                  ...sanitizeHtml.defaults.allowedAttributes,
+                  img: ['src', 'alt', 'title', 'width', 'height', 'loading']
+                },
+                allowedSchemes: ['http', 'https', 'mailto', 'data'],
+                allowedSchemesByTag: {
+                  img: ['http', 'https', 'data']
+                },
+                disallowedTagsMode: 'discard',
+                enforceHtmlBoundary: true
               }
             ),
             author: joinValuesOrEmptyString(item['dc:creator'])
@@ -115,7 +125,17 @@ export function parseAtom(feedTitle: string, xml: any): Site {
             link: (itemLink && itemLink.$.href) || '',
             date: parseDate(joinValuesOrEmptyString(published || updated)),
             content: sanitizeHtml(feedContent, {
-              allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
+              allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+              allowedAttributes: {
+                ...sanitizeHtml.defaults.allowedAttributes,
+                img: ['src', 'alt', 'title', 'width', 'height', 'loading']
+              },
+              allowedSchemes: ['http', 'https', 'mailto', 'data'],
+              allowedSchemesByTag: {
+                img: ['http', 'https', 'data']
+              },
+              disallowedTagsMode: 'discard',
+              enforceHtmlBoundary: true
             }),
             author:
               (author && joinValuesOrEmptyString(author[0].name)) || siteAuthor

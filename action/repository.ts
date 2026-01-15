@@ -2,6 +2,49 @@ import { spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 
+/**
+ * Validates that a branch name is safe to use in git commands
+ * @param branch The branch name to validate
+ * @throws Error if the branch name contains potentially dangerous characters
+ */
+function validateBranchName(branch: string): void {
+  // Git branch names cannot contain: .., ~, ^, :, \, *, ?, [, @{, //, start with /, end with /, end with .lock
+  const dangerousPatterns = [
+    /\.\./,
+    /~/,
+    /\^/,
+    /:/,
+    /\\/,
+    /\*/,
+    /\?/,
+    /\[/,
+    /@\{/,
+    /\/\//,
+    /^\//,
+    /\/$/,
+    /\.lock$/
+  ]
+  
+  for (const pattern of dangerousPatterns) {
+    if (pattern.test(branch)) {
+      throw new Error(`Invalid branch name: ${branch}`)
+    }
+  }
+}
+
+/**
+ * Validates that a domain name is safe to write to CNAME file
+ * @param domain The domain name to validate
+ * @throws Error if the domain name contains potentially dangerous characters
+ */
+function validateDomainName(domain: string): void {
+  // Domain names should only contain alphanumeric characters, dots, and hyphens
+  const domainPattern = /^[a-zA-Z0-9]([a-zA-Z0-9-_.]*[a-zA-Z0-9])?$/
+  if (!domainPattern.test(domain)) {
+    throw new Error(`Invalid domain name: ${domain}`)
+  }
+}
+
 export function runCommand(commands: string[], cwd?: string) {
   return spawnSync(commands[0], commands.slice(1), {
     stdio: 'inherit',
@@ -67,6 +110,9 @@ export async function setup() {
     const user = process.env['GITHUB_ACTOR']
     const token = core.getInput('token', { required: true })
     const branch = core.getInput('branch', { required: true })
+    
+    // Validate branch name to prevent command injection
+    validateBranchName(branch)
 
     const octokit = new Octokit({
       auth: token
@@ -81,6 +127,9 @@ export async function setup() {
     const checkoutBranch = isBranchExist
       ? branch
       : github.context.ref.substring('refs/heads/'.length)
+    
+    // Validate checkout branch as well
+    validateBranchName(checkoutBranch)
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
     const cloneResult = runCommand([
       'git',
@@ -118,10 +167,15 @@ export async function publish() {
     const token = core.getInput('token', { required: true })
     const user = process.env['GITHUB_ACTOR']
     const pushUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
+    
+    // Validate branch name to prevent command injection
+    validateBranchName(branch)
 
     // Fix custom domain getting disable after run
     const customDomain = core.getInput('customDomain')
     if (customDomain) {
+      // Validate domain name to prevent injection attacks
+      validateDomainName(customDomain)
       fs.writeFileSync(path.join(workSpace, 'CNAME'), customDomain)
     }
 
