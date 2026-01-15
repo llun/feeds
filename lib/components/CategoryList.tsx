@@ -36,7 +36,7 @@ export const CategoryList = ({
         </span>
         <ThemeToggle />
       </div>
-      <div className="mb-4">
+      <div className="mb-2">
         <button
           type="button"
           onClick={() => {
@@ -51,18 +51,17 @@ export const CategoryList = ({
         </button>
       </div>
       {categories.map((category) => (
-        <div key={category.title} className="mb-4">
+        <div key={category.title} className="mb-2">
           <button
             type="button"
             onClick={() => {
               setCurrentCategory(category.title)
               selectCategory?.(category.title)
             }}
-            className={`flex items-center w-full text-left font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1 ${
-              category.title === currentCategory
-                ? 'text-blue-700 dark:text-blue-500'
-                : ''
-            }`}
+            className={`flex items-center w-full text-left font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1 ${category.title === currentCategory
+              ? 'text-blue-700 dark:text-blue-500'
+              : ''
+              }`}
             aria-expanded={currentCategory === category.title}
           >
             <span className="truncate">{category.title}</span>
