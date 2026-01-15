@@ -49,7 +49,7 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
                 addSuffix: true
               })}
             </time>
-            <span aria-hidden="true">|</span>
+            <span className="text-gray-400 dark:text-gray-500">•</span>
             <a
               href={content.url}
               target="_blank"
