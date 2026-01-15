@@ -22,8 +22,7 @@ function validateBranchName(branch: string): void {
     /\/\//,
     /^\//,
     /\/$/,
-    /\.lock$/,
-    /\.\./
+    /\.lock$/
   ]
   
   for (const pattern of dangerousPatterns) {
@@ -40,7 +39,7 @@ function validateBranchName(branch: string): void {
  */
 function validateDomainName(domain: string): void {
   // Domain names should only contain alphanumeric characters, dots, and hyphens
-  const domainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$/
+  const domainPattern = /^[a-zA-Z0-9]([a-zA-Z0-9-_.]*[a-zA-Z0-9])?$/
   if (!domainPattern.test(domain)) {
     throw new Error(`Invalid domain name: ${domain}`)
   }
