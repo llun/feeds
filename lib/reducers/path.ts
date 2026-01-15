@@ -26,7 +26,6 @@ export const PathReducer: Reducer<PathState, Actions> = (
       }
 
       const location = parseLocation(pathname)
-      window.history.pushState({ location }, '', pathname)
       return {
         ...state,
         pathname,

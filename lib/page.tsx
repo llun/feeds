@@ -32,6 +32,13 @@ export const Page: FC = () => {
     location: parseLocation(originalPath)
   })
 
+  // Handle browser history updates when pathname changes
+  useEffect(() => {
+    if (state.pathname !== originalPath) {
+      window.history.pushState({ location: state.location }, '', state.pathname)
+    }
+  }, [state.pathname, state.location])
+
   useEffect(() => {
     ;(async () => {
       if (!state.location) {
