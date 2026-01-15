@@ -35,10 +35,15 @@ export interface OpmlCategory {
 
 export async function readOpml(opmlContent: string): Promise<OpmlCategory[]> {
   const input = await parseXML(opmlContent)
-  if (!input.opml || !input.opml.body || !input.opml.body[0] || !input.opml.body[0].outline) {
+  if (
+    !input.opml ||
+    !input.opml.body ||
+    !input.opml.body[0] ||
+    !input.opml.body[0].outline
+  ) {
     throw new Error('Invalid OPML format: missing required structure')
   }
-  
+
   const body = input.opml.body
   const outlines = body[0].outline
 

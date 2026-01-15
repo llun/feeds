@@ -32,6 +32,13 @@ export const Page: FC = () => {
     location: parseLocation(originalPath)
   })
 
+  // Handle browser history updates when pathname changes
+  useEffect(() => {
+    if (state.pathname !== originalPath) {
+      window.history.pushState({ location: state.location }, '', state.pathname)
+    }
+  }, [state.pathname, state.location])
+
   useEffect(() => {
     ;(async () => {
       if (!state.location) {
@@ -113,8 +120,14 @@ export const Page: FC = () => {
     return (
       <div className="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-lg font-semibold">Loading content...</p>
+          <div
+            className="w-16 h-16 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin motion-reduce:animate-none mx-auto mb-4"
+            role="status"
+            aria-label="Loading"
+          ></div>
+          <p className="text-lg font-semibold" aria-live="polite">
+            Loading content...
+          </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             This will take a few seconds
           </p>
@@ -124,80 +137,99 @@ export const Page: FC = () => {
   }
 
   return (
-    <main className="flex flex-col md:flex-row h-screen">
-      <div
-        className={`w-full md:w-1/4 xl:w-1/5 flex-shrink-0 ${categoriesClassName(
-          pageState
-        )}`}
+    <>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault()
+          document.getElementById('main-content')?.focus()
+        }}
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
       >
-        <CategoryList
-          categories={categories}
-          totalEntries={totalEntries}
-          selectCategory={(category: string) => {
-            setListTitle(category)
-            dispatch(updatePath(`/categories/${category}`))
-          }}
-          selectSite={(siteKey: string, siteTitle: string) => {
-            setListTitle(siteTitle)
-            dispatch(updatePath(`/sites/${siteKey}`))
-          }}
-        />
-      </div>
-
-      <div
-        className={`w-full md:w-1/3 xl:w-2/5 flex-shrink-0 ${entriesClassName(
-          pageState
-        )}`}
+        Skip to main content
+      </button>
+      <main
+        className="flex flex-col md:flex-row h-screen"
+        id="main-content"
+        tabIndex={-1}
       >
-        {listTitle ? (
-          <ItemList
-            basePath={state.pathname}
-            locationState={state.location}
-            title={listTitle}
-            selectBack={() => setPageState('categories')}
-            selectSite={(site: string) => {
-              dispatch(updatePath(`/sites/${site}`))
+        <div
+          className={`w-full md:w-1/4 xl:w-1/5 flex-shrink-0 ${categoriesClassName(
+            pageState
+          )}`}
+        >
+          <CategoryList
+            categories={categories}
+            totalEntries={totalEntries}
+            selectCategory={(category: string) => {
+              setListTitle(category)
+              dispatch(updatePath(`/categories/${category}`))
             }}
-            selectEntry={(
-              parentType: string,
-              parentKey: string,
-              entryKey: string
-            ) => {
-              const targetPath = `/${
-                parentType === 'category' ? 'categories' : 'sites'
-              }/${parentKey}/entries/${entryKey}`
-              dispatch(updatePath(targetPath))
+            selectSite={(siteKey: string, siteTitle: string) => {
+              setListTitle(siteTitle)
+              dispatch(updatePath(`/sites/${siteKey}`))
             }}
           />
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 p-8 text-center border-r border-gray-200 dark:border-gray-700">
-            <p>
-              Select a category or site from the left panel to see feed items.
-            </p>
-          </div>
-        )}
-      </div>
+        </div>
 
-      <div
-        className={`w-full flex-1 ${
-          !content ? 'hidden md:block' : ''
-        } ${articleClassName(pageState)}`}
-      >
-        <ItemContent
-          content={content}
-          selectBack={() => {
-            const location = state.location
-            if (location.type !== 'entry') return
-            const { parent } = location
-            const { type, key } = parent
-            dispatch(
-              updatePath(
-                `/${type === 'category' ? 'categories' : 'sites'}/${key}`
+        <div
+          className={`w-full md:w-1/3 xl:w-2/5 flex-shrink-0 ${entriesClassName(
+            pageState
+          )}`}
+        >
+          {listTitle ? (
+            <ItemList
+              basePath={state.pathname}
+              locationState={state.location}
+              title={listTitle}
+              selectBack={() => setPageState('categories')}
+              selectSite={(site: string) => {
+                dispatch(updatePath(`/sites/${site}`))
+              }}
+              selectEntry={(
+                parentType: string,
+                parentKey: string,
+                entryKey: string
+              ) => {
+                const targetPath = `/${
+                  parentType === 'category' ? 'categories' : 'sites'
+                }/${parentKey}/entries/${entryKey}`
+                dispatch(updatePath(targetPath))
+              }}
+            />
+          ) : (
+            <div
+              className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 p-8 text-center border-r border-gray-200 dark:border-gray-700"
+              role="status"
+            >
+              <p>
+                Select a category or site from the left panel to see feed items.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div
+          className={`w-full flex-1 ${
+            !content ? 'hidden md:block' : ''
+          } ${articleClassName(pageState)}`}
+        >
+          <ItemContent
+            content={content}
+            selectBack={() => {
+              const location = state.location
+              if (location.type !== 'entry') return
+              const { parent } = location
+              const { type, key } = parent
+              dispatch(
+                updatePath(
+                  `/${type === 'category' ? 'categories' : 'sites'}/${key}`
+                )
               )
-            )
-          }}
-        />
-      </div>
-    </main>
+            }}
+          />
+        </div>
+      </main>
+    </>
   )
 }

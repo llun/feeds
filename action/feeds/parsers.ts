@@ -113,9 +113,7 @@ export function parseAtom(feedTitle: string, xml: any): Site {
           return {
             title: joinValuesOrEmptyString(title).trim(),
             link: (itemLink && itemLink.$.href) || '',
-            date: parseDate(
-              joinValuesOrEmptyString(published || updated)
-            ),
+            date: parseDate(joinValuesOrEmptyString(published || updated)),
             content: sanitizeHtml(feedContent, {
               allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img'])
             }),

@@ -12,7 +12,7 @@ test('#parseAtom handles missing entry field gracefully', async (t) => {
       // Note: entry field is missing
     }
   }
-  
+
   const site = parseAtom('Test Feed', xml)
   t.truthy(site)
   t.is(site.entries.length, 0)
@@ -29,7 +29,9 @@ test('#parseAtom handles empty date fields gracefully', async (t) => {
       entry: [
         {
           title: ['Test Entry'],
-          link: [{ $: { rel: 'alternate', href: 'https://example.com/entry' } }],
+          link: [
+            { $: { rel: 'alternate', href: 'https://example.com/entry' } }
+          ],
           published: [''],
           updated: [''],
           content: [{ _: 'Test content' }]
@@ -37,7 +39,7 @@ test('#parseAtom handles empty date fields gracefully', async (t) => {
       ]
     }
   }
-  
+
   const site = parseAtom('Test Feed', xml)
   t.truthy(site)
   t.false(isNaN(site.updatedAt))
@@ -56,14 +58,16 @@ test('#parseAtom handles invalid date fields gracefully', async (t) => {
       entry: [
         {
           title: ['Test Entry'],
-          link: [{ $: { rel: 'alternate', href: 'https://example.com/entry' } }],
+          link: [
+            { $: { rel: 'alternate', href: 'https://example.com/entry' } }
+          ],
           published: ['invalid'],
           content: [{ _: 'Test content' }]
         }
       ]
     }
   }
-  
+
   const site = parseAtom('Test Feed', xml)
   t.truthy(site)
   t.false(isNaN(site.updatedAt))
@@ -82,7 +86,7 @@ test('#parseAtom handles empty entry array', async (t) => {
       entry: []
     }
   }
-  
+
   const site = parseAtom('Test Feed', xml)
   t.truthy(site)
   t.is(site.entries.length, 0)
@@ -106,7 +110,7 @@ test('#parseAtom handles missing link in entry', async (t) => {
       ]
     }
   }
-  
+
   const site = parseAtom('Test Feed', xml)
   t.truthy(site)
   t.is(site.entries.length, 1)
@@ -131,10 +135,9 @@ test('#parseAtom handles empty link array in entry', async (t) => {
       ]
     }
   }
-  
+
   const site = parseAtom('Test Feed', xml)
   t.truthy(site)
   t.is(site.entries.length, 1)
   t.is(site.entries[0].link, '')
 })
-

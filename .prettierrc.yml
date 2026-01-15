@@ -1,5 +1,5 @@
 semi: false
 singleQuote: true
-arrowParens: "always"
+arrowParens: 'always'
 requirePragma: false
-trailingComma: "none"
+trailingComma: 'none'
