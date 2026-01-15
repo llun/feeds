@@ -129,13 +129,16 @@ export const Page: FC = () => {
 
   return (
     <>
-      <a
-        href="#main-content"
+      <button
+        onClick={(e) => {
+          e.preventDefault()
+          document.getElementById('main-content')?.focus()
+        }}
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
       >
         Skip to main content
-      </a>
-      <main className="flex flex-col md:flex-row h-screen" id="main-content">
+      </button>
+      <main className="flex flex-col md:flex-row h-screen" id="main-content" tabIndex={-1}>
         <div
           className={`w-full md:w-1/4 xl:w-1/5 flex-shrink-0 ${categoriesClassName(
             pageState

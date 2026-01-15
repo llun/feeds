@@ -55,6 +55,7 @@ export const ThemeToggle = () => {
       <button
         ref={buttonRef}
         type="button"
+        id="theme-toggle-button"
         onClick={() => setShowModal(!showModal)}
         className="flex items-center border rounded-md p-1.5 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
         aria-label="Toggle theme"
@@ -70,6 +71,7 @@ export const ThemeToggle = () => {
           className="absolute right-0 mt-2 z-20 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-md shadow-lg p-2 min-w-[140px]"
           role="menu"
           aria-orientation="vertical"
+          aria-labelledby="theme-toggle-button"
         >
           <div className="flex flex-col space-y-2">
             <button
