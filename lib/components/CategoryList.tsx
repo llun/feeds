@@ -18,7 +18,10 @@ export const CategoryList = ({
 }: CategoryListProps) => {
   const [currentCategory, setCurrentCategory] = useState<string | undefined>()
   return (
-    <nav className="space-y-4 p-4 border-r border-gray-200 dark:border-gray-700 h-full overflow-y-auto">
+    <nav
+      className="space-y-4 p-4 border-r border-gray-200 dark:border-gray-700 h-full overflow-y-auto"
+      aria-label="Categories and feeds"
+    >
       <div className="mb-6 flex items-center justify-between">
         <span className="inline-flex items-center">
           <Image
@@ -35,13 +38,14 @@ export const CategoryList = ({
       </div>
       <div className="mb-4">
         <button
+          type="button"
           onClick={() => {
             selectSite?.('all', 'All Items')
           }}
-          className={`block font-medium hover:text-blue-600 dark:hover:text-blue-400`}
+          className="block w-full text-left font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1"
         >
-          All Items
-          <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+          <span className="truncate block">All Items</span>
+          <span className="ml-2 text-xs text-gray-500 dark:text-gray-400" aria-label={`${totalEntries ?? 0} total entries`}>
             ({totalEntries ?? 0})
           </span>
         </button>
@@ -49,33 +53,36 @@ export const CategoryList = ({
       {categories.map((category) => (
         <div key={category.title} className="mb-4">
           <button
+            type="button"
             onClick={() => {
               setCurrentCategory(category.title)
               selectCategory?.(category.title)
             }}
-            className={`block font-medium hover:text-blue-600 dark:hover:text-blue-400 text-left ${
+            className={`block w-full text-left font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1 ${
               category.title === currentCategory
                 ? 'text-blue-700 dark:text-blue-500'
                 : ''
             }`}
+            aria-expanded={currentCategory === category.title}
           >
-            {category.title}
-            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+            <span className="truncate block">{category.title}</span>
+            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400" aria-label={`${category.totalEntries} entries in ${category.title}`}>
               ({category.totalEntries})
             </span>
           </button>
           {currentCategory === category.title && (
-            <ul className="ml-4 mt-2 space-y-1">
+            <ul className="ml-4 mt-2 space-y-1" role="list">
               {category.sites.map((site) => (
                 <li key={site.key}>
                   <button
+                    type="button"
                     onClick={() => {
                       selectSite?.(site.key, site.title)
                     }}
-                    className={`block text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-left`}
+                    className="block w-full text-left text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-2 py-1"
                   >
-                    {site.title}
-                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="truncate block">{site.title}</span>
+                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400" aria-label={`${site.totalEntries} entries from ${site.title}`}>
                       ({site.totalEntries})
                     </span>
                   </button>
@@ -86,7 +93,7 @@ export const CategoryList = ({
         </div>
       ))}
       {!categories.length && (
-        <p className="text-sm text-gray-500">No categories found.</p>
+        <p className="text-sm text-gray-500" role="status">No categories found.</p>
       )}
     </nav>
   )

@@ -220,7 +220,10 @@ export const ItemList = ({
       : locationState.siteKey
 
   return (
-    <section className="border-r border-gray-200 dark:border-gray-700 h-full overflow-hidden flex flex-col">
+    <section
+      className="border-r border-gray-200 dark:border-gray-700 h-full overflow-hidden flex flex-col"
+      aria-label="Feed items"
+    >
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="md:hidden p-4 border-b border-gray-200 dark:border-gray-700">
           <BackButton onClickBack={selectBack} />
@@ -231,14 +234,18 @@ export const ItemList = ({
             element = section
           }}
         >
-          <h2 className="text-lg font-semibold line-clamp-2">{title}</h2>
+          <h2 className="text-lg font-semibold line-clamp-2 break-words">{title}</h2>
         </div>
       </div>
 
       <div className="overflow-y-auto flex-1">
         {pageState === 'loading' ? (
           <div className="flex flex-col items-center justify-center h-96 p-4">
-            <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+            <div
+              className="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-4 motion-reduce:animate-none"
+              role="status"
+              aria-label="Loading"
+            ></div>
             <p className="text-gray-500 dark:text-gray-400 text-center">
               Loading items...
             </p>
@@ -247,6 +254,7 @@ export const ItemList = ({
           <ul
             ref={itemsRef}
             className="divide-y divide-gray-200 dark:divide-gray-700"
+            role="list"
           >
             {entries.map((entry, index) => (
               <li
@@ -264,12 +272,15 @@ export const ItemList = ({
                 }
               >
                 <div className="w-full pr-2">
-                  <button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      selectEntryHash(entry.key)
+                    }}
+                    className="w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md p-1"
+                  >
                     <h3
-                      onClick={() => {
-                        selectEntryHash(entry.key)
-                      }}
-                      className={`font-medium text-sm text-left ${
+                      className={`font-medium text-sm break-words ${
                         entry.key === selectedEntryHash
                           ? 'text-blue-700 dark:text-blue-500'
                           : ''
@@ -278,19 +289,21 @@ export const ItemList = ({
                       {entry.title}
                     </h3>
                   </button>
-                  <div className="flex items-center mt-1 whitespace-nowrap">
+                  <div className="flex items-center mt-1 whitespace-nowrap overflow-hidden">
                     <button
-                      className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400 truncate"
+                      type="button"
+                      className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-1 truncate max-w-[60%]"
                       onClick={() => {
                         selectSite?.(entry.site.key)
                       }}
+                      title={entry.site.title}
                     >
                       {entry.site.title}
                     </button>
-                    <span className="mx-1 text-gray-400 dark:text-gray-500 text-xs">
+                    <span className="mx-1 text-gray-400 dark:text-gray-500 text-xs flex-shrink-0">
                       •
                     </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 text-nowrap">
+                    <span className="text-xs text-gray-400 dark:text-gray-500 text-nowrap flex-shrink-0">
                       {formatDistance(entry.timestamp * 1000, new Date(), {
                         addSuffix: true
                       })}
@@ -301,7 +314,7 @@ export const ItemList = ({
             ))}
           </ul>
         ) : (
-          <div className="p-4 text-center text-gray-500">
+          <div className="p-4 text-center text-gray-500" role="status">
             <p>No items to display.</p>
             <p className="text-sm">
               Select a category or site from the left panel.

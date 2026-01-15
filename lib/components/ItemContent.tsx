@@ -25,7 +25,10 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
 
   if (!content) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 p-8 text-center">
+      <div
+        className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 p-8 text-center"
+        role="status"
+      >
         <p>Select an item from the list to view its content.</p>
       </div>
     )
@@ -33,33 +36,33 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
 
   return (
     <article className="h-full overflow-hidden flex flex-col">
-      <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+      <header className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="md:hidden p-4 border-b border-gray-200 dark:border-gray-700">
           <BackButton onClickBack={selectBack} />
         </div>
         <div className="p-6 pb-3">
-          <h1 className="text-2xl font-bold">{content.title}</h1>
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            <span>
+          <h1 className="text-2xl font-bold break-words">{content.title}</h1>
+          <div className="text-sm text-gray-500 dark:text-gray-400 mt-2 flex flex-wrap gap-2 items-center">
+            <time dateTime={new Date(content.timestamp * 1000).toISOString()}>
               Published:{' '}
               {formatDistance(content.timestamp * 1000, new Date(), {
                 addSuffix: true
               })}
-            </span>
-            <span className="mx-2">|</span>
+            </time>
+            <span aria-hidden="true">|</span>
             <a
               href={content.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-blue-600 dark:hover:text-blue-400"
+              className="hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-1 break-all"
             >
               View Original
             </a>
           </div>
         </div>
-      </div>
+      </header>
       <div
-        className="p-6 pt-4 prose dark:prose-invert lg:prose-xl max-w-full overflow-y-auto flex-1 [&_a]:underline [&_a:hover]:text-blue-600 [&_a:hover]:dark:text-blue-400"
+        className="p-6 pt-4 prose dark:prose-invert lg:prose-xl max-w-full overflow-y-auto flex-1 overflow-x-hidden break-words [&_a]:underline [&_a:hover]:text-blue-600 [&_a:hover]:dark:text-blue-400 [&_a]:break-words [&_img]:max-w-full [&_img]:h-auto [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:overflow-x-auto [&_table]:block"
         ref={(contentPane) => {
           element = contentPane
         }}
