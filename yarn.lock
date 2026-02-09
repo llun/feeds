@@ -1064,7 +1064,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@modelcontextprotocol/sdk@npm:^1.17.2":
+"@modelcontextprotocol/sdk@npm:^1.26.0":
   version: 1.26.0
   resolution: "@modelcontextprotocol/sdk@npm:1.26.0"
   dependencies:
@@ -4290,7 +4290,7 @@ __metadata:
     react: "npm:^19.2.4"
     react-dom: "npm:^19.2.3"
     sanitize-html: "npm:^2.17.0"
-    shadcn: "npm:3.8.2"
+    shadcn: "npm:3.8.4"
     sinon: "npm:^21.0.1"
     sql.js-httpvfs: "npm:^0.8.12"
     sqlite3: "npm:^5.1.7"
@@ -7623,9 +7623,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shadcn@npm:3.8.2":
-  version: 3.8.2
-  resolution: "shadcn@npm:3.8.2"
+"shadcn@npm:3.8.4":
+  version: 3.8.4
+  resolution: "shadcn@npm:3.8.4"
   dependencies:
     "@antfu/ni": "npm:^25.0.0"
     "@babel/core": "npm:^7.28.0"
@@ -7633,7 +7633,7 @@ __metadata:
     "@babel/plugin-transform-typescript": "npm:^7.28.0"
     "@babel/preset-typescript": "npm:^7.27.1"
     "@dotenvx/dotenvx": "npm:^1.48.4"
-    "@modelcontextprotocol/sdk": "npm:^1.17.2"
+    "@modelcontextprotocol/sdk": "npm:^1.26.0"
     "@types/validate-npm-package-name": "npm:^4.0.2"
     browserslist: "npm:^4.26.2"
     commander: "npm:^14.0.0"
@@ -7656,6 +7656,7 @@ __metadata:
     prompts: "npm:^2.4.2"
     recast: "npm:^0.23.11"
     stringify-object: "npm:^5.0.0"
+    tailwind-merge: "npm:^3.0.1"
     ts-morph: "npm:^26.0.0"
     tsconfig-paths: "npm:^4.2.0"
     validate-npm-package-name: "npm:^7.0.1"
@@ -7663,7 +7664,7 @@ __metadata:
     zod-to-json-schema: "npm:^3.24.6"
   bin:
     shadcn: dist/index.js
-  checksum: 10c0/bce8f40b64cb3ba2c66080deb4ffa6fffb1eed8708be0cd4b6fbff0cf242d75ea6b6a133d59a34167c8ec0b2d0bf1ca818935c31efaec330fabf3a959f06d887
+  checksum: 10c0/6313129df3f865dd42f39c5d07b8103236875f24933d394a74771f7295cec3eb523127fd8917da5d112c2ea09004e661ad1379627c55079fece16e3afca0fbf7
   languageName: node
   linkType: hard
 
@@ -8214,6 +8215,13 @@ __metadata:
   version: 3.2.4
   resolution: "symbol-tree@npm:3.2.4"
   checksum: 10c0/dfbe201ae09ac6053d163578778c53aa860a784147ecf95705de0cd23f42c851e1be7889241495e95c37cabb058edb1052f141387bef68f705afc8f9dd358509
+  languageName: node
+  linkType: hard
+
+"tailwind-merge@npm:^3.0.1":
+  version: 3.4.0
+  resolution: "tailwind-merge@npm:3.4.0"
+  checksum: 10c0/eaf17bb695c51c7bb7a90366a9c62be295473ee97fcfd1da54287714d4a5788a88ff4ad1ab9e0128638257fda777d6c9ea88682e36195e31a7fa2cf43f45e310
   languageName: node
   linkType: hard
 
