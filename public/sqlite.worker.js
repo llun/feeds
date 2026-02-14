@@ -94,7 +94,14 @@
                         ['__proto__', 'prototype', 'constructor'].includes(e)
                       )
                         throw new Error(`Refusing unsafe property assignment: ${e}`)
-                      ;((t[e] = b(n.data.value)), (f = !0))
+                      const r = b(n.data.value)
+                      Object.defineProperty(t, e, {
+                        value: r,
+                        configurable: !0,
+                        writable: !0,
+                        enumerable: !0
+                      })
+                      f = !0
                     }
                     break
                   case 2:
