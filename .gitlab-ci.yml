@@ -9,6 +9,13 @@ stages:
   - test
   - sample
 
+cache:
+  key:
+    files:
+      - yarn.lock
+  paths:
+    - .yarn/cache
+
 default:
   before_script:
     - corepack enable
@@ -25,6 +32,6 @@ sample:
     - test
   script:
     - yarn install
-    - INPUT_STORAGETYPE='files' INPUT_OPMLFILE='feeds.opml' node --import tsx index.ts
+    - node --import tsx scripts/gitlab-sample.ts
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
