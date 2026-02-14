@@ -1,6 +1,6 @@
 import anyTest, { TestFn } from 'ava'
 import fs from 'fs'
-import { knex, Knex } from 'knex'
+import knex, { type Knex } from 'knex'
 import path from 'path'
 import sinon from 'sinon'
 import {
