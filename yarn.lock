@@ -1424,7 +1424,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@octokit/rest@npm:22.0.1":
+"@octokit/rest@npm:^22.0.1":
   version: 22.0.1
   resolution: "@octokit/rest@npm:22.0.1"
   dependencies:
