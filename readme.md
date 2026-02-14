@@ -2,6 +2,8 @@
 
 A GitHub Action that fetches RSS/Atom feeds from an OPML file and builds a static site aggregating all the feed content. This project creates a modern, responsive feed reader as a static site.
 
+This action runs on Node.js 24 (`runs.using: node24`).
+
 ## Usage
 
 To use it, create a new repository and add an OPML file named `feeds.opml` with your list of website RSS/Atom feeds. Create a GitHub workflow like the one below to fetch data and store it in a contents branch:
@@ -30,7 +32,8 @@ This action can be configured to use a custom domain and different types of stor
 
 - `customDomain`: Specifies the custom domain for the feeds site. Required when generating a static site as it's needed to generate the `CNAME` file.
 - `branch`: Branch where the static site will be generated. The default value is `contents`. This is the branch you'll need to point the repository's GitHub Pages to.
-- `storageType`: **(Default is `files`)** Content storage type, currently supports `files` and `sqlite`.
+- `storageType`: **(Default input value is `database`)** Content storage type, currently supports `files` and `sqlite`.
+  - `database`: Legacy default input value that behaves like `files`
   - `files`: Stores all feed contents in a JSON tree structure
   - `sqlite`: Stores content in a SQLite database that the client will download using HTTP chunks
 - `opmlFile`: Name of the OPML file containing the list of sites you want to include in your feed site.
