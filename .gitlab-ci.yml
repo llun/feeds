@@ -1,13 +1,30 @@
 image: node:24
 
-pages:
-  stage: deploy
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - when: never
+
+stages:
+  - test
+  - sample
+
+default:
+  before_script:
+    - corepack enable
+
+test:
+  stage: test
   script:
     - yarn install
-    - INPUT_OPMLFILE='feeds.opml' yarn run swc-node index.ts
-    - yarn run build -o public
-  artifacts:
-    paths:
-      - public
+    - yarn test
+
+sample:
+  stage: sample
+  needs:
+    - test
+  script:
+    - yarn install
+    - INPUT_STORAGETYPE='files' INPUT_OPMLFILE='feeds.opml' node --import tsx index.ts
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
