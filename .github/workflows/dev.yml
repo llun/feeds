@@ -2,12 +2,12 @@ name: Dev
 
 on: push
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    permissions: {}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     name: Sample
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Run Action
         uses: llun/feeds@main

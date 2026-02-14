@@ -91,9 +91,7 @@
                     {
                       const e = a.slice(-1)[0]
                       if (
-                        '__proto__' === e ||
-                        'prototype' === e ||
-                        'constructor' === e
+                        ['__proto__', 'prototype', 'constructor'].includes(e)
                       )
                         throw new Error(`Refusing unsafe property assignment: ${e}`)
                       ;((t[e] = b(n.data.value)), (f = !0))
