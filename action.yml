@@ -25,5 +25,5 @@ inputs:
       Enable custom domain name for the site generator
     default: ''
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'action.mjs'
