@@ -1,6 +1,6 @@
+import * as core from '@actions/core'
 import fs from 'fs/promises'
 import path from 'path'
-import { getInput, setFailed } from '../input'
 import { getWorkspacePath } from '../repository'
 import {
   cleanup,
@@ -26,10 +26,10 @@ import { loadFeed, readOpml } from './opml'
 
 export async function createFeedDatabase(githubActionPath: string) {
   try {
-    const storageType = getInput('storageType')
+    const storageType = core.getInput('storageType')
     // This feed site uses files
     if (storageType !== 'sqlite') return
-    const feedsFile = getInput('opmlFile', { required: true })
+    const feedsFile = core.getInput('opmlFile', { required: true })
     const opmlContent = (
       await fs.readFile(path.join(getWorkspacePath(), feedsFile))
     ).toString('utf8')
@@ -56,16 +56,16 @@ export async function createFeedDatabase(githubActionPath: string) {
   } catch (error: any) {
     console.error(error.message)
     console.error(error.stack)
-    setFailed(error)
+    core.setFailed(error)
   }
 }
 
 export async function createFeedFiles(githubActionPath: string) {
   try {
-    const storageType = getInput('storageType')
+    const storageType = core.getInput('storageType')
     // This feed site uses database
     if (storageType === 'sqlite') return
-    const feedsFile = getInput('opmlFile', { required: true })
+    const feedsFile = core.getInput('opmlFile', { required: true })
     const publicPath = githubActionPath
       ? path.join(githubActionPath, 'contents')
       : path.join('contents')
@@ -77,7 +77,7 @@ export async function createFeedFiles(githubActionPath: string) {
       path.join(getWorkspacePath(), feedsFile),
       (title, url) => loadFeed(title, url, { mediaDirectory })
     )
-    const customDomainName = getInput('customDomain')
+    const customDomainName = core.getInput('customDomain')
     const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
 
     await prepareDirectories(DEFAULT_PATHS)
@@ -91,6 +91,6 @@ export async function createFeedFiles(githubActionPath: string) {
   } catch (error: any) {
     console.error(error.message)
     console.error(error.stack)
-    setFailed(error)
+    core.setFailed(error)
   }
 }

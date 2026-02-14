@@ -1,11 +1,6 @@
 import { spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import {
-  getInput,
-  getRefBranch,
-  getRepositoryContext
-} from './input'
 
 /**
  * Validates that a branch name is safe to use in git commands
@@ -93,7 +88,8 @@ export async function buildSite() {
     // Bypass Jekyll
     runCommand(['touch', '.nojekyll'], workSpace)
 
-    const storageType = getInput('storageType')
+    const core = await import('@actions/core')
+    const storageType = core.getInput('storageType')
     if (storageType === 'files') process.env.NEXT_PUBLIC_STORAGE = 'files'
 
     const result = runCommand(['yarn', 'build'], getGithubActionPath())
@@ -108,11 +104,12 @@ export async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
   const workSpace = getWorkspacePath()
   if (workSpace) {
+    const core = await import('@actions/core')
+    const github = await import('@actions/github')
     const { Octokit } = await import('@octokit/rest')
     const user = process.env['GITHUB_ACTOR']
-    const token = getInput('token', { required: true })
-    const branch = getInput('branch', { required: true })
-    const { owner, repo } = getRepositoryContext()
+    const token = core.getInput('token', { required: true })
+    const branch = core.getInput('branch', { required: true })
     
     // Validate branch name to prevent command injection
     validateBranchName(branch)
@@ -121,18 +118,19 @@ export async function setup() {
       auth: token
     })
     const response = await octokit.repos.listBranches({
-      owner,
-      repo
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo
     })
     const isBranchExist = response.data
       .map((item) => item.name)
       .includes(branch)
-    const currentRefBranch = getRefBranch()
-    const checkoutBranch = isBranchExist ? branch : currentRefBranch
+    const checkoutBranch = isBranchExist
+      ? branch
+      : github.context.ref.substring('refs/heads/'.length)
     
     // Validate checkout branch as well
     validateBranchName(checkoutBranch)
-    const cloneUrl = `https://${user}:${token}@github.com/${owner}/${repo}`
+    const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
     const cloneResult = runCommand([
       'git',
       'clone',
@@ -163,17 +161,18 @@ export async function setup() {
 export async function publish() {
   const workSpace = getWorkspacePath()
   if (workSpace) {
-    const branch = getInput('branch', { required: true })
-    const token = getInput('token', { required: true })
-    const { owner, repo } = getRepositoryContext()
+    const core = await import('@actions/core')
+    const github = await import('@actions/github')
+    const branch = core.getInput('branch', { required: true })
+    const token = core.getInput('token', { required: true })
     const user = process.env['GITHUB_ACTOR']
-    const pushUrl = `https://${user}:${token}@github.com/${owner}/${repo}`
+    const pushUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
     
     // Validate branch name to prevent command injection
     validateBranchName(branch)
 
     // Fix custom domain getting disable after run
-    const customDomain = getInput('customDomain')
+    const customDomain = core.getInput('customDomain')
     if (customDomain) {
       // Validate domain name to prevent injection attacks
       validateDomainName(customDomain)
