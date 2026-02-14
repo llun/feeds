@@ -2,16 +2,19 @@ name: Dev
 
 on: push
 
+permissions: {}
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Use Node.js 20
+      - name: Use Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - name: Test
         run: |
           corepack enable
@@ -23,6 +26,8 @@ jobs:
     needs: [test]
     if: github.ref == 'refs/heads/main'
     name: Sample
+    permissions:
+      contents: read
     steps:
       - name: Run Action
         uses: llun/feeds@main

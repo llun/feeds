@@ -88,7 +88,16 @@
                     f = r
                     break
                   case 1:
-                    ;((t[a.slice(-1)[0]] = b(n.data.value)), (f = !0))
+                    {
+                      const e = a.slice(-1)[0]
+                      if (
+                        '__proto__' === e ||
+                        'prototype' === e ||
+                        'constructor' === e
+                      )
+                        throw new Error(`Refusing unsafe property assignment: ${e}`)
+                      ;((t[e] = b(n.data.value)), (f = !0))
+                    }
                     break
                   case 2:
                     f = r.apply(t, u)
