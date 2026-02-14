@@ -62,7 +62,7 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
         </div>
       </header>
       <div
-        className="p-6 pt-4 prose dark:prose-invert lg:prose-xl max-w-full overflow-y-auto flex-1 overflow-x-hidden break-words [&_a]:underline [&_a:hover]:text-blue-600 [&_a:hover]:dark:text-blue-400 [&_a]:break-words [&_img]:max-w-full [&_img]:h-auto [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:overflow-x-auto [&_table]:block"
+        className="p-6 pt-4 prose dark:prose-invert lg:prose-xl max-w-full overflow-y-auto flex-1 overflow-x-hidden break-words [&_a]:underline [&_a:hover]:text-blue-600 [&_a:hover]:dark:text-blue-400 [&_a]:break-words [&_img]:max-w-full [&_img]:h-auto [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:overflow-x-auto [&_table]:block [&_iframe]:max-w-full [&_video]:max-w-full [&_embed]:max-w-full [&_object]:max-w-full [&_code]:break-all [&_figure]:max-w-full"
         ref={(contentPane) => {
           element = contentPane
         }}
