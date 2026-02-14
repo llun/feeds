@@ -11,7 +11,7 @@ inputs:
   storageType:
     description: >
       Feed storage type, database or files
-    default: 'database'
+    default: 'files'
   branch:
     description: >
       Output branch
@@ -25,5 +25,5 @@ inputs:
       Enable custom domain name for the site generator
     default: ''
 runs:
-  using: 'node20'
-  main: 'action.js'
+  using: 'node24'
+  main: 'action.mjs'

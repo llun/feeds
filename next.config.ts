@@ -1,8 +1,7 @@
 import { NextConfig } from 'next'
 
-export default async () => {
-  const core = await import('@actions/core')
-  const customDomainName = core.getInput('customDomain')
+export default () => {
+  const customDomainName = process.env['INPUT_CUSTOMDOMAIN'] || ''
   const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
   const basePath = customDomainName
     ? ''
