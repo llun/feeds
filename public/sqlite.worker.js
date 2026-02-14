@@ -88,21 +88,7 @@
                     f = r
                     break
                   case 1:
-                    {
-                      const e = a.slice(-1)[0]
-                      if (
-                        ['__proto__', 'prototype', 'constructor'].includes(e)
-                      )
-                        throw new Error(`Refusing unsafe property assignment: ${e}`)
-                      const r = b(n.data.value)
-                      Object.defineProperty(t, e, {
-                        value: r,
-                        configurable: !0,
-                        writable: !0,
-                        enumerable: !0
-                      })
-                      f = !0
-                    }
+                    throw new Error('Refusing remote property assignment')
                     break
                   case 2:
                     f = r.apply(t, u)
