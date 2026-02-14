@@ -16,11 +16,6 @@ import {
   loadOPMLAndWriteFiles,
   prepareDirectories
 } from './file'
-import {
-  cleanupUnusedMediaFiles,
-  collectReferencedMediaFromContents,
-  collectReferencedMediaFromEntryDirectory
-} from './media'
 import { loadFeed, readOpml } from './opml'
 
 export async function createFeedDatabase(githubActionPath: string) {
@@ -36,20 +31,10 @@ export async function createFeedDatabase(githubActionPath: string) {
     const publicPath = githubActionPath
       ? path.join(githubActionPath, 'public')
       : 'public'
-    const mediaDirectory = path.join(publicPath, 'media')
     await copyExistingDatabase(publicPath)
     const database = getDatabase(publicPath)
     await createTables(database)
-    await createOrUpdateDatabase(database, opml, (title, url) =>
-      loadFeed(title, url, { mediaDirectory })
-    )
-    const entryContents = (await database('Entries').select('content')) as {
-      content: string
-    }[]
-    const referencedMedia = collectReferencedMediaFromContents(
-      entryContents.map((entry) => entry.content)
-    )
-    await cleanupUnusedMediaFiles(mediaDirectory, referencedMedia)
+    await createOrUpdateDatabase(database, opml, loadFeed)
     await cleanup(database)
     await database.destroy()
   } catch (error: any) {
@@ -68,13 +53,9 @@ export async function createFeedFiles(githubActionPath: string) {
     const publicPath = githubActionPath
       ? path.join(githubActionPath, 'contents')
       : path.join('contents')
-    const mediaDirectory = githubActionPath
-      ? path.join(githubActionPath, 'public', 'media')
-      : path.join('public', 'media')
     await loadOPMLAndWriteFiles(
       publicPath,
-      path.join(getWorkspacePath(), feedsFile),
-      (title, url) => loadFeed(title, url, { mediaDirectory })
+      path.join(getWorkspacePath(), feedsFile)
     )
     const customDomainName = getActionInput('customDomain')
     const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
@@ -83,10 +64,6 @@ export async function createFeedFiles(githubActionPath: string) {
     await createRepositoryData(DEFAULT_PATHS, githubRootName, customDomainName)
     await createCategoryData(DEFAULT_PATHS)
     await createAllEntriesData()
-    const referencedMedia = await collectReferencedMediaFromEntryDirectory(
-      DEFAULT_PATHS.entriesDataPath
-    )
-    await cleanupUnusedMediaFiles(mediaDirectory, referencedMedia)
   } catch (error: any) {
     console.error(error.message)
     console.error(error.stack)
