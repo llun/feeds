@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import fs, { constants } from 'fs'
-import { knex, Knex } from 'knex'
+import knex, { type Knex } from 'knex'
 import path from 'path'
 
 import { getWorkspacePath } from '../repository'

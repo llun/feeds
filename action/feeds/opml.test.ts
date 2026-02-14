@@ -1,6 +1,6 @@
 import test from 'ava'
 import fs from 'fs/promises'
-import { knex } from 'knex'
+import knex from 'knex'
 import path from 'path'
 import sinon from 'sinon'
 import {
