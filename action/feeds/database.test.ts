@@ -286,6 +286,48 @@ test('#insertEntry single entry', async (t) => {
   })
 })
 
+test('#insertEntry updates EntryCategories metadata when entry already exists', async (t) => {
+  const { db, fixtures } = t.context
+  const { site } = fixtures
+  await insertCategory(db, 'category1')
+  const siteKey = await insertSite(db, 'category1', site)
+
+  const firstDate = new Date('2024-01-01T00:00:00Z').getTime()
+  const secondDate = new Date('2024-02-01T00:00:00Z').getTime()
+  const entry: Entry = {
+    title: 'Stable key entry',
+    link: 'https://example.com/posts/stable',
+    author: 'llun',
+    content: 'old content',
+    date: firstDate
+  }
+  const updatedEntry: Entry = {
+    ...entry,
+    content: 'new content',
+    date: secondDate
+  }
+
+  const entryKey = await insertEntry(db, siteKey, site.title, 'category1', entry)
+  await insertEntry(db, siteKey, site.title, 'category1', updatedEntry)
+
+  const persistedEntry = await db('Entries').where('key', entryKey).first()
+  t.is(persistedEntry.content, 'new content')
+  t.is(persistedEntry.contentTime, Math.floor(secondDate / 1000))
+
+  const entryCategory = await db('EntryCategories')
+    .where('category', 'category1')
+    .andWhere('entryKey', entryKey)
+    .first()
+  t.is(entryCategory.entryContentTime, Math.floor(secondDate / 1000))
+
+  const entryCategoryCount = await db('EntryCategories')
+    .where('category', 'category1')
+    .andWhere('entryKey', entryKey)
+    .count('* as total')
+    .first()
+  t.is(entryCategoryCount.total, 1)
+})
+
 test('#insertEntry with site in multiple categories', async (t) => {
   const { db, fixtures } = t.context
   const { entry, site } = fixtures

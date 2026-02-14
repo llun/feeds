@@ -215,8 +215,8 @@ export async function insertEntry(
   const createdTime = Math.floor(Date.now() / 1000)
   const contentTime =
     (entry.date && Math.floor(entry.date / 1000)) || createdTime
-  if (!(await isEntryExists(knex, entry))) {
-    await knex('Entries').insert({
+  await knex('Entries')
+    .insert({
       key,
       siteKey,
       siteTitle,
@@ -226,7 +226,15 @@ export async function insertEntry(
       contentTime,
       createdAt: createdTime
     })
-  }
+    .onConflict('key')
+    .merge({
+      siteKey,
+      siteTitle,
+      title: entry.title,
+      url: entry.link,
+      content: entry.content,
+      contentTime
+    })
   const isEntryCategoryExists = await knex('EntryCategories')
     .where('category', category)
     .andWhere('entryKey', key)
@@ -241,6 +249,16 @@ export async function insertEntry(
       entryContentTime: contentTime,
       entryCreatedAt: createdTime
     })
+  } else {
+    await knex('EntryCategories')
+      .where('category', category)
+      .andWhere('entryKey', key)
+      .update({
+        entryTitle: entry.title,
+        siteKey,
+        siteTitle,
+        entryContentTime: contentTime
+      })
   }
   return key
 }
@@ -372,7 +390,7 @@ export async function removeOldEntries(db: Knex, site: Site) {
 export async function createOrUpdateDatabase(
   db: Knex,
   opmlCategories: OpmlCategory[],
-  feedLoader: (title: string, url: string) => Promise<Site>
+  feedLoader: (title: string, url: string) => Promise<Site | null>
 ) {
   await removeOldCategories(db, opmlCategories)
   for (const category of opmlCategories) {
@@ -389,9 +407,6 @@ export async function createOrUpdateDatabase(
       const siteKey = await insertSite(db, categoryName, site)
       await removeOldEntries(db, site)
       for (const entry of site.entries) {
-        if (await isEntryExists(db, entry)) {
-          continue
-        }
         await insertEntry(db, siteKey, site.title, categoryName, entry)
       }
     }
