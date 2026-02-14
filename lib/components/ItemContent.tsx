@@ -16,6 +16,36 @@ interface ItemContentProps {
   selectBack?: () => void
 }
 
+function isLocalMediaPath(url?: string) {
+  return !!url && /^\/media\/.+/.test(url)
+}
+
+function withBasePath(url: string) {
+  if (!isLocalMediaPath(url)) return url
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+  return `${basePath}${url}`
+}
+
+function rewriteLocalSrcSet(srcSet?: string) {
+  if (!srcSet) return ''
+  const candidates = srcSet
+    .split(',')
+    .map((candidate) => candidate.trim())
+    .filter((candidate) => candidate.length > 0)
+
+  const rewritten = candidates
+    .map((candidate) => {
+      const [urlPart, ...descriptorParts] = candidate.split(/\s+/)
+      if (!isLocalMediaPath(urlPart)) return null
+      const descriptor = descriptorParts.join(' ').trim()
+      const source = withBasePath(urlPart)
+      return descriptor ? `${source} ${descriptor}` : source
+    })
+    .filter((candidate) => candidate)
+
+  return rewritten.join(', ')
+}
+
 export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
   let element: HTMLElement | null = null
   useEffect(() => {
@@ -71,8 +101,27 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
           replace: (domNode) => {
             const node = domNode as ReactParserNode
             if (node.attribs && node.name === 'a') {
+              const href = node.attribs.href
+              if (isLocalMediaPath(href)) {
+                node.attribs.href = withBasePath(href)
+              }
               node.attribs.target = '_blank'
               node.attribs.rel = 'noopener noreferrer'
+              return node
+            }
+            if (node.attribs && node.name === 'img') {
+              const source = node.attribs.src
+              if (!source) return <></>
+              if (source.startsWith('data:')) return node
+              if (!isLocalMediaPath(source)) return <></>
+
+              node.attribs.src = withBasePath(source)
+              const srcSet = rewriteLocalSrcSet(node.attribs.srcset)
+              if (srcSet) {
+                node.attribs.srcset = srcSet
+              } else {
+                delete node.attribs.srcset
+              }
               return node
             }
             return domNode

@@ -75,7 +75,8 @@ export async function createCategoryDirectory(
 
 export async function loadOPMLAndWriteFiles(
   contentDirectory: string,
-  opmlPath: string
+  opmlPath: string,
+  feedLoader: (title: string, url: string) => Promise<Site | null> = loadFeed
 ) {
   const opmlContent = (await fs.readFile(opmlPath)).toString('utf8')
   const opml = await readOpml(opmlContent)
@@ -85,7 +86,7 @@ export async function loadOPMLAndWriteFiles(
     if (!items) continue
     console.log(`Load category ${title}`)
     for (const item of items) {
-      const feedData = await loadFeed(item.title, item.xmlUrl)
+      const feedData = await feedLoader(item.title, item.xmlUrl)
       if (!feedData) {
         continue
       }
@@ -126,6 +127,9 @@ export async function prepareDirectories(paths: Paths) {
   const { feedsContentPath, categoryDataPath, sitesDataPath, entriesDataPath } =
     paths
   await fs.stat(feedsContentPath)
+  await fs.rm(categoryDataPath, { recursive: true, force: true })
+  await fs.rm(sitesDataPath, { recursive: true, force: true })
+  await fs.rm(entriesDataPath, { recursive: true, force: true })
   await fs.mkdir(categoryDataPath, { recursive: true })
   await fs.mkdir(sitesDataPath, { recursive: true })
   await fs.mkdir(entriesDataPath, { recursive: true })
@@ -233,13 +237,14 @@ export async function createSitesData(
   return result
 }
 
-export async function createAllEntriesData() {
-  const entries = await fs.readdir(ENTRIES_DATA_PATH)
+export async function createAllEntriesData(paths: Paths = DEFAULT_PATHS) {
+  const { entriesDataPath, dataPath } = paths
+  const entries = await fs.readdir(entriesDataPath)
   const entriesData = (
     await Promise.all(
       entries.map(async (entryHashFile) => {
         const entry = await fs.readFile(
-          path.join(ENTRIES_DATA_PATH, entryHashFile),
+          path.join(entriesDataPath, entryHashFile),
           'utf-8'
         )
         try {
@@ -264,7 +269,7 @@ export async function createAllEntriesData() {
     .filter((item) => item)
     .sort((a, b) => b.date - a.date)
   const text = JSON.stringify(entriesData)
-  await fs.writeFile(path.join(DATA_PATH, 'all.json'), text)
+  await fs.writeFile(path.join(dataPath, 'all.json'), text)
 }
 
 export async function createCategoryData(paths: Paths) {

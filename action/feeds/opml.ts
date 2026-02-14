@@ -1,6 +1,15 @@
 import { parseAtom, parseRss, parseXML } from './parsers'
+import { localizeSiteMedia } from './media'
 
-export async function loadFeed(title: string, url: string) {
+interface LoadFeedOptions {
+  mediaDirectory?: string
+}
+
+export async function loadFeed(
+  title: string,
+  url: string,
+  options?: LoadFeedOptions
+) {
   try {
     const response = await fetch(url, {
       headers: { 'User-Agent': 'llun/feed' }
@@ -11,7 +20,14 @@ export async function loadFeed(title: string, url: string) {
       return null
     }
 
-    const site = 'rss' in xml ? parseRss(title, xml) : parseAtom(title, xml)
+    const parsedSite = 'rss' in xml ? parseRss(title, xml) : parseAtom(title, xml)
+    if (!parsedSite) {
+      return null
+    }
+    if (!options?.mediaDirectory) {
+      return parsedSite
+    }
+    const site = await localizeSiteMedia(parsedSite, options.mediaDirectory)
     return site
   } catch (error: any) {
     console.error(
