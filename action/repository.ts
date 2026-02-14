@@ -80,6 +80,17 @@ export function getWorkspacePath() {
   return workSpace
 }
 
+export function resolveSourceBranch(
+  ref?: string,
+  defaultBranch = 'main'
+) {
+  const branchPrefix = 'refs/heads/'
+  if (ref && ref.startsWith(branchPrefix)) {
+    return ref.substring(branchPrefix.length)
+  }
+  return defaultBranch
+}
+
 export async function buildSite() {
   const workSpace = getWorkspacePath()
   if (workSpace) {
@@ -106,36 +117,30 @@ export async function setup() {
   if (workSpace) {
     const core = await import('@actions/core')
     const github = await import('@actions/github')
-    const { Octokit } = await import('@octokit/rest')
     const user = process.env['GITHUB_ACTOR']
     const token = core.getInput('token', { required: true })
     const branch = core.getInput('branch', { required: true })
+    const sourceBranch = resolveSourceBranch(
+      github.context.ref,
+      (github.context.payload as any)?.repository?.default_branch || 'main'
+    )
     
-    // Validate branch name to prevent command injection
+    // Validate branch names to prevent command injection
     validateBranchName(branch)
+    validateBranchName(sourceBranch)
 
-    const octokit = new Octokit({
-      auth: token
-    })
-    const response = await octokit.repos.listBranches({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo
-    })
-    const isBranchExist = response.data
-      .map((item) => item.name)
-      .includes(branch)
-    const checkoutBranch = isBranchExist
-      ? branch
-      : github.context.ref.substring('refs/heads/'.length)
-    
-    // Validate checkout branch as well
-    validateBranchName(checkoutBranch)
+    if (sourceBranch !== branch) {
+      console.log(
+        `Use source branch ${sourceBranch} and publish to branch ${branch}`
+      )
+    }
+
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
     const cloneResult = runCommand([
       'git',
       'clone',
       '-b',
-      checkoutBranch,
+      sourceBranch,
       '--depth',
       '1',
       cloneUrl,
@@ -143,17 +148,6 @@ export async function setup() {
     ])
     if (cloneResult.error) {
       throw new Error('Fail to clone repository')
-    }
-
-    if (!isBranchExist) {
-      console.log(`Create content branch ${branch}`)
-      const branchResult = runCommand(
-        ['git', 'checkout', '-B', branch],
-        workSpace
-      )
-      if (branchResult.error) {
-        throw new Error('Fail to switch branch')
-      }
     }
   }
 }

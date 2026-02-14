@@ -26,6 +26,8 @@ jobs:
 
 After this, enable GitHub Pages on the `contents` branch and the content will be available on that page.
 
+The action always reads the OPML file from the branch that triggered the workflow (for example `main`), then publishes generated output to the configured `branch`.
+
 ## Configurations
 
 This action can be configured to use a custom domain and different types of storage. Here are the available configuration options:
