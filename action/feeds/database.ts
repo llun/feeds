@@ -249,6 +249,16 @@ export async function insertEntry(
       entryContentTime: contentTime,
       entryCreatedAt: createdTime
     })
+  } else {
+    await knex('EntryCategories')
+      .where('category', category)
+      .andWhere('entryKey', key)
+      .update({
+        entryTitle: entry.title,
+        siteKey,
+        siteTitle,
+        entryContentTime: contentTime
+      })
   }
   return key
 }

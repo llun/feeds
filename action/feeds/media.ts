@@ -212,9 +212,8 @@ async function downloadMediaFile(
 
     const extension =
       preferredExtension ||
-      extensionFromContentType(response.headers.get('content-type')) ||
-      '.jpg'
-    const fileName = `${mediaHash}${extension}`
+      extensionFromContentType(response.headers.get('content-type'))
+    const fileName = extension ? `${mediaHash}${extension}` : mediaHash
     await fs.mkdir(mediaDirectory, { recursive: true })
     await fs.writeFile(path.join(mediaDirectory, fileName), buffer)
     return `${LOCAL_MEDIA_DIRECTORY}/${fileName}`
