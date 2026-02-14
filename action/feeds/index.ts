@@ -1,7 +1,6 @@
-import * as core from '@actions/core'
 import fs from 'fs/promises'
 import path from 'path'
-import { getWorkspacePath } from '../repository'
+import { getActionInput, getWorkspacePath } from '../repository'
 import {
   cleanup,
   copyExistingDatabase,
@@ -26,10 +25,10 @@ import { loadFeed, readOpml } from './opml'
 
 export async function createFeedDatabase(githubActionPath: string) {
   try {
-    const storageType = core.getInput('storageType')
+    const storageType = getActionInput('storageType')
     // This feed site uses files
     if (storageType !== 'sqlite') return
-    const feedsFile = core.getInput('opmlFile', { required: true })
+    const feedsFile = getActionInput('opmlFile', { required: true })
     const opmlContent = (
       await fs.readFile(path.join(getWorkspacePath(), feedsFile))
     ).toString('utf8')
@@ -56,16 +55,16 @@ export async function createFeedDatabase(githubActionPath: string) {
   } catch (error: any) {
     console.error(error.message)
     console.error(error.stack)
-    core.setFailed(error)
+    throw error
   }
 }
 
 export async function createFeedFiles(githubActionPath: string) {
   try {
-    const storageType = core.getInput('storageType')
+    const storageType = getActionInput('storageType')
     // This feed site uses database
     if (storageType === 'sqlite') return
-    const feedsFile = core.getInput('opmlFile', { required: true })
+    const feedsFile = getActionInput('opmlFile', { required: true })
     const publicPath = githubActionPath
       ? path.join(githubActionPath, 'contents')
       : path.join('contents')
@@ -77,7 +76,7 @@ export async function createFeedFiles(githubActionPath: string) {
       path.join(getWorkspacePath(), feedsFile),
       (title, url) => loadFeed(title, url, { mediaDirectory })
     )
-    const customDomainName = core.getInput('customDomain')
+    const customDomainName = getActionInput('customDomain')
     const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
 
     await prepareDirectories(DEFAULT_PATHS)
@@ -91,6 +90,6 @@ export async function createFeedFiles(githubActionPath: string) {
   } catch (error: any) {
     console.error(error.message)
     console.error(error.stack)
-    core.setFailed(error)
+    throw error
   }
 }

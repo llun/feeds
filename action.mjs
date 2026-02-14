@@ -1,7 +1,7 @@
 // @ts-check
-import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
 // Duplicate code from action/repository, keep this until
 // found a better way to include typescript without transpiles
@@ -15,22 +15,12 @@ function runCommand(
   })
 }
 
+function isCommandFailed(result) {
+  return Boolean(result.error || result.signal || result.status !== 0)
+}
+
 function getGithubActionPath() {
-  const workSpace = process.env['GITHUB_WORKSPACE']
-  if (!workSpace) {
-    return ''
-  }
-  const actionPath = '/home/runner/work/_actions/llun/feeds'
-  try {
-    const files = fs.readdirSync(actionPath)
-    const version = files.filter((file) => {
-      const stat = fs.statSync(path.join(actionPath, file))
-      return stat.isDirectory()
-    })
-    return path.join(actionPath, version.pop() || 'main')
-  } catch (error) {
-    return path.join(actionPath, 'main')
-  }
+  return path.dirname(fileURLToPath(import.meta.url))
 }
 
 // Main
@@ -39,26 +29,30 @@ if (
   process.env['GITHUB_ACTION'] === 'llunfeeds' ||
   process.env['GITHUB_ACTION'] === '__llun_feeds'
 ) {
-  runCommand(['node', '--version'], getGithubActionPath())
+  const actionPath = getGithubActionPath()
+  const nodeVersionResult = runCommand(['node', '--version'], actionPath)
+  if (isCommandFailed(nodeVersionResult)) {
+    throw new Error('Fail to check node version')
+  }
   const enableCorepackResult = runCommand(
     ['npm', 'install', '-g', 'corepack'],
-    getGithubActionPath()
+    actionPath
   )
-  if (enableCorepackResult.error) {
+  if (isCommandFailed(enableCorepackResult)) {
     throw new Error('Fail to enable corepack')
   }
   const dependenciesResult = runCommand(
     ['yarn', 'install'],
-    getGithubActionPath()
+    actionPath
   )
-  if (dependenciesResult.error) {
+  if (isCommandFailed(dependenciesResult)) {
     throw new Error('Fail to run setup')
   }
   const executeResult = runCommand(
     ['node', '--import', 'tsx', 'index.ts'],
-    getGithubActionPath()
+    actionPath
   )
-  if (executeResult.error) {
+  if (isCommandFailed(executeResult)) {
     throw new Error('Fail to site builder')
   }
 }

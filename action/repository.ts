@@ -1,6 +1,7 @@
-import { spawnSync } from 'child_process'
+import { spawnSync, type SpawnSyncReturns } from 'child_process'
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
 
 /**
  * Validates that a branch name is safe to use in git commands
@@ -45,6 +46,33 @@ function validateDomainName(domain: string): void {
   }
 }
 
+const DEFAULT_INPUTS: Record<string, string> = {
+  opmlFile: 'feeds.opml',
+  storageType: 'files',
+  branch: 'contents',
+  customDomain: ''
+}
+
+function isCommandFailed(result: SpawnSyncReturns<Buffer>) {
+  return Boolean(result.error || result.signal || result.status !== 0)
+}
+
+function toInputEnvName(name: string) {
+  return `INPUT_${name.replace(/ /g, '_').toUpperCase()}`
+}
+
+export function getActionInput(
+  name: string,
+  options?: { required?: boolean }
+) {
+  const envName = toInputEnvName(name)
+  const value = (process.env[envName] ?? DEFAULT_INPUTS[name] ?? '').trim()
+  if (options?.required && !value) {
+    throw new Error(`Input required and not supplied: ${name}`)
+  }
+  return value
+}
+
 export function runCommand(commands: string[], cwd?: string) {
   return spawnSync(commands[0], commands.slice(1), {
     stdio: 'inherit',
@@ -54,22 +82,8 @@ export function runCommand(commands: string[], cwd?: string) {
 }
 
 export function getGithubActionPath() {
-  const workSpace = process.env['GITHUB_WORKSPACE']
-  if (!workSpace) {
-    return ''
-  }
-
-  const actionPath = '/home/runner/work/_actions/llun/feeds'
-  try {
-    const files = fs.readdirSync(actionPath)
-    const version = files.filter((file) => {
-      const stat = fs.statSync(path.join(actionPath, file))
-      return stat.isDirectory()
-    })
-    return path.join(actionPath, version.pop() || 'main')
-  } catch (error) {
-    return path.join(actionPath, 'main')
-  }
+  const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url))
+  return path.resolve(currentFileDirectory, '..')
 }
 
 export function getWorkspacePath() {
@@ -99,14 +113,19 @@ export async function buildSite() {
     // Bypass Jekyll
     runCommand(['touch', '.nojekyll'], workSpace)
 
-    const core = await import('@actions/core')
-    const storageType = core.getInput('storageType')
+    const storageType = getActionInput('storageType')
     if (storageType === 'files') process.env.NEXT_PUBLIC_STORAGE = 'files'
 
     const result = runCommand(['yarn', 'build'], getGithubActionPath())
-    runCommand(['cp', '-rT', 'out', workSpace], getGithubActionPath())
-    if (result.error) {
+    if (isCommandFailed(result)) {
       throw new Error('Fail to build site')
+    }
+    const copyResult = runCommand(
+      ['cp', '-rT', 'out', workSpace],
+      getGithubActionPath()
+    )
+    if (isCommandFailed(copyResult)) {
+      throw new Error('Fail to copy built site')
     }
   }
 }
@@ -115,11 +134,10 @@ export async function setup() {
   console.log('Action: ', process.env['GITHUB_ACTION'])
   const workSpace = getWorkspacePath()
   if (workSpace) {
-    const core = await import('@actions/core')
     const github = await import('@actions/github')
     const user = process.env['GITHUB_ACTOR']
-    const token = core.getInput('token', { required: true })
-    const branch = core.getInput('branch', { required: true })
+    const token = getActionInput('token', { required: true })
+    const branch = getActionInput('branch', { required: true })
     const sourceBranch = resolveSourceBranch(
       github.context.ref,
       (github.context.payload as any)?.repository?.default_branch || 'main'
@@ -146,7 +164,7 @@ export async function setup() {
       cloneUrl,
       workSpace
     ])
-    if (cloneResult.error) {
+    if (isCommandFailed(cloneResult)) {
       throw new Error('Fail to clone repository')
     }
   }
@@ -155,10 +173,9 @@ export async function setup() {
 export async function publish() {
   const workSpace = getWorkspacePath()
   if (workSpace) {
-    const core = await import('@actions/core')
     const github = await import('@actions/github')
-    const branch = core.getInput('branch', { required: true })
-    const token = core.getInput('token', { required: true })
+    const branch = getActionInput('branch', { required: true })
+    const token = getActionInput('token', { required: true })
     const user = process.env['GITHUB_ACTOR']
     const pushUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
     
@@ -166,7 +183,7 @@ export async function publish() {
     validateBranchName(branch)
 
     // Fix custom domain getting disable after run
-    const customDomain = core.getInput('customDomain')
+    const customDomain = getActionInput('customDomain')
     if (customDomain) {
       // Validate domain name to prevent injection attacks
       validateDomainName(customDomain)
