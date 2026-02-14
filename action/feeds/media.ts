@@ -9,6 +9,7 @@ import type { Site } from './parsers'
 
 const LOCAL_MEDIA_DIRECTORY = '/media'
 const DEFAULT_USER_AGENT = 'llun/feed'
+export const MEDIA_DOWNLOAD_TIMEOUT_MS = 2_000
 const KNOWN_IMAGE_EXTENSIONS = new Set([
   '.avif',
   '.gif',
@@ -201,7 +202,8 @@ async function downloadMediaFile(
     const response = await fetch(resolvedUrl, {
       headers: {
         'User-Agent': DEFAULT_USER_AGENT
-      }
+      },
+      signal: AbortSignal.timeout(MEDIA_DOWNLOAD_TIMEOUT_MS)
     })
     if (!response.ok) {
       console.error(`Fail to download media ${resolvedUrl}: ${response.status}`)
