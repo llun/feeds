@@ -1,7 +1,7 @@
 // @ts-check
-const fs = require('fs')
-const path = require('path')
-const { spawnSync } = require('child_process')
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
 
 // Duplicate code from action/repository, keep this until
 // found a better way to include typescript without transpiles
@@ -55,7 +55,7 @@ if (
     throw new Error('Fail to run setup')
   }
   const executeResult = runCommand(
-    ['node', '-r', '@swc-node/register', 'index.ts'],
+    ['node', '--import', 'tsx', 'index.ts'],
     getGithubActionPath()
   )
   if (executeResult.error) {

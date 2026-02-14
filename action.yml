@@ -26,4 +26,4 @@ inputs:
     default: ''
 runs:
   using: 'node20'
-  main: 'action.js'
+  main: 'action.mjs'

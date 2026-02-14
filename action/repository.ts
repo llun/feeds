@@ -205,11 +205,15 @@ export async function publish() {
         '.gitlab-ci.yml',
         'yarn.lock',
         'action.js',
+        'action.mjs',
         'index.ts',
         // NextJS files
         'next-env.d.ts',
         'next.config.js',
+        'next.config.ts',
         'postcss.config.js',
+        'postcss.config.mjs',
+        'tailwind.config.ts',
         // Old eleventy structure
         'css',
         'js'
