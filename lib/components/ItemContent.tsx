@@ -35,7 +35,7 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
   }
 
   return (
-    <article className="h-full overflow-hidden flex flex-col">
+    <article className="h-full flex flex-col">
       <header className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="md:hidden p-4 border-b border-gray-200 dark:border-gray-700">
           <BackButton onClickBack={selectBack} />
