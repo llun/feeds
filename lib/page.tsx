@@ -210,7 +210,7 @@ export const Page: FC = () => {
         </div>
 
         <div
-          className={`w-full flex-1 ${
+          className={`w-full flex-1 overflow-hidden ${
             !content ? 'hidden md:block' : ''
           } ${articleClassName(pageState)}`}
         >
