@@ -1814,12 +1814,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/sanitize-html@npm:^2.16.0":
-  version: 2.16.0
-  resolution: "@types/sanitize-html@npm:2.16.0"
+"@types/sanitize-html@npm:^2.16.1":
+  version: 2.16.1
+  resolution: "@types/sanitize-html@npm:2.16.1"
   dependencies:
-    htmlparser2: "npm:^8.0.0"
-  checksum: 10c0/1d5ff68e07815d86a6832fba9b86f21af1824fd1080b765485688dc2777e03c22c6058ae12ba67ac3ee1aa1731f99626ed465e914ed6982bfe7c6c7144b79d45
+    htmlparser2: "npm:^10.1"
+  checksum: 10c0/4e0d326a5243edb49780105d3b9a246e6672d998e20aefbc29e5d840bf51a0b03825a20901851ed8f333b4a52ea58b2ac634132792d3c1b0ce91fded9ffe8315
   languageName: node
   linkType: hard
 
@@ -3682,7 +3682,7 @@ __metadata:
     "@types/node": "npm:^25.3.3"
     "@types/react": "npm:^19.2.14"
     "@types/react-dom": "npm:^19.2.3"
-    "@types/sanitize-html": "npm:^2.16.0"
+    "@types/sanitize-html": "npm:^2.16.1"
     "@types/sinon": "npm:^21.0.0"
     "@types/xml2js": "npm:^0.4.14"
     "@vscode/sqlite3": "npm:^5.1.12-vscode"
@@ -4176,7 +4176,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"htmlparser2@npm:10.1.0":
+"htmlparser2@npm:10.1.0, htmlparser2@npm:^10.1":
   version: 10.1.0
   resolution: "htmlparser2@npm:10.1.0"
   dependencies:
