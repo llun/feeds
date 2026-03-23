@@ -3664,7 +3664,7 @@ __metadata:
     date-fns: "npm:^4.1.0"
     history: "npm:^5.3.0"
     html-react-parser: "npm:^5.2.17"
-    knex: "npm:^3.1.0"
+    knex: "npm:^3.2.4"
     lucide-react: "npm:^0.577.0"
     next: "npm:^16.1.7"
     next-themes: "npm:^0.4.6"
@@ -4713,9 +4713,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"knex@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "knex@npm:3.1.0"
+"knex@npm:^3.2.4":
+  version: 3.2.4
+  resolution: "knex@npm:3.2.4"
   dependencies:
     colorette: "npm:2.0.19"
     commander: "npm:^10.0.0"
@@ -4731,6 +4731,8 @@ __metadata:
     resolve-from: "npm:^5.0.0"
     tarn: "npm:^3.0.2"
     tildify: "npm:2.0.0"
+  peerDependencies:
+    pg-query-stream: ^4.14.0
   peerDependenciesMeta:
     better-sqlite3:
       optional: true
@@ -4742,13 +4744,15 @@ __metadata:
       optional: true
     pg-native:
       optional: true
+    pg-query-stream:
+      optional: true
     sqlite3:
       optional: true
     tedious:
       optional: true
   bin:
     knex: bin/cli.js
-  checksum: 10c0/d8a1f99fad143c6057e94759b2ae700ae661a0b0b2385f643011962ef501dcc7b32cfdb5bda66ef81283ca56f13630f47691c579ce66ad0e8128e209533c3785
+  checksum: 10c0/6823eaf5cc59f94c88121f926e0b84c7eb5bfa53323f38e70de05ab01781754214f88cb352f777d934e2aaf37ef11e9b766f1b3a50b614a91e8b8c52b04d5812
   languageName: node
   linkType: hard
 
