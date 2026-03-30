@@ -3683,7 +3683,7 @@ __metadata:
     date-fns: "npm:^4.1.0"
     history: "npm:^5.3.0"
     html-react-parser: "npm:^5.2.17"
-    knex: "npm:^3.2.4"
+    knex: "npm:^3.2.7"
     lucide-react: "npm:^0.577.0"
     next: "npm:^16.2.1"
     next-themes: "npm:^0.4.6"
@@ -4732,9 +4732,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"knex@npm:^3.2.4":
-  version: 3.2.4
-  resolution: "knex@npm:3.2.4"
+"knex@npm:^3.2.7":
+  version: 3.2.7
+  resolution: "knex@npm:3.2.7"
   dependencies:
     colorette: "npm:2.0.19"
     commander: "npm:^10.0.0"
@@ -4771,7 +4771,7 @@ __metadata:
       optional: true
   bin:
     knex: bin/cli.js
-  checksum: 10c0/6823eaf5cc59f94c88121f926e0b84c7eb5bfa53323f38e70de05ab01781754214f88cb352f777d934e2aaf37ef11e9b766f1b3a50b614a91e8b8c52b04d5812
+  checksum: 10c0/f3f1f2abd76726a2c5ddfd681ec9402bae50bd18982e525d6a5b1b48450f96402c6ea7c1732008a6a7abf5e1d26e83f54b64b74553d67b40de0b908632f769a6
   languageName: node
   linkType: hard
 
