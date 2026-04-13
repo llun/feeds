@@ -57,11 +57,11 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/sanitize-html": "^2.16.1",
-    "@types/sinon": "^21.0.0",
+    "@types/sinon": "^21.0.1",
     "@types/xml2js": "^0.4.14",
     "ava": "^7.0.0",
     "prettier": "^3.8.1",
-    "sinon": "^21.0.3",
+    "sinon": "^21.1.2",
     "typescript": "^6.0.2"
   },
   "resolutions": {
