@@ -62,7 +62,7 @@
     "ava": "^7.0.0",
     "prettier": "^3.8.1",
     "sinon": "^21.1.2",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   },
   "resolutions": {
     "glob": "^10.5.0",
