@@ -24,7 +24,7 @@
     "failWithoutAssertions": false
   },
   "dependencies": {
-    "@actions/core": "^3.0.0",
+    "@actions/core": "^3.0.1",
     "@actions/github": "^9.0.0",
     "@octokit/rest": "^22.0.1",
     "@tailwindcss/postcss": "^4.2.2",
