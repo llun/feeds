@@ -27,7 +27,7 @@
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.1.1",
     "@octokit/rest": "^22.0.1",
-    "@tailwindcss/postcss": "^4.2.2",
+    "@tailwindcss/postcss": "^4.2.4",
     "@tailwindcss/typography": "^0.5.19",
     "@vscode/sqlite3": "^5.1.12-vscode",
     "autoprefixer": "^10.5.0",
