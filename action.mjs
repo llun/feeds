@@ -41,6 +41,12 @@ function getGithubActionPath() {
   return path.dirname(fileURLToPath(import.meta.url))
 }
 
+
+function getLocalCommand(command, cwd) {
+  const extension = process.platform === 'win32' ? '.cmd' : ''
+  return path.join(cwd, 'node_modules', '.bin', `${command}${extension}`)
+}
+
 // Main
 console.log('Action: ', process.env['GITHUB_ACTION'])
 if (
@@ -52,18 +58,23 @@ if (
   if (isCommandFailed(nodeVersionResult)) {
     throw new Error('Fail to check node version')
   }
-  const corepackCommand = getRuntimeCommand('corepack')
-  const enableCorepackResult = runCommand(
-    [corepackCommand, 'enable'],
-    actionPath
-  )
+  let corepackCommand = getRuntimeCommand('corepack')
+  let enableCorepackResult = runCommand([corepackCommand, 'enable'], actionPath)
+  if (isCommandFailed(enableCorepackResult)) {
+    const installCorepackResult = runCommand(
+      [getRuntimeCommand('npm'), 'install', '--no-save', 'corepack'],
+      actionPath
+    )
+    if (isCommandFailed(installCorepackResult)) {
+      throw new Error('Fail to install corepack')
+    }
+    corepackCommand = getLocalCommand('corepack', actionPath)
+    enableCorepackResult = runCommand([corepackCommand, 'enable'], actionPath)
+  }
   if (isCommandFailed(enableCorepackResult)) {
     throw new Error('Fail to enable corepack')
   }
-  const dependenciesResult = runCommand(
-    [corepackCommand, 'yarn', 'install'],
-    actionPath
-  )
+  const dependenciesResult = runCommand([corepackCommand, 'yarn', 'install'], actionPath)
   if (isCommandFailed(dependenciesResult)) {
     throw new Error('Fail to run setup')
   }
