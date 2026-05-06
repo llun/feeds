@@ -3,6 +3,7 @@ import fs from 'fs/promises'
 import knex from 'knex'
 import path from 'path'
 import sinon from 'sinon'
+import { fileURLToPath } from 'url'
 import {
   createTables,
   getAllCategories,
@@ -10,6 +11,8 @@ import {
   removeOldCategories
 } from './database'
 import { readOpml } from './opml'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 test('#readOpml returns categories and sites in OPML file', async (t) => {
   const data = (

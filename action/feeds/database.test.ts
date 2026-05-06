@@ -3,6 +3,7 @@ import fs from 'fs'
 import knex, { type Knex } from 'knex'
 import path from 'path'
 import sinon from 'sinon'
+import { fileURLToPath } from 'url'
 import {
   createOrUpdateDatabase,
   createTables,
@@ -22,6 +23,8 @@ import {
 } from './database'
 import { readOpml } from './opml'
 import { Entry, Site } from './parsers'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const test = anyTest as TestFn<{
   db: Knex

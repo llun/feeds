@@ -2,7 +2,10 @@ import test from 'ava'
 import fs from 'fs'
 import path from 'path'
 import sinon from 'sinon'
+import { fileURLToPath } from 'url'
 import { parseRss, parseXML } from './parsers'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 test('#parseAtom returns site information with empty string for fields that does not have information', async (t) => {
   const data = fs
