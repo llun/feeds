@@ -1,6 +1,9 @@
-import { createDbWorker, WorkerHttpvfs } from 'sql.js-httpvfs'
-import { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
-import { Category, Content, SiteEntry, Storage } from './types'
+import sqlJsHttpvfs from 'sql.js-httpvfs'
+import type { WorkerHttpvfs } from 'sql.js-httpvfs'
+import type { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
+import type { Category, Content, SiteEntry, Storage } from './types'
+
+const { createDbWorker } = sqlJsHttpvfs as typeof import('sql.js-httpvfs')
 
 const CONTENT_PER_PAGE = 30
 
