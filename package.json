@@ -40,12 +40,12 @@
     "html-react-parser": "^6.1.0",
     "knex": "^3.2.10",
     "lucide-react": "^1.14.0",
-    "next": "^16.2.4",
+    "next": "^16.2.5",
     "next-themes": "^0.4.6",
     "node-fetch": "^3.3.2",
     "postcss": "^8.5.14",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "sanitize-html": "^2.17.3",
     "shadcn": "^4.7.0",
     "sql.js-httpvfs": "^0.8.12",
@@ -75,5 +75,5 @@
     "node-gyp": "^12.2.0",
     "tar": "^7.5.13"
   },
-  "packageManager": "yarn@4.12.0"
+  "packageManager": "yarn@4.14.1"
 }
