@@ -1,0 +1,19 @@
+.github/workflows/dev.yml
+  s_450c67bb40b4bd::t_2ab91d387a7469 27,33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "759ee336eb87100713a3163c7126611924161056",
+  "prompts": {},
+  "sessions": {
+    "s_450c67bb40b4bd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e035a-0b18-7a23-99c1-b06b53a957df",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
