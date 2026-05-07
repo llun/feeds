@@ -1,0 +1,25 @@
+action.mjs
+  eadec8570171b7c3 55-62
+action.test.js
+  eadec8570171b7c3 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "11ca0cb972fa3bc6f5451b46b95e029f50d3dcd5",
+  "prompts": {
+    "eadec8570171b7c3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e0348-0e74-7d73-9f6a-1b8625808b08",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Maythee Anegboonlap",
+      "messages": [],
+      "total_additions": 22,
+      "total_deletions": 0,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  }
+}
