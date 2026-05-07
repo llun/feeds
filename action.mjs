@@ -52,6 +52,14 @@ if (
   if (isCommandFailed(nodeVersionResult)) {
     throw new Error('Fail to check node version')
   }
+  const npmCommand = getRuntimeCommand('npm')
+  const installCorepackResult = runCommand(
+    [npmCommand, 'install', '-g', 'corepack'],
+    actionPath
+  )
+  if (isCommandFailed(installCorepackResult)) {
+    throw new Error('Fail to install corepack')
+  }
   const corepackCommand = getRuntimeCommand('corepack')
   const enableCorepackResult = runCommand(
     [corepackCommand, 'enable'],
