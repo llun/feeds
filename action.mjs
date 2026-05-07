@@ -17,12 +17,27 @@ function getRuntimeCommand(command) {
   return path.join(path.dirname(process.execPath), `${command}${extension}`)
 }
 
+function formatCommand(/** @type {string[]} */ commands) {
+  return commands
+    .map((part) => (/\s/.test(part) ? JSON.stringify(part) : part))
+    .join(' ')
+}
+
+function getCommandResultSummary(/** @type {ReturnType<typeof spawnSync>} */ result) {
+  const status = result.status === null ? 'null' : String(result.status)
+  const signal = result.signal || 'none'
+  const error = result.error ? result.error.message : 'none'
+  return `status=${status} signal=${signal} error=${error}`
+}
+
 // Duplicate code from action/repository, keep this until
 // found a better way to include typescript without transpiles
 function runCommand(
+  /** @type {string} */ label,
   /** @type {string[]} */ commands,
   /** @type {string} */ cwd
 ) {
+  console.log(`[feeds-action] ${label}: ${formatCommand(commands)}`)
   return spawnSync(commands[0], commands.slice(1), {
     stdio: 'inherit',
     cwd,
@@ -37,6 +52,17 @@ function isCommandFailed(result) {
   return Boolean(result.error || result.signal || result.status !== 0)
 }
 
+function assertCommandSucceeded(
+  /** @type {string} */ label,
+  /** @type {ReturnType<typeof spawnSync>} */ result
+) {
+  const resultSummary = getCommandResultSummary(result)
+  console.log(`[feeds-action] ${label}: ${resultSummary}`)
+  if (isCommandFailed(result)) {
+    throw new Error(`Fail to ${label} (${resultSummary})`)
+  }
+}
+
 function getGithubActionPath() {
   return path.dirname(fileURLToPath(import.meta.url))
 }
@@ -48,38 +74,26 @@ if (
   process.env['GITHUB_ACTION'] === '__llun_feeds'
 ) {
   const actionPath = getGithubActionPath()
-  const nodeVersionResult = runCommand([process.execPath, '--version'], actionPath)
-  if (isCommandFailed(nodeVersionResult)) {
-    throw new Error('Fail to check node version')
-  }
-  const npmCommand = getRuntimeCommand('npm')
-  const installCorepackResult = runCommand(
-    [npmCommand, 'install', '-g', 'corepack'],
-    actionPath
-  )
-  if (isCommandFailed(installCorepackResult)) {
-    throw new Error('Fail to install corepack')
-  }
   const corepackCommand = getRuntimeCommand('corepack')
-  const enableCorepackResult = runCommand(
-    [corepackCommand, 'enable'],
-    actionPath
+  console.log('[feeds-action] action path:', actionPath)
+  console.log('[feeds-action] node executable:', process.execPath)
+  console.log('[feeds-action] runtime bin:', path.dirname(process.execPath))
+  console.log('[feeds-action] corepack command:', corepackCommand)
+
+  assertCommandSucceeded(
+    'check node version',
+    runCommand('check node version', [process.execPath, '--version'], actionPath)
   )
-  if (isCommandFailed(enableCorepackResult)) {
-    throw new Error('Fail to enable corepack')
-  }
-  const dependenciesResult = runCommand(
-    [corepackCommand, 'yarn', 'install'],
-    actionPath
+  assertCommandSucceeded(
+    'run setup',
+    runCommand('run setup', [corepackCommand, 'yarn', 'install'], actionPath)
   )
-  if (isCommandFailed(dependenciesResult)) {
-    throw new Error('Fail to run setup')
-  }
-  const executeResult = runCommand(
-    [process.execPath, '--import', 'tsx', 'index.ts'],
-    actionPath
+  assertCommandSucceeded(
+    'site builder',
+    runCommand(
+      'site builder',
+      [process.execPath, '--import', 'tsx', 'index.ts'],
+      actionPath
+    )
   )
-  if (isCommandFailed(executeResult)) {
-    throw new Error('Fail to site builder')
-  }
 }
