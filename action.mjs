@@ -12,18 +12,33 @@ function withRuntimeNodePath() {
   return [runtimeBinPath, ...sanitizedEntries].join(pathDelimiter)
 }
 
-function getRuntimeCommand(command) {
+function getPathCommand(command) {
   const extension = process.platform === 'win32' ? '.cmd' : ''
-  return path.join(path.dirname(process.execPath), `${command}${extension}`)
+  return `${command}${extension}`
+}
+
+function formatCommand(/** @type {string[]} */ commands) {
+  return commands
+    .map((part) => (/\s/.test(part) ? JSON.stringify(part) : part))
+    .join(' ')
+}
+
+function getCommandResultSummary(/** @type {ReturnType<typeof spawnSync>} */ result) {
+  const status = result.status === null ? 'null' : String(result.status)
+  const signal = result.signal || 'none'
+  const error = result.error ? result.error.message : 'none'
+  return `status=${status} signal=${signal} error=${error}`
 }
 
 // Duplicate code from action/repository, keep this until
 // found a better way to include typescript without transpiles
 function runCommand(
+  /** @type {string} */ label,
   /** @type {string[]} */ commands,
   /** @type {string} */ cwd
 ) {
-  return spawnSync(commands[0], commands.slice(1), {
+  console.log(`[feeds-action] ${label}: ${formatCommand(commands)}`)
+  const result = spawnSync(commands[0], commands.slice(1), {
     stdio: 'inherit',
     cwd,
     env: {
@@ -31,10 +46,22 @@ function runCommand(
       PATH: withRuntimeNodePath()
     }
   })
+  return { label, result }
 }
 
 function isCommandFailed(result) {
   return Boolean(result.error || result.signal || result.status !== 0)
+}
+
+function assertCommandSucceeded(
+  /** @type {{ label: string, result: ReturnType<typeof spawnSync> }} */ commandResult
+) {
+  const { label, result } = commandResult
+  const resultSummary = getCommandResultSummary(result)
+  console.log(`[feeds-action] ${label}: ${resultSummary}`)
+  if (isCommandFailed(result)) {
+    throw new Error(`Fail to ${label} (${resultSummary})`)
+  }
 }
 
 function getGithubActionPath() {
@@ -48,38 +75,30 @@ if (
   process.env['GITHUB_ACTION'] === '__llun_feeds'
 ) {
   const actionPath = getGithubActionPath()
-  const nodeVersionResult = runCommand([process.execPath, '--version'], actionPath)
-  if (isCommandFailed(nodeVersionResult)) {
-    throw new Error('Fail to check node version')
-  }
-  const npmCommand = getRuntimeCommand('npm')
-  const installCorepackResult = runCommand(
-    [npmCommand, 'install', '-g', 'corepack'],
-    actionPath
+  const npmCommand = getPathCommand('npm')
+  const corepackCommand = getPathCommand('corepack')
+
+  assertCommandSucceeded(
+    runCommand('check node version', [process.execPath, '--version'], actionPath)
   )
-  if (isCommandFailed(installCorepackResult)) {
-    throw new Error('Fail to install corepack')
-  }
-  const corepackCommand = getRuntimeCommand('corepack')
-  const enableCorepackResult = runCommand(
-    [corepackCommand, 'enable'],
-    actionPath
+  assertCommandSucceeded(
+    runCommand(
+      'install corepack',
+      [npmCommand, 'install', '-g', 'corepack'],
+      actionPath
+    )
   )
-  if (isCommandFailed(enableCorepackResult)) {
-    throw new Error('Fail to enable corepack')
-  }
-  const dependenciesResult = runCommand(
-    [corepackCommand, 'yarn', 'install'],
-    actionPath
+  assertCommandSucceeded(
+    runCommand('enable corepack', [corepackCommand, 'enable'], actionPath)
   )
-  if (isCommandFailed(dependenciesResult)) {
-    throw new Error('Fail to run setup')
-  }
-  const executeResult = runCommand(
-    [process.execPath, '--import', 'tsx', 'index.ts'],
-    actionPath
+  assertCommandSucceeded(
+    runCommand('run setup', [corepackCommand, 'yarn', 'install'], actionPath)
   )
-  if (isCommandFailed(executeResult)) {
-    throw new Error('Fail to site builder')
-  }
+  assertCommandSucceeded(
+    runCommand(
+      'site builder',
+      [process.execPath, '--import', 'tsx', 'index.ts'],
+      actionPath
+    )
+  )
 }
