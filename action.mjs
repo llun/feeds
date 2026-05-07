@@ -1,4 +1,5 @@
 // @ts-check
+import fs from 'node:fs/promises'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
@@ -10,11 +11,6 @@ function withRuntimeNodePath() {
   const pathEntries = currentPath.split(pathDelimiter).filter(Boolean)
   const sanitizedEntries = pathEntries.filter((entry) => entry !== runtimeBinPath)
   return [runtimeBinPath, ...sanitizedEntries].join(pathDelimiter)
-}
-
-function getRuntimeCommand(command) {
-  const extension = process.platform === 'win32' ? '.cmd' : ''
-  return path.join(path.dirname(process.execPath), `${command}${extension}`)
 }
 
 function formatCommand(/** @type {string[]} */ commands) {
@@ -67,6 +63,49 @@ function getGithubActionPath() {
   return path.dirname(fileURLToPath(import.meta.url))
 }
 
+async function pathExists(/** @type {string} */ filePath) {
+  try {
+    await fs.access(filePath)
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function getPackageManagerVersion(/** @type {string} */ actionPath) {
+  const packageJsonPath = path.join(actionPath, 'package.json')
+  const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'))
+  const packageManager = packageJson.packageManager
+  const yarnMatch =
+    typeof packageManager === 'string' && packageManager.match(/^yarn@(.+)$/)
+  if (!yarnMatch) {
+    throw new Error(`Unsupported packageManager: ${packageManager}`)
+  }
+  return yarnMatch[1]
+}
+
+async function getYarnCommand(/** @type {string} */ actionPath) {
+  const yarnVersion = await getPackageManagerVersion(actionPath)
+  const downloadPath = path.join(
+    process.env['RUNNER_TEMP'] || actionPath,
+    `feeds-action-yarn-${yarnVersion}.cjs`
+  )
+  if (!(await pathExists(downloadPath))) {
+    const yarnUrl = `https://repo.yarnpkg.com/${yarnVersion}/packages/yarnpkg-cli/bin/yarn.js`
+    console.log(`[feeds-action] download yarn: ${yarnUrl}`)
+    const response = await fetch(yarnUrl)
+    if (!response.ok) {
+      throw new Error(
+        `Fail to download yarn ${yarnVersion} (${response.status} ${response.statusText})`
+      )
+    }
+    await fs.mkdir(path.dirname(downloadPath), { recursive: true })
+    await fs.writeFile(downloadPath, await response.text())
+  }
+  console.log('[feeds-action] yarn command:', downloadPath)
+  return downloadPath
+}
+
 // Main
 console.log('Action: ', process.env['GITHUB_ACTION'])
 if (
@@ -74,11 +113,10 @@ if (
   process.env['GITHUB_ACTION'] === '__llun_feeds'
 ) {
   const actionPath = getGithubActionPath()
-  const corepackCommand = getRuntimeCommand('corepack')
+  const yarnCommand = await getYarnCommand(actionPath)
   console.log('[feeds-action] action path:', actionPath)
   console.log('[feeds-action] node executable:', process.execPath)
   console.log('[feeds-action] runtime bin:', path.dirname(process.execPath))
-  console.log('[feeds-action] corepack command:', corepackCommand)
 
   assertCommandSucceeded(
     'check node version',
@@ -86,7 +124,11 @@ if (
   )
   assertCommandSucceeded(
     'run setup',
-    runCommand('run setup', [corepackCommand, 'yarn', 'install'], actionPath)
+    runCommand(
+      'run setup',
+      [process.execPath, yarnCommand, 'install'],
+      actionPath
+    )
   )
   assertCommandSucceeded(
     'site builder',
