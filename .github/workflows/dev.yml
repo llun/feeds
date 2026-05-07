@@ -24,11 +24,12 @@ jobs:
   sample:
     runs-on: ubuntu-latest
     needs: [test]
+    if: github.ref == 'refs/heads/main'
     name: Sample
     permissions:
       contents: write
     steps:
       - name: Run Action
-        uses: llun/feeds@codex/fix-corepack-install-debug
+        uses: llun/feeds@main
         with:
           storageType: files
