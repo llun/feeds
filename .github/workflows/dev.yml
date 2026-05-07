@@ -28,9 +28,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
       - name: Run Action
-        uses: ./
+        uses: llun/feeds@codex/fix-corepack-install-debug
         with:
           storageType: files
