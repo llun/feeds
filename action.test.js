@@ -6,6 +6,7 @@ test('installs corepack with npm from PATH before using runtime corepack', async
   const actionPath = path.join(import.meta.dirname, 'action.mjs')
   const source = await fs.readFile(actionPath, 'utf8')
 
+  t.true(source.includes('function getRuntimeCommand(command)'))
   t.false(source.includes("getRuntimeCommand('npm')"))
   t.true(source.includes("'npm', 'install', '-g', 'corepack'"))
   t.true(source.includes("const corepackCommand = getRuntimeCommand('corepack')"))

@@ -12,6 +12,11 @@ function withRuntimeNodePath() {
   return [runtimeBinPath, ...sanitizedEntries].join(pathDelimiter)
 }
 
+function getRuntimeCommand(command) {
+  const extension = process.platform === 'win32' ? '.cmd' : ''
+  return path.join(path.dirname(process.execPath), `${command}${extension}`)
+}
+
 function formatCommand(/** @type {string[]} */ commands) {
   return commands
     .map((part) => (/\s/.test(part) ? JSON.stringify(part) : part))
