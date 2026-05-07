@@ -12,11 +12,6 @@ function withRuntimeNodePath() {
   return [runtimeBinPath, ...sanitizedEntries].join(pathDelimiter)
 }
 
-function getRuntimeCommand(command) {
-  const extension = process.platform === 'win32' ? '.cmd' : ''
-  return path.join(path.dirname(process.execPath), `${command}${extension}`)
-}
-
 function formatCommand(/** @type {string[]} */ commands) {
   return commands
     .map((part) => (/\s/.test(part) ? JSON.stringify(part) : part))
@@ -38,7 +33,7 @@ function runCommand(
   /** @type {string} */ cwd
 ) {
   console.log(`[feeds-action] ${label}: ${formatCommand(commands)}`)
-  return spawnSync(commands[0], commands.slice(1), {
+  const result = spawnSync(commands[0], commands.slice(1), {
     stdio: 'inherit',
     cwd,
     env: {
@@ -46,6 +41,7 @@ function runCommand(
       PATH: withRuntimeNodePath()
     }
   })
+  return { label, result }
 }
 
 function isCommandFailed(result) {
@@ -53,9 +49,9 @@ function isCommandFailed(result) {
 }
 
 function assertCommandSucceeded(
-  /** @type {string} */ label,
-  /** @type {ReturnType<typeof spawnSync>} */ result
+  /** @type {{ label: string, result: ReturnType<typeof spawnSync> }} */ commandResult
 ) {
+  const { label, result } = commandResult
   const resultSummary = getCommandResultSummary(result)
   console.log(`[feeds-action] ${label}: ${resultSummary}`)
   if (isCommandFailed(result)) {
@@ -74,18 +70,11 @@ if (
   process.env['GITHUB_ACTION'] === '__llun_feeds'
 ) {
   const actionPath = getGithubActionPath()
-  const corepackCommand = getRuntimeCommand('corepack')
-  console.log('[feeds-action] action path:', actionPath)
-  console.log('[feeds-action] node executable:', process.execPath)
-  console.log('[feeds-action] runtime bin:', path.dirname(process.execPath))
-  console.log('[feeds-action] corepack command:', corepackCommand)
 
   assertCommandSucceeded(
-    'check node version',
     runCommand('check node version', [process.execPath, '--version'], actionPath)
   )
   assertCommandSucceeded(
-    'install corepack',
     runCommand(
       'install corepack',
       ['npm', 'install', '-g', 'corepack'],
@@ -93,15 +82,12 @@ if (
     )
   )
   assertCommandSucceeded(
-    'enable corepack',
-    runCommand('enable corepack', [corepackCommand, 'enable'], actionPath)
+    runCommand('enable corepack', ['corepack', 'enable'], actionPath)
   )
   assertCommandSucceeded(
-    'run setup',
-    runCommand('run setup', [corepackCommand, 'yarn', 'install'], actionPath)
+    runCommand('run setup', ['corepack', 'yarn', 'install'], actionPath)
   )
   assertCommandSucceeded(
-    'site builder',
     runCommand(
       'site builder',
       [process.execPath, '--import', 'tsx', 'index.ts'],

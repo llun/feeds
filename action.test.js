@@ -2,15 +2,20 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import test from 'ava'
 
-test('installs corepack with npm from PATH before using runtime corepack', async (t) => {
+test('installs corepack before enabling and running yarn from PATH', async (t) => {
   const actionPath = path.join(import.meta.dirname, 'action.mjs')
   const source = await fs.readFile(actionPath, 'utf8')
 
-  t.true(source.includes('function getRuntimeCommand(command)'))
   t.false(source.includes("getRuntimeCommand('npm')"))
-  t.true(source.includes("'npm', 'install', '-g', 'corepack'"))
-  t.true(source.includes("const corepackCommand = getRuntimeCommand('corepack')"))
+  t.false(source.includes("getRuntimeCommand('corepack')"))
 
-  t.true(source.includes("'enable'"))
-  t.true(source.includes("corepackCommand, 'yarn', 'install'"))
+  const installIndex = source.indexOf("'npm', 'install', '-g', 'corepack'")
+  const enableIndex = source.indexOf("'corepack', 'enable'")
+  const yarnIndex = source.indexOf("'corepack', 'yarn', 'install'")
+
+  t.not(installIndex, -1)
+  t.not(enableIndex, -1)
+  t.not(yarnIndex, -1)
+  t.true(installIndex < enableIndex)
+  t.true(enableIndex < yarnIndex)
 })
