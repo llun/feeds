@@ -106,6 +106,47 @@ async function getYarnCommand(/** @type {string} */ actionPath) {
   return downloadPath
 }
 
+async function exposeYarnOnPath(/** @type {string} */ yarnCommand) {
+  const shimDirectory = path.join(
+    process.env['RUNNER_TEMP'] || path.dirname(yarnCommand),
+    'feeds-action-bin'
+  )
+  await fs.mkdir(shimDirectory, { recursive: true })
+
+  if (process.platform === 'win32') {
+    const shimPath = path.join(shimDirectory, 'yarn.cmd')
+    await fs.writeFile(
+      shimPath,
+      `@echo off\r\n"${process.execPath}" "${yarnCommand}" %*\r\n`
+    )
+    console.log('[feeds-action] yarn shim:', shimPath)
+  } else {
+    const shimPath = path.join(shimDirectory, 'yarn')
+    const yarnCommandArguments = JSON.stringify([yarnCommand])
+    await fs.writeFile(
+      shimPath,
+      `#!/usr/bin/env node
+const { spawnSync } = require('node:child_process')
+const result = spawnSync(process.execPath, ${yarnCommandArguments}.concat(process.argv.slice(2)), { stdio: 'inherit' })
+if (result.error) {
+  console.error(result.error.message)
+  process.exit(1)
+}
+if (result.signal) {
+  process.kill(process.pid, result.signal)
+}
+process.exit(result.status ?? 1)
+`
+    )
+    await fs.chmod(shimPath, 0o755)
+    console.log('[feeds-action] yarn shim:', shimPath)
+  }
+
+  process.env['PATH'] = [shimDirectory, process.env['PATH'] || '']
+    .filter(Boolean)
+    .join(path.delimiter)
+}
+
 // Main
 console.log('Action: ', process.env['GITHUB_ACTION'])
 if (
@@ -114,6 +155,7 @@ if (
 ) {
   const actionPath = getGithubActionPath()
   const yarnCommand = await getYarnCommand(actionPath)
+  await exposeYarnOnPath(yarnCommand)
   console.log('[feeds-action] action path:', actionPath)
   console.log('[feeds-action] node executable:', process.execPath)
   console.log('[feeds-action] runtime bin:', path.dirname(process.execPath))

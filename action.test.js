@@ -11,4 +11,5 @@ test('uses downloaded yarn without mutating the action runtime install', async (
   t.false(source.includes("getRuntimeCommand('corepack')"))
 
   t.true(source.includes("process.execPath, yarnCommand, 'install'"))
+  t.true(source.includes("process.env['PATH'] ="))
 })
