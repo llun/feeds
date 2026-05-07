@@ -1,0 +1,22 @@
+action.mjs
+  s_450c67bb40b4bd::t_9cdc0318d8800a 3,21-33,54-64,76,79-82,86,91-106,108-125
+  s_450c67bb40b4bd::t_70ed4669566b4a 77-78,83-85,87-90,107
+.github/workflows/dev.yml
+  s_450c67bb40b4bd::t_313214fa896088 31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "9512f66cd1c411cecd1de04530efda33e6d05dce",
+  "prompts": {},
+  "sessions": {
+    "s_450c67bb40b4bd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e035a-0b18-7a23-99c1-b06b53a957df",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
