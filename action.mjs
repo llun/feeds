@@ -12,6 +12,11 @@ function withRuntimeNodePath() {
   return [runtimeBinPath, ...sanitizedEntries].join(pathDelimiter)
 }
 
+function getPathCommand(command) {
+  const extension = process.platform === 'win32' ? '.cmd' : ''
+  return `${command}${extension}`
+}
+
 function formatCommand(/** @type {string[]} */ commands) {
   return commands
     .map((part) => (/\s/.test(part) ? JSON.stringify(part) : part))
@@ -70,6 +75,8 @@ if (
   process.env['GITHUB_ACTION'] === '__llun_feeds'
 ) {
   const actionPath = getGithubActionPath()
+  const npmCommand = getPathCommand('npm')
+  const corepackCommand = getPathCommand('corepack')
 
   assertCommandSucceeded(
     runCommand('check node version', [process.execPath, '--version'], actionPath)
@@ -77,15 +84,15 @@ if (
   assertCommandSucceeded(
     runCommand(
       'install corepack',
-      ['npm', 'install', '-g', 'corepack'],
+      [npmCommand, 'install', '-g', 'corepack'],
       actionPath
     )
   )
   assertCommandSucceeded(
-    runCommand('enable corepack', ['corepack', 'enable'], actionPath)
+    runCommand('enable corepack', [corepackCommand, 'enable'], actionPath)
   )
   assertCommandSucceeded(
-    runCommand('run setup', ['corepack', 'yarn', 'install'], actionPath)
+    runCommand('run setup', [corepackCommand, 'yarn', 'install'], actionPath)
   )
   assertCommandSucceeded(
     runCommand(
