@@ -2,14 +2,14 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import test from 'ava'
 
-test('uses downloaded yarn without mutating the action runtime install', async (t) => {
+test('installs corepack with npm from PATH before using runtime corepack', async (t) => {
   const actionPath = path.join(import.meta.dirname, 'action.mjs')
   const source = await fs.readFile(actionPath, 'utf8')
 
-  t.false(source.includes("'install', '-g', 'corepack'"))
-  t.false(source.includes("'enable'"))
-  t.false(source.includes("getRuntimeCommand('corepack')"))
+  t.false(source.includes("getRuntimeCommand('npm')"))
+  t.true(source.includes("'npm', 'install', '-g', 'corepack'"))
+  t.true(source.includes("const corepackCommand = getRuntimeCommand('corepack')"))
 
-  t.true(source.includes("process.execPath, yarnCommand, 'install'"))
-  t.true(source.includes("process.env['PATH'] ="))
+  t.true(source.includes("'enable'"))
+  t.true(source.includes("corepackCommand, 'yarn', 'install'"))
 })
