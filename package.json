@@ -63,7 +63,7 @@
     "@types/sanitize-html": "^2.16.1",
     "@types/sinon": "^21.0.1",
     "@types/xml2js": "^0.4.14",
-    "ava": "^8.0.0",
+    "ava": "^8.0.1",
     "prettier": "^3.8.3",
     "sinon": "^22.0.0",
     "typescript": "^6.0.3"
