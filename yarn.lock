@@ -3678,7 +3678,7 @@ __metadata:
     react: "npm:^19.2.6"
     react-dom: "npm:^19.2.7"
     sanitize-html: "npm:^2.17.4"
-    shadcn: "npm:^4.8.0"
+    shadcn: "npm:^4.10.0"
     sinon: "npm:^22.0.0"
     sql.js-httpvfs: "npm:^0.8.12"
     sqlite3: "npm:^6.0.1"
@@ -6298,9 +6298,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shadcn@npm:^4.8.0":
-  version: 4.8.0
-  resolution: "shadcn@npm:4.8.0"
+"shadcn@npm:^4.10.0":
+  version: 4.10.0
+  resolution: "shadcn@npm:4.10.0"
   dependencies:
     "@babel/core": "npm:^7.28.0"
     "@babel/parser": "npm:^7.28.0"
@@ -6338,7 +6338,7 @@ __metadata:
     zod-to-json-schema: "npm:^3.24.6"
   bin:
     shadcn: dist/index.js
-  checksum: 10c0/f93f63da6a69f8f6b439a345a4186f4badcf497ad0d34dad06789520165cd6b975670f7b11717b9633ccf355ab479e9984099d150543072bc9380c71f8586ca9
+  checksum: 10c0/44c6f432e6a860d864026836b3d790036030e7a557ef78399f3556b37359f371cb9de29d5f56d7713612bed94aadbac6d8f4bc487ce237c8a1c1a3905931a5bf
   languageName: node
   linkType: hard
 
