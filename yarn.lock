@@ -2848,10 +2848,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "date-fns@npm:4.1.0"
-  checksum: 10c0/b79ff32830e6b7faa009590af6ae0fb8c3fd9ffad46d930548fbb5acf473773b4712ae887e156ba91a7b3dc30591ce0f517d69fd83bd9c38650fdc03b4e0bac8
+"date-fns@npm:^4.4.0":
+  version: 4.4.0
+  resolution: "date-fns@npm:4.4.0"
+  checksum: 10c0/988f0a13db183f5dfc85c36bbb6847a9c135a9225888bbea4005876ec15539a8613c21a07370a4e7ea543918d5a1cafb423c528b42cdbbde5fdfddb178126b21
   languageName: node
   linkType: hard
 
@@ -3665,7 +3665,7 @@ __metadata:
     "@vscode/sqlite3": "npm:^5.1.12-vscode"
     autoprefixer: "npm:^10.5.0"
     ava: "npm:^8.0.1"
-    date-fns: "npm:^4.1.0"
+    date-fns: "npm:^4.4.0"
     history: "npm:^5.3.0"
     html-react-parser: "npm:^6.1.2"
     knex: "npm:^3.2.10"
