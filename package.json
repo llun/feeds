@@ -70,7 +70,7 @@
   },
   "resolutions": {
     "glob": "^10.5.0",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^4.2.0",
     "postcss@npm:8.4.31": "npm:8.5.14"
   },
   "packageManager": "yarn@4.14.1"
