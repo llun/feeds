@@ -1,0 +1,22 @@
+action.mjs
+  s_450c67bb40b4bd::t_6747b5df7ab2fd 109-124,126-129,131-149,158
+  s_450c67bb40b4bd::t_3265e1f4e3e8aa 125,130
+action.test.js
+  s_450c67bb40b4bd::t_d4287b23d25101 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "cfcdb2bc9f05dfce1495b069e47bc708fb8bf84b",
+  "prompts": {},
+  "sessions": {
+    "s_450c67bb40b4bd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e035a-0b18-7a23-99c1-b06b53a957df",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}

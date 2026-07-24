@@ -1,0 +1,21 @@
+action.test.js
+  s_23044337061d6d::t_92d534aac11580 5,10,12-20
+action.mjs
+  s_23044337061d6d::t_c904b1633ee8ec 36,44,52,54,85,88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "97f050e04da76e33eabc199dc2cd0d17de2314ed",
+  "prompts": {},
+  "sessions": {
+    "s_23044337061d6d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e039b-fd76-71d2-ae48-dcdac0ef8699",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
