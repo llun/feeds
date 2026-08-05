@@ -1,0 +1,19 @@
+package.json
+  s_c43341a45faa1b::t_558869ed0c7d6c 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "ed9a3bde1c103affdde63abfffab5ee92e4412e6",
+  "prompts": {},
+  "sessions": {
+    "s_c43341a45faa1b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1df98e89-ef8a-470f-befa-f27856aba486",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
