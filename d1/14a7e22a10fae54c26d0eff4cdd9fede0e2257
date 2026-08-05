@@ -1,0 +1,26 @@
+package.json
+  s_c43341a45faa1b::t_0a0f36886320b1 43
+next.config.ts
+  s_c43341a45faa1b::t_e68fe1f3b7c111 17-18
+  s_c43341a45faa1b::t_4191a27e2facc4 15-16,19-20
+next-env.d.ts
+  s_c43341a45faa1b::t_4674b00e948c58 4
+yarn.lock
+  s_c43341a45faa1b::t_36ace13e79f8ea 1202-1205,1209-1211,1216-1218,1223-1225,1230-1232,1237-1239,1244-1246,1251-1253,1258-1260,3808,5260-5262,5264-5272,5276-5277,5316
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "d114a7e22a10fae54c26d0eff4cdd9fede0e2257",
+  "prompts": {},
+  "sessions": {
+    "s_c43341a45faa1b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1df98e89-ef8a-470f-befa-f27856aba486",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
