@@ -12,7 +12,12 @@ export default () => {
 
   const nextConfig: NextConfig = {
     basePath,
-    output: 'export'
+    output: 'export',
+    experimental: {
+      // TypeScript 7 dropped the in-process compiler API `next build` normally
+      // uses for type checking; this shells out to `tsc` instead.
+      useTypeScriptCli: true
+    }
   }
   return nextConfig
 }
