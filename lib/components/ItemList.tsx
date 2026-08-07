@@ -261,7 +261,9 @@ export const ItemList = ({
                 key={entry.key}
                 id={`entry-${entry.key}`}
                 className={`px-3 py-2.5 transition-colors hover:bg-surface-2 ${
-                  entry.key === selectedEntryHash ? 'bg-surface-3' : ''
+                  entry.key === selectedEntryHash
+                    ? 'bg-brand-subtle hover:bg-brand-subtle'
+                    : ''
                 }`}
                 ref={
                   entries.length - 5 === index && entries.length < totalEntry
@@ -287,7 +289,7 @@ export const ItemList = ({
                       {entry.title}
                     </h3>
                   </button>
-                  <div className="mt-1 flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
+                  <div className="mt-1 flex min-w-0 items-center gap-1.5 whitespace-nowrap">
                     <button
                       type="button"
                       className="max-w-[60%] truncate rounded-sm text-xs font-medium text-muted-foreground transition-colors hover:text-brand focus-ring"
@@ -299,7 +301,7 @@ export const ItemList = ({
                       {entry.site.title}
                     </button>
                     <span className="shrink-0 text-xs text-faint">•</span>
-                    <span className="shrink-0 text-nowrap text-xs text-faint">
+                    <span className="shrink-0 text-nowrap text-xs text-muted-foreground">
                       {formatDistance(entry.timestamp * 1000, new Date(), {
                         addSuffix: true
                       })}
