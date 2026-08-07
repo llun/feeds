@@ -1,0 +1,22 @@
+app/globals.css
+  s_592b30039c7707::t_e0113f6455f64a 250
+  s_592b30039c7707::t_b687e6057074d3 128-129,132-133
+  s_592b30039c7707::t_8f27be41cd6bc2 102
+  s_592b30039c7707::t_01d668da9df0b8 192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "b4c097c48c800a9b1bc4ed17e87217d6800ddd51",
+  "prompts": {},
+  "sessions": {
+    "s_592b30039c7707": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "50e8ef10-1726-4c77-9fbc-5998b85a6261",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
