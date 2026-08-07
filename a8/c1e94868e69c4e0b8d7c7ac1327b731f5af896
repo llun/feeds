@@ -1,0 +1,19 @@
+lib/components/CategoryList.tsx
+  s_592b30039c7707::t_220c981c720785 121,128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "a8c1e94868e69c4e0b8d7c7ac1327b731f5af896",
+  "prompts": {},
+  "sessions": {
+    "s_592b30039c7707": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "50e8ef10-1726-4c77-9fbc-5998b85a6261",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
