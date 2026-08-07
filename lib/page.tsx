@@ -18,7 +18,12 @@ import {
 } from '../lib/utils'
 import { PathReducer, updatePath } from './reducers/path'
 
-export const Page: FC = () => {
+interface PageProps {
+  version?: string
+  buildTime?: string | null
+}
+
+export const Page: FC<PageProps> = ({ version, buildTime }) => {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
   const [pageState, setPageState] = useState<PageState>('categories')
   const [categories, setCategories] = useState<Category[]>([])
@@ -163,6 +168,8 @@ export const Page: FC = () => {
           <CategoryList
             categories={categories}
             totalEntries={totalEntries}
+            version={version}
+            buildTime={buildTime}
             selectCategory={(category: string) => {
               setListTitle(category)
               dispatch(updatePath(`/categories/${category}`))

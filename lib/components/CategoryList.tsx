@@ -4,29 +4,35 @@ import { Folder, Inbox } from 'lucide-react'
 import { Category } from '../storage/types'
 import { ThemeToggle } from './ThemeToggle'
 import { Logo } from './Logo'
-import { version } from '../../package.json'
 
 interface CategoryListProps {
   categories: Category[]
   totalEntries: number | null
+  version?: string
+  buildTime?: string | null
   selectCategory?: (category: string) => void
   selectSite?: (siteKey: string, siteTitle: string) => void
 }
 
+// The sidebar sits one step above the page, so its rows hover to surface-3
+// rather than the page-level surface-2, which is the sidebar's own color.
 const navItemClassName =
-  'flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-medium text-subtle transition-colors hover:bg-surface-2 hover:text-foreground focus-ring'
+  'flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-medium text-subtle transition-colors hover:bg-surface-3 hover:text-foreground focus-ring'
 
 const selectedNavItemClassName =
-  'bg-surface-3 font-semibold text-brand-emphasis hover:bg-surface-3 hover:text-brand-emphasis'
+  'bg-brand-subtle font-semibold text-brand-emphasis hover:bg-brand-subtle hover:text-brand-emphasis'
+
+const countClassName = 'shrink-0 text-xs tabular-nums text-muted-foreground'
 
 export const CategoryList = ({
   categories,
   totalEntries,
+  version,
+  buildTime,
   selectCategory,
   selectSite
 }: CategoryListProps) => {
   const [currentCategory, setCurrentCategory] = useState<string | undefined>()
-  const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME
   return (
     <nav
       className="flex h-full flex-col border-border bg-sidebar text-sidebar-foreground md:border-r"
@@ -40,7 +46,8 @@ export const CategoryList = ({
         <ThemeToggle />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-4">
+      {/* pt-1 keeps the first row's focus ring clear of the scroll clip */}
+      <div className="flex-1 overflow-y-auto px-3 pt-1 pb-4">
         <button
           type="button"
           onClick={() => {
@@ -49,11 +56,9 @@ export const CategoryList = ({
           }}
           className={navItemClassName}
         >
-          <Inbox size={16} className="shrink-0 text-faint" />
+          <Inbox size={16} className="shrink-0 text-muted-foreground" />
           <span className="flex-1 truncate">All Items</span>
-          <span className="shrink-0 text-xs tabular-nums text-faint">
-            {totalEntries ?? 0}
-          </span>
+          <span className={countClassName}>{totalEntries ?? 0}</span>
         </button>
 
         {categories.length > 0 && (
@@ -78,12 +83,12 @@ export const CategoryList = ({
               >
                 <Folder
                   size={16}
-                  className={`shrink-0 ${selected ? 'text-brand' : 'text-faint'}`}
+                  className={`shrink-0 ${
+                    selected ? 'text-brand' : 'text-muted-foreground'
+                  }`}
                 />
                 <span className="flex-1 truncate">{category.title}</span>
-                <span className="shrink-0 text-xs tabular-nums text-faint">
-                  {category.totalEntries}
-                </span>
+                <span className={countClassName}>{category.totalEntries}</span>
               </button>
               {selected && (
                 <ul className="mt-0.5 space-y-0.5" role="list">
@@ -94,10 +99,10 @@ export const CategoryList = ({
                         onClick={() => {
                           selectSite?.(site.key, site.title)
                         }}
-                        className="flex min-h-7.5 w-full items-center gap-2 rounded-md py-1 pr-2 pl-7 text-left text-sm text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-ring"
+                        className="flex min-h-7.5 w-full items-center gap-2 rounded-md py-1 pr-2 pl-7 text-left text-sm text-muted-foreground transition-colors hover:bg-surface-3 hover:text-foreground focus-ring"
                       >
                         <span className="flex-1 truncate">{site.title}</span>
-                        <span className="shrink-0 text-xs tabular-nums text-faint">
+                        <span className={countClassName}>
                           {site.totalEntries}
                         </span>
                       </button>
@@ -116,7 +121,7 @@ export const CategoryList = ({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-border px-3.5 py-2.5 text-xs text-faint">
+      <div className="flex items-center justify-between gap-2 border-t border-border px-3.5 py-2.5 text-xs text-muted-foreground">
         {buildTime && (
           <span className="min-w-0 truncate">
             Updated{' '}
@@ -125,7 +130,7 @@ export const CategoryList = ({
             })}
           </span>
         )}
-        <span className="ml-auto shrink-0">v{version}</span>
+        {version && <span className="ml-auto shrink-0">v{version}</span>}
       </div>
     </nav>
   )
