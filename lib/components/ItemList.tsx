@@ -221,20 +221,20 @@ export const ItemList = ({
 
   return (
     <section
-      className="border-r border-gray-200 dark:border-gray-700 h-full overflow-hidden flex flex-col"
+      className="flex h-full flex-col overflow-hidden border-border bg-background md:border-r"
       aria-label="Feed items"
     >
-      <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-        <div className="md:hidden p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="sticky top-0 z-10 border-b border-border bg-background">
+        <div className="border-b border-border px-2.5 py-2 md:hidden">
           <BackButton onClickBack={selectBack} />
         </div>
         <div
-          className="p-4"
+          className="px-4 py-3"
           ref={(section) => {
             element = section
           }}
         >
-          <h2 className="text-lg font-semibold line-clamp-2 break-words">
+          <h2 className="truncate text-lg font-semibold leading-snug tracking-tight">
             {title}
           </h2>
         </div>
@@ -242,30 +242,26 @@ export const ItemList = ({
 
       <div className="overflow-y-auto flex-1">
         {pageState === 'loading' ? (
-          <div className="flex flex-col items-center justify-center h-96 p-4">
+          <div className="flex h-full flex-col items-center justify-center gap-3.5 p-8">
             <div
-              className="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-4 motion-reduce:animate-none"
+              className="feeds-spinner size-7"
               role="status"
               aria-label="Loading"
             ></div>
-            <p className="text-gray-500 dark:text-gray-400 text-center">
-              Loading items...
-            </p>
+            <p className="text-sm text-muted-foreground">Loading items...</p>
           </div>
         ) : entries.length > 0 ? (
           <ul
             ref={itemsRef}
-            className="divide-y divide-gray-200 dark:divide-gray-700"
+            className="divide-y divide-border p-1.5"
             role="list"
           >
             {entries.map((entry, index) => (
               <li
                 key={entry.key}
                 id={`entry-${entry.key}`}
-                className={`py-2 px-3 hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                  entry.key === selectedEntryHash
-                    ? 'bg-gray-100 dark:bg-gray-800'
-                    : ''
+                className={`px-3 py-2.5 transition-colors hover:bg-surface-2 ${
+                  entry.key === selectedEntryHash ? 'bg-surface-3' : ''
                 }`}
                 ref={
                   entries.length - 5 === index && entries.length < totalEntry
@@ -273,28 +269,28 @@ export const ItemList = ({
                     : null
                 }
               >
-                <div className="w-full pr-2">
+                <div className="w-full">
                   <button
                     type="button"
                     onClick={() => {
                       selectEntryHash(entry.key)
                     }}
-                    className="w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md p-1"
+                    className="w-full rounded-sm text-left focus-ring"
                   >
                     <h3
-                      className={`font-medium text-sm break-words ${
+                      className={`line-clamp-2 break-words text-sm leading-snug ${
                         entry.key === selectedEntryHash
-                          ? 'text-blue-700 dark:text-blue-500'
-                          : ''
+                          ? 'font-semibold text-brand-emphasis'
+                          : 'font-medium'
                       }`}
                     >
                       {entry.title}
                     </h3>
                   </button>
-                  <div className="flex items-center mt-1 whitespace-nowrap overflow-hidden">
+                  <div className="mt-1 flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
                     <button
                       type="button"
-                      className="text-xs text-gray-500 dark:text-gray-400 font-medium hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md px-1 truncate max-w-[60%]"
+                      className="max-w-[60%] truncate rounded-sm text-xs font-medium text-muted-foreground transition-colors hover:text-brand focus-ring"
                       onClick={() => {
                         selectSite?.(entry.site.key)
                       }}
@@ -302,10 +298,8 @@ export const ItemList = ({
                     >
                       {entry.site.title}
                     </button>
-                    <span className="mx-1 text-gray-400 dark:text-gray-500 text-xs flex-shrink-0">
-                      •
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 text-nowrap flex-shrink-0">
+                    <span className="shrink-0 text-xs text-faint">•</span>
+                    <span className="shrink-0 text-nowrap text-xs text-faint">
                       {formatDistance(entry.timestamp * 1000, new Date(), {
                         addSuffix: true
                       })}
@@ -316,10 +310,13 @@ export const ItemList = ({
             ))}
           </ul>
         ) : (
-          <div className="p-4 text-center text-gray-500" role="status">
-            <p>No items to display.</p>
-            <p className="text-sm">
-              Select a category or site from the left panel.
+          <div
+            className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground"
+            role="status"
+          >
+            <p>
+              No items to display. Select a category or site from the left
+              panel.
             </p>
           </div>
         )}
