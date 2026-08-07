@@ -87,10 +87,10 @@ export const ThemeToggle = () => {
                   setShowModal(false)
                   buttonRef.current?.focus()
                 }}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-surface-3 focus-ring ${
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors focus-ring ${
                   selected
-                    ? 'bg-brand-subtle font-medium text-brand-emphasis hover:bg-brand-subtle'
-                    : ''
+                    ? 'bg-brand-subtle font-medium text-brand-emphasis'
+                    : 'hover:bg-surface-3'
                 }`}
                 role="menuitemradio"
                 aria-checked={selected}

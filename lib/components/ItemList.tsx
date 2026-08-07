@@ -260,10 +260,10 @@ export const ItemList = ({
               <li
                 key={entry.key}
                 id={`entry-${entry.key}`}
-                className={`px-3 py-2.5 transition-colors hover:bg-surface-2 ${
+                className={`px-3 py-2.5 transition-colors ${
                   entry.key === selectedEntryHash
-                    ? 'bg-brand-subtle hover:bg-brand-subtle'
-                    : ''
+                    ? 'bg-brand-subtle'
+                    : 'hover:bg-surface-2'
                 }`}
                 ref={
                   entries.length - 5 === index && entries.length < totalEntry

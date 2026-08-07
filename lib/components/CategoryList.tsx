@@ -14,13 +14,19 @@ interface CategoryListProps {
   selectSite?: (siteKey: string, siteTitle: string) => void
 }
 
-// The sidebar sits one step above the page, so its rows hover to surface-3
-// rather than the page-level surface-2, which is the sidebar's own color.
+// Idle and selected are kept mutually exclusive rather than layered: Tailwind
+// emits same-property utilities in its own order, not the order they appear in
+// the class string, so an override appended here would not reliably win.
+// The sidebar sits one step above the page, so rows hover to surface-3 rather
+// than the page-level surface-2, which is the sidebar's own color.
 const navItemClassName =
-  'flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-medium text-subtle transition-colors hover:bg-surface-3 hover:text-foreground focus-ring'
+  'flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors focus-ring'
+
+const idleNavItemClassName =
+  'font-medium text-subtle hover:bg-surface-3 hover:text-foreground'
 
 const selectedNavItemClassName =
-  'bg-brand-subtle font-semibold text-brand-emphasis hover:bg-brand-subtle hover:text-brand-emphasis'
+  'bg-brand-subtle font-semibold text-brand-emphasis'
 
 const countClassName = 'shrink-0 text-xs tabular-nums text-muted-foreground'
 
@@ -54,7 +60,7 @@ export const CategoryList = ({
             setCurrentCategory(undefined)
             selectSite?.('all', 'All Items')
           }}
-          className={navItemClassName}
+          className={`${navItemClassName} ${idleNavItemClassName}`}
         >
           <Inbox size={16} className="shrink-0 text-muted-foreground" />
           <span className="flex-1 truncate">All Items</span>
@@ -76,7 +82,7 @@ export const CategoryList = ({
                   selectCategory?.(category.title)
                 }}
                 className={`${navItemClassName} ${
-                  selected ? selectedNavItemClassName : ''
+                  selected ? selectedNavItemClassName : idleNavItemClassName
                 }`}
                 aria-expanded={selected}
                 aria-current={selected ? true : undefined}
