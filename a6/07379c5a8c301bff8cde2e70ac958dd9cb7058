@@ -1,0 +1,56 @@
+action/feeds/parsers.ts
+  s_09a455b9db409e::t_6cfa155623b745 90-103,106
+.gitignore
+  s_09a455b9db409e::t_08a280e8b0babe 45
+action/repository.test.ts
+  s_09a455b9db409e::t_61f26e46e096ab 6-7
+  s_09a455b9db409e::t_6d1ddb815e0cbd 44-57
+lib/components/ItemContent.tsx
+  s_09a455b9db409e::t_7fab7c22aec2f2 7
+  s_09a455b9db409e::t_4a931094cd9ded 22
+  s_09a455b9db409e::t_172d5954330e32 86-100
+lib/media.test.ts
+  s_09a455b9db409e::t_70ebffb386389e 1-35
+package.json
+  s_09a455b9db409e::t_c11121b70d895d 3
+action/feeds/media.ts
+  s_09a455b9db409e::t_545dfce8c39d9d 315
+  s_09a455b9db409e::t_11822f8107db54 137-141,148,155
+  s_09a455b9db409e::t_15ea9141614110 1-136,142-147,149-154,156-211,216-228,230-314,316-438
+  s_09a455b9db409e::t_7ccbce28c6a53b 212-215,229
+lib/media.ts
+  s_09a455b9db409e::t_2cea1ee952e778 1-30
+action/feeds/media.test.ts
+  s_09a455b9db409e::t_2d3ec80b599f72 1-255,284-405
+  s_09a455b9db409e::t_c9ba5681c3ac8c 256-283
+action/repository.ts
+  s_09a455b9db409e::t_8e8513a3fc2325 3
+  s_09a455b9db409e::t_0eabac4dd0be14 109-134,141,143,153,161-167,169-171
+  s_09a455b9db409e::t_01b21f360b64b6 135-140,142,144-152,154-160,168
+readme.md
+  s_09a455b9db409e::t_5ac452a6540704 31-38
+action/feeds/index.ts
+  s_09a455b9db409e::t_76643dbca75403 107-112
+  s_09a455b9db409e::t_1e0679ec261be5 33-36,38
+  s_09a455b9db409e::t_e5e45ddd0e3962 23-29,31-32,37,39-47
+  s_09a455b9db409e::t_2ff8ab5b4461c6 3-7
+  s_09a455b9db409e::t_f8f151cbf24936 59
+  s_09a455b9db409e::t_37e787de0f9765 60-61,65-74
+  s_09a455b9db409e::t_b51e73fef7364f 93-94,97-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "a607379c5a8c301bff8cde2e70ac958dd9cb7058",
+  "prompts": {},
+  "sessions": {
+    "s_09a455b9db409e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dfd608b5-4310-40f6-ab04-a0cb83019370",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
