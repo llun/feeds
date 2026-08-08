@@ -123,7 +123,7 @@ function walkContentUrls(
   })
 }
 
-export function collectImageUrls(content: string) {
+export function collectDownloadableMediaUrls(content: string) {
   const urls = new Set<string>()
   if (!content) return urls
   // Only media an entry actually displays is worth the download. A link to an
@@ -138,7 +138,8 @@ export function collectImageUrls(content: string) {
 /**
  * Swaps every downloaded URL for its local path. This covers links as well as
  * images, so a lightbox href to an image the store downloaded stops hotlinking
- * the origin -- the counterpart of collectImageUrls, which is media-only.
+ * the origin. Deliberately not the mirror of collectDownloadableMediaUrls,
+ * which only ever collects media: a link is rewritten but never downloaded for.
  */
 export function rewriteLocalizedUrls(
   content: string,
@@ -310,7 +311,7 @@ export function createMediaStore({
   async function localizeSite(site: Site) {
     const urls = new Set<string>()
     for (const entry of site.entries) {
-      for (const url of collectImageUrls(entry.content)) urls.add(url)
+      for (const url of collectDownloadableMediaUrls(entry.content)) urls.add(url)
     }
 
     const replacements = new Map<string, string>()

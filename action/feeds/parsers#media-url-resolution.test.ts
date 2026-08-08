@@ -1,5 +1,5 @@
 import test from 'ava'
-import { parseAtom, parseRss } from './parsers'
+import { ENTRY_CONTENT_SANITIZE_OPTIONS, parseAtom, parseRss } from './parsers'
 
 const SITE_LINK = 'https://site.example/'
 const ENTRY_LINK = 'https://feed.example/posts/entry-1'
@@ -78,6 +78,49 @@ test('#parseRss picks the link base on the extension alone', (t) => {
       'href="https://feed.example/posts/diagram.svg"'
     )
   )
+  // The extension match is case folded, so a feed shouting its filenames still
+  // lines its links up with the images they point at.
+  t.true(
+    contentOf('<a href="/images/A.PNG">u</a>').includes(
+      'href="https://site.example/images/A.PNG"'
+    )
+  )
+  t.true(
+    contentOf('<a href="/images/D.SVG">s</a>').includes(
+      'href="https://feed.example/images/D.SVG"'
+    )
+  )
+})
+
+// Attributes that are allowed through but genuinely carry no URL. Anything not
+// listed here has to come back resolved, or the sanitizer is allowing an
+// attribute URL_ATTRIBUTES does not know about -- which is the original bug,
+// reintroduced for that one attribute.
+const NON_URL_ATTRIBUTES = new Set([
+  'name',
+  'target',
+  'alt',
+  'title',
+  'width',
+  'height',
+  'loading'
+])
+
+test('#parseRss resolves every allowed attribute that carries a URL', (t) => {
+  const allowed = ENTRY_CONTENT_SANITIZE_OPTIONS.allowedAttributes as Record<
+    string,
+    string[]
+  >
+  for (const [tag, attributes] of Object.entries(allowed)) {
+    for (const attribute of attributes) {
+      if (NON_URL_ATTRIBUTES.has(attribute)) continue
+      const output = contentOf(`<${tag} ${attribute}="/rel">x</${tag}>`)
+      t.false(
+        output.includes(`${attribute}="/rel"`),
+        `${tag}[${attribute}] kept a relative URL -- add it to URL_ATTRIBUTES`
+      )
+    }
+  }
 })
 
 test('#parseRss resolves relative links using the entry URL', (t) => {
@@ -195,6 +238,37 @@ test('#parseRss falls back between the entry and site URL', (t) => {
       site: '',
       entry: ''
     }).includes('href="https://h.example/x"')
+  )
+  // A link takes its scheme from the entry, the document base a browser uses.
+  t.true(
+    contentOf('<a href="//h.example/x">l</a>', {
+      site: 'https://site.example/',
+      entry: 'http://feed.example/posts/1'
+    }).includes('href="http://h.example/x"')
+  )
+})
+
+test('#parseRss makes a relative entry link absolute', (t) => {
+  // Atom allows a relative entry link and RSS feeds publish them too. Left
+  // relative it is useless as a base and lands in storage as the entry URL.
+  const site = parseRss(
+    'Test Feed',
+    rssWithContent('<a href="foo.html">x</a><a href="#fn1">f</a>', {
+      site: 'https://site.example/',
+      entry: '2024/01/post/'
+    })
+  )
+
+  t.is(site.entries[0].link, 'https://site.example/2024/01/post/')
+  t.true(
+    site.entries[0].content.includes(
+      'href="https://site.example/2024/01/post/foo.html"'
+    )
+  )
+  t.true(
+    site.entries[0].content.includes(
+      'href="https://site.example/2024/01/post/#fn1"'
+    )
   )
 })
 

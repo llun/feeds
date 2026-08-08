@@ -113,6 +113,19 @@ function resolveUrl(
   }
 }
 
+/**
+ * The entry's own URL, made absolute against the site. Atom allows a relative
+ * link (RFC 4287) and RSS feeds publish them too, and a relative one is no use
+ * as a base: the entry's links would fall back to the site, and the reader
+ * stores it as the entry URL, so both its resolution and its "View Original"
+ * would point at the reader's own domain. An already absolute link is returned
+ * byte for byte, since it is part of the key an entry is stored under.
+ */
+function resolveEntryLink(rawLink: string, siteLink: string) {
+  if (!rawLink || parseAbsoluteHttpUrl(rawLink)) return rawLink
+  return resolveUrl(rawLink, siteLink, '')
+}
+
 function resolveContentUrl(
   url: string,
   target: UrlTarget,
@@ -223,7 +236,10 @@ export function parseRss(feedTitle: string, xml: any): Site {
             pubDate,
             description: entryDescription
           } = item
-          const entryLink = joinValuesOrEmptyString(entryLinks)
+          const entryLink = resolveEntryLink(
+            joinValuesOrEmptyString(entryLinks),
+            siteLink
+          )
           return {
             title: joinValuesOrEmptyString(title).trim(),
             link: entryLink,
@@ -269,7 +285,10 @@ export function parseAtom(feedTitle: string, xml: any): Site {
             : summary
               ? summary[0]._
               : ''
-          const entryLink = (itemLink && itemLink.$.href) || ''
+          const entryLink = resolveEntryLink(
+            (itemLink && itemLink.$.href) || '',
+            siteUrl
+          )
           return {
             title: joinValuesOrEmptyString(title).trim(),
             link: entryLink,

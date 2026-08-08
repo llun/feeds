@@ -7,7 +7,7 @@ import sinon from 'sinon'
 
 import {
   cleanupUnusedMediaFiles,
-  collectImageUrls,
+  collectDownloadableMediaUrls,
   collectReferencedMediaFromContents,
   collectReferencedMediaFromEntryDirectory,
   createMediaStore,
@@ -265,6 +265,16 @@ test('#localizeSite names files from the content type when the url has no extens
   t.true(
     localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.webp"`)
   )
+  // Names built from the content type have to survive the walker too, or
+  // cleanup would delete what this path just downloaded.
+  t.deepEqual(
+    [
+      ...collectReferencedMediaFromContents(
+        localized.entries.map((entry) => entry.content)
+      )
+    ],
+    [`${mediaHash(url)}.webp`]
+  )
 })
 
 test('#localizeSite skips svg images', async (t) => {
@@ -403,8 +413,8 @@ test('#localizeSite stops downloading after the deadline', async (t) => {
   )
 })
 
-test('#collectImageUrls returns absolute image urls only', (t) => {
-  const urls = collectImageUrls(
+test('#collectDownloadableMediaUrls returns absolute image urls only', (t) => {
+  const urls = collectDownloadableMediaUrls(
     '<img src="https://example.com/a.png" srcset="https://example.com/b.png 2x, data:image/gif;base64,AAA 3x" />' +
       '<img src="/media/local.png" /><a href="https://example.com/c.png">link</a>'
   )
