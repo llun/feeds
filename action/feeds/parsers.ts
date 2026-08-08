@@ -1,7 +1,7 @@
 import { parseString } from 'xml2js'
 import sanitizeHtml from 'sanitize-html'
 
-import { mapSrcSet } from '../../lib/media'
+import { mapUrlAttributes, type UrlTarget } from '../../lib/media'
 
 export interface Entry {
   title: string
@@ -21,9 +21,10 @@ export interface Site {
 }
 
 type Values = string[] | { _: string; $: { type: 'text' } }[] | null
-// Which links look like an image, so their URL is worth resolving. This is
-// deliberately not the list of images media.ts downloads: svg belongs here but
-// must never be served from our own origin. Keep the two lists apart.
+// Which links point at an image, so they resolve against the same base as the
+// media they reference. This is deliberately not the list of images media.ts
+// downloads: svg belongs here but must never be served from our own origin.
+// Keep the two lists apart.
 const IMAGE_EXTENSION_REGEX =
   /\.(avif|gif|heic|heif|jpeg|jpg|jxl|png|svg|tif|tiff|webp)$/i
 
@@ -45,15 +46,19 @@ function parseAbsoluteHttpUrl(input?: string | null) {
   }
 }
 
-function resolveMediaUrl(inputUrl: string, siteLink: string, entryLink: string) {
+function resolveUrl(
+  inputUrl: string,
+  primaryBase: string,
+  fallbackBase: string
+) {
   const trimmed = inputUrl.trim()
   if (!trimmed) return trimmed
   if (trimmed.startsWith('data:')) return trimmed
 
   if (trimmed.startsWith('//')) {
     const protocol =
-      parseAbsoluteHttpUrl(siteLink)?.protocol ||
-      parseAbsoluteHttpUrl(entryLink)?.protocol ||
+      parseAbsoluteHttpUrl(primaryBase)?.protocol ||
+      parseAbsoluteHttpUrl(fallbackBase)?.protocol ||
       'https:'
     return `${protocol}${trimmed}`
   }
@@ -62,8 +67,8 @@ function resolveMediaUrl(inputUrl: string, siteLink: string, entryLink: string) 
   if (absolute) return absolute.toString()
 
   const base =
-    parseAbsoluteHttpUrl(siteLink)?.toString() ||
-    parseAbsoluteHttpUrl(entryLink)?.toString()
+    parseAbsoluteHttpUrl(primaryBase)?.toString() ||
+    parseAbsoluteHttpUrl(fallbackBase)?.toString()
   if (!base) return trimmed
 
   try {
@@ -73,20 +78,37 @@ function resolveMediaUrl(inputUrl: string, siteLink: string, entryLink: string) 
   }
 }
 
-function resolveSrcSet(srcSet: string, siteLink: string, entryLink: string) {
-  return mapSrcSet(srcSet, (url) => resolveMediaUrl(url, siteLink, entryLink))
-}
-
 function isImageLikeUrl(url: string) {
   const pathOnly = url.trim().split('#')[0].split('?')[0]
   return IMAGE_EXTENSION_REGEX.test(pathOnly)
+}
+
+function resolveContentUrl(
+  url: string,
+  target: UrlTarget,
+  siteLink: string,
+  entryLink: string
+) {
+  const asMedia = resolveUrl(url, siteLink, entryLink)
+  if (target === 'media') return asMedia
+  // A link to an image resolves like the media it points at, so it matches the
+  // src the media store downloads and can be swapped for the local copy. The
+  // store collects across the whole site, so this holds whether the link wraps
+  // the image or another entry is the one displaying it. Every other link
+  // resolves against the entry, the document base a browser would use and the
+  // only one that gets a bare "foo.html" or a "#footnote" right.
+  return isImageLikeUrl(asMedia)
+    ? asMedia
+    : resolveUrl(url, entryLink, siteLink)
 }
 
 export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
   allowedAttributes: {
     ...sanitizeHtml.defaults.allowedAttributes,
-    img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset']
+    img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset'],
+    blockquote: ['cite'],
+    q: ['cite']
   },
   allowedSchemes: ['http', 'https', 'mailto', 'data'],
   allowedSchemesByTag: {
@@ -100,33 +122,15 @@ function sanitizeEntryContent(content: string, siteLink: string, entryLink: stri
   return sanitizeHtml(content, {
     ...ENTRY_CONTENT_SANITIZE_OPTIONS,
     transformTags: {
-      img: (tagName, attribs) => {
-        const nextAttribs = { ...attribs }
-        if (nextAttribs.src) {
-          nextAttribs.src = resolveMediaUrl(
-            nextAttribs.src,
-            siteLink,
-            entryLink
-          )
-        }
-        if (nextAttribs.srcset) {
-          nextAttribs.srcset = resolveSrcSet(
-            nextAttribs.srcset,
-            siteLink,
-            entryLink
-          )
-        }
-        return { tagName, attribs: nextAttribs }
-      },
-      a: (tagName, attribs) => {
-        if (!attribs.href) return { tagName, attribs }
-        const nextAttribs = { ...attribs }
-        const resolvedHref = resolveMediaUrl(nextAttribs.href, siteLink, entryLink)
-        if (isImageLikeUrl(resolvedHref)) {
-          nextAttribs.href = resolvedHref
-        }
-        return { tagName, attribs: nextAttribs }
-      }
+      // Every tag rather than img and a alone, so a relative URL is resolved
+      // wherever it hides. Schemes are filtered after this runs, so a
+      // javascript: href is still dropped even though it is resolved here.
+      '*': (tagName, attribs) => ({
+        tagName,
+        attribs: mapUrlAttributes(attribs, (url, target) =>
+          resolveContentUrl(url, target, siteLink, entryLink)
+        )
+      })
     }
   })
 }

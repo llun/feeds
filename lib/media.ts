@@ -38,9 +38,46 @@ export function withBasePath(url: string, basePath: string) {
 }
 
 /**
- * Images that fail to download keep their remote URL, so a srcset can mix local
- * and remote candidates. Only the local ones get the base path.
+ * Where a URL attribute points: `link` at another document, `media` at a
+ * subresource the page loads. Relative URLs of the two resolve against
+ * different bases, see resolveContentUrl in action/feeds/parsers.ts.
  */
-export function rewriteLocalSrcSet(srcSet: string, basePath: string) {
-  return mapSrcSet(srcSet, (url) => withBasePath(url, basePath))
+export type UrlTarget = 'link' | 'media'
+
+interface UrlAttribute {
+  target: UrlTarget
+  /** Comma separated candidate list rather than a single URL, as in srcset. */
+  list: boolean
+}
+
+/**
+ * Every attribute that carries a URL in entry content. Walking this map instead
+ * of naming tags keeps the action and the reader resolving the same set, and
+ * covers new tags as soon as the sanitizer allows their attributes.
+ */
+export const URL_ATTRIBUTES: Record<string, UrlAttribute> = {
+  href: { target: 'link', list: false },
+  cite: { target: 'link', list: false },
+  src: { target: 'media', list: false },
+  poster: { target: 'media', list: false },
+  srcset: { target: 'media', list: true }
+}
+
+/**
+ * Copies `attribs` with every URL it carries passed through `mapUrl`. srcset
+ * candidates are visited one at a time, so a mixed local and remote list stays
+ * intact. Attributes holding no URL, and empty values, are left untouched.
+ */
+export function mapUrlAttributes(
+  attribs: Record<string, string>,
+  mapUrl: (url: string, target: UrlTarget) => string
+) {
+  const nextAttribs = { ...attribs }
+  for (const [name, value] of Object.entries(nextAttribs)) {
+    const attribute = URL_ATTRIBUTES[name]
+    if (!attribute || !value) continue
+    const map = (url: string) => mapUrl(url, attribute.target)
+    nextAttribs[name] = attribute.list ? mapSrcSet(value, map) : map(value)
+  }
+  return nextAttribs
 }

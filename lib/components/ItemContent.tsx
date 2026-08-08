@@ -4,7 +4,8 @@ import { formatDistance } from 'date-fns'
 import { ExternalLink } from 'lucide-react'
 import { BackButton } from './BackButton'
 import parse from 'html-react-parser'
-import { isLocalMediaPath, rewriteLocalSrcSet, withBasePath } from '../media'
+import { isLocalMediaPath, mapUrlAttributes, withBasePath } from '../media'
+import { resolveEntryLink } from '../utils'
 
 interface ReactParserNode {
   name: string
@@ -78,27 +79,32 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
           {parse(content.content, {
             replace: (domNode) => {
               const node = domNode as ReactParserNode
-              if (node.attribs && node.name === 'a') {
+              if (!node.attribs) return domNode
+
+              // Downloaded media is served from this site, so it only needs the
+              // base path. Everything else resolves against the entry, which
+              // keeps a relative URL stored before the action resolved them
+              // from pointing at the reader's own domain.
+              node.attribs = mapUrlAttributes(node.attribs, (url) =>
+                isLocalMediaPath(url)
+                  ? withBasePath(url, basePath)
+                  : resolveEntryLink(url, content.url)
+              )
+
+              if (node.name === 'a') {
                 node.attribs.target = '_blank'
                 node.attribs.rel = 'noopener noreferrer'
-                return node
               }
-              if (node.attribs && node.name === 'img') {
-                const { src, srcset } = node.attribs
-                if (src?.startsWith('data:')) return node
+              if (
+                node.name === 'img' &&
+                !node.attribs.src?.startsWith('data:')
+              ) {
                 // Images that could not be downloaded still point at their
                 // origin, where a referrer often triggers hotlink protection.
                 node.attribs.referrerpolicy = 'no-referrer'
                 node.attribs.loading = node.attribs.loading || 'lazy'
-                if (isLocalMediaPath(src)) {
-                  node.attribs.src = withBasePath(src, basePath)
-                }
-                if (srcset) {
-                  node.attribs.srcset = rewriteLocalSrcSet(srcset, basePath)
-                }
-                return node
               }
-              return domNode
+              return node
             }
           })}
         </div>

@@ -5,7 +5,11 @@ import path from 'path'
 
 import sanitizeHtml from 'sanitize-html'
 
-import { LOCAL_MEDIA_PATH, mapSrcSet } from '../../lib/media'
+import {
+  LOCAL_MEDIA_PATH,
+  mapUrlAttributes,
+  type UrlTarget
+} from '../../lib/media'
 import { USER_AGENT } from './http'
 import { ENTRY_CONTENT_SANITIZE_OPTIONS, type Site } from './parsers'
 
@@ -18,7 +22,8 @@ const LOCALIZE_DEADLINE_MS = 10 * 60 * 1000
 // Which images may be downloaded and served from our own origin. SVG is
 // deliberately absent from both maps: a localized file is navigable on the
 // published origin, and a feed could otherwise plant a scripted SVG there.
-// parsers.ts keeps a wider list for URL resolution; do not merge the two.
+// parsers.ts keeps a wider list to decide how a link resolves; do not merge
+// the two.
 const KNOWN_IMAGE_EXTENSIONS = new Set([
   '.avif',
   '.gif',
@@ -119,32 +124,25 @@ function extractMediaFileNameFromLocalPath(value: string) {
 
 /**
  * Walks entry content with the same sanitizer configuration used to store it,
- * visiting every image URL in `src` and `srcset`. sanitize-html transforms are
- * synchronous, so downloading happens between a collect pass and a rewrite pass
- * instead of inside the transform itself.
+ * visiting every URL it carries and reporting whether that URL is media the
+ * page loads or a link it points at. sanitize-html transforms are synchronous,
+ * so downloading happens between a collect pass and a rewrite pass instead of
+ * inside the transform itself.
  */
-function walkImageUrls(
+function walkContentUrls(
   content: string,
-  visitImageUrl: (url: string) => string | void
+  visitUrl: (url: string, target: UrlTarget) => string | void
 ) {
-  const visit = (url: string) => {
-    const nextUrl = visitImageUrl(url)
-    return typeof nextUrl === 'string' ? nextUrl : url
-  }
-
   return sanitizeHtml(content, {
     ...ENTRY_CONTENT_SANITIZE_OPTIONS,
     transformTags: {
-      img: (tagName, attribs) => {
-        const nextAttribs = { ...attribs }
-        if (nextAttribs.src) {
-          nextAttribs.src = visit(nextAttribs.src)
-        }
-        if (nextAttribs.srcset) {
-          nextAttribs.srcset = mapSrcSet(nextAttribs.srcset, visit)
-        }
-        return { tagName, attribs: nextAttribs }
-      }
+      '*': (tagName, attribs) => ({
+        tagName,
+        attribs: mapUrlAttributes(attribs, (url, target) => {
+          const nextUrl = visitUrl(url, target)
+          return typeof nextUrl === 'string' ? nextUrl : url
+        })
+      })
     }
   })
 }
@@ -152,8 +150,11 @@ function walkImageUrls(
 export function collectImageUrls(content: string) {
   const urls = new Set<string>()
   if (!content) return urls
-  walkImageUrls(content, (url) => {
-    if (isDownloadableUrl(url)) urls.add(url)
+  // Only media the entry actually displays is worth the download. A link to an
+  // image is followed by hand, so it is rewritten when the image happens to be
+  // cached already but never pulls one down on its own.
+  walkContentUrls(content, (url, target) => {
+    if (target === 'media' && isDownloadableUrl(url)) urls.add(url)
   })
   return urls
 }
@@ -163,7 +164,7 @@ export function rewriteImageUrls(
   replacements: Map<string, string>
 ) {
   if (!content) return content
-  return walkImageUrls(content, (url) => replacements.get(url))
+  return walkContentUrls(content, (url) => replacements.get(url))
 }
 
 async function fileExists(filePath: string) {
@@ -351,10 +352,16 @@ export function createMediaStore({
   return { localizeSite }
 }
 
+/**
+ * Every downloaded file the content still points at, so cleanup keeps it. Links
+ * count as well as images: rewriteImageUrls sends a lightbox href to the local
+ * copy too, and deleting a file that is still referenced is worse than keeping
+ * one that is not.
+ */
 export function extractLocalMediaReferences(content: string) {
   const references = new Set<string>()
   if (!content) return references
-  walkImageUrls(content, (url) => {
+  walkContentUrls(content, (url) => {
     const mediaFile = extractMediaFileNameFromLocalPath(url)
     if (mediaFile) references.add(mediaFile)
   })

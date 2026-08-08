@@ -34,6 +34,23 @@ export const categoriesClassName = (pageState: PageState): string => {
   }
 }
 
+/**
+ * Resolves a URL from entry content against the entry it came from. Entries
+ * stored before the action started resolving URLs still hold relative ones,
+ * which would otherwise point at the reader's own domain. Anything already
+ * absolute is returned as it is.
+ */
+export const resolveEntryLink = (url: string, entryUrl?: string): string => {
+  const trimmed = url.trim()
+  if (!trimmed || !entryUrl) return url
+  if (trimmed.startsWith('data:')) return url
+  try {
+    return new URL(trimmed, entryUrl).toString()
+  } catch {
+    return url
+  }
+}
+
 export type LocationState =
   | {
       type: 'category'

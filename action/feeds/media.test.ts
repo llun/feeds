@@ -84,7 +84,8 @@ test('#localizeSite downloads images and rewrites src and srcset', async (t) => 
     content,
     /srcset="\/media\/[a-f0-9]{64}\.png 1x, \/media\/[a-f0-9]{64}\.webp 2x"/
   )
-  t.true(content.includes('href="https://example.com/images/one.png"'))
+  // A lightbox link to an image we downloaded points at the local copy too.
+  t.regex(content, /href="\/media\/[a-f0-9]{64}\.png"/)
   t.deepEqual(await listMediaFiles(mediaDirectory), [
     `${mediaHash('https://cdn.example.com/two.webp')}.webp`,
     `${mediaHash('https://example.com/images/one.png')}.png`
@@ -105,6 +106,26 @@ test('#localizeSite downloads each url once across entries', async (t) => {
   )
   await store.localizeSite(createSite('<img src="https://example.com/a.png" />'))
 
+  t.is(fetchStub.callCount, 1)
+})
+
+test('#localizeSite localizes a link to an image another entry displays', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-crossentry-')
+  const fetchStub = sinon.stub().resolves(imageResponse())
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(
+    createSite(
+      '<a href="https://example.com/a.png">Full size</a>',
+      '<img src="https://example.com/a.png" />'
+    )
+  )
+
+  // Images are collected across the whole site, so the entry that only links
+  // to one still reaches the local copy.
+  const localPath = `/media/${mediaHash('https://example.com/a.png')}.png`
+  t.true(localized.entries[0].content.includes(`href="${localPath}"`))
+  t.true(localized.entries[1].content.includes(`src="${localPath}"`))
   t.is(fetchStub.callCount, 1)
 })
 
@@ -367,13 +388,28 @@ test('#rewriteImageUrls only replaces mapped urls', (t) => {
   )
 })
 
-test('#collectReferencedMediaFromContents returns local image references', (t) => {
+test('#rewriteImageUrls sends links to a cached image to the local copy', (t) => {
+  const content = rewriteImageUrls(
+    '<a href="https://example.com/a.png"><img src="https://example.com/a.png" /></a>' +
+      '<a href="https://example.com/uncached.png">Full size</a>',
+    new Map([['https://example.com/a.png', '/media/a.png']])
+  )
+
+  t.true(content.includes('href="/media/a.png"'))
+  t.true(content.includes('src="/media/a.png"'))
+  // Nothing was downloaded for this one, so it keeps pointing at the origin.
+  t.true(content.includes('href="https://example.com/uncached.png"'))
+})
+
+test('#collectReferencedMediaFromContents returns every local media reference', (t) => {
   const media = collectReferencedMediaFromContents([
     '<p><img src="/media/a.jpg" srcset="/media/b.webp 1x, /media/c.png 2x" /><a href="/media/d.gif">Download</a></p>',
     '<img src="https://example.com/remote.png" />'
   ])
 
-  t.deepEqual([...media].sort(), ['a.jpg', 'b.webp', 'c.png'])
+  // Links count as well as images: a lightbox href is rewritten to the local
+  // copy too, so cleanup would otherwise delete a file still in use.
+  t.deepEqual([...media].sort(), ['a.jpg', 'b.webp', 'c.png', 'd.gif'])
 })
 
 test('#collectReferencedMediaFromEntryDirectory reads entry files', async (t) => {

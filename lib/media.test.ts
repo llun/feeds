@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { isLocalMediaPath, rewriteLocalSrcSet, withBasePath } from './media'
+import { isLocalMediaPath, mapUrlAttributes, withBasePath } from './media'
 
 test('#isLocalMediaPath matches downloaded media paths only', (t) => {
   t.true(isLocalMediaPath('/media/a.png'))
@@ -20,16 +20,44 @@ test('#withBasePath prefixes local media only', (t) => {
   )
 })
 
-test('#rewriteLocalSrcSet keeps remote candidates and descriptors', (t) => {
-  t.is(
-    rewriteLocalSrcSet(
-      '/media/a.png 1x, https://example.com/b.png 2x, /media/c.png',
-      '/feeds'
-    ),
-    '/feeds/media/a.png 1x, https://example.com/b.png 2x, /feeds/media/c.png'
+test('#mapUrlAttributes maps every url and reports what it points at', (t) => {
+  const seen: [string, string][] = []
+  const attribs = mapUrlAttributes(
+    {
+      href: 'page.html',
+      cite: 'quote.html',
+      src: 'a.png',
+      srcset: 'a.png 1x, b.png 2x',
+      alt: 'not a url',
+      title: ''
+    },
+    (url, target) => {
+      seen.push([url, target])
+      return `resolved:${url}`
+    }
   )
-  t.is(
-    rewriteLocalSrcSet('/media/a.png 1x', ''),
-    '/media/a.png 1x'
-  )
+
+  t.deepEqual(attribs, {
+    href: 'resolved:page.html',
+    cite: 'resolved:quote.html',
+    src: 'resolved:a.png',
+    srcset: 'resolved:a.png 1x, resolved:b.png 2x',
+    alt: 'not a url',
+    title: ''
+  })
+  t.deepEqual(seen, [
+    ['page.html', 'link'],
+    ['quote.html', 'link'],
+    ['a.png', 'media'],
+    ['a.png', 'media'],
+    ['b.png', 'media']
+  ])
+})
+
+test('#mapUrlAttributes leaves the original attributes alone', (t) => {
+  const attribs = { href: 'page.html' }
+  const mapped = mapUrlAttributes(attribs, () => 'changed')
+
+  t.is(attribs.href, 'page.html')
+  t.is(mapped.href, 'changed')
 })
