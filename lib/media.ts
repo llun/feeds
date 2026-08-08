@@ -2,41 +2,12 @@
  * Shared between the action that downloads feed images and the reader that
  * renders them, so both sides always agree on where media lives -- and, through
  * URL_ATTRIBUTES below, on which attributes of entry content carry a URL at all
- * and whether each points at a document or at media.
+ * and whether each points at a document or at media. What the action may
+ * download is its own policy and lives with the parser.
  */
 export const LOCAL_MEDIA_PATH = '/media'
 
 const LOCAL_MEDIA_PREFIX = `${LOCAL_MEDIA_PATH}/`
-
-/**
- * Every image extension the action may download and serve from our own origin,
- * and so also every extension whose link resolves against the media base rather
- * than the document -- the two have to agree or a link stops matching the image
- * it points at and silently keeps hotlinking. One list, so they cannot drift.
- *
- * SVG is deliberately absent: a localized file is navigable on the published
- * origin, and a feed could otherwise plant a scripted SVG there.
- */
-const DOWNLOADABLE_IMAGE_EXTENSIONS = new Set([
-  '.avif',
-  '.gif',
-  '.heic',
-  '.heif',
-  '.jpeg',
-  '.jpg',
-  '.jxl',
-  '.png',
-  '.tif',
-  '.tiff',
-  '.webp'
-])
-
-export function normalizeImageExtension(extension?: string | null) {
-  if (!extension) return null
-  const normalized = extension.trim().toLowerCase()
-  if (!DOWNLOADABLE_IMAGE_EXTENSIONS.has(normalized)) return null
-  return normalized
-}
 
 /** The media store names every file it writes after the hash of its URL. */
 const LOCAL_MEDIA_FILE = /^[0-9a-f]{64}\.[a-z0-9]+$/
@@ -45,7 +16,7 @@ const LOCAL_MEDIA_FILE = /^[0-9a-f]{64}\.[a-z0-9]+$/
  * The part of a local media URL that names the file on disk, or null when the
  * URL is not one we wrote. Matching the hashed shape rather than the `/media`
  * prefix alone keeps a feed's own `/media/...` path from being mistaken for a
- * downloaded copy -- serving plenty of sites lay their uploads out that way.
+ * downloaded copy -- plenty of sites lay their own uploads out that way.
  */
 export function localMediaFileName(url?: string) {
   if (!url) return null
@@ -56,17 +27,6 @@ export function localMediaFileName(url?: string) {
     .split('?')[0]
     .split('#')[0]
   return LOCAL_MEDIA_FILE.test(fileName) ? fileName : null
-}
-
-/**
- * Whether a URL points at an image the action may download, which is what makes
- * a link to it resolve against the same base as the image itself.
- */
-export function hasDownloadableImageExtension(url: string) {
-  const pathOnly = url.trim().split('#')[0].split('?')[0]
-  const dot = pathOnly.lastIndexOf('.')
-  if (dot < 0) return false
-  return DOWNLOADABLE_IMAGE_EXTENSIONS.has(pathOnly.slice(dot).toLowerCase())
 }
 
 const WHITESPACE = /\s/
@@ -98,9 +58,12 @@ function mapSrcSet(srcSet: string, mapUrl: (url: string) => string) {
     let url = srcSet.slice(urlStart, index)
     let descriptor = ''
 
-    const trailingCommas = url.match(/,+$/)
-    if (trailingCommas) {
-      url = url.slice(0, -trailingCommas[0].length)
+    // Scanned rather than matched with /,+$/, which backtracks quadratically
+    // over a long run of commas that a feed is free to publish.
+    let end = url.length
+    while (end > 0 && url[end - 1] === ',') end--
+    if (end < url.length) {
+      url = url.slice(0, end)
     } else {
       while (index < srcSet.length && WHITESPACE.test(srcSet[index])) index++
       const descriptorStart = index

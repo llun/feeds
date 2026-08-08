@@ -1,11 +1,7 @@
 import { parseString } from 'xml2js'
 import sanitizeHtml from 'sanitize-html'
 
-import {
-  hasDownloadableImageExtension,
-  mapUrlAttributes,
-  type UrlTarget
-} from '../../lib/media'
+import { mapUrlAttributes, type UrlTarget } from '../../lib/media'
 
 export interface Entry {
   title: string
@@ -25,6 +21,47 @@ export interface Site {
 }
 
 type Values = string[] | { _: string; $: { type: 'text' } }[] | null
+
+/**
+ * Every image extension media.ts may download and serve from our own origin,
+ * and so also every extension whose link resolves against the media base rather
+ * than the document -- the two have to agree or a link stops matching the image
+ * it points at and silently keeps hotlinking. One list, so they cannot drift.
+ *
+ * SVG is deliberately absent: a localized file is navigable on the published
+ * origin, and a feed could otherwise plant a scripted SVG there.
+ */
+const DOWNLOADABLE_IMAGE_EXTENSIONS = new Set([
+  '.avif',
+  '.gif',
+  '.heic',
+  '.heif',
+  '.jpeg',
+  '.jpg',
+  '.jxl',
+  '.png',
+  '.tif',
+  '.tiff',
+  '.webp'
+])
+
+export function normalizeImageExtension(extension?: string | null) {
+  if (!extension) return null
+  const normalized = extension.trim().toLowerCase()
+  if (!DOWNLOADABLE_IMAGE_EXTENSIONS.has(normalized)) return null
+  return normalized
+}
+
+/**
+ * Whether a URL points at an image the action may download, which is what makes
+ * a link to it resolve against the same base as the image itself.
+ */
+function hasDownloadableImageExtension(url: string) {
+  const pathOnly = url.trim().split('#')[0].split('?')[0]
+  const dot = pathOnly.lastIndexOf('.')
+  if (dot < 0) return false
+  return DOWNLOADABLE_IMAGE_EXTENSIONS.has(pathOnly.slice(dot).toLowerCase())
+}
 
 function joinValuesOrEmptyString(values: Values) {
   if (values && values.length > 0 && typeof values[0] !== 'string') {
@@ -106,6 +143,8 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     // feed published and lands on the reader's own domain.
     ...sanitizeHtml.defaults.allowedAttributes,
     img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset'],
+    // Kept so the source of a quotation survives into the stored JSON, and
+    // resolved like any other URL rather than left pointing at this site.
     blockquote: ['cite'],
     q: ['cite']
   },

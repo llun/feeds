@@ -144,6 +144,30 @@ test('#localizeSite localizes a link to an image another entry displays', async 
   ])
 })
 
+test('#localizeSite writes files the reference walker still recognises', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-roundtrip-')
+  const fetchStub = sinon.stub().resolves(imageResponse('x', 'image/jpeg'))
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(
+    createSite(
+      '<a href="https://example.com/a.jpeg"><img src="https://example.com/a.jpeg" srcset="https://example.com/a.jpeg 1x" /></a>'
+    )
+  )
+
+  // The name the store writes has to be the name cleanup keeps, or a run would
+  // delete the images the previous one downloaded.
+  const onDisk = await listMediaFiles(mediaDirectory)
+  t.true(onDisk.length > 0)
+  const referenced = collectReferencedMediaFromContents(
+    localized.entries.map((entry) => entry.content)
+  )
+  t.deepEqual([...referenced].sort(), onDisk)
+
+  await cleanupUnusedMediaFiles(mediaDirectory, referenced)
+  t.deepEqual(await listMediaFiles(mediaDirectory), onDisk)
+})
+
 test('#localizeSite keeps the remote url when the download fails', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-failure-')
   const fetchStub = sinon.stub().resolves(new Response('nope', { status: 403 }))

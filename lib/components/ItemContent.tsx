@@ -5,7 +5,7 @@ import { ExternalLink } from 'lucide-react'
 import { BackButton } from './BackButton'
 import parse from 'html-react-parser'
 import { isLocalMediaPath, mapUrlAttributes, withBasePath } from '../media'
-import { resolveEntryLink } from '../utils'
+import { resolveEntryUrl } from '../utils'
 
 interface ReactParserNode {
   name: string
@@ -82,15 +82,15 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
               if (!node.attribs) return domNode
 
               // Downloaded media is served from this site, so it only needs the
-              // base path. Everything else resolves against the entry, which
-              // keeps a relative URL stored before the action resolved them
-              // from pointing at the reader's own domain. Links and media both
-              // take the entry as their base here: the site link the action
-              // prefers for media is not part of the stored entry.
+              // base path. Everything else resolves against the entry, which is
+              // what stops a URL stored before the action resolved them from
+              // pointing at the reader's own domain. Links and media both take
+              // the entry as their base here: the site link the action prefers
+              // for media is not part of the stored entry.
               node.attribs = mapUrlAttributes(node.attribs, (url) =>
                 isLocalMediaPath(url)
                   ? withBasePath(url, basePath)
-                  : resolveEntryLink(url, content.url)
+                  : resolveEntryUrl(url, content.url)
               )
 
               if (node.name === 'a') {

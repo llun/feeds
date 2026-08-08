@@ -114,6 +114,13 @@ test('#parseRss resolves URLs outside of a and img tags', (t) => {
       'cite="https://feed.example/posts/source.html"'
     )
   )
+  // Every link attribute picks its base the same way, so a cite ending in an
+  // image extension takes the media base like a lightbox href would.
+  t.true(
+    contentOf('<q cite="photo.png">Quoted</q>').includes(
+      'cite="https://site.example/photo.png"'
+    )
+  )
 })
 
 test('#parseRss leaves URLs it must not rewrite alone', (t) => {
@@ -141,6 +148,17 @@ test('#parseRss leaves URLs it must not rewrite alone', (t) => {
   )
   t.is(contentOf('<a href="">Empty</a>'), '<a>Empty</a>')
   t.is(contentOf('<a href="   ">Blank</a>'), '<a>Blank</a>')
+  // A citation is a document, so the schemes links and inline images get do
+  // not apply to it.
+  t.is(
+    contentOf('<blockquote cite="mailto:a@b.example">q</blockquote>'),
+    '<blockquote>q</blockquote>'
+  )
+  t.is(
+    contentOf('<blockquote cite="data:text/html,x">q</blockquote>'),
+    '<blockquote>q</blockquote>'
+  )
+  t.is(contentOf('<q cite="javascript:alert(1)">q</q>'), '<q>q</q>')
 })
 
 test('#parseRss falls back between the entry and site URL', (t) => {
@@ -163,6 +181,20 @@ test('#parseRss falls back between the entry and site URL', (t) => {
     contentOf('<a href="/x">l</a>', { site: '', entry: '' }).includes(
       'href="/x"'
     )
+  )
+
+  // A protocol-relative URL takes its scheme from the base it resolves
+  // against, and falls back to https when there is none.
+  t.true(
+    contentOf('<img src="//cdn.example/x.png" />', {
+      site: 'http://site.example/'
+    }).includes('src="http://cdn.example/x.png"')
+  )
+  t.true(
+    contentOf('<a href="//h.example/x">l</a>', {
+      site: '',
+      entry: ''
+    }).includes('href="https://h.example/x"')
   )
 })
 

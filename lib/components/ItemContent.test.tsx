@@ -73,6 +73,13 @@ test.serial('#ItemContent serves downloaded media from this site', (t) => {
         `srcSet="/feeds${DOWNLOADED} 1x, https://example.com/b.png 2x"`
       )
     )
+    // A legacy entry whose images only partly downloaded mixes the two
+    // branches within one srcset.
+    t.true(
+      render(`<img srcset="${DOWNLOADED} 1x, legacy.png 2x" />`).includes(
+        `srcSet="/feeds${DOWNLOADED} 1x, https://feed.example/posts/legacy.png 2x"`
+      )
+    )
   } finally {
     delete process.env.NEXT_PUBLIC_BASE_PATH
   }

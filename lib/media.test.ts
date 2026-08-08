@@ -151,6 +151,22 @@ test('#mapUrlAttributes reads srcset candidates the way HTML does', (t) => {
   t.deepEqual(seen, ['a.png,b.png'])
 })
 
+test('#mapUrlAttributes scans a long comma run in linear time', (t) => {
+  // A feed publishes the srcset, so scanning it must not be quadratic. This
+  // input takes milliseconds linearly and about sixteen seconds otherwise.
+  t.timeout(5000)
+  const seen: string[] = []
+  const srcset = `a${','.repeat(200_000)}x`
+  t.is(
+    mapUrlAttributes({ srcset }, (url) => {
+      seen.push(url)
+      return url
+    }).srcset,
+    srcset
+  )
+  t.deepEqual(seen, [srcset])
+})
+
 test('#mapUrlAttributes ignores attributes inherited from Object', (t) => {
   // Attribute names come straight from feed HTML.
   const attribs = { constructor: 'evil.html', toString: 'evil.html' }

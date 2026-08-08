@@ -35,7 +35,8 @@ export const categoriesClassName = (pageState: PageState): string => {
 }
 
 /**
- * Resolves a URL from entry content against the entry it came from. Entries
+ * Resolves any URL from entry content against the entry it came from -- media
+ * as well as links, since the reader has no site link to fall back on. Entries
  * stored before the action started resolving URLs still hold relative ones,
  * which would otherwise point at the reader's own domain. An absolute URL
  * keeps its target but comes back re-serialized by the URL parser, so it can
@@ -45,7 +46,7 @@ export const categoriesClassName = (pageState: PageState): string => {
  * is whatever the feed put in it, and resolving against a `javascript:` base
  * would turn every "#footnote" in the entry into a script URL.
  */
-export const resolveEntryLink = (url: string, entryUrl?: string): string => {
+export const resolveEntryUrl = (url: string, entryUrl?: string): string => {
   const trimmed = url.trim()
   if (!trimmed || !entryUrl) return url
   if (trimmed.startsWith('data:')) return url

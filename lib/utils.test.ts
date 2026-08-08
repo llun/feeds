@@ -1,59 +1,77 @@
 import test from 'ava'
-import { parseLocation, resolveEntryLink } from './utils'
+import { parseLocation, resolveEntryUrl } from './utils'
 
 const ENTRY_URL = 'https://feed.example/posts/entry-1'
 
-test('#resolveEntryLink resolves relative urls against the entry', (t) => {
+test('#resolveEntryUrl resolves relative urls against the entry', (t) => {
   t.is(
-    resolveEntryLink('/posts/other', ENTRY_URL),
+    resolveEntryUrl('/posts/other', ENTRY_URL),
     'https://feed.example/posts/other'
   )
   t.is(
-    resolveEntryLink('chapter-two.html', ENTRY_URL),
+    resolveEntryUrl('chapter-two.html', ENTRY_URL),
     'https://feed.example/posts/chapter-two.html'
   )
   t.is(
-    resolveEntryLink('#footnote', ENTRY_URL),
+    resolveEntryUrl('#footnote', ENTRY_URL),
     'https://feed.example/posts/entry-1#footnote'
   )
   t.is(
-    resolveEntryLink('//en.wikipedia.org/wiki/RSS', ENTRY_URL),
+    resolveEntryUrl('//en.wikipedia.org/wiki/RSS', ENTRY_URL),
     'https://en.wikipedia.org/wiki/RSS'
   )
 })
 
-test('#resolveEntryLink keeps urls it must not rewrite', (t) => {
+test('#resolveEntryUrl keeps urls it must not rewrite', (t) => {
   t.is(
-    resolveEntryLink('https://other.example/page', ENTRY_URL),
+    resolveEntryUrl('https://other.example/page', ENTRY_URL),
     'https://other.example/page'
   )
   t.is(
-    resolveEntryLink('mailto:user@example.com', ENTRY_URL),
+    resolveEntryUrl('mailto:user@example.com', ENTRY_URL),
     'mailto:user@example.com'
   )
   t.is(
-    resolveEntryLink('data:image/gif;base64,AAA', ENTRY_URL),
+    resolveEntryUrl('data:image/gif;base64,AAA', ENTRY_URL),
     'data:image/gif;base64,AAA'
+  )
+  // Signed CDN URLs carry characters a stricter normalizer would escape.
+  t.is(
+    resolveEntryUrl('https://cdn.example/x?sig=a|b^c', ENTRY_URL),
+    'https://cdn.example/x?sig=a|b^c'
   )
 })
 
-test('#resolveEntryLink returns the url unchanged without a usable entry', (t) => {
-  t.is(resolveEntryLink('/posts/other'), '/posts/other')
-  t.is(resolveEntryLink('/posts/other', ''), '/posts/other')
-  t.is(resolveEntryLink('/posts/other', 'not a url'), '/posts/other')
-  t.is(resolveEntryLink('', ENTRY_URL), '')
-  t.is(resolveEntryLink('   ', ENTRY_URL), '   ')
+test('#resolveEntryUrl re-serializes an absolute url', (t) => {
+  // Every URL in stored content goes through here now, so the normalizing is
+  // worth pinning: it keeps the target but not necessarily the exact bytes.
+  t.is(
+    resolveEntryUrl('https://other.example', ENTRY_URL),
+    'https://other.example/'
+  )
+  t.is(
+    resolveEntryUrl('HTTPS://Other.Example/Page', ENTRY_URL),
+    'https://other.example/Page'
+  )
 })
 
-test('#resolveEntryLink refuses a base that is not http', (t) => {
+test('#resolveEntryUrl returns the url unchanged without a usable entry', (t) => {
+  t.is(resolveEntryUrl('/posts/other'), '/posts/other')
+  t.is(resolveEntryUrl('/posts/other', ''), '/posts/other')
+  t.is(resolveEntryUrl('/posts/other', 'not a url'), '/posts/other')
+  t.is(resolveEntryUrl('', ENTRY_URL), '')
+  t.is(resolveEntryUrl('   ', ENTRY_URL), '   ')
+})
+
+test('#resolveEntryUrl refuses a base that is not http', (t) => {
   // The entry link is whatever the feed published. Resolving against a
   // javascript: base would turn every footnote anchor into a script URL.
-  t.is(resolveEntryLink('#fn1', 'javascript:alert(1)'), '#fn1')
-  t.is(resolveEntryLink('#fn1', 'file:///etc/passwd'), '#fn1')
-  t.is(resolveEntryLink('#fn1', 'data:text/html,<script></script>'), '#fn1')
-  t.is(resolveEntryLink('/posts/other', 'ftp://feed.example/x'), '/posts/other')
+  t.is(resolveEntryUrl('#fn1', 'javascript:alert(1)'), '#fn1')
+  t.is(resolveEntryUrl('#fn1', 'file:///etc/passwd'), '#fn1')
+  t.is(resolveEntryUrl('#fn1', 'data:text/html,<script></script>'), '#fn1')
+  t.is(resolveEntryUrl('/posts/other', 'ftp://feed.example/x'), '/posts/other')
   t.is(
-    resolveEntryLink('/posts/other', 'http://feed.example/posts/1'),
+    resolveEntryUrl('/posts/other', 'http://feed.example/posts/1'),
     'http://feed.example/posts/other'
   )
 })

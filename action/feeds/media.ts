@@ -9,11 +9,14 @@ import {
   LOCAL_MEDIA_PATH,
   localMediaFileName,
   mapUrlAttributes,
-  normalizeImageExtension,
   type UrlTarget
 } from '../../lib/media'
 import { USER_AGENT } from './http'
-import { ENTRY_CONTENT_SANITIZE_OPTIONS, type Site } from './parsers'
+import {
+  ENTRY_CONTENT_SANITIZE_OPTIONS,
+  normalizeImageExtension,
+  type Site
+} from './parsers'
 
 const MAX_MEDIA_BYTES = 20 * 1024 * 1024
 const DOWNLOAD_TIMEOUT_MS = 15_000
@@ -22,10 +25,10 @@ const MAX_CONCURRENT_DOWNLOADS_PER_HOST = 2
 const LOCALIZE_DEADLINE_MS = 10 * 60 * 1000
 
 // Which images may be downloaded and served from our own origin. The list of
-// extensions lives in lib/media.ts, where the link resolver reads it too. SVG
-// is deliberately absent from that list and from the map below: a localized
-// file is navigable on the published origin, and a feed could otherwise plant
-// a scripted SVG there.
+// extensions lives in parsers.ts, where the link resolver reads it too. SVG is
+// deliberately absent from that list and from the map below: a localized file
+// is navigable on the published origin, and a feed could otherwise plant a
+// scripted SVG there.
 const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
   'image/avif': '.avif',
   'image/gif': '.gif',
