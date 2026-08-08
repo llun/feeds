@@ -18,7 +18,12 @@ import {
 } from '../lib/utils'
 import { PathReducer, updatePath } from './reducers/path'
 
-export const Page: FC = () => {
+interface PageProps {
+  version?: string
+  buildTime?: string | null
+}
+
+export const Page: FC<PageProps> = ({ version, buildTime }) => {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
   const [pageState, setPageState] = useState<PageState>('categories')
   const [categories, setCategories] = useState<Category[]>([])
@@ -118,19 +123,21 @@ export const Page: FC = () => {
 
   if (status === 'loading') {
     return (
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
-        <div className="text-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 text-center">
           <div
-            className="w-16 h-16 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin motion-reduce:animate-none mx-auto mb-4"
+            className="feeds-spinner size-12 border-4"
             role="status"
             aria-label="Loading"
           ></div>
-          <p className="text-lg font-semibold" aria-live="polite">
-            Loading content...
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            This will take a few seconds
-          </p>
+          <div>
+            <p className="text-lg font-semibold" aria-live="polite">
+              Loading content...
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              This will take a few seconds
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -144,23 +151,25 @@ export const Page: FC = () => {
           e.preventDefault()
           document.getElementById('main-content')?.focus()
         }}
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-brand focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-brand-foreground focus:shadow-lg focus:outline-none"
       >
         Skip to main content
       </button>
       <main
-        className="flex flex-col md:flex-row h-screen"
+        className="flex h-dvh flex-col md:flex-row"
         id="main-content"
         tabIndex={-1}
       >
         <div
-          className={`w-full md:w-1/4 xl:w-1/5 flex-shrink-0 ${categoriesClassName(
+          className={`h-full min-h-0 w-full flex-shrink-0 md:w-[26%] md:max-w-80 xl:w-1/5 ${categoriesClassName(
             pageState
           )}`}
         >
           <CategoryList
             categories={categories}
             totalEntries={totalEntries}
+            version={version}
+            buildTime={buildTime}
             selectCategory={(category: string) => {
               setListTitle(category)
               dispatch(updatePath(`/categories/${category}`))
@@ -173,7 +182,7 @@ export const Page: FC = () => {
         </div>
 
         <div
-          className={`w-full md:w-1/3 xl:w-2/5 flex-shrink-0 ${entriesClassName(
+          className={`h-full min-h-0 w-full flex-shrink-0 md:w-[36%] xl:w-2/5 ${entriesClassName(
             pageState
           )}`}
         >
@@ -199,7 +208,7 @@ export const Page: FC = () => {
             />
           ) : (
             <div
-              className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 p-8 text-center border-r border-gray-200 dark:border-gray-700"
+              className="flex h-full items-center justify-center border-border p-8 text-center text-sm text-muted-foreground md:border-r"
               role="status"
             >
               <p>
@@ -210,7 +219,7 @@ export const Page: FC = () => {
         </div>
 
         <div
-          className={`w-full flex-1 overflow-hidden ${
+          className={`h-full min-h-0 w-full flex-1 overflow-hidden ${
             !content ? 'hidden md:block' : ''
           } ${articleClassName(pageState)}`}
         >

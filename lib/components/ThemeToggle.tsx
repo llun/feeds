@@ -1,6 +1,17 @@
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Laptop } from 'lucide-react'
+import { Sun, Moon, Laptop, Check } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
+
+const OPTIONS = [
+  { value: 'light', label: 'Light', ariaLabel: 'Light mode', Icon: Sun },
+  { value: 'dark', label: 'Dark', ariaLabel: 'Dark mode', Icon: Moon },
+  {
+    value: 'system',
+    label: 'System',
+    ariaLabel: 'System preference',
+    Icon: Laptop
+  }
+] as const
 
 export const ThemeToggle = () => {
   const { theme, setTheme } = useTheme()
@@ -8,16 +19,8 @@ export const ThemeToggle = () => {
   const modalRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
-  const getCurrentIcon = () => {
-    switch (theme) {
-      case 'light':
-        return <Sun size={16} />
-      case 'dark':
-        return <Moon size={16} />
-      default:
-        return <Laptop size={16} />
-    }
-  }
+  const CurrentIcon =
+    OPTIONS.find((option) => option.value === theme)?.Icon ?? Laptop
 
   // Handle escape key and click outside
   useEffect(() => {
@@ -57,72 +60,48 @@ export const ThemeToggle = () => {
         type="button"
         id="theme-toggle-button"
         onClick={() => setShowModal(!showModal)}
-        className="flex items-center border rounded-md p-1.5 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+        className="inline-flex size-8.5 items-center justify-center rounded-md border border-border-strong text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-ring"
         aria-label="Toggle theme"
         aria-expanded={showModal}
         aria-haspopup="true"
       >
-        {getCurrentIcon()}
+        <CurrentIcon size={16} />
       </button>
 
       {showModal && (
         <div
           ref={modalRef}
-          className="absolute right-0 mt-2 z-20 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-md shadow-lg p-2 min-w-[140px]"
+          className="absolute right-0 z-20 mt-2 flex min-w-36 flex-col gap-0.5 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg animate-pop-in"
           role="menu"
           aria-orientation="vertical"
           aria-labelledby="theme-toggle-button"
         >
-          <div className="flex flex-col space-y-2">
-            <button
-              type="button"
-              onClick={() => {
-                setTheme('light')
-                setShowModal(false)
-                buttonRef.current?.focus()
-              }}
-              className={`flex items-center space-x-2 p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset text-left ${
-                theme === 'light' ? 'bg-gray-200 dark:bg-gray-700' : ''
-              }`}
-              role="menuitem"
-              aria-label="Light mode"
-            >
-              <Sun size={16} />
-              <span>Light</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTheme('dark')
-                setShowModal(false)
-                buttonRef.current?.focus()
-              }}
-              className={`flex items-center space-x-2 p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset text-left ${
-                theme === 'dark' ? 'bg-gray-200 dark:bg-gray-700' : ''
-              }`}
-              role="menuitem"
-              aria-label="Dark mode"
-            >
-              <Moon size={16} />
-              <span>Dark</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTheme('system')
-                setShowModal(false)
-                buttonRef.current?.focus()
-              }}
-              className={`flex items-center space-x-2 p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset text-left ${
-                theme === 'system' ? 'bg-gray-200 dark:bg-gray-700' : ''
-              }`}
-              role="menuitem"
-              aria-label="System preference"
-            >
-              <Laptop size={16} />
-              <span>System</span>
-            </button>
-          </div>
+          {OPTIONS.map(({ value, label, ariaLabel, Icon }) => {
+            const selected = theme === value
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  setTheme(value)
+                  setShowModal(false)
+                  buttonRef.current?.focus()
+                }}
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors focus-ring ${
+                  selected
+                    ? 'bg-brand-subtle font-medium text-brand-emphasis'
+                    : 'hover:bg-surface-3'
+                }`}
+                role="menuitemradio"
+                aria-checked={selected}
+                aria-label={ariaLabel}
+              >
+                <Icon size={16} />
+                <span>{label}</span>
+                {selected && <Check size={15} className="ml-auto" />}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>

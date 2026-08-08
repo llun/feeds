@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -41,9 +40,53 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Design-system semantic colors. Text tiers are exposed under --color-*
+     because the --text-* namespace generates font-size utilities. */
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-active: var(--brand-active);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-emphasis: var(--brand-emphasis);
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
+  --color-border-strong: var(--border-strong);
+  --color-subtle: var(--text-secondary);
+  --color-faint: var(--text-faint);
+}
+
+@theme {
+  --default-transition-duration: 120ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --leading-snug: 1.35;
+  --leading-relaxed: 1.65;
+  --animate-pop-in: feeds-pop-in 120ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes feeds-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes feeds-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 :root {
+  color-scheme: light;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -56,13 +99,13 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.53 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.623 0.214 259.815);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -76,9 +119,37 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Surfaces: page, hover, selected */
+  --surface-1: oklch(1 0 0);
+  --surface-2: oklch(0.985 0 0);
+  --surface-3: oklch(0.97 0 0);
+
+  /* Text tiers. Faint is for decorative marks only (separators, list
+     markers) — it does not meet AA for reading text. */
+  --text-primary: oklch(0.145 0 0);
+  --text-secondary: oklch(0.371 0 0);
+  --text-muted: oklch(0.53 0 0);
+  --text-faint: oklch(0.62 0 0);
+
+  /* Brand accent */
+  --brand: oklch(0.546 0.245 262.881);
+  --brand-hover: oklch(0.488 0.243 264.376);
+  --brand-active: oklch(0.424 0.199 265.638);
+  --brand-subtle: oklch(0.97 0.014 254.604);
+  --brand-foreground: oklch(1 0 0);
+  --brand-emphasis: oklch(0.488 0.243 264.376);
+  --link: oklch(0.546 0.245 262.881);
+  --link-hover: oklch(0.488 0.243 264.376);
+
+  --border-strong: oklch(0.87 0 0);
+
+  --measure: 68ch;
+  --focus-ring: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -96,7 +167,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.623 0.214 259.815);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -110,6 +181,39 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  --surface-1: oklch(0.145 0 0);
+  --surface-2: oklch(0.205 0 0);
+  --surface-3: oklch(0.269 0 0);
+
+  --text-primary: oklch(0.985 0 0);
+  --text-secondary: oklch(0.87 0 0);
+  --text-muted: oklch(0.708 0 0);
+  --text-faint: oklch(0.62 0 0);
+
+  --brand: oklch(0.623 0.214 259.815);
+  --brand-hover: oklch(0.707 0.165 254.624);
+  --brand-active: oklch(0.809 0.105 251.813);
+  --brand-subtle: oklch(0.282 0.091 267.935 / 45%);
+  --brand-foreground: oklch(0.145 0 0);
+  --brand-emphasis: oklch(0.707 0.165 254.624);
+  --link: oklch(0.707 0.165 254.624);
+  --link-hover: oklch(0.809 0.105 251.813);
+
+  --border-strong: oklch(1 0 0 / 18%);
+}
+
+/* Keyboard-only focus indicator: a 2px ring separated from the element by a
+   2px gap in the page background, so it reads on any surface. */
+@utility focus-ring {
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
 }
 
 @layer base {
@@ -125,27 +229,223 @@
     cursor: pointer;
   }
 
-  /* Screen reader only utility */
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .feeds-eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
   }
 
-  .focus\:not-sr-only:focus {
-    position: static;
-    width: auto;
+  .feeds-spinner {
+    display: inline-block;
+    border: 3px solid var(--border-strong);
+    border-top-color: var(--brand);
+    border-radius: calc(infinity * 1px);
+    animation: feeds-spin 0.7s linear infinite;
+  }
+
+  /* Article reading surface. Feed HTML is arbitrary, so every element that can
+     overflow a pane is constrained here. */
+  .feeds-prose {
+    max-width: var(--measure);
+    font-size: 1rem;
+    line-height: 1.65;
+    overflow-wrap: break-word;
+  }
+
+  .feeds-prose > :first-child {
+    margin-top: 0;
+  }
+
+  .feeds-prose p {
+    margin: 0 0 1.15em;
+  }
+
+  .feeds-prose h1,
+  .feeds-prose h2,
+  .feeds-prose h3,
+  .feeds-prose h4,
+  .feeds-prose h5,
+  .feeds-prose h6 {
+    margin: 1.8em 0 0.6em;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+
+  .feeds-prose h1 {
+    font-size: 1.6em;
+  }
+
+  .feeds-prose h2 {
+    font-size: 1.35em;
+  }
+
+  .feeds-prose h3 {
+    font-size: 1.15em;
+  }
+
+  .feeds-prose h4,
+  .feeds-prose h5,
+  .feeds-prose h6 {
+    font-size: 1em;
+  }
+
+  .feeds-prose h1:first-child,
+  .feeds-prose h2:first-child {
+    margin-top: 0;
+  }
+
+  .feeds-prose a {
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    overflow-wrap: anywhere;
+  }
+
+  .feeds-prose a:hover {
+    color: var(--link-hover);
+  }
+
+  .feeds-prose strong {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .feeds-prose em {
+    font-style: italic;
+  }
+
+  /* Preflight removes list markers; feed content relies on them. */
+  .feeds-prose ul,
+  .feeds-prose ol {
+    margin: 0 0 1.15em;
+    padding-left: 1.4em;
+  }
+
+  .feeds-prose ul {
+    list-style-type: disc;
+  }
+
+  .feeds-prose ol {
+    list-style-type: decimal;
+  }
+
+  .feeds-prose li {
+    margin: 0.35em 0;
+  }
+
+  .feeds-prose li::marker {
+    color: var(--text-faint);
+  }
+
+  .feeds-prose blockquote {
+    margin: 1.3em 0;
+    padding: 0.1em 0 0.1em 1em;
+    border-left: 3px solid var(--border-strong);
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  .feeds-prose code {
+    padding: 0.15em 0.4em;
+    border-radius: calc(var(--radius) - 4px);
+    background: var(--muted);
+    color: var(--text-primary);
+    font-family: var(--font-geist-mono);
+    font-size: 0.875em;
+    overflow-wrap: anywhere;
+  }
+
+  .feeds-prose pre {
+    margin: 1.3em 0;
+    padding: 1em 1.15em;
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 2px);
+    background: var(--surface-2);
+    font-size: 0.875em;
+    line-height: 1.5;
+  }
+
+  .feeds-prose pre code {
+    padding: 0;
+    background: none;
+    font-size: 1em;
+  }
+
+  .feeds-prose img,
+  .feeds-prose video,
+  .feeds-prose iframe {
+    display: block;
+    margin: 1.3em 0;
+    max-width: 100%;
     height: auto;
-    padding: inherit;
-    margin: inherit;
-    overflow: visible;
-    clip: auto;
-    white-space: normal;
+    border-radius: calc(var(--radius) - 2px);
+  }
+
+  .feeds-prose embed,
+  .feeds-prose object {
+    max-width: 100%;
+  }
+
+  .feeds-prose figure {
+    margin: 1.3em 0;
+    max-width: 100%;
+  }
+
+  .feeds-prose figure img {
+    margin: 0;
+  }
+
+  .feeds-prose figcaption {
+    margin-top: 0.5em;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .feeds-prose hr {
+    margin: 2em 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .feeds-prose table {
+    display: block;
+    margin: 1.3em 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .feeds-prose th,
+  .feeds-prose td {
+    padding: 0.5em 0.75em;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .feeds-prose th {
+    color: var(--text-primary);
+    font-weight: 600;
   }
 }
