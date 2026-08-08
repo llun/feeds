@@ -251,16 +251,12 @@ export const ItemList = ({
             <p className="text-sm text-muted-foreground">Loading items...</p>
           </div>
         ) : entries.length > 0 ? (
-          <ul
-            ref={itemsRef}
-            className="divide-y divide-border p-1.5"
-            role="list"
-          >
+          <ul ref={itemsRef} className="divide-y divide-border" role="list">
             {entries.map((entry, index) => (
               <li
                 key={entry.key}
                 id={`entry-${entry.key}`}
-                className={`px-3 py-2.5 transition-colors ${
+                className={`px-4 py-2.5 transition-colors ${
                   entry.key === selectedEntryHash
                     ? 'bg-brand-subtle'
                     : 'hover:bg-surface-2'
