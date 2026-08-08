@@ -85,7 +85,11 @@ test('#localizeSite downloads images and rewrites src and srcset', async (t) => 
     /srcset="\/media\/[a-f0-9]{64}\.png 1x, \/media\/[a-f0-9]{64}\.webp 2x"/
   )
   // A lightbox link to an image we downloaded points at the local copy too.
-  t.regex(content, /href="\/media\/[a-f0-9]{64}\.png"/)
+  t.true(
+    content.includes(
+      `href="/media/${mediaHash('https://example.com/images/one.png')}.png"`
+    )
+  )
   t.deepEqual(await listMediaFiles(mediaDirectory), [
     `${mediaHash('https://cdn.example.com/two.webp')}.webp`,
     `${mediaHash('https://example.com/images/one.png')}.png`
@@ -117,7 +121,8 @@ test('#localizeSite localizes a link to an image another entry displays', async 
   const localized = await store.localizeSite(
     createSite(
       '<a href="https://example.com/a.png">Full size</a>',
-      '<img src="https://example.com/a.png" />'
+      '<img src="https://example.com/a.png" />',
+      '<a href="https://example.com/link-only.png">Never shown</a>'
     )
   )
 
@@ -126,7 +131,17 @@ test('#localizeSite localizes a link to an image another entry displays', async 
   const localPath = `/media/${mediaHash('https://example.com/a.png')}.png`
   t.true(localized.entries[0].content.includes(`href="${localPath}"`))
   t.true(localized.entries[1].content.includes(`src="${localPath}"`))
+  // An image nothing displays is never downloaded, so the link that is its
+  // only reference keeps pointing at the origin.
+  t.true(
+    localized.entries[2].content.includes(
+      'href="https://example.com/link-only.png"'
+    )
+  )
   t.is(fetchStub.callCount, 1)
+  t.deepEqual(await listMediaFiles(mediaDirectory), [
+    `${mediaHash('https://example.com/a.png')}.png`
+  ])
 })
 
 test('#localizeSite keeps the remote url when the download fails', async (t) => {

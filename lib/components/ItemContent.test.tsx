@@ -54,7 +54,9 @@ test('#ItemContent resolves URLs outside of a and img tags', (t) => {
   )
 })
 
-test('#ItemContent serves downloaded media from this site', (t) => {
+// Serial because it swaps NEXT_PUBLIC_BASE_PATH, which the component reads as
+// it renders, and ava runs a file's tests concurrently.
+test.serial('#ItemContent serves downloaded media from this site', (t) => {
   process.env.NEXT_PUBLIC_BASE_PATH = '/feeds'
   try {
     const output = render(
@@ -80,10 +82,27 @@ test('#ItemContent opens content links in a new tab', (t) => {
   t.true(output.includes('rel="noopener noreferrer"'))
 })
 
+test('#ItemContent hardens remote images', (t) => {
+  const output = render('<img src="https://example.com/a.png" />')
+  // An image that could not be downloaded still points at its origin, where a
+  // referrer often triggers hotlink protection.
+  t.true(output.includes('referrerPolicy="no-referrer"'))
+  t.true(output.includes('loading="lazy"'))
+  t.true(
+    render('<img src="https://example.com/a.png" loading="eager" />').includes(
+      'loading="eager"'
+    )
+  )
+})
+
 test('#ItemContent leaves data uri images alone', (t) => {
-  const output = render('<img src="data:image/gif;base64,AAA" />')
+  const output = render(
+    '<img src="data:image/gif;base64,AAA" /><img src="https://example.com/a.png" />'
+  )
   t.true(output.includes('src="data:image/gif;base64,AAA"'))
-  t.false(output.includes('referrerPolicy'))
+  // Only the remote image is hardened, so this stays a real assertion even if
+  // the hardening itself is removed.
+  t.is(output.match(/referrerPolicy/g)?.length, 1)
 })
 
 test('#ItemContent keeps relative URLs when the entry URL is unusable', (t) => {

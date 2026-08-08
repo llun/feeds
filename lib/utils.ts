@@ -37,8 +37,9 @@ export const categoriesClassName = (pageState: PageState): string => {
 /**
  * Resolves a URL from entry content against the entry it came from. Entries
  * stored before the action started resolving URLs still hold relative ones,
- * which would otherwise point at the reader's own domain. Anything already
- * absolute is returned as it is.
+ * which would otherwise point at the reader's own domain. An absolute URL
+ * keeps its target but comes back re-serialized by the URL parser, so it can
+ * differ from the input by a trailing slash or percent-encoding.
  *
  * The base has to be http(s), the same gate the action applies. An entry link
  * is whatever the feed put in it, and resolving against a `javascript:` base

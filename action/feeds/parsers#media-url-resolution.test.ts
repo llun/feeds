@@ -52,6 +52,27 @@ test('#parseRss resolves relative media URLs using site domain', (t) => {
   )
 })
 
+test('#parseRss picks the link base on the extension alone', (t) => {
+  // The extension is what decides the base now, so a query or a fragment must
+  // not hide it -- these links would otherwise stop matching downloaded media.
+  t.true(
+    contentOf('<a href="/images/a.png?w=100">q</a>').includes(
+      'href="https://site.example/images/a.png?w=100"'
+    )
+  )
+  t.true(
+    contentOf('<a href="/images/a.png#x">f</a>').includes(
+      'href="https://site.example/images/a.png#x"'
+    )
+  )
+  // No extension, so it is an ordinary link and takes the entry base.
+  t.true(
+    contentOf('<a href="/images/a">n</a>').includes(
+      'href="https://feed.example/images/a"'
+    )
+  )
+})
+
 test('#parseRss resolves relative links using the entry URL', (t) => {
   t.true(
     contentOf('<a href="/posts/other">Read more</a>').includes(

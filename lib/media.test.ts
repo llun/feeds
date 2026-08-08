@@ -74,6 +74,20 @@ test('#mapUrlAttributes keeps srcset candidates a mapper skipped', (t) => {
   )
 })
 
+test('#mapUrlAttributes maps a candidate whose descriptor is omitted', (t) => {
+  // A candidate can end at a comma rather than a descriptor, which is the only
+  // thing separating its URL from the one that follows.
+  const seen: string[] = []
+  t.is(
+    mapUrlAttributes({ srcset: '/media/a.png, /media/b.png 2x' }, (url) => {
+      seen.push(url)
+      return `/feeds${url}`
+    }).srcset,
+    '/feeds/media/a.png, /feeds/media/b.png 2x'
+  )
+  t.deepEqual(seen, ['/media/a.png', '/media/b.png'])
+})
+
 test('#mapUrlAttributes keeps commas that belong to a srcset URL', (t) => {
   const seen: string[] = []
   const collect = (url: string) => {

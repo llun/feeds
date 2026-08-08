@@ -128,6 +128,10 @@ function extractMediaFileNameFromLocalPath(value: string) {
  * page loads or a link it points at. sanitize-html transforms are synchronous,
  * so downloading happens between a collect pass and a rewrite pass instead of
  * inside the transform itself.
+ *
+ * Expects content that is already sanitized, which is all a feed ever produces
+ * here: the transform runs before tags are discarded, so on raw HTML it would
+ * also visit URLs on tags that never survive to render.
  */
 function walkContentUrls(
   content: string,
@@ -150,9 +154,9 @@ function walkContentUrls(
 export function collectImageUrls(content: string) {
   const urls = new Set<string>()
   if (!content) return urls
-  // Only media the entry actually displays is worth the download. A link to an
-  // image is followed by hand, so it is rewritten when the image happens to be
-  // cached already but never pulls one down on its own.
+  // Only media an entry actually displays is worth the download. A link to an
+  // image is followed by hand, so it is rewritten when some entry of the same
+  // site displays that image, but never pulls one down on its own.
   walkContentUrls(content, (url, target) => {
     if (target === 'media' && isDownloadableUrl(url)) urls.add(url)
   })

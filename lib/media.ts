@@ -1,6 +1,8 @@
 /**
  * Shared between the action that downloads feed images and the reader that
- * renders them, so both sides always agree on where media lives.
+ * renders them, so both sides always agree on where media lives -- and, through
+ * URL_ATTRIBUTES below, on which attributes of entry content carry a URL at all
+ * and whether each points at a document or at media.
  */
 export const LOCAL_MEDIA_PATH = '/media'
 

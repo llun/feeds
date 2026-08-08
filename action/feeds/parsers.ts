@@ -106,6 +106,9 @@ function resolveContentUrl(
 export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
   allowedAttributes: {
+    // An attribute added here that carries a URL has to be listed in
+    // URL_ATTRIBUTES in lib/media.ts too, or it keeps whatever relative URL the
+    // feed published and lands on the reader's own domain.
     ...sanitizeHtml.defaults.allowedAttributes,
     img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset'],
     blockquote: ['cite'],
