@@ -173,6 +173,30 @@ test('#localizeSite writes files the reference walker still recognises', async (
   t.deepEqual(await listMediaFiles(mediaDirectory), onDisk)
 })
 
+test('#cleanupUnusedMediaFiles keeps a file only a link still points at', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-linkonly-')
+  const fetchStub = sinon.stub().resolves(imageResponse())
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(
+    createSite(
+      '<img src="https://example.com/a.png" />',
+      '<a href="https://example.com/a.png">Full size</a>'
+    )
+  )
+
+  // The entry that displayed the image is gone, and only the link remains --
+  // which is the case that decides whether counting links actually protects
+  // the file from being deleted.
+  const onDisk = await listMediaFiles(mediaDirectory)
+  t.true(onDisk.length > 0)
+  await cleanupUnusedMediaFiles(
+    mediaDirectory,
+    collectReferencedMediaFromContents([localized.entries[1].content])
+  )
+  t.deepEqual(await listMediaFiles(mediaDirectory), onDisk)
+})
+
 test('#localizeSite localizes a relative lightbox href with its image', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-relative-')
   const fetchStub = sinon.stub().resolves(imageResponse())

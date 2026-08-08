@@ -99,8 +99,10 @@ function resolveContentUrl(
   // Media resolves against the site first. That base is known to be wrong for a
   // path-relative URL -- a browser uses the document, so "images/x.jpg" in an
   // entry at /2024/01/post/ belongs under that directory, not at the root. It
-  // is kept because it is what this project has always stored, and changing it
-  // re-hashes and re-downloads every image; see the open follow-up.
+  // is kept because it is what this project has always stored: every image is
+  // hashed under the URL this produces, so switching to the entry base re-keys
+  // and re-downloads all of them, and that is worth doing on its own with
+  // before-and-after numbers from real feeds rather than as part of a link fix.
   const asMedia = resolveUrl(url, siteLink, entryLink)
   if (target === 'media') return asMedia
   // A link to an image the store can download takes the media base so that when
@@ -157,25 +159,39 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   enforceHtmlBoundary: true
 }
 
+/**
+ * Rewrites every URL in entry content through `mapUrl`, under the sanitizer
+ * configuration the content is stored with. Both passes over entry content go
+ * through here -- this one and the media store's -- so neither can end up
+ * walking the content under different rules than the other.
+ *
+ * Every tag is visited rather than img and a alone, so a relative URL is
+ * resolved wherever it hides. Schemes are filtered after this runs, so a
+ * javascript: href is still dropped even though it is resolved here.
+ */
+export function mapContentUrls(
+  content: string,
+  mapUrl: (url: string, target: UrlTarget) => string
+) {
+  return sanitizeHtml(content, {
+    ...ENTRY_CONTENT_SANITIZE_OPTIONS,
+    transformTags: {
+      '*': (tagName, attribs) => ({
+        tagName,
+        attribs: mapUrlAttributes(attribs, mapUrl)
+      })
+    }
+  })
+}
+
 function sanitizeEntryContent(
   content: string,
   siteLink: string,
   entryLink: string
 ) {
-  return sanitizeHtml(content, {
-    ...ENTRY_CONTENT_SANITIZE_OPTIONS,
-    transformTags: {
-      // Every tag rather than img and a alone, so a relative URL is resolved
-      // wherever it hides. Schemes are filtered after this runs, so a
-      // javascript: href is still dropped even though it is resolved here.
-      '*': (tagName, attribs) => ({
-        tagName,
-        attribs: mapUrlAttributes(attribs, (url, target) =>
-          resolveContentUrl(url, target, siteLink, entryLink)
-        )
-      })
-    }
-  })
+  return mapContentUrls(content, (url, target) =>
+    resolveContentUrl(url, target, siteLink, entryLink)
+  )
 }
 
 function parseDate(dateString: string): number {

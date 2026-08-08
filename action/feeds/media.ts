@@ -3,17 +3,14 @@ import { Dirent } from 'fs'
 import fs from 'fs/promises'
 import path from 'path'
 
-import sanitizeHtml from 'sanitize-html'
-
 import {
   LOCAL_MEDIA_PATH,
   localMediaFileName,
-  mapUrlAttributes,
   type UrlTarget
 } from '../../lib/media'
 import { USER_AGENT } from './http'
 import { normalizeImageExtension } from './images'
-import { ENTRY_CONTENT_SANITIZE_OPTIONS, type Site } from './parsers'
+import { mapContentUrls, type Site } from './parsers'
 
 const MAX_MEDIA_BYTES = 20 * 1024 * 1024
 const DOWNLOAD_TIMEOUT_MS = 15_000
@@ -25,7 +22,7 @@ const LOCALIZE_DEADLINE_MS = 10 * 60 * 1000
 // live in images.ts, which the link resolver reads too, and every value here
 // goes back through it -- so an entry that is not downloadable simply never
 // resolves. SVG is absent from both, see images.ts for why.
-const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
+export const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
   'image/avif': '.avif',
   'image/gif': '.gif',
   'image/heic': '.heic',
@@ -94,31 +91,22 @@ function isDownloadableUrl(url: string) {
 }
 
 /**
- * Walks entry content with the same sanitizer configuration used to store it,
- * visiting every URL it carries and reporting whether that URL is media the
- * page loads or a link it points at. sanitize-html transforms are synchronous,
- * so downloading happens between a collect pass and a rewrite pass instead of
- * inside the transform itself.
+ * Visits every URL entry content carries, reporting whether it is media the
+ * page loads or a link it points at, and replaces it with whatever the visitor
+ * returns. sanitize-html transforms are synchronous, so downloading happens
+ * between a collect pass and a rewrite pass instead of inside the transform.
  *
  * Expects content that is already sanitized, which is all a feed ever produces
- * here: the transform runs before tags are discarded, so on raw HTML it would
- * also visit URLs on tags that never survive to render.
+ * here: the walk runs before tags are discarded, so on raw HTML it would also
+ * visit URLs on tags that never survive to render.
  */
 function walkContentUrls(
   content: string,
   visitUrl: (url: string, target: UrlTarget) => string | void
 ) {
-  return sanitizeHtml(content, {
-    ...ENTRY_CONTENT_SANITIZE_OPTIONS,
-    transformTags: {
-      '*': (tagName, attribs) => ({
-        tagName,
-        attribs: mapUrlAttributes(attribs, (url, target) => {
-          const nextUrl = visitUrl(url, target)
-          return typeof nextUrl === 'string' ? nextUrl : url
-        })
-      })
-    }
+  return mapContentUrls(content, (url, target) => {
+    const nextUrl = visitUrl(url, target)
+    return typeof nextUrl === 'string' ? nextUrl : url
   })
 }
 
@@ -171,7 +159,9 @@ async function resolveExistingMediaFile(
 
   try {
     const files = await fs.readdir(mediaDirectory)
-    return files.find((fileName) => fileName.startsWith(`${mediaHash}.`)) || null
+    return (
+      files.find((fileName) => fileName.startsWith(`${mediaHash}.`)) || null
+    )
   } catch {
     return null
   }
@@ -234,7 +224,10 @@ export function createMediaStore({
       return await download()
     } finally {
       activeDownloads--
-      activeDownloadsByHost.set(host, (activeDownloadsByHost.get(host) ?? 1) - 1)
+      activeDownloadsByHost.set(
+        host,
+        (activeDownloadsByHost.get(host) ?? 1) - 1
+      )
       // Every waiter re-checks its own host limit, so waking all of them keeps
       // the queue free of head-of-line blocking on a single busy host.
       waiting.splice(0).forEach((resume) => resume())

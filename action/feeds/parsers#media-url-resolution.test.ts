@@ -217,6 +217,29 @@ test('#parseRss leaves URLs it must not rewrite alone', (t) => {
   t.is(contentOf('<q cite="javascript:alert(1)">q</q>'), '<q>q</q>')
   // Only an inline image has any use for data:, so a link does not get it.
   t.is(contentOf('<a href="data:text/html,x">d</a>'), '<a>d</a>')
+  // A data: URI is handed back untouched rather than re-serialized, which this
+  // payload can tell apart -- the URL parser would percent-encode both of these.
+  t.true(
+    contentOf('<img src="data:text/plain,café" />').includes(
+      'src="data:text/plain,café"'
+    )
+  )
+  t.true(
+    contentOf('<img src="data:text/plain,a b" />').includes(
+      'src="data:text/plain,a b"'
+    )
+  )
+  // The scheme filter still runs after resolution on media attributes, which
+  // are the ones this change reshapes.
+  t.is(
+    contentOf('<img src="javascript:alert(1)" alt="x" />'),
+    '<img alt="x" />'
+  )
+  t.true(
+    contentOf('<img srcset="javascript:alert(1) 1x, /ok.png 2x" />').includes(
+      'srcset="https://site.example/ok.png 2x"'
+    )
+  )
   t.true(
     contentOf('<img srcset="data:image/gif;base64,AAA 1x" />').includes(
       'srcset="data:image/gif;base64,AAA 1x"'
@@ -331,6 +354,20 @@ test('#parseRss keeps an absolute entry link byte for byte', (t) => {
       link
     )
   }
+})
+
+test('#parseRss gives a scheme-less entry link one', (t) => {
+  const entryLink = (links: { site?: string; entry?: string }) =>
+    parseRss('Test Feed', rssWithContent('<p>x</p>', links)).entries[0].link
+
+  t.is(entryLink({ entry: '//other.example/p' }), 'https://other.example/p')
+  t.is(
+    entryLink({ site: 'http://site.example/', entry: '//other.example/p' }),
+    'http://other.example/p'
+  )
+  // With nothing to resolve against, the link stays as published and the
+  // reader's own resolution degrades to a no-op for that entry.
+  t.is(entryLink({ site: '', entry: '2024/01/post/' }), '2024/01/post/')
 })
 
 test('#parseAtom makes a relative entry link absolute', (t) => {

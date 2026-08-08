@@ -38,9 +38,11 @@ test('#resolveEntryUrl keeps urls it must not rewrite', (t) => {
     resolveEntryUrl('mailto:user@example.com', ENTRY_URL),
     'mailto:user@example.com'
   )
+  // A payload the URL parser would rewrite, so the assertion can tell being
+  // handed back untouched apart from being round-tripped through it.
   t.is(
-    resolveEntryUrl('data:image/gif;base64,AAA', ENTRY_URL),
-    'data:image/gif;base64,AAA'
+    resolveEntryUrl('data:image/svg+xml,<svg>café</svg>', ENTRY_URL),
+    'data:image/svg+xml,<svg>café</svg>'
   )
   // Signed CDN URLs carry characters a stricter normalizer would escape.
   t.is(

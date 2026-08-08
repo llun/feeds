@@ -65,6 +65,20 @@ test('#mapUrlAttributes maps every url and reports what it points at', (t) => {
   ])
 })
 
+test('#mapUrlAttributes skips a URL attribute holding nothing', (t) => {
+  // The guard has to be on the value, not just on the attribute name, or an
+  // empty href is handed to the mapper and comes back as a resolved URL.
+  const seen: string[] = []
+  t.deepEqual(
+    mapUrlAttributes({ href: '', src: 'a.png' }, (url) => {
+      seen.push(url)
+      return `resolved:${url}`
+    }),
+    { href: '', src: 'resolved:a.png' }
+  )
+  t.deepEqual(seen, ['a.png'])
+})
+
 test('#mapUrlAttributes leaves the original attributes alone', (t) => {
   const attribs = { href: 'page.html' }
   const mapped = mapUrlAttributes(attribs, () => 'changed')
