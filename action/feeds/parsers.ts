@@ -2,6 +2,7 @@ import { parseString } from 'xml2js'
 import sanitizeHtml from 'sanitize-html'
 
 import { mapUrlAttributes, type UrlTarget } from '../../lib/media'
+import { hasDownloadableImageExtension } from './images'
 
 export interface Entry {
   title: string
@@ -22,54 +23,12 @@ export interface Site {
 
 type Values = string[] | { _: string; $: { type: 'text' } }[] | null
 
-/**
- * Every image extension media.ts may download and serve from our own origin,
- * and so also every extension whose link resolves against the media base rather
- * than the document -- the two have to agree or a link stops matching the image
- * it points at and silently keeps hotlinking. One list, so they cannot drift.
- *
- * SVG is deliberately absent: a localized file is navigable on the published
- * origin, and a feed could otherwise plant a scripted SVG there.
- */
-const DOWNLOADABLE_IMAGE_EXTENSIONS = new Set([
-  '.avif',
-  '.gif',
-  '.heic',
-  '.heif',
-  '.jpeg',
-  '.jpg',
-  '.jxl',
-  '.png',
-  '.tif',
-  '.tiff',
-  '.webp'
-])
-
-export function normalizeImageExtension(extension?: string | null) {
-  if (!extension) return null
-  const normalized = extension.trim().toLowerCase()
-  if (!DOWNLOADABLE_IMAGE_EXTENSIONS.has(normalized)) return null
-  return normalized
-}
-
-/**
- * Whether a URL points at an image the action may download, which is what makes
- * a link to it resolve against the same base as the image itself.
- */
-function hasDownloadableImageExtension(url: string) {
-  const pathOnly = url.trim().split('#')[0].split('?')[0]
-  const dot = pathOnly.lastIndexOf('.')
-  if (dot < 0) return false
-  return DOWNLOADABLE_IMAGE_EXTENSIONS.has(pathOnly.slice(dot).toLowerCase())
-}
-
 function joinValuesOrEmptyString(values: Values) {
   if (values && values.length > 0 && typeof values[0] !== 'string') {
     return values[0]._
   }
   return (values && values.join('').trim()) || ''
 }
-
 function parseAbsoluteHttpUrl(input?: string | null) {
   if (!input) return null
   try {
@@ -120,8 +79,12 @@ function resolveUrl(
  * stores it as the entry URL, so both its resolution and its "View Original"
  * would point at the reader's own domain. An already absolute link is returned
  * byte for byte, since it is part of the key an entry is stored under.
+ *
+ * A feed that does publish relative links is therefore re-keyed once, the first
+ * run after this ships: its stored entries reappear under new keys and the old
+ * ones are cleaned up. That is the cost of the fix, not a bug to undo.
  */
-function resolveEntryLink(rawLink: string, siteLink: string) {
+function absoluteEntryLink(rawLink: string, siteLink: string) {
   if (!rawLink || parseAbsoluteHttpUrl(rawLink)) return rawLink
   return resolveUrl(rawLink, siteLink, '')
 }
@@ -134,6 +97,11 @@ function resolveContentUrl(
 ) {
   const asMedia = resolveUrl(url, siteLink, entryLink)
   if (target === 'media') return asMedia
+  // A scheme-less link says "whatever this page is served over", and the page it
+  // ends up on is the reader, not the feed. Baking in the entry's scheme would
+  // pin every such link on an http feed to plaintext, where before this change
+  // the browser resolved it against the reader's own https.
+  if (url.trim().startsWith('//')) return `https:${url.trim()}`
   // A link to an image the store can download takes the media base so that when
   // some entry of the site also displays that image, the two agree and the link
   // can be swapped for the downloaded copy. The trade is that a link to an
@@ -164,6 +132,8 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedSchemes: ['http', 'https', 'mailto', 'data'],
   allowedSchemesByTag: {
     img: ['http', 'https', 'data'],
+    // Only an inline image has any use for data:, so a link does not get it.
+    a: ['http', 'https', 'mailto'],
     // A citation is a document, so it has no use for the data: and mailto:
     // schemes the global list carries for links and inline images.
     blockquote: ['http', 'https'],
@@ -236,7 +206,7 @@ export function parseRss(feedTitle: string, xml: any): Site {
             pubDate,
             description: entryDescription
           } = item
-          const entryLink = resolveEntryLink(
+          const entryLink = absoluteEntryLink(
             joinValuesOrEmptyString(entryLinks),
             siteLink
           )
@@ -285,7 +255,7 @@ export function parseAtom(feedTitle: string, xml: any): Site {
             : summary
               ? summary[0]._
               : ''
-          const entryLink = resolveEntryLink(
+          const entryLink = absoluteEntryLink(
             (itemLink && itemLink.$.href) || '',
             siteUrl
           )

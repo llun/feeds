@@ -12,11 +12,8 @@ import {
   type UrlTarget
 } from '../../lib/media'
 import { USER_AGENT } from './http'
-import {
-  ENTRY_CONTENT_SANITIZE_OPTIONS,
-  normalizeImageExtension,
-  type Site
-} from './parsers'
+import { normalizeImageExtension } from './images'
+import { ENTRY_CONTENT_SANITIZE_OPTIONS, type Site } from './parsers'
 
 const MAX_MEDIA_BYTES = 20 * 1024 * 1024
 const DOWNLOAD_TIMEOUT_MS = 15_000
@@ -24,11 +21,9 @@ const MAX_CONCURRENT_DOWNLOADS = 4
 const MAX_CONCURRENT_DOWNLOADS_PER_HOST = 2
 const LOCALIZE_DEADLINE_MS = 10 * 60 * 1000
 
-// Which images may be downloaded and served from our own origin. The list of
-// extensions lives in parsers.ts, where the link resolver reads it too. SVG is
-// deliberately absent from that list and from the map below: a localized file
-// is navigable on the published origin, and a feed could otherwise plant a
-// scripted SVG there.
+// Which content types name a downloadable image. The extensions themselves
+// live in images.ts, which the link resolver reads too; keep this map a subset
+// of that list. SVG is absent from both, see images.ts for why.
 const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
   'image/avif': '.avif',
   'image/gif': '.gif',
@@ -311,7 +306,9 @@ export function createMediaStore({
   async function localizeSite(site: Site) {
     const urls = new Set<string>()
     for (const entry of site.entries) {
-      for (const url of collectDownloadableMediaUrls(entry.content)) urls.add(url)
+      for (const url of collectDownloadableMediaUrls(entry.content)) {
+        urls.add(url)
+      }
     }
 
     const replacements = new Map<string, string>()

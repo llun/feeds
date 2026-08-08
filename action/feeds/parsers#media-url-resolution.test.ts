@@ -239,12 +239,20 @@ test('#parseRss falls back between the entry and site URL', (t) => {
       entry: ''
     }).includes('href="https://h.example/x"')
   )
-  // A link takes its scheme from the entry, the document base a browser uses.
+  // A scheme-less link is stored as https even when the feed itself is plain
+  // http, since the page it ends up opening from is the reader, not the feed.
   t.true(
     contentOf('<a href="//h.example/x">l</a>', {
-      site: 'https://site.example/',
+      site: 'http://site.example/',
       entry: 'http://feed.example/posts/1'
-    }).includes('href="http://h.example/x"')
+    }).includes('href="https://h.example/x"')
+  )
+  // Media keeps taking the scheme of the site it is loaded alongside.
+  t.true(
+    contentOf('<img src="//cdn.example/x.png" />', {
+      site: 'http://site.example/',
+      entry: 'http://feed.example/posts/1'
+    }).includes('src="http://cdn.example/x.png"')
   )
 })
 
@@ -268,6 +276,52 @@ test('#parseRss makes a relative entry link absolute', (t) => {
   t.true(
     site.entries[0].content.includes(
       'href="https://site.example/2024/01/post/#fn1"'
+    )
+  )
+})
+
+test('#parseRss keeps an absolute entry link byte for byte', (t) => {
+  // The link is half the key an entry is stored under, so normalizing it would
+  // re-create every stored entry on the first run after this ships.
+  for (const link of [
+    'https://feed.example',
+    'https://feed.example/a b',
+    'https://FEED.example/Post'
+  ]) {
+    t.is(
+      parseRss('Test Feed', rssWithContent('<p>x</p>', { entry: link }))
+        .entries[0].link,
+      link
+    )
+  }
+})
+
+test('#parseAtom makes a relative entry link absolute', (t) => {
+  const site = parseAtom('Test Feed', {
+    feed: {
+      title: ['Test'],
+      updated: ['2026-01-01T00:00:00Z'],
+      link: [{ $: { rel: 'alternate', href: 'https://site.example/base/' } }],
+      entry: [
+        {
+          title: ['Entry 1'],
+          link: [{ $: { rel: 'alternate', href: '2024/01/post/' } }],
+          published: ['2026-01-01T00:00:00Z'],
+          content: [{ _: '<a href="foo.html">x</a><a href="#fn1">f</a>' }]
+        }
+      ]
+    }
+  })
+
+  t.is(site.entries[0].link, 'https://site.example/base/2024/01/post/')
+  t.true(
+    site.entries[0].content.includes(
+      'href="https://site.example/base/2024/01/post/foo.html"'
+    )
+  )
+  t.true(
+    site.entries[0].content.includes(
+      'href="https://site.example/base/2024/01/post/#fn1"'
     )
   )
 })
