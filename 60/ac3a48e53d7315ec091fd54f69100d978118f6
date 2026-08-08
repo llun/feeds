@@ -1,0 +1,21 @@
+lib/components/ItemList.tsx
+  s_9da933475ea384::t_ab963494bec86f 172-173
+package.json
+  s_9da933475ea384::t_e014adbffb7fdf 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "60ac3a48e53d7315ec091fd54f69100d978118f6",
+  "prompts": {},
+  "sessions": {
+    "s_9da933475ea384": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "47553c9d-d58a-4012-9753-67c74f785d43",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
