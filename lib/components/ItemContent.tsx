@@ -4,6 +4,7 @@ import { formatDistance } from 'date-fns'
 import { ExternalLink } from 'lucide-react'
 import { BackButton } from './BackButton'
 import parse from 'html-react-parser'
+import { isLocalMediaPath, rewriteLocalSrcSet, withBasePath } from '../media'
 
 interface ReactParserNode {
   name: string
@@ -18,6 +19,7 @@ interface ItemContentProps {
 }
 
 export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
   let element: HTMLElement | null = null
   useEffect(() => {
     if (!element) return
@@ -79,6 +81,21 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
               if (node.attribs && node.name === 'a') {
                 node.attribs.target = '_blank'
                 node.attribs.rel = 'noopener noreferrer'
+                return node
+              }
+              if (node.attribs && node.name === 'img') {
+                const { src, srcset } = node.attribs
+                if (src?.startsWith('data:')) return node
+                // Images that could not be downloaded still point at their
+                // origin, where a referrer often triggers hotlink protection.
+                node.attribs.referrerpolicy = 'no-referrer'
+                node.attribs.loading = node.attribs.loading || 'lazy'
+                if (isLocalMediaPath(src)) {
+                  node.attribs.src = withBasePath(src, basePath)
+                }
+                if (srcset) {
+                  node.attribs.srcset = rewriteLocalSrcSet(srcset, basePath)
+                }
                 return node
               }
               return domNode

@@ -3,7 +3,8 @@ import path from 'path'
 import {
   getActionInput,
   getGithubActionPath,
-  resolveSourceBranch
+  resolveSourceBranch,
+  restorePublishedMedia
 } from './repository'
 
 test('#resolveSourceBranch uses workflow branch ref', (t) => {
@@ -38,6 +39,20 @@ test('#getActionInput reads from action input environment', (t) => {
 
   process.env['INPUT_STORAGETYPE'] = 'sqlite'
   t.is(getActionInput('storageType'), 'sqlite')
+})
+
+test('#restorePublishedMedia skips when there is no workspace', async (t) => {
+  const originalWorkspace = process.env['GITHUB_WORKSPACE']
+  t.teardown(() => {
+    if (originalWorkspace === undefined) {
+      delete process.env['GITHUB_WORKSPACE']
+      return
+    }
+    process.env['GITHUB_WORKSPACE'] = originalWorkspace
+  })
+
+  delete process.env['GITHUB_WORKSPACE']
+  t.false(await restorePublishedMedia('public'))
 })
 
 test('#getActionInput uses configured defaults', (t) => {

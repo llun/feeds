@@ -28,6 +28,14 @@ After this, enable GitHub Pages on the `contents` branch and the content will be
 
 The action always reads the OPML file from the branch that triggered the workflow (for example `main`), then publishes generated output to the configured `branch`.
 
+## Images in feed content
+
+Images referenced by feed entries are downloaded while the feeds are loaded and published alongside the site under `/media`, so the reader never hotlinks a publisher's server. This avoids hotlink protection, mixed content and cross-origin resource policy blocking.
+
+Images that cannot be downloaded keep their original URL and are rendered with `referrerpolicy="no-referrer"`. Because feeds are re-read on every run, a publisher that was temporarily unavailable is picked up again on a later run. SVG images are always kept remote, since a published SVG would be a script running on the site's own origin.
+
+Each run restores the media files of the published branch before downloading, so only images that have not been seen before are fetched, and files no longer referenced by any entry are removed. Schedule only one run at a time (a workflow `concurrency` group) because the publish step force pushes the whole site.
+
 ## Configurations
 
 This action can be configured to use a custom domain and different types of storage. Here are the available configuration options:

@@ -87,19 +87,23 @@ function isImageLikeUrl(url: string) {
   return IMAGE_EXTENSION_REGEX.test(pathOnly)
 }
 
+export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset']
+  },
+  allowedSchemes: ['http', 'https', 'mailto', 'data'],
+  allowedSchemesByTag: {
+    img: ['http', 'https', 'data']
+  },
+  disallowedTagsMode: 'discard',
+  enforceHtmlBoundary: true
+}
+
 function sanitizeEntryContent(content: string, siteLink: string, entryLink: string) {
   return sanitizeHtml(content, {
-    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-    allowedAttributes: {
-      ...sanitizeHtml.defaults.allowedAttributes,
-      img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset']
-    },
-    allowedSchemes: ['http', 'https', 'mailto', 'data'],
-    allowedSchemesByTag: {
-      img: ['http', 'https', 'data']
-    },
-    disallowedTagsMode: 'discard',
-    enforceHtmlBoundary: true,
+    ...ENTRY_CONTENT_SANITIZE_OPTIONS,
     transformTags: {
       img: (tagName, attribs) => {
         const nextAttribs = { ...attribs }

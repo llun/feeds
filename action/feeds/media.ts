@@ -1,0 +1,438 @@
+import crypto from 'crypto'
+import { Dirent } from 'fs'
+import fs from 'fs/promises'
+import path from 'path'
+
+import sanitizeHtml from 'sanitize-html'
+
+import { ENTRY_CONTENT_SANITIZE_OPTIONS, type Site } from './parsers'
+
+export const LOCAL_MEDIA_DIRECTORY = '/media'
+
+const DEFAULT_USER_AGENT = 'llun/feed'
+const MAX_MEDIA_BYTES = 20 * 1024 * 1024
+const DOWNLOAD_TIMEOUT_MS = 15_000
+const MAX_CONCURRENT_DOWNLOADS = 4
+const MAX_CONCURRENT_DOWNLOADS_PER_HOST = 2
+const LOCALIZE_DEADLINE_MS = 10 * 60 * 1000
+
+// SVG is deliberately absent from both maps. Localized files are navigable on
+// the published origin, and a feed could otherwise plant a scripted SVG there.
+const KNOWN_IMAGE_EXTENSIONS = new Set([
+  '.avif',
+  '.gif',
+  '.heic',
+  '.heif',
+  '.jpeg',
+  '.jpg',
+  '.jxl',
+  '.png',
+  '.tif',
+  '.tiff',
+  '.webp'
+])
+
+const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
+  'image/avif': '.avif',
+  'image/gif': '.gif',
+  'image/heic': '.heic',
+  'image/heif': '.heif',
+  'image/jpeg': '.jpg',
+  'image/jxl': '.jxl',
+  'image/png': '.png',
+  'image/tiff': '.tiff',
+  'image/webp': '.webp'
+}
+
+interface EntryWithContent {
+  content: string
+}
+
+interface MediaStoreOptions {
+  mediaDirectory: string
+  fetch?: typeof globalThis.fetch
+  now?: () => number
+}
+
+export function getMediaDirectory(githubActionPath: string) {
+  return githubActionPath
+    ? path.join(githubActionPath, 'public', 'media')
+    : path.join('public', 'media')
+}
+
+function createMediaHash(input: string) {
+  return crypto.createHash('sha256').update(input).digest('hex')
+}
+
+function normalizeImageExtension(extension?: string | null) {
+  if (!extension) return null
+  const normalized = extension.trim().toLowerCase()
+  if (!KNOWN_IMAGE_EXTENSIONS.has(normalized)) return null
+  return normalized
+}
+
+export function extensionFromContentType(contentType?: string | null) {
+  if (!contentType) return null
+  const normalizedType = contentType.split(';')[0].trim().toLowerCase()
+  return CONTENT_TYPE_EXTENSIONS[normalizedType] ?? null
+}
+
+export function extensionFromUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    return normalizeImageExtension(path.extname(parsed.pathname))
+  } catch {
+    return null
+  }
+}
+
+function isSvgUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    return path.extname(parsed.pathname).toLowerCase() === '.svg'
+  } catch {
+    return false
+  }
+}
+
+export function splitSrcSet(srcSet: string) {
+  return srcSet
+    .split(',')
+    .map((candidate) => candidate.trim())
+    .filter((candidate) => candidate.length > 0)
+}
+
+function isDownloadableUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    return ['http:', 'https:'].includes(parsed.protocol)
+  } catch {
+    return false
+  }
+}
+
+function extractMediaFileNameFromLocalPath(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  const pathWithQuery = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed
+  if (!pathWithQuery.startsWith('media/')) return null
+  const fileName = pathWithQuery
+    .substring('media/'.length)
+    .split('?')[0]
+    .split('#')[0]
+    .trim()
+  return fileName || null
+}
+
+/**
+ * Walks entry content with the same sanitizer configuration used to store it,
+ * visiting every image URL in `src` and `srcset`. sanitize-html transforms are
+ * synchronous, so downloading happens between a collect pass and a rewrite pass
+ * instead of inside the transform itself.
+ */
+function walkImageUrls(
+  content: string,
+  visitImageUrl: (url: string) => string | void
+) {
+  const visit = (url: string) => {
+    const nextUrl = visitImageUrl(url)
+    return typeof nextUrl === 'string' ? nextUrl : url
+  }
+
+  return sanitizeHtml(content, {
+    ...ENTRY_CONTENT_SANITIZE_OPTIONS,
+    transformTags: {
+      img: (tagName, attribs) => {
+        const nextAttribs = { ...attribs }
+        if (nextAttribs.src) {
+          nextAttribs.src = visit(nextAttribs.src)
+        }
+        if (nextAttribs.srcset) {
+          nextAttribs.srcset = splitSrcSet(nextAttribs.srcset)
+            .map((candidate) => {
+              const [urlPart, ...descriptorParts] = candidate.split(/\s+/)
+              const descriptor = descriptorParts.join(' ').trim()
+              const nextUrl = visit(urlPart)
+              return descriptor ? `${nextUrl} ${descriptor}` : nextUrl
+            })
+            .join(', ')
+        }
+        return { tagName, attribs: nextAttribs }
+      }
+    }
+  })
+}
+
+export function collectImageUrls(content: string) {
+  const urls = new Set<string>()
+  if (!content) return urls
+  walkImageUrls(content, (url) => {
+    if (isDownloadableUrl(url)) urls.add(url)
+  })
+  return urls
+}
+
+export function rewriteImageUrls(
+  content: string,
+  replacements: Map<string, string>
+) {
+  if (!content) return content
+  return walkImageUrls(content, (url) => replacements.get(url))
+}
+
+async function fileExists(filePath: string) {
+  try {
+    await fs.stat(filePath)
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function resolveExistingMediaFile(
+  mediaDirectory: string,
+  mediaHash: string,
+  expectedExtension: string | null
+) {
+  if (expectedExtension) {
+    const expectedName = `${mediaHash}${expectedExtension}`
+    if (await fileExists(path.join(mediaDirectory, expectedName))) {
+      return expectedName
+    }
+  }
+
+  try {
+    const files = await fs.readdir(mediaDirectory)
+    return files.find((fileName) => fileName.startsWith(`${mediaHash}.`)) || null
+  } catch {
+    return null
+  }
+}
+
+async function readBodyWithinLimit(
+  response: Response,
+  controller: AbortController
+) {
+  const declaredLength = Number(response.headers.get('content-length'))
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_MEDIA_BYTES) {
+    throw new Error(`Media is larger than ${MAX_MEDIA_BYTES} bytes`)
+  }
+  if (!response.body) throw new Error('Media response has no body')
+
+  const chunks: Buffer[] = []
+  let total = 0
+  for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) {
+    total += chunk.length
+    // Servers can omit or lie about content-length, so the cap is enforced
+    // while streaming rather than after buffering the whole response.
+    if (total > MAX_MEDIA_BYTES) {
+      controller.abort()
+      throw new Error(`Media is larger than ${MAX_MEDIA_BYTES} bytes`)
+    }
+    chunks.push(Buffer.from(chunk))
+  }
+  return Buffer.concat(chunks)
+}
+
+export interface MediaStore {
+  localizeSite(site: Site): Promise<Site>
+}
+
+export function createMediaStore({
+  mediaDirectory,
+  fetch: fetchMedia = globalThis.fetch,
+  now = Date.now
+}: MediaStoreOptions): MediaStore {
+  const localPaths = new Map<string, Promise<string | null>>()
+  const deadline = now() + LOCALIZE_DEADLINE_MS
+  let activeDownloads = 0
+  const activeDownloadsByHost = new Map<string, number>()
+  const waiting: (() => void)[] = []
+
+  function hasCapacity(host: string) {
+    return (
+      activeDownloads < MAX_CONCURRENT_DOWNLOADS &&
+      (activeDownloadsByHost.get(host) ?? 0) < MAX_CONCURRENT_DOWNLOADS_PER_HOST
+    )
+  }
+
+  async function withDownloadSlot<T>(host: string, download: () => Promise<T>) {
+    while (!hasCapacity(host)) {
+      await new Promise<void>((resolve) => waiting.push(resolve))
+    }
+    activeDownloads++
+    activeDownloadsByHost.set(host, (activeDownloadsByHost.get(host) ?? 0) + 1)
+    try {
+      return await download()
+    } finally {
+      activeDownloads--
+      activeDownloadsByHost.set(host, (activeDownloadsByHost.get(host) ?? 1) - 1)
+      // Every waiter re-checks its own host limit, so waking all of them keeps
+      // the queue free of head-of-line blocking on a single busy host.
+      waiting.splice(0).forEach((resume) => resume())
+    }
+  }
+
+  async function downloadMedia(url: string): Promise<string | null> {
+    const mediaHash = createMediaHash(url)
+    const urlExtension = extensionFromUrl(url)
+    const existingFileName = await resolveExistingMediaFile(
+      mediaDirectory,
+      mediaHash,
+      urlExtension
+    )
+    if (existingFileName) {
+      return `${LOCAL_MEDIA_DIRECTORY}/${existingFileName}`
+    }
+
+    if (isSvgUrl(url)) return null
+    if (now() > deadline) {
+      console.error(`Skip media ${url}: localization deadline exceeded`)
+      return null
+    }
+
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS)
+    try {
+      const response = await fetchMedia(url, {
+        headers: { 'User-Agent': DEFAULT_USER_AGENT },
+        signal: controller.signal
+      })
+      if (!response.ok) {
+        throw new Error(`Unexpected response status ${response.status}`)
+      }
+
+      const contentTypeExtension = extensionFromContentType(
+        response.headers.get('content-type')
+      )
+      const extension = contentTypeExtension || urlExtension
+      if (!extension) {
+        throw new Error(
+          `Unsupported media type ${response.headers.get('content-type')}`
+        )
+      }
+
+      const buffer = await readBodyWithinLimit(response, controller)
+      if (buffer.length === 0) throw new Error('Media response is empty')
+
+      const fileName = `${mediaHash}${extension}`
+      await fs.mkdir(mediaDirectory, { recursive: true })
+      await fs.writeFile(path.join(mediaDirectory, fileName), buffer)
+      return `${LOCAL_MEDIA_DIRECTORY}/${fileName}`
+    } catch (error: any) {
+      console.error(`Fail to download media ${url}: ${error.message}`)
+      return null
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
+
+  function localPathFor(url: string) {
+    const existing = localPaths.get(url)
+    if (existing) return existing
+
+    const host = new URL(url).host
+    // Failures are cached for the run too, so one dead host costs a single
+    // timeout no matter how many entries reference it.
+    const localPath = withDownloadSlot(host, () => downloadMedia(url))
+    localPaths.set(url, localPath)
+    return localPath
+  }
+
+  async function localizeSite(site: Site) {
+    const urls = new Set<string>()
+    for (const entry of site.entries) {
+      for (const url of collectImageUrls(entry.content)) urls.add(url)
+    }
+
+    const replacements = new Map<string, string>()
+    await Promise.all(
+      [...urls].map(async (url) => {
+        const localPath = await localPathFor(url)
+        if (localPath) replacements.set(url, localPath)
+      })
+    )
+
+    return {
+      ...site,
+      entries: site.entries.map((entry) => ({
+        ...entry,
+        content: rewriteImageUrls(entry.content, replacements)
+      }))
+    }
+  }
+
+  return { localizeSite }
+}
+
+export function extractLocalMediaReferences(content: string) {
+  const references = new Set<string>()
+  if (!content) return references
+  walkImageUrls(content, (url) => {
+    const mediaFile = extractMediaFileNameFromLocalPath(url)
+    if (mediaFile) references.add(mediaFile)
+  })
+  return references
+}
+
+export function collectReferencedMediaFromContents(contents: string[]) {
+  const references = new Set<string>()
+  for (const content of contents) {
+    for (const mediaFile of extractLocalMediaReferences(content)) {
+      references.add(mediaFile)
+    }
+  }
+  return references
+}
+
+export async function collectReferencedMediaFromEntryDirectory(
+  entriesDirectory: string
+) {
+  const references = new Set<string>()
+  let files: string[] = []
+  try {
+    files = await fs.readdir(entriesDirectory)
+  } catch {
+    return references
+  }
+
+  for (const fileName of files) {
+    if (!fileName.endsWith('.json')) continue
+    try {
+      const content = await fs.readFile(
+        path.join(entriesDirectory, fileName),
+        'utf-8'
+      )
+      const parsed = JSON.parse(content) as EntryWithContent
+      if (!parsed.content) continue
+      for (const mediaFile of extractLocalMediaReferences(parsed.content)) {
+        references.add(mediaFile)
+      }
+    } catch {
+      continue
+    }
+  }
+  return references
+}
+
+export async function cleanupUnusedMediaFiles(
+  mediaDirectory: string,
+  referencedFiles: Iterable<string>
+) {
+  const references = new Set(referencedFiles)
+  let entries: Dirent[] = []
+  try {
+    entries = await fs.readdir(mediaDirectory, { withFileTypes: true })
+  } catch {
+    return
+  }
+
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isFile())
+      .map(async (entry) => {
+        if (references.has(entry.name)) return
+        await fs.rm(path.join(mediaDirectory, entry.name), { force: true })
+      })
+  )
+}
