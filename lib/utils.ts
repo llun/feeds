@@ -39,13 +39,19 @@ export const categoriesClassName = (pageState: PageState): string => {
  * stored before the action started resolving URLs still hold relative ones,
  * which would otherwise point at the reader's own domain. Anything already
  * absolute is returned as it is.
+ *
+ * The base has to be http(s), the same gate the action applies. An entry link
+ * is whatever the feed put in it, and resolving against a `javascript:` base
+ * would turn every "#footnote" in the entry into a script URL.
  */
 export const resolveEntryLink = (url: string, entryUrl?: string): string => {
   const trimmed = url.trim()
   if (!trimmed || !entryUrl) return url
   if (trimmed.startsWith('data:')) return url
   try {
-    return new URL(trimmed, entryUrl).toString()
+    const base = new URL(entryUrl)
+    if (base.protocol !== 'http:' && base.protocol !== 'https:') return url
+    return new URL(trimmed, base).toString()
   } catch {
     return url
   }

@@ -61,3 +61,52 @@ test('#mapUrlAttributes leaves the original attributes alone', (t) => {
   t.is(attribs.href, 'page.html')
   t.is(mapped.href, 'changed')
 })
+
+test('#mapUrlAttributes keeps srcset candidates a mapper skipped', (t) => {
+  // A candidate can carry no descriptor, and one that maps to itself has to
+  // survive untouched -- images that fail to download keep their remote URL.
+  t.is(
+    mapUrlAttributes(
+      { srcset: '/media/a.png 1x, https://example.com/b.png 2x, /media/c.png' },
+      (url) => (url.startsWith('/media/') ? `/feeds${url}` : url)
+    ).srcset,
+    '/feeds/media/a.png 1x, https://example.com/b.png 2x, /feeds/media/c.png'
+  )
+})
+
+test('#mapUrlAttributes keeps commas that belong to a srcset URL', (t) => {
+  const seen: string[] = []
+  const collect = (url: string) => {
+    seen.push(url)
+    return url
+  }
+
+  // Image CDNs put commas in the path, and every data: URI carries one.
+  t.is(
+    mapUrlAttributes(
+      { srcset: 'https://cdn.example/upload/w_300,h_200/x.jpg 1x' },
+      collect
+    ).srcset,
+    'https://cdn.example/upload/w_300,h_200/x.jpg 1x'
+  )
+  t.deepEqual(seen, ['https://cdn.example/upload/w_300,h_200/x.jpg'])
+
+  seen.length = 0
+  t.is(
+    mapUrlAttributes(
+      { srcset: 'data:image/gif;base64,R0lGODlhAQ 1x, /real.png 2x' },
+      collect
+    ).srcset,
+    'data:image/gif;base64,R0lGODlhAQ 1x, /real.png 2x'
+  )
+  t.deepEqual(seen, ['data:image/gif;base64,R0lGODlhAQ', '/real.png'])
+})
+
+test('#mapUrlAttributes ignores attributes inherited from Object', (t) => {
+  // Attribute names come straight from feed HTML.
+  const attribs = { constructor: 'evil.html', toString: 'evil.html' }
+  t.deepEqual(
+    mapUrlAttributes(attribs, () => 'mapped'),
+    attribs
+  )
+})

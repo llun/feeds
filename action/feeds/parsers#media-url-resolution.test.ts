@@ -106,7 +106,13 @@ test('#parseRss leaves URLs it must not rewrite alone', (t) => {
   )
   // Resolution runs before sanitize-html filters schemes, so this still goes.
   t.false(contentOf('<a href="javascript:alert(1)">No</a>').includes('href='))
-  t.true(contentOf('<a name="footnote">Anchor</a>').includes('name="footnote"'))
+  // Asserted whole, so an anchor that has no href cannot silently gain one.
+  t.is(
+    contentOf('<a name="footnote">Anchor</a>'),
+    '<a name="footnote">Anchor</a>'
+  )
+  t.is(contentOf('<a href="">Empty</a>'), '<a>Empty</a>')
+  t.is(contentOf('<a href="   ">Blank</a>'), '<a>Blank</a>')
 })
 
 test('#parseRss falls back between the entry and site URL', (t) => {

@@ -6,21 +6,52 @@ export const LOCAL_MEDIA_PATH = '/media'
 
 const LOCAL_MEDIA_PREFIX = `${LOCAL_MEDIA_PATH}/`
 
+const WHITESPACE = /\s/
+
 /**
  * Rewrites every candidate URL of a srcset, keeping its descriptor.
+ *
+ * Splitting on commas alone would tear apart a URL that contains one, which
+ * image CDNs emit routinely (`/upload/w_300,h_200/x.jpg`) and every `data:` URI
+ * does. So candidates are read the way HTML defines them: the URL runs to the
+ * next whitespace, and a comma only ends a candidate when it trails the URL or
+ * follows the descriptor.
  */
-export function mapSrcSet(srcSet: string, mapUrl: (url: string) => string) {
-  return srcSet
-    .split(',')
-    .map((candidate) => candidate.trim())
-    .filter((candidate) => candidate.length > 0)
-    .map((candidate) => {
-      const [urlPart, ...descriptorParts] = candidate.split(/\s+/)
-      const url = mapUrl(urlPart)
-      const descriptor = descriptorParts.join(' ').trim()
-      return descriptor ? `${url} ${descriptor}` : url
-    })
-    .join(', ')
+function mapSrcSet(srcSet: string, mapUrl: (url: string) => string) {
+  const candidates: string[] = []
+  let index = 0
+
+  while (index < srcSet.length) {
+    while (
+      index < srcSet.length &&
+      (WHITESPACE.test(srcSet[index]) || srcSet[index] === ',')
+    ) {
+      index++
+    }
+    if (index >= srcSet.length) break
+
+    const urlStart = index
+    while (index < srcSet.length && !WHITESPACE.test(srcSet[index])) index++
+    let url = srcSet.slice(urlStart, index)
+    let descriptor = ''
+
+    const trailingCommas = url.match(/,+$/)
+    if (trailingCommas) {
+      url = url.slice(0, -trailingCommas[0].length)
+    } else {
+      while (index < srcSet.length && WHITESPACE.test(srcSet[index])) index++
+      const descriptorStart = index
+      while (index < srcSet.length && srcSet[index] !== ',') index++
+      descriptor = srcSet.slice(descriptorStart, index).trim()
+      index++
+    }
+
+    if (!url) continue
+    const mapped = mapUrl(url)
+    candidates.push(descriptor ? `${mapped} ${descriptor}` : mapped)
+  }
+
+  return candidates.join(', ')
 }
 
 export function isLocalMediaPath(url?: string) {
@@ -53,13 +84,12 @@ interface UrlAttribute {
 /**
  * Every attribute that carries a URL in entry content. Walking this map instead
  * of naming tags keeps the action and the reader resolving the same set, and
- * covers new tags as soon as the sanitizer allows their attributes.
+ * covers a newly allowed tag as soon as its attribute is listed here.
  */
-export const URL_ATTRIBUTES: Record<string, UrlAttribute> = {
+const URL_ATTRIBUTES: Record<string, UrlAttribute> = {
   href: { target: 'link', list: false },
   cite: { target: 'link', list: false },
   src: { target: 'media', list: false },
-  poster: { target: 'media', list: false },
   srcset: { target: 'media', list: true }
 }
 
@@ -74,8 +104,10 @@ export function mapUrlAttributes(
 ) {
   const nextAttribs = { ...attribs }
   for (const [name, value] of Object.entries(nextAttribs)) {
+    // Attribute names come from feed HTML, so an own-property check keeps one
+    // called "constructor" from matching Object.prototype.
+    if (!Object.hasOwn(URL_ATTRIBUTES, name) || !value) continue
     const attribute = URL_ATTRIBUTES[name]
-    if (!attribute || !value) continue
     const map = (url: string) => mapUrl(url, attribute.target)
     nextAttribs[name] = attribute.list ? mapSrcSet(value, map) : map(value)
   }

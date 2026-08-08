@@ -84,7 +84,9 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
               // Downloaded media is served from this site, so it only needs the
               // base path. Everything else resolves against the entry, which
               // keeps a relative URL stored before the action resolved them
-              // from pointing at the reader's own domain.
+              // from pointing at the reader's own domain. Links and media both
+              // take the entry as their base here: the site link the action
+              // prefers for media is not part of the stored entry.
               node.attribs = mapUrlAttributes(node.attribs, (url) =>
                 isLocalMediaPath(url)
                   ? withBasePath(url, basePath)

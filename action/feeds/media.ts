@@ -159,6 +159,11 @@ export function collectImageUrls(content: string) {
   return urls
 }
 
+/**
+ * Swaps every downloaded URL for its local path. This covers links as well as
+ * images, so a lightbox href to an image the store downloaded stops hotlinking
+ * the origin -- the counterpart of collectImageUrls, which is media-only.
+ */
 export function rewriteImageUrls(
   content: string,
   replacements: Map<string, string>

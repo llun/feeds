@@ -91,10 +91,11 @@ function resolveContentUrl(
 ) {
   const asMedia = resolveUrl(url, siteLink, entryLink)
   if (target === 'media') return asMedia
-  // A link to an image resolves like the media it points at, so it matches the
-  // src the media store downloads and can be swapped for the local copy. The
-  // store collects across the whole site, so this holds whether the link wraps
-  // the image or another entry is the one displaying it. Every other link
+  // A link to an image takes the media base so that when some entry of the site
+  // also displays that image, the two agree and the link can be swapped for the
+  // downloaded copy. The trade is that a link to an image nothing displays gets
+  // the site base rather than the document one -- same as the img rule it is
+  // matching, and the reason to keep the two together. Every other link
   // resolves against the entry, the document base a browser would use and the
   // only one that gets a bare "foo.html" or a "#footnote" right.
   return isImageLikeUrl(asMedia)

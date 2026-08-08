@@ -45,6 +45,19 @@ test('#resolveEntryLink returns the url unchanged without a usable entry', (t) =
   t.is(resolveEntryLink('   ', ENTRY_URL), '   ')
 })
 
+test('#resolveEntryLink refuses a base that is not http', (t) => {
+  // The entry link is whatever the feed published. Resolving against a
+  // javascript: base would turn every footnote anchor into a script URL.
+  t.is(resolveEntryLink('#fn1', 'javascript:alert(1)'), '#fn1')
+  t.is(resolveEntryLink('#fn1', 'file:///etc/passwd'), '#fn1')
+  t.is(resolveEntryLink('#fn1', 'data:text/html,<script></script>'), '#fn1')
+  t.is(resolveEntryLink('/posts/other', 'ftp://feed.example/x'), '/posts/other')
+  t.is(
+    resolveEntryLink('/posts/other', 'http://feed.example/posts/1'),
+    'http://feed.example/posts/other'
+  )
+})
+
 test('#parseLocation returns category type', (t) => {
   t.deepEqual(parseLocation('/categories/Apple'), {
     type: 'category',
