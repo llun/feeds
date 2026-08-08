@@ -97,23 +97,25 @@ function resolveContentUrl(
 ) {
   const asMedia = resolveUrl(url, siteLink, entryLink)
   if (target === 'media') return asMedia
-  // A scheme-less link says "whatever this page is served over", and the page it
-  // ends up on is the reader, not the feed. Baking in the entry's scheme would
-  // pin every such link on an http feed to plaintext, where before this change
-  // the browser resolved it against the reader's own https.
-  if (url.trim().startsWith('//')) return `https:${url.trim()}`
   // A link to an image the store can download takes the media base so that when
   // some entry of the site also displays that image, the two agree and the link
-  // can be swapped for the downloaded copy. The trade is that a link to an
-  // image nothing displays gets the site base rather than the document one --
-  // same as the img rule it is matching, and the reason to keep the two
-  // together. An extension the store will never fetch, svg above all, buys
-  // nothing here and so resolves like any other link. Every other link resolves
-  // against the entry, the document base a browser would use and the only one
-  // that gets a bare "foo.html" or a "#footnote" right.
-  return hasDownloadableImageExtension(asMedia)
-    ? asMedia
-    : resolveUrl(url, entryLink, siteLink)
+  // can be swapped for the downloaded copy. This is checked first, before the
+  // scheme-less rule below, because agreeing with the image matters more than
+  // the scheme: disagree and the link is left hotlinking the origin. The trade
+  // is that a link to an image nothing displays gets the site base rather than
+  // the document one -- same as the img rule it is matching, and the reason to
+  // keep the two together. An extension the store will never fetch, svg above
+  // all, buys nothing here and so resolves like any other link.
+  if (hasDownloadableImageExtension(asMedia)) return asMedia
+  // A scheme-less link says "whatever this page is served over", and the page it
+  // ends up on is the reader, not the feed. Baking in the entry's scheme would
+  // pin every such link on an http feed to plaintext, where the browser would
+  // otherwise resolve it against the reader's own https.
+  if (url.trim().startsWith('//')) return `https:${url.trim()}`
+  // Every other link resolves against the entry, the document base a browser
+  // would use and the only one that gets a bare "foo.html" or a "#footnote"
+  // right.
+  return resolveUrl(url, entryLink, siteLink)
 }
 
 export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {

@@ -90,6 +90,19 @@ test('#parseRss picks the link base on the extension alone', (t) => {
       'href="https://feed.example/images/D.SVG"'
     )
   )
+  // A query parameter that merely ends in an image extension is not an image,
+  // so the link keeps the document base.
+  t.true(
+    contentOf('<a href="/download?file=a.png">d</a>').includes(
+      'href="https://feed.example/download?file=a.png"'
+    )
+  )
+  // A dot in an earlier path segment is not an extension either.
+  t.true(
+    contentOf('<a href="/v1.2/page">v</a>').includes(
+      'href="https://feed.example/v1.2/page"'
+    )
+  )
 })
 
 // Attributes that are allowed through but genuinely carry no URL. Anything not
@@ -254,6 +267,15 @@ test('#parseRss falls back between the entry and site URL', (t) => {
       entry: 'http://feed.example/posts/1'
     }).includes('src="http://cdn.example/x.png"')
   )
+  // A scheme-less link to a downloadable image follows the image instead, so
+  // the two still agree and the link can be swapped for the local copy. Only
+  // this ordering keeps them matching on an http feed.
+  const schemeless = contentOf(
+    '<a href="//cdn.example/x.png">L</a><img src="//cdn.example/x.png" />',
+    { site: 'http://site.example/', entry: 'http://feed.example/posts/1' }
+  )
+  t.true(schemeless.includes('href="http://cdn.example/x.png"'))
+  t.true(schemeless.includes('src="http://cdn.example/x.png"'))
 })
 
 test('#parseRss makes a relative entry link absolute', (t) => {

@@ -3,7 +3,7 @@
  * renders them, so both sides always agree on where media lives -- and, through
  * URL_ATTRIBUTES below, on which attributes of entry content carry a URL at all
  * and whether each points at a document or at media. What the action may
- * download is its own policy and lives with the parser.
+ * download is its own policy and lives in action/feeds/images.ts.
  */
 export const LOCAL_MEDIA_PATH = '/media'
 

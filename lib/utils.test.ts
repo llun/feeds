@@ -20,6 +20,13 @@ test('#resolveEntryUrl resolves relative urls against the entry', (t) => {
     resolveEntryUrl('//en.wikipedia.org/wiki/RSS', ENTRY_URL),
     'https://en.wikipedia.org/wiki/RSS'
   )
+  // A scheme-less URL takes the scheme of the page it ends up on, which is the
+  // reader, so an http entry does not drag it down to plaintext -- the same
+  // rule the action applies when it resolves content.
+  t.is(
+    resolveEntryUrl('//x.example/y', 'http://feed.example/p'),
+    'https://x.example/y'
+  )
 })
 
 test('#resolveEntryUrl keeps urls it must not rewrite', (t) => {

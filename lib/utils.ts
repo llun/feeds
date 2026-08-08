@@ -50,6 +50,11 @@ export const resolveEntryUrl = (url: string, entryUrl?: string): string => {
   const trimmed = url.trim()
   if (!trimmed || !entryUrl) return url
   if (trimmed.startsWith('data:')) return url
+  // Same rule the action applies: a scheme-less URL takes the scheme of the
+  // page it ends up on, which is this one, not the feed's. Inheriting the
+  // entry's would render a legacy //host URL from an http feed as plaintext,
+  // and an image that way is blocked outright as mixed content.
+  if (trimmed.startsWith('//')) return `https:${trimmed}`
   try {
     const base = new URL(entryUrl)
     if (base.protocol !== 'http:' && base.protocol !== 'https:') return url
