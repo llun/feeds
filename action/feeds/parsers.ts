@@ -1,6 +1,8 @@
 import { parseString } from 'xml2js'
 import sanitizeHtml from 'sanitize-html'
 
+import { mapSrcSet } from '../../lib/media'
+
 export interface Entry {
   title: string
   link: string
@@ -19,6 +21,9 @@ export interface Site {
 }
 
 type Values = string[] | { _: string; $: { type: 'text' } }[] | null
+// Which links look like an image, so their URL is worth resolving. This is
+// deliberately not the list of images media.ts downloads: svg belongs here but
+// must never be served from our own origin. Keep the two lists apart.
 const IMAGE_EXTENSION_REGEX =
   /\.(avif|gif|heic|heif|jpeg|jpg|jxl|png|svg|tif|tiff|webp)$/i
 
@@ -69,17 +74,7 @@ function resolveMediaUrl(inputUrl: string, siteLink: string, entryLink: string) 
 }
 
 function resolveSrcSet(srcSet: string, siteLink: string, entryLink: string) {
-  return srcSet
-    .split(',')
-    .map((candidate) => candidate.trim())
-    .filter((candidate) => candidate.length > 0)
-    .map((candidate) => {
-      const [urlPart, ...descriptorParts] = candidate.split(/\s+/)
-      const resolvedUrl = resolveMediaUrl(urlPart, siteLink, entryLink)
-      const descriptor = descriptorParts.join(' ').trim()
-      return descriptor ? `${resolvedUrl} ${descriptor}` : resolvedUrl
-    })
-    .join(', ')
+  return mapSrcSet(srcSet, (url) => resolveMediaUrl(url, siteLink, entryLink))
 }
 
 function isImageLikeUrl(url: string) {

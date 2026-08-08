@@ -5,19 +5,20 @@ import path from 'path'
 
 import sanitizeHtml from 'sanitize-html'
 
+import { LOCAL_MEDIA_PATH, mapSrcSet } from '../../lib/media'
+import { USER_AGENT } from './http'
 import { ENTRY_CONTENT_SANITIZE_OPTIONS, type Site } from './parsers'
 
-export const LOCAL_MEDIA_DIRECTORY = '/media'
-
-const DEFAULT_USER_AGENT = 'llun/feed'
 const MAX_MEDIA_BYTES = 20 * 1024 * 1024
 const DOWNLOAD_TIMEOUT_MS = 15_000
 const MAX_CONCURRENT_DOWNLOADS = 4
 const MAX_CONCURRENT_DOWNLOADS_PER_HOST = 2
 const LOCALIZE_DEADLINE_MS = 10 * 60 * 1000
 
-// SVG is deliberately absent from both maps. Localized files are navigable on
-// the published origin, and a feed could otherwise plant a scripted SVG there.
+// Which images may be downloaded and served from our own origin. SVG is
+// deliberately absent from both maps: a localized file is navigable on the
+// published origin, and a feed could otherwise plant a scripted SVG there.
+// parsers.ts keeps a wider list for URL resolution; do not merge the two.
 const KNOWN_IMAGE_EXTENSIONS = new Set([
   '.avif',
   '.gif',
@@ -95,13 +96,6 @@ function isSvgUrl(url: string) {
   }
 }
 
-export function splitSrcSet(srcSet: string) {
-  return srcSet
-    .split(',')
-    .map((candidate) => candidate.trim())
-    .filter((candidate) => candidate.length > 0)
-}
-
 function isDownloadableUrl(url: string) {
   try {
     const parsed = new URL(url)
@@ -112,12 +106,11 @@ function isDownloadableUrl(url: string) {
 }
 
 function extractMediaFileNameFromLocalPath(value: string) {
+  const prefix = `${LOCAL_MEDIA_PATH}/`
   const trimmed = value.trim()
-  if (!trimmed) return null
-  const pathWithQuery = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed
-  if (!pathWithQuery.startsWith('media/')) return null
-  const fileName = pathWithQuery
-    .substring('media/'.length)
+  if (!trimmed.startsWith(prefix)) return null
+  const fileName = trimmed
+    .substring(prefix.length)
     .split('?')[0]
     .split('#')[0]
     .trim()
@@ -148,14 +141,7 @@ function walkImageUrls(
           nextAttribs.src = visit(nextAttribs.src)
         }
         if (nextAttribs.srcset) {
-          nextAttribs.srcset = splitSrcSet(nextAttribs.srcset)
-            .map((candidate) => {
-              const [urlPart, ...descriptorParts] = candidate.split(/\s+/)
-              const descriptor = descriptorParts.join(' ').trim()
-              const nextUrl = visit(urlPart)
-              return descriptor ? `${nextUrl} ${descriptor}` : nextUrl
-            })
-            .join(', ')
+          nextAttribs.srcset = mapSrcSet(nextAttribs.srcset, visit)
         }
         return { tagName, attribs: nextAttribs }
       }
@@ -282,7 +268,7 @@ export function createMediaStore({
       urlExtension
     )
     if (existingFileName) {
-      return `${LOCAL_MEDIA_DIRECTORY}/${existingFileName}`
+      return `${LOCAL_MEDIA_PATH}/${existingFileName}`
     }
 
     if (isSvgUrl(url)) return null
@@ -295,7 +281,7 @@ export function createMediaStore({
     const timeout = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS)
     try {
       const response = await fetchMedia(url, {
-        headers: { 'User-Agent': DEFAULT_USER_AGENT },
+        headers: { 'User-Agent': USER_AGENT },
         signal: controller.signal
       })
       if (!response.ok) {
@@ -318,7 +304,7 @@ export function createMediaStore({
       const fileName = `${mediaHash}${extension}`
       await fs.mkdir(mediaDirectory, { recursive: true })
       await fs.writeFile(path.join(mediaDirectory, fileName), buffer)
-      return `${LOCAL_MEDIA_DIRECTORY}/${fileName}`
+      return `${LOCAL_MEDIA_PATH}/${fileName}`
     } catch (error: any) {
       console.error(`Fail to download media ${url}: ${error.message}`)
       return null
