@@ -1,0 +1,39 @@
+action/feeds/media.test.ts
+  s_03c23a8974bbf4::t_19ba83b1e7a6b7 176-199
+lib/media.test.ts
+  s_03c23a8974bbf4::t_e35171c8164b14 68-81
+lib/utils.test.ts
+  s_03c23a8974bbf4::t_b20fd2c413dbf0 41-42,44-45
+action/feeds/images.test.ts
+  s_03c23a8974bbf4::t_0413080f614fa1 7,10-16,28-30
+action/feeds/parsers#media-url-resolution.test.ts
+  s_03c23a8974bbf4::t_9637a6c27514c8 359-372
+  s_03c23a8974bbf4::t_6ef5cd7fcb6293 221,223-229
+  s_03c23a8974bbf4::t_9ada570679f20b 220,222,230-233,238-242
+  s_03c23a8974bbf4::t_1892bf5cfc2965 234-237
+action/feeds/media.ts
+  s_03c23a8974bbf4::t_c56f428967d909 25
+  s_03c23a8974bbf4::t_1892bf5cfc2965 162-164,227-230
+  s_03c23a8974bbf4::t_a03bc47e8fcf6e 107-109
+  s_03c23a8974bbf4::t_8e7624b38ecec1 13,94-97,100-101
+action/feeds/parsers.ts
+  s_03c23a8974bbf4::t_732781d5eec449 162-172,174,181,187-194
+  s_03c23a8974bbf4::t_b439c6d289a6cd 195-196
+  s_03c23a8974bbf4::t_6c185bc9e18758 102-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "bb0a4cfd9ac5bd24d9853d9cc63c18db4030e342",
+  "prompts": {},
+  "sessions": {
+    "s_03c23a8974bbf4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a167a7d7-7639-41e0-8658-ab688b2cf7f0",
+        "model": "claude-opus-5"
+      },
+      "human_author": null
+    }
+  }
+}
