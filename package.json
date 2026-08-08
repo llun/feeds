@@ -71,7 +71,7 @@
   "resolutions": {
     "@hono/node-server": "^2.0.11",
     "glob": "^10.5.0",
-    "js-yaml": "^4.3.0",
+    "js-yaml": "^4.3.1",
     "postcss@npm:8.4.31": "npm:8.5.23",
     "sharp": "^0.35.3"
   },
