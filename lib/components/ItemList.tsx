@@ -169,6 +169,8 @@ export const ItemList = ({
 
   useEffect(() => {
     const handler: EventListener = (event: KeyboardEvent) => {
+      if (entries.length === 0) return
+
       switch (event.code) {
         case 'ArrowUp':
         case 'KeyW': {
