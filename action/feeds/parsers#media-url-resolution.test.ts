@@ -52,6 +52,14 @@ test('#parseRss resolves relative media URLs using site domain', (t) => {
   )
 })
 
+test('#parseRss resolves media against the site even without a downloadable extension', (t) => {
+  // The link rule would send these to the entry base. Media does not follow it:
+  // the media hash is computed from this URL, so the base must not drift.
+  const output = contentOf('<img src="/photo" srcset="/diagram.svg 2x" />')
+  t.true(output.includes('src="https://site.example/photo"'))
+  t.true(output.includes('srcset="https://site.example/diagram.svg 2x"'))
+})
+
 test('#parseRss picks the link base on the extension alone', (t) => {
   // The extension is what decides the base now, so a query or a fragment must
   // not hide it -- these links would otherwise stop matching downloaded media.
@@ -130,7 +138,13 @@ test('#parseRss resolves every allowed attribute that carries a URL', (t) => {
       const output = contentOf(`<${tag} ${attribute}="/rel">x</${tag}>`)
       t.false(
         output.includes(`${attribute}="/rel"`),
-        `${tag}[${attribute}] kept a relative URL -- add it to URL_ATTRIBUTES`
+        `${tag}[${attribute}] kept a relative URL -- add it to URL_ATTRIBUTES in lib/media.ts, or to NON_URL_ATTRIBUTES here if it carries no URL`
+      )
+      // Asserted both ways, or a tag dropped for not being in allowedTags
+      // would look like an attribute that resolved.
+      t.true(
+        output.includes(`${attribute}="https://`),
+        `${tag}[${attribute}] was dropped instead of resolved -- is ${tag} in allowedTags?`
       )
     }
   }
@@ -354,6 +368,21 @@ test('#parseRss keeps an absolute entry link byte for byte', (t) => {
       link
     )
   }
+})
+
+test('#parseRss re-serializes an absolute URL in content', (t) => {
+  // Unlike entry.link, a content URL is not a storage key, so normalizing it is
+  // fine -- but it is a change from leaving non-image hrefs untouched.
+  t.true(
+    contentOf('<a href="HTTPS://Other.Example/Page">x</a>').includes(
+      'href="https://other.example/Page"'
+    )
+  )
+  t.true(
+    contentOf('<a href="https://other.example/a b">x</a>').includes(
+      'href="https://other.example/a%20b"'
+    )
+  )
 })
 
 test('#parseRss gives a scheme-less entry link one', (t) => {

@@ -35,8 +35,11 @@ export function normalizeImageExtension(extension?: string | null) {
  * Whether a URL's extension names an image the action may download, which is
  * what makes a link to it resolve against the same base as the image itself.
  *
- * Extension-less URLs the store fetches by content type are not covered, so a
- * link to one is not aligned with its image and simply never localizes.
+ * Extension-less URLs the store fetches by content type are not covered here,
+ * so a link to one aligns with its image only when both already resolve to the
+ * same absolute URL -- which they do when the URL is absolute or root-relative.
+ * A path-relative one takes the entry base while the image takes the site base,
+ * and that pair never localizes.
  */
 export function hasDownloadableImageExtension(url: string) {
   const pathOnly = url.trim().split('#')[0].split('?')[0]

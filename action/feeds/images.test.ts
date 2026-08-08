@@ -25,9 +25,6 @@ test('svg is downloadable by neither, which keeps it off our origin', (t) => {
   t.false(hasDownloadableImageExtension('https://e.example/x.svg'))
   t.is(normalizeImageExtension('.svg'), null)
   t.is(extensionFromContentType('image/svg+xml'), null)
-  // The guard that matters is the routing, not the map's current contents: an
-  // svg entry added to the map still comes back null.
-  t.is(normalizeImageExtension(CONTENT_TYPE_EXTENSIONS['image/svg+xml']), null)
 })
 
 test('#hasDownloadableImageExtension reads the path, not the whole URL', (t) => {
