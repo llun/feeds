@@ -215,6 +215,13 @@ test('#parseRss leaves URLs it must not rewrite alone', (t) => {
     '<blockquote>q</blockquote>'
   )
   t.is(contentOf('<q cite="javascript:alert(1)">q</q>'), '<q>q</q>')
+  // Only an inline image has any use for data:, so a link does not get it.
+  t.is(contentOf('<a href="data:text/html,x">d</a>'), '<a>d</a>')
+  t.true(
+    contentOf('<img srcset="data:image/gif;base64,AAA 1x" />').includes(
+      'srcset="data:image/gif;base64,AAA 1x"'
+    )
+  )
 })
 
 test('#parseRss falls back between the entry and site URL', (t) => {
@@ -251,6 +258,14 @@ test('#parseRss falls back between the entry and site URL', (t) => {
       site: '',
       entry: ''
     }).includes('href="https://h.example/x"')
+  )
+  // Media is the only caller that reaches resolveUrl's own https default, since
+  // a link is short-circuited by the scheme-less rule before it gets there.
+  t.true(
+    contentOf('<img src="//h.example/x.png" />', {
+      site: '',
+      entry: ''
+    }).includes('src="https://h.example/x.png"')
   )
   // A scheme-less link is stored as https even when the feed itself is plain
   // http, since the page it ends up opening from is the reader, not the feed.

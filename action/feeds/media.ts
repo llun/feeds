@@ -22,8 +22,9 @@ const MAX_CONCURRENT_DOWNLOADS_PER_HOST = 2
 const LOCALIZE_DEADLINE_MS = 10 * 60 * 1000
 
 // Which content types name a downloadable image. The extensions themselves
-// live in images.ts, which the link resolver reads too; keep this map a subset
-// of that list. SVG is absent from both, see images.ts for why.
+// live in images.ts, which the link resolver reads too, and every value here
+// goes back through it -- so an entry that is not downloadable simply never
+// resolves. SVG is absent from both, see images.ts for why.
 const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
   'image/avif': '.avif',
   'image/gif': '.gif',
@@ -59,7 +60,10 @@ function createMediaHash(input: string) {
 export function extensionFromContentType(contentType?: string | null) {
   if (!contentType) return null
   const normalizedType = contentType.split(';')[0].trim().toLowerCase()
-  return CONTENT_TYPE_EXTENSIONS[normalizedType] ?? null
+  // Routed through images.ts rather than returned straight from the map, so an
+  // entry added here that is not downloadable -- svg above all -- becomes a
+  // refused download instead of a file served from our own origin.
+  return normalizeImageExtension(CONTENT_TYPE_EXTENSIONS[normalizedType])
 }
 
 export function extensionFromUrl(url: string) {

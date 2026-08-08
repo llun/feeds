@@ -98,8 +98,10 @@ export type UrlTarget = 'link' | 'media'
 
 interface UrlAttribute {
   target: UrlTarget
-  /** Comma separated candidate list rather than a single URL, as in srcset. */
-  list: boolean
+  /** Holds a srcset candidate list rather than a single URL, and is parsed by
+   * srcset's grammar specifically -- a space separated list such as <a ping>
+   * would need its own format rather than this flag. */
+  srcset: boolean
 }
 
 /**
@@ -108,10 +110,10 @@ interface UrlAttribute {
  * covers a newly allowed tag as soon as its attribute is listed here.
  */
 const URL_ATTRIBUTES: Record<string, UrlAttribute> = {
-  href: { target: 'link', list: false },
-  cite: { target: 'link', list: false },
-  src: { target: 'media', list: false },
-  srcset: { target: 'media', list: true }
+  href: { target: 'link', srcset: false },
+  cite: { target: 'link', srcset: false },
+  src: { target: 'media', srcset: false },
+  srcset: { target: 'media', srcset: true }
 }
 
 /**
@@ -130,7 +132,7 @@ export function mapUrlAttributes(
     if (!Object.hasOwn(URL_ATTRIBUTES, name) || !value) continue
     const attribute = URL_ATTRIBUTES[name]
     const map = (url: string) => mapUrl(url, attribute.target)
-    nextAttribs[name] = attribute.list ? mapSrcSet(value, map) : map(value)
+    nextAttribs[name] = attribute.srcset ? mapSrcSet(value, map) : map(value)
   }
   return nextAttribs
 }

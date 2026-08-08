@@ -111,9 +111,14 @@ test('#ItemContent resolves a feed path that only looks like local media', (t) =
 })
 
 test('#ItemContent opens content links in a new tab', (t) => {
-  const output = render('<a href="https://example.com/page">Link</a>')
-  t.true(output.includes('target="_blank"'))
-  t.true(output.includes('rel="noopener noreferrer"'))
+  // Asserted on the anchor itself: the header's own "View Original" link
+  // carries these attributes on every render, so a looser check would pass
+  // against content containing no links at all.
+  t.true(
+    render('<a href="https://example.com/page">Link</a>').includes(
+      '<a href="https://example.com/page" target="_blank" rel="noopener noreferrer">Link</a>'
+    )
+  )
 })
 
 test('#ItemContent hardens remote images', (t) => {

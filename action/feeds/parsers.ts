@@ -29,6 +29,7 @@ function joinValuesOrEmptyString(values: Values) {
   }
   return (values && values.join('').trim()) || ''
 }
+
 function parseAbsoluteHttpUrl(input?: string | null) {
   if (!input) return null
   try {
@@ -95,6 +96,11 @@ function resolveContentUrl(
   siteLink: string,
   entryLink: string
 ) {
+  // Media resolves against the site first. That base is known to be wrong for a
+  // path-relative URL -- a browser uses the document, so "images/x.jpg" in an
+  // entry at /2024/01/post/ belongs under that directory, not at the root. It
+  // is kept because it is what this project has always stored, and changing it
+  // re-hashes and re-downloads every image; see the open follow-up.
   const asMedia = resolveUrl(url, siteLink, entryLink)
   if (target === 'media') return asMedia
   // A link to an image the store can download takes the media base so that when
@@ -123,7 +129,8 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedAttributes: {
     // An attribute added here that carries a URL has to be listed in
     // URL_ATTRIBUTES in lib/media.ts too, or it keeps whatever relative URL the
-    // feed published and lands on the reader's own domain.
+    // feed published and lands on the reader's own domain -- and its tag needs
+    // an allowedSchemesByTag entry below if http(s) is not the right set.
     ...sanitizeHtml.defaults.allowedAttributes,
     img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset'],
     // Kept so the source of a quotation survives into the stored JSON, and
@@ -131,13 +138,18 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     blockquote: ['cite'],
     q: ['cite']
   },
-  allowedSchemes: ['http', 'https', 'mailto', 'data'],
+  // Nothing beyond http(s) by default, so an attribute allowed later inherits
+  // the safe set rather than data: or mailto:. Anything that needs more says so
+  // below.
+  allowedSchemes: ['http', 'https'],
   allowedSchemesByTag: {
+    // Only an inline image has any use for data:.
     img: ['http', 'https', 'data'],
-    // Only an inline image has any use for data:, so a link does not get it.
+    // sanitize-html looks srcset up by attribute name rather than by tag, so
+    // this is what covers <img srcset>, not the img entry above.
+    srcset: ['http', 'https', 'data'],
     a: ['http', 'https', 'mailto'],
-    // A citation is a document, so it has no use for the data: and mailto:
-    // schemes the global list carries for links and inline images.
+    // A citation is a document, so it has no use for either.
     blockquote: ['http', 'https'],
     q: ['http', 'https']
   },
@@ -145,7 +157,11 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   enforceHtmlBoundary: true
 }
 
-function sanitizeEntryContent(content: string, siteLink: string, entryLink: string) {
+function sanitizeEntryContent(
+  content: string,
+  siteLink: string,
+  entryLink: string
+) {
   return sanitizeHtml(content, {
     ...ENTRY_CONTENT_SANITIZE_OPTIONS,
     transformTags: {
