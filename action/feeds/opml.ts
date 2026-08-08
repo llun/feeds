@@ -1,9 +1,10 @@
+import { USER_AGENT } from './http'
 import { parseAtom, parseRss, parseXML } from './parsers'
 
 export async function loadFeed(title: string, url: string) {
   try {
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'llun/feed' }
+      headers: { 'User-Agent': USER_AGENT }
     })
     const text = await response.text()
     const xml = await parseXML(text)

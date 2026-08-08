@@ -1,5 +1,6 @@
 import { spawnSync, type SpawnSyncReturns } from 'child_process'
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -103,6 +104,69 @@ export function resolveSourceBranch(
     return ref.substring(branchPrefix.length)
   }
   return defaultBranch
+}
+
+/**
+ * Copies the media files of the published branch into the public directory so
+ * a run only downloads images it has never seen before.
+ *
+ * The fetch deliberately runs inside the workspace repository rather than a
+ * throwaway clone: publish() pushes from the workspace, and git can only leave
+ * existing blobs out of the push pack when the local repository can walk the
+ * remote tip. Seeding anywhere else would re-upload every media file each run.
+ */
+export async function restorePublishedMedia(publicDirectory: string) {
+  const workSpace = getWorkspacePath()
+  if (!workSpace) return false
+
+  const branch = getActionInput('branch', { required: true })
+  validateBranchName(branch)
+
+  const fetchResult = runCommand(
+    ['git', 'fetch', '--depth=1', 'origin', branch],
+    workSpace
+  )
+  if (isCommandFailed(fetchResult)) {
+    console.log(`No published ${branch} branch to restore media from`)
+    return false
+  }
+
+  // git archive reads the fetched commit directly, so the workspace index and
+  // working tree that publish() later commits stay untouched. The archive is
+  // written outside the workspace because git archive creates its output file
+  // before it resolves the pathspec, and publish() force adds everything it
+  // finds in the workspace.
+  const archiveDirectory = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'feeds-media-')
+  )
+  const archivePath = path.join(archiveDirectory, 'media.tar')
+  try {
+    const archiveResult = runCommand(
+      ['git', 'archive', '--output', archivePath, 'FETCH_HEAD', 'media'],
+      workSpace
+    )
+    if (isCommandFailed(archiveResult)) {
+      console.log(`No published media to restore from ${branch} branch`)
+      return false
+    }
+
+    fs.mkdirSync(publicDirectory, { recursive: true })
+    const extractResult = runCommand([
+      'tar',
+      '-xf',
+      archivePath,
+      '-C',
+      publicDirectory
+    ])
+    if (isCommandFailed(extractResult)) {
+      console.log('Fail to extract published media')
+      return false
+    }
+    console.log(`Restore published media from ${branch} branch`)
+    return true
+  } finally {
+    fs.rmSync(archiveDirectory, { recursive: true, force: true })
+  }
 }
 
 export async function buildSite() {
