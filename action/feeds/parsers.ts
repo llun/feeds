@@ -1,7 +1,11 @@
 import { parseString } from 'xml2js'
 import sanitizeHtml from 'sanitize-html'
 
-import { mapUrlAttributes, type UrlTarget } from '../../lib/media'
+import {
+  hasDownloadableImageExtension,
+  mapUrlAttributes,
+  type UrlTarget
+} from '../../lib/media'
 
 export interface Entry {
   title: string
@@ -21,12 +25,6 @@ export interface Site {
 }
 
 type Values = string[] | { _: string; $: { type: 'text' } }[] | null
-// Which links point at an image, so they resolve against the same base as the
-// media they reference. This is deliberately not the list of images media.ts
-// downloads: svg belongs here but must never be served from our own origin.
-// Keep the two lists apart.
-const IMAGE_EXTENSION_REGEX =
-  /\.(avif|gif|heic|heif|jpeg|jpg|jxl|png|svg|tif|tiff|webp)$/i
 
 function joinValuesOrEmptyString(values: Values) {
   if (values && values.length > 0 && typeof values[0] !== 'string') {
@@ -78,11 +76,6 @@ function resolveUrl(
   }
 }
 
-function isImageLikeUrl(url: string) {
-  const pathOnly = url.trim().split('#')[0].split('?')[0]
-  return IMAGE_EXTENSION_REGEX.test(pathOnly)
-}
-
 function resolveContentUrl(
   url: string,
   target: UrlTarget,
@@ -91,14 +84,16 @@ function resolveContentUrl(
 ) {
   const asMedia = resolveUrl(url, siteLink, entryLink)
   if (target === 'media') return asMedia
-  // A link to an image takes the media base so that when some entry of the site
-  // also displays that image, the two agree and the link can be swapped for the
-  // downloaded copy. The trade is that a link to an image nothing displays gets
-  // the site base rather than the document one -- same as the img rule it is
-  // matching, and the reason to keep the two together. Every other link
-  // resolves against the entry, the document base a browser would use and the
-  // only one that gets a bare "foo.html" or a "#footnote" right.
-  return isImageLikeUrl(asMedia)
+  // A link to an image the store can download takes the media base so that when
+  // some entry of the site also displays that image, the two agree and the link
+  // can be swapped for the downloaded copy. The trade is that a link to an
+  // image nothing displays gets the site base rather than the document one --
+  // same as the img rule it is matching, and the reason to keep the two
+  // together. An extension the store will never fetch, svg above all, buys
+  // nothing here and so resolves like any other link. Every other link resolves
+  // against the entry, the document base a browser would use and the only one
+  // that gets a bare "foo.html" or a "#footnote" right.
+  return hasDownloadableImageExtension(asMedia)
     ? asMedia
     : resolveUrl(url, entryLink, siteLink)
 }
@@ -116,7 +111,11 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   },
   allowedSchemes: ['http', 'https', 'mailto', 'data'],
   allowedSchemesByTag: {
-    img: ['http', 'https', 'data']
+    img: ['http', 'https', 'data'],
+    // A citation is a document, so it has no use for the data: and mailto:
+    // schemes the global list carries for links and inline images.
+    blockquote: ['http', 'https'],
+    q: ['http', 'https']
   },
   disallowedTagsMode: 'discard',
   enforceHtmlBoundary: true

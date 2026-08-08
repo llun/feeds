@@ -2,22 +2,33 @@ import test from 'ava'
 
 import { isLocalMediaPath, mapUrlAttributes, withBasePath } from './media'
 
+// The media store names every file it writes after the sha256 of its URL.
+const DOWNLOADED = `/media/${'a'.repeat(64)}.png`
+
 test('#isLocalMediaPath matches downloaded media paths only', (t) => {
-  t.true(isLocalMediaPath('/media/a.png'))
+  t.true(isLocalMediaPath(DOWNLOADED))
+  t.true(isLocalMediaPath(`${DOWNLOADED}?v=2`))
   t.false(isLocalMediaPath('/media/'))
   t.false(isLocalMediaPath('https://example.com/media/a.png'))
   t.false(isLocalMediaPath('data:image/gif;base64,AAA'))
   t.false(isLocalMediaPath(''))
   t.false(isLocalMediaPath(undefined))
+  // A feed's own /media path is not something we downloaded, so it has to keep
+  // resolving against the entry rather than being served from this site.
+  t.false(isLocalMediaPath('/media/2019/photo.jpg'))
+  t.false(isLocalMediaPath('/media/a.png'))
+  t.false(isLocalMediaPath(`/media/${'a'.repeat(63)}.png`))
+  t.false(isLocalMediaPath(`/media/${'z'.repeat(64)}.png`))
 })
 
 test('#withBasePath prefixes local media only', (t) => {
-  t.is(withBasePath('/media/a.png', '/feeds'), '/feeds/media/a.png')
-  t.is(withBasePath('/media/a.png', ''), '/media/a.png')
+  t.is(withBasePath(DOWNLOADED, '/feeds'), `/feeds${DOWNLOADED}`)
+  t.is(withBasePath(DOWNLOADED, ''), DOWNLOADED)
   t.is(
     withBasePath('https://example.com/a.png', '/feeds'),
     'https://example.com/a.png'
   )
+  t.is(withBasePath('/media/2019/photo.jpg', '/feeds'), '/media/2019/photo.jpg')
 })
 
 test('#mapUrlAttributes maps every url and reports what it points at', (t) => {
@@ -114,6 +125,30 @@ test('#mapUrlAttributes keeps commas that belong to a srcset URL', (t) => {
     'data:image/gif;base64,R0lGODlhAQ 1x, /real.png 2x'
   )
   t.deepEqual(seen, ['data:image/gif;base64,R0lGODlhAQ', '/real.png'])
+})
+
+test('#mapUrlAttributes reads srcset candidates the way HTML does', (t) => {
+  const seen: string[] = []
+  const collect = (url: string) => {
+    seen.push(url)
+    return `M(${url})`
+  }
+
+  // No space after the comma is the common compact form.
+  t.is(
+    mapUrlAttributes({ srcset: 'a.png 1x,b.png 2x' }, collect).srcset,
+    'M(a.png) 1x, M(b.png) 2x'
+  )
+  t.deepEqual(seen, ['a.png', 'b.png'])
+
+  // A comma inside a descriptor-less URL belongs to the URL, so splitting on
+  // commas would wrongly make this two candidates.
+  seen.length = 0
+  t.is(
+    mapUrlAttributes({ srcset: 'a.png,b.png' }, collect).srcset,
+    'M(a.png,b.png)'
+  )
+  t.deepEqual(seen, ['a.png,b.png'])
 })
 
 test('#mapUrlAttributes ignores attributes inherited from Object', (t) => {

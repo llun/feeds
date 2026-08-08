@@ -71,6 +71,13 @@ test('#parseRss picks the link base on the extension alone', (t) => {
       'href="https://feed.example/images/a"'
     )
   )
+  // The store never downloads svg, so the media base could never pay off and
+  // the link resolves against the document like any other.
+  t.true(
+    contentOf('<a href="diagram.svg">Diagram</a>').includes(
+      'href="https://feed.example/posts/diagram.svg"'
+    )
+  )
 })
 
 test('#parseRss resolves relative links using the entry URL', (t) => {

@@ -7,7 +7,9 @@ import sanitizeHtml from 'sanitize-html'
 
 import {
   LOCAL_MEDIA_PATH,
+  localMediaFileName,
   mapUrlAttributes,
+  normalizeImageExtension,
   type UrlTarget
 } from '../../lib/media'
 import { USER_AGENT } from './http'
@@ -19,25 +21,11 @@ const MAX_CONCURRENT_DOWNLOADS = 4
 const MAX_CONCURRENT_DOWNLOADS_PER_HOST = 2
 const LOCALIZE_DEADLINE_MS = 10 * 60 * 1000
 
-// Which images may be downloaded and served from our own origin. SVG is
-// deliberately absent from both maps: a localized file is navigable on the
-// published origin, and a feed could otherwise plant a scripted SVG there.
-// parsers.ts keeps a wider list to decide how a link resolves; do not merge
-// the two.
-const KNOWN_IMAGE_EXTENSIONS = new Set([
-  '.avif',
-  '.gif',
-  '.heic',
-  '.heif',
-  '.jpeg',
-  '.jpg',
-  '.jxl',
-  '.png',
-  '.tif',
-  '.tiff',
-  '.webp'
-])
-
+// Which images may be downloaded and served from our own origin. The list of
+// extensions lives in lib/media.ts, where the link resolver reads it too. SVG
+// is deliberately absent from that list and from the map below: a localized
+// file is navigable on the published origin, and a feed could otherwise plant
+// a scripted SVG there.
 const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
   'image/avif': '.avif',
   'image/gif': '.gif',
@@ -68,13 +56,6 @@ export function getMediaDirectory(githubActionPath: string) {
 
 function createMediaHash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
-}
-
-function normalizeImageExtension(extension?: string | null) {
-  if (!extension) return null
-  const normalized = extension.trim().toLowerCase()
-  if (!KNOWN_IMAGE_EXTENSIONS.has(normalized)) return null
-  return normalized
 }
 
 export function extensionFromContentType(contentType?: string | null) {
@@ -108,18 +89,6 @@ function isDownloadableUrl(url: string) {
   } catch {
     return false
   }
-}
-
-function extractMediaFileNameFromLocalPath(value: string) {
-  const prefix = `${LOCAL_MEDIA_PATH}/`
-  const trimmed = value.trim()
-  if (!trimmed.startsWith(prefix)) return null
-  const fileName = trimmed
-    .substring(prefix.length)
-    .split('?')[0]
-    .split('#')[0]
-    .trim()
-  return fileName || null
 }
 
 /**
@@ -168,7 +137,7 @@ export function collectImageUrls(content: string) {
  * images, so a lightbox href to an image the store downloaded stops hotlinking
  * the origin -- the counterpart of collectImageUrls, which is media-only.
  */
-export function rewriteImageUrls(
+export function rewriteLocalizedUrls(
   content: string,
   replacements: Map<string, string>
 ) {
@@ -353,7 +322,7 @@ export function createMediaStore({
       ...site,
       entries: site.entries.map((entry) => ({
         ...entry,
-        content: rewriteImageUrls(entry.content, replacements)
+        content: rewriteLocalizedUrls(entry.content, replacements)
       }))
     }
   }
@@ -363,7 +332,7 @@ export function createMediaStore({
 
 /**
  * Every downloaded file the content still points at, so cleanup keeps it. Links
- * count as well as images: rewriteImageUrls sends a lightbox href to the local
+ * count as well as images: rewriteLocalizedUrls sends a lightbox href to the local
  * copy too, and deleting a file that is still referenced is worse than keeping
  * one that is not.
  */
@@ -371,7 +340,7 @@ export function extractLocalMediaReferences(content: string) {
   const references = new Set<string>()
   if (!content) return references
   walkContentUrls(content, (url) => {
-    const mediaFile = extractMediaFileNameFromLocalPath(url)
+    const mediaFile = localMediaFileName(url)
     if (mediaFile) references.add(mediaFile)
   })
   return references

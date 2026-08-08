@@ -54,26 +54,53 @@ test('#ItemContent resolves URLs outside of a and img tags', (t) => {
   )
 })
 
+// The media store names every file it writes after the sha256 of its URL.
+const DOWNLOADED = `/media/${'a'.repeat(64)}.png`
+const downloadedMedia = `<a href="${DOWNLOADED}"><img src="${DOWNLOADED}" srcset="${DOWNLOADED} 1x, https://example.com/b.png 2x" /></a>`
+
 // Serial because it swaps NEXT_PUBLIC_BASE_PATH, which the component reads as
 // it renders, and ava runs a file's tests concurrently.
 test.serial('#ItemContent serves downloaded media from this site', (t) => {
   process.env.NEXT_PUBLIC_BASE_PATH = '/feeds'
   try {
-    const output = render(
-      '<a href="/media/a.png"><img src="/media/a.png" srcset="/media/a.png 1x, https://example.com/b.png 2x" /></a>'
-    )
+    const output = render(downloadedMedia)
     // The link to a downloaded image needs the base path too, not the entry.
-    t.true(output.includes('href="/feeds/media/a.png"'))
-    t.true(output.includes('src="/feeds/media/a.png"'))
+    t.true(output.includes(`href="/feeds${DOWNLOADED}"`))
+    t.true(output.includes(`src="/feeds${DOWNLOADED}"`))
     // An image that failed to download keeps its remote candidate.
     t.true(
       output.includes(
-        'srcSet="/feeds/media/a.png 1x, https://example.com/b.png 2x"'
+        `srcSet="/feeds${DOWNLOADED} 1x, https://example.com/b.png 2x"`
       )
     )
   } finally {
     delete process.env.NEXT_PUBLIC_BASE_PATH
   }
+})
+
+test.serial(
+  '#ItemContent leaves downloaded media alone without a base path',
+  (t) => {
+    delete process.env.NEXT_PUBLIC_BASE_PATH
+    const output = render(downloadedMedia)
+    // Downloaded media is served from this site at any base path, so it must
+    // never be resolved against the entry.
+    t.true(output.includes(`href="${DOWNLOADED}"`))
+    t.true(output.includes(`src="${DOWNLOADED}"`))
+    t.true(
+      output.includes(`srcSet="${DOWNLOADED} 1x, https://example.com/b.png 2x"`)
+    )
+  }
+)
+
+test('#ItemContent resolves a feed path that only looks like local media', (t) => {
+  // Plenty of sites lay their own uploads out under /media, and those are not
+  // files we downloaded -- they belong to the entry.
+  t.true(
+    render('<img src="/media/2019/photo.jpg" />').includes(
+      'src="https://feed.example/media/2019/photo.jpg"'
+    )
+  )
 })
 
 test('#ItemContent opens content links in a new tab', (t) => {

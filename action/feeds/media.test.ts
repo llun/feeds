@@ -12,7 +12,7 @@ import {
   collectReferencedMediaFromEntryDirectory,
   createMediaStore,
   getMediaDirectory,
-  rewriteImageUrls
+  rewriteLocalizedUrls
 } from './media'
 import type { Site } from './parsers'
 
@@ -391,8 +391,8 @@ test('#collectImageUrls returns absolute image urls only', (t) => {
   )
 })
 
-test('#rewriteImageUrls only replaces mapped urls', (t) => {
-  const content = rewriteImageUrls(
+test('#rewriteLocalizedUrls only replaces mapped urls', (t) => {
+  const content = rewriteLocalizedUrls(
     '<img src="https://example.com/a.png" srcset="https://example.com/a.png 1x, https://example.com/b.png 2x" />',
     new Map([['https://example.com/a.png', '/media/a.png']])
   )
@@ -403,8 +403,8 @@ test('#rewriteImageUrls only replaces mapped urls', (t) => {
   )
 })
 
-test('#rewriteImageUrls sends links to a cached image to the local copy', (t) => {
-  const content = rewriteImageUrls(
+test('#rewriteLocalizedUrls sends links to a cached image to the local copy', (t) => {
+  const content = rewriteLocalizedUrls(
     '<a href="https://example.com/a.png"><img src="https://example.com/a.png" /></a>' +
       '<a href="https://example.com/uncached.png">Full size</a>',
     new Map([['https://example.com/a.png', '/media/a.png']])
@@ -417,26 +417,34 @@ test('#rewriteImageUrls sends links to a cached image to the local copy', (t) =>
 })
 
 test('#collectReferencedMediaFromContents returns every local media reference', (t) => {
+  const a = `${'a'.repeat(64)}.jpg`
+  const b = `${'b'.repeat(64)}.webp`
+  const c = `${'c'.repeat(64)}.png`
+  const d = `${'d'.repeat(64)}.gif`
   const media = collectReferencedMediaFromContents([
-    '<p><img src="/media/a.jpg" srcset="/media/b.webp 1x, /media/c.png 2x" /><a href="/media/d.gif">Download</a></p>',
-    '<img src="https://example.com/remote.png" />'
+    `<p><img src="/media/${a}" srcset="/media/${b} 1x, /media/${c} 2x" /><a href="/media/${d}">Download</a></p>`,
+    '<img src="https://example.com/remote.png" />',
+    // A feed's own /media path is not a file we wrote, so it must not be
+    // mistaken for one and keep an unrelated file alive.
+    '<img src="/media/2019/photo.jpg" />'
   ])
 
   // Links count as well as images: a lightbox href is rewritten to the local
   // copy too, so cleanup would otherwise delete a file still in use.
-  t.deepEqual([...media].sort(), ['a.jpg', 'b.webp', 'c.png', 'd.gif'])
+  t.deepEqual([...media].sort(), [a, b, c, d].sort())
 })
 
 test('#collectReferencedMediaFromEntryDirectory reads entry files', async (t) => {
   const rootPath = await fs.mkdtemp(path.join(os.tmpdir(), 'feeds-media-entry-'))
+  const a = `${'a'.repeat(64)}.jpg`
   await fs.writeFile(
     path.join(rootPath, 'one.json'),
-    JSON.stringify({ content: '<img src="/media/a.jpg" />' })
+    JSON.stringify({ content: `<img src="/media/${a}" />` })
   )
   await fs.writeFile(path.join(rootPath, 'broken.json'), 'not json')
 
   const media = await collectReferencedMediaFromEntryDirectory(rootPath)
-  t.deepEqual([...media], ['a.jpg'])
+  t.deepEqual([...media], [a])
 
   const missing = await collectReferencedMediaFromEntryDirectory(
     path.join(rootPath, 'missing')
