@@ -194,7 +194,7 @@ export function parseHttpUrl(input?: string | null) {
  * the scheme -- the action used to short-circuit as absolute where the reader
  * resolved it against a base of the same scheme; sharing this function settles
  * that on the reader's answer, which is the browser's. Against a base of a
- * different scheme both always agreed that it is absolute. See
+ * different scheme both always agreed. See
  * #resolveAgainstBase resolves a scheme-prefixed url like a browser.
  *
  * An absolute URL keeps its target but comes back re-serialized by the URL

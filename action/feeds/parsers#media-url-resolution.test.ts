@@ -281,8 +281,10 @@ test('#parseRss falls back between the entry and site URL', (t) => {
   // An absolute one included, which the parser could have normalized without a
   // base. The reader leaves it alone, so the action does too: with nothing to
   // resolve against, a URL that takes a base is no longer normalized either.
-  // Only a URL that takes no base still changes -- a scheme-less one still gets
-  // a scheme, asserted below.
+  // Two things still change it. The action trims, here and everywhere, so a
+  // padded URL comes back without its padding and a blank one comes back empty
+  // for the sanitizer to drop. And a scheme-less URL takes no base at all, so
+  // it still gets a scheme -- asserted below.
   t.true(
     contentOf('<a href="HTTPS://Other.Example/Page">l</a>', {
       site: '',
@@ -424,10 +426,9 @@ test('#parseRss trims a scheme-less URL before giving it a scheme', (t) => {
   )
   // Two shapes the URL parser would rewrite -- a trailing slash on the bare
   // host, punycode on the unicode one -- so a copy that fell through to it is
-  // caught. Not two independent detectors: both rewrites come from the one
-  // new URL() call in resolveAgainstBase, so either assertion alone catches
-  // everything the pair does. The second is belt and braces on a rule that
-  // exists in three copies.
+  // caught. Both rewrites come out of the same new URL() call, but that does
+  // not make either assertion redundant: a branch that skipped only hostless
+  // URLs, or only non-ASCII ones, fails exactly one of them.
   t.true(normalizes.includes('src="http://h.example"'), normalizes)
   t.true(normalizes.includes('src="http://ex\u00e4mple.com/x.png"'), normalizes)
   t.true(

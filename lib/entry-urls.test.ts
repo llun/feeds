@@ -253,10 +253,11 @@ test('#resolveAgainstBase returns null for a url that takes no base', (t) => {
   // Null rather than the input, so each caller says for itself what "leave it
   // alone" hands back -- the action the trimmed URL, the reader the original,
   // whitespace and all. These are the cases where the two copies of this
-  // function took separate branches; of the inputs asserted here three produced
-  // different strings, and all
-  // three needed the input to carry whitespace or to meet an unusable base:
-  // '   ', '  data:text/plain,a b  ', and an absolute URL with no base.
+  // function took separate branches. Two of the inputs below produced different
+  // strings from them -- '   ' and '  data:text/plain,a b  ' -- and both needed
+  // the input to carry whitespace. The third such input across this file is an
+  // absolute URL with no base, in #resolveAgainstBase returns null without a
+  // usable http base.
   t.is(resolveAgainstBase('', ENTRY_URL), null)
   t.is(resolveAgainstBase('   ', ENTRY_URL), null)
   // Re-serializing a data: URI would rewrite its payload rather than a URL.
@@ -265,15 +266,21 @@ test('#resolveAgainstBase returns null for a url that takes no base', (t) => {
     null
   )
   t.is(resolveAgainstBase('  data:text/plain,a b  ', ENTRY_URL), null)
-  // The colon is load-bearing: `data` is an ordinary directory name, and a feed
-  // is free to publish a path under one.
+  // Both the colon and the anchor are load-bearing, and each needs its own
+  // input. `data` is an ordinary directory name, so a guard testing for it
+  // without the colon strands a path under one; and `data:` can appear inside
+  // a URL that is not one, so a guard that merely contains it strands those.
   t.is(
     resolveAgainstBase('data/chart.png', ENTRY_URL),
     'https://feed.example/posts/data/chart.png'
   )
   t.is(
-    resolveAgainstBase('/data/chart.png', ENTRY_URL),
-    'https://feed.example/data/chart.png'
+    resolveAgainstBase('/uploads/data:2024/x.png', ENTRY_URL),
+    'https://feed.example/uploads/data:2024/x.png'
+  )
+  t.is(
+    resolveAgainstBase('https://cdn.example/proxy?u=data:image/png', ENTRY_URL),
+    'https://cdn.example/proxy?u=data:image/png'
   )
 })
 
@@ -324,9 +331,10 @@ test('#resolveAgainstBase returns null without a usable http base', (t) => {
   t.is(resolveAgainstBase('/posts/other', ''), null)
   t.is(resolveAgainstBase('/posts/other'), null)
   // Including an absolute URL, which the parser could have resolved on its own.
-  // With no usable base, every URL that takes one comes back as published,
-  // rather than some of them normalized and some not. A scheme-less URL takes
-  // no base and is the exception; it is each caller's, not this function's.
+  // With no usable base this function gives up on every URL alike, rather than
+  // resolving an absolute one on its own and leaving the rest. What each caller
+  // hands back for a null still differs -- the action trims, the reader does
+  // not -- and the scheme-less rule never reaches here at all.
   t.is(resolveAgainstBase('HTTPS://Other.Example/Page', ''), null)
 })
 
