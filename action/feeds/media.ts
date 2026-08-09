@@ -54,23 +54,61 @@ function createMediaHash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
 }
 
+/**
+ * Splits a header value on the commas that separate repeated headers, which is
+ * how headers.get returns them. Commas inside a quoted parameter do not count,
+ * the same rule Fetch splits by: on a bare split, an unterminated quote in
+ * `text/html;x="a,image/png` hides a type the reader's browser never sees.
+ */
+function splitHeaderValues(value: string) {
+  const values: string[] = []
+  let current = ''
+  let quoted = false
+  for (let index = 0; index < value.length; index++) {
+    const character = value[index]
+    if (quoted) {
+      current += character
+      if (character === '\\' && index + 1 < value.length)
+        current += value[++index]
+      else if (character === '"') quoted = false
+      continue
+    }
+    if (character === '"') {
+      quoted = true
+      current += character
+    } else if (character === ',') {
+      values.push(current)
+      current = ''
+    } else {
+      current += character
+    }
+  }
+  values.push(current)
+  return values
+}
+
 export function extensionFromContentType(contentType?: string | null) {
   if (!contentType) return null
-  // headers.get joins repeated Content-Type headers with ", " and the fetch
-  // spec reads the last of them, as every browser does -- so judging a body by
-  // the first would judge it by a header the reader's own browser ignores.
-  const declaredTypes = contentType.split(',')
-  const declaredType = declaredTypes[declaredTypes.length - 1]
-    .split(';')[0]
-    .trim()
-    .toLowerCase()
-  // hasOwn because the type is feed-controlled and `constructor` survives
-  // lowercasing, so a plain lookup hands normalizeImageExtension a function.
-  if (!Object.hasOwn(CONTENT_TYPE_EXTENSIONS, declaredType)) return null
+  // headers.get joins repeated Content-Type headers, and the fetch spec
+  // resolves them to the last one it can parse -- so reading the first would
+  // judge the body by a header the reader's browser ignores.
+  let essence = ''
+  for (const value of splitHeaderValues(contentType)) {
+    const candidate = value.split(';')[0].trim().toLowerCase()
+    // Fetch skips a value it cannot parse and any */*, rather than letting
+    // either be the answer, so neither a trailing comma nor a junk repeat can
+    // erase the real type.
+    if (!candidate.includes('/') || candidate === '*/*') continue
+    essence = candidate
+  }
+  // Requiring the slash is what keeps a response naming `constructor` off the
+  // lookup below: no Object.prototype key contains one, and `constructor`
+  // otherwise survives lowercasing where toString and valueOf do not.
+  //
   // Routed through images.ts rather than returned straight from the map, so an
   // entry added here that is not downloadable -- svg above all -- becomes a
   // refused download instead of a file served from our own origin.
-  return normalizeImageExtension(CONTENT_TYPE_EXTENSIONS[declaredType])
+  return normalizeImageExtension(CONTENT_TYPE_EXTENSIONS[essence])
 }
 
 export function extensionFromUrl(url: string) {
@@ -284,11 +322,11 @@ export function createMediaStore({
       const contentType = response.headers.get('content-type')
       const contentTypeExtension = extensionFromContentType(contentType)
       if (contentType !== null && !contentTypeExtension) {
-        throw new Error(`Unsupported media type ${JSON.stringify(contentType)}`)
+        throw new Error(`Unsupported media type "${contentType}"`)
       }
 
-      // Falling back to the URL is all there is to go on when a host sets no
-      // type header at all.
+      // Anything reaching here without a content type extension had no header
+      // at all, so the URL is the only thing left naming a type.
       const extension = contentTypeExtension || urlExtension
       if (!extension) {
         throw new Error(
@@ -304,9 +342,10 @@ export function createMediaStore({
       await fs.writeFile(path.join(mediaDirectory, fileName), buffer)
       return `${LOCAL_MEDIA_PATH}/${fileName}`
     } catch (error: any) {
-      // Every throw above can leave the body unread, and an unread body holds
-      // its socket until the request times out. Aborting here covers all of
-      // them at once rather than cancelling at each throw site.
+      // The early throws -- a bad status, a refused type, no usable extension
+      // -- all leave the body unread, and an unread body holds its socket
+      // until the remote end drops it. clearTimeout below has already retired
+      // the download timeout by then, so nothing else would ever release it.
       controller.abort()
       console.error(`Fail to download media ${url}: ${error.message}`)
       return null

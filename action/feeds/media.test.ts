@@ -414,9 +414,12 @@ test('#localizeSite keeps the remote url for an empty content type header', asyn
   const url = 'https://example.com/photo.png'
   // Sending the header and naming nothing is still a declaration, and an
   // unusable one -- unlike a host that omits the header altogether.
-  const fetchStub = sinon
-    .stub()
-    .resolves(imageResponse('<html>blocked</html>', ''))
+  const fetchStub = sinon.stub().resolves(
+    new Response(Buffer.from('<html>blocked</html>'), {
+      status: 200,
+      headers: { 'content-type': '' }
+    })
+  )
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
   const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
@@ -441,7 +444,7 @@ test('#localizeSite names files from a content type in upper case', async (t) =>
   )
 })
 
-test('#localizeSite names files from a content type padded before its parameters', async (t) => {
+test('#localizeSite names files from a content type with space before its parameters', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-padded-type-')
   const url = 'https://example.com/a.png'
   const fetchStub = sinon
@@ -475,15 +478,75 @@ test('#localizeSite keeps the remote url for a content type naming an object pro
   const mediaDirectory = await createMediaDirectory('feeds-media-proto-type-')
   const url = 'https://example.com/photo.png'
   // The type is feed-controlled, and `constructor` survives lowercasing.
-  const fetchStub = sinon
-    .stub()
-    .resolves(imageResponse('<html>blocked</html>', 'constructor'))
+  const fetchStub = sinon.stub().resolves(
+    new Response(Buffer.from('<html>blocked</html>'), {
+      status: 200,
+      headers: { 'content-type': 'constructor' }
+    })
+  )
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
   const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
 
   t.true(localized.entries[0].content.includes(`src="${url}"`))
   t.deepEqual(await listMediaFiles(mediaDirectory), [])
+})
+
+test('#localizeSite names files from the content type when the url names a different image type', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-mismatch-')
+  const url = 'https://example.com/a.png'
+  // The one case that tells the two orderings apart: both name an image, and
+  // they disagree. The server wins, or "the URL does not overrule it" is empty.
+  const fetchStub = sinon
+    .stub()
+    .resolves(imageResponse('image-bytes', 'image/webp'))
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.deepEqual(await listMediaFiles(mediaDirectory), [`${mediaHash(url)}.webp`])
+  t.true(
+    localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.webp"`)
+  )
+})
+
+test('#localizeSite aborts the request when it refuses the response', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-abort-')
+  const signals: AbortSignal[] = []
+  // An unread body holds its socket until the remote end drops it, so a
+  // refusal has to abort rather than just walk away.
+  const fetchStub = sinon.stub().callsFake(async (_url: string, init: any) => {
+    signals.push(init.signal)
+    return new Response('<html>blocked</html>', {
+      status: 200,
+      headers: { 'content-type': 'text/html' }
+    })
+  })
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  await store.localizeSite(
+    createSite('<img src="https://example.com/photo.png" />')
+  )
+
+  t.is(signals.length, 1)
+  t.true(signals[0].aborted)
+})
+
+test('#localizeSite leaves the request alone when it accepts the response', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-noabort-')
+  const signals: AbortSignal[] = []
+  const fetchStub = sinon.stub().callsFake(async (_url: string, init: any) => {
+    signals.push(init.signal)
+    return imageResponse()
+  })
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  await store.localizeSite(
+    createSite('<img src="https://example.com/a.png" />')
+  )
+
+  t.is(signals.length, 1)
+  t.false(signals[0].aborted)
 })
 
 test('#localizeSite names files from the content type when the url has no extension', async (t) => {
