@@ -1,6 +1,6 @@
 import test from 'ava'
 import { ENTRY_CONTENT_SANITIZE_OPTIONS, parseAtom, parseRss } from './parsers'
-import { resolveEntryUrl } from '../../lib/utils'
+import { resolveAgainstEntry } from '../../lib/entry-urls'
 
 const SITE_LINK = 'https://site.example/'
 const ENTRY_LINK = 'https://feed.example/posts/entry-1'
@@ -134,7 +134,7 @@ test('#parseRss resolves every allowed attribute that carries a URL', (t) => {
       const output = contentOf(`<${tag} ${attribute}="/rel">x</${tag}>`)
       t.false(
         output.includes(`${attribute}="/rel"`),
-        `${tag}[${attribute}] kept a relative URL -- add it to URL_ATTRIBUTES in lib/media.ts, or to NON_URL_ATTRIBUTES here if it carries no URL`
+        `${tag}[${attribute}] kept a relative URL -- add it to URL_ATTRIBUTES in lib/entry-urls.ts, or to NON_URL_ATTRIBUTES here if it carries no URL`
       )
       // Asserted both ways, or a tag dropped for not being in allowedTags
       // would look like an attribute that resolved.
@@ -278,6 +278,22 @@ test('#parseRss falls back between the entry and site URL', (t) => {
       'href="/x"'
     )
   )
+  // An absolute one included, which the parser could have normalized without a
+  // base. The reader leaves it alone, so the action does too: with nothing to
+  // resolve against, a URL that takes a base is no longer normalized either.
+  // Two things still change it. Content URLs are trimmed, so a padded one comes
+  // back without its padding and a blank one comes back empty for the sanitizer
+  // to drop. And a scheme-less URL takes no base at all, so it still gets a
+  // scheme -- asserted below. An entry link that is already an absolute http(s)
+  // URL is the exception to the trimming, deliberately, since it is half a
+  // storage key; a relative or other-scheme one is trimmed like anything else.
+  // See "#parseRss keeps an absolute entry link byte for byte".
+  t.true(
+    contentOf('<a href="HTTPS://Other.Example/Page">l</a>', {
+      site: '',
+      entry: ''
+    }).includes('href="HTTPS://Other.Example/Page"')
+  )
 
   // A protocol-relative image takes its scheme from the base it resolves
   // against -- now the entry, like everything else -- and falls back to https
@@ -294,8 +310,11 @@ test('#parseRss falls back between the entry and site URL', (t) => {
       entry: ''
     }).includes('href="https://h.example/x"')
   )
-  // Media is the only caller that reaches resolveUrl's own https default, since
-  // a link is short-circuited by the scheme-less rule before it gets there.
+  // Media is the only *content* URL that reaches resolveUrl's own https
+  // default, since a content link is short-circuited in resolveContentUrl
+  // before it gets there. An entry link reaches it too, through
+  // absolutizeEntryLink, which has no such short-circuit -- see
+  // "#parseRss gives a scheme-less entry link one" below.
   t.true(
     contentOf('<img src="//h.example/x.png" />', {
       site: '',
@@ -370,6 +389,47 @@ test('#parseRss keeps an absolute entry link byte for byte', (t) => {
       link
     )
   }
+
+  // Padding included. A bare RSS <link> is a string, which
+  // joinValuesOrEmptyString trims before absolutizeEntryLink ever sees it, so
+  // the cases above cannot reach this axis. An Atom link arrives as published,
+  // and so does an RSS <link> carrying an attribute, which xml2js gives as
+  // {_, $} and joinValuesOrEmptyString returns untrimmed. Trimming here would
+  // re-key every entry under a padded link, which is what the loop above exists
+  // to prevent -- it just could not see this half of it.
+  const atomEntryLink = (href: string) =>
+    parseAtom('Test Feed', {
+      feed: {
+        title: ['Test'],
+        updated: ['2026-01-01T00:00:00Z'],
+        link: [{ $: { rel: 'alternate', href: 'https://site.example/' } }],
+        entry: [
+          {
+            title: ['Entry 1'],
+            link: [{ $: { rel: 'alternate', href } }],
+            published: ['2026-01-01T00:00:00Z'],
+            content: [{ _: '<p>x</p>' }]
+          }
+        ]
+      }
+    }).entries[0].link
+
+  for (const href of [
+    '  https://feed.example/x  ',
+    '\thttps://feed.example/x\n'
+  ])
+    t.is(atomEntryLink(href), href)
+
+  // Non-ASCII padding is a separate axis, and the answer flips. new URL()
+  // strips ASCII space, tab and newline itself, so the cases above cannot tell
+  // parseHttpUrl apart from a version that trims its input first. It does not
+  // strip  , so a link padded with one is not an absolute URL as far as
+  // the guard is concerned: it resolves against the site link instead, and the
+  // padding is gone from the key.
+  t.is(
+    atomEntryLink('\u00a0https://feed.example/x\u00a0'),
+    'https://feed.example/x'
+  )
 })
 
 test('#parseRss re-serializes an absolute URL in content', (t) => {
@@ -387,6 +447,159 @@ test('#parseRss re-serializes an absolute URL in content', (t) => {
   )
 })
 
+test('#parseRss trims a scheme-less URL before giving it a scheme', (t) => {
+  // The scheme-less branch never reaches resolveAgainstBase, so the trim there
+  // pins nothing here -- both of the action's copies of this rule need their
+  // own whitespace case. On an http feed, so resolveContentUrl's copy testing
+  // the untrimmed URL, and falling through to resolveUrl, is caught by the
+  // link's scheme.
+  const output = contentOf(
+    '<a href="\u00a0//h.example/x\u00a0">l</a><img src="\u00a0//h.example/x.png\u00a0" />',
+    { site: 'http://site.example/', entry: 'http://feed.example/posts/1' }
+  )
+  t.true(output.includes('href="https://h.example/x"'), output)
+  t.true(output.includes('src="http://h.example/x.png"'), output)
+
+  // resolveUrl's own copy needs more than that. With a usable base, falling
+  // through to resolveAgainstBase produces the same string this branch emits,
+  // so only a URL the parser would normalize can tell the two apart -- and a
+  // feed with no usable base at all, where falling through resolves nothing.
+  const normalizes = contentOf(
+    '<img src="\u00a0//h.example\u00a0" /><img src="\u00a0//ex\u00e4mple.com/x.png\u00a0" />',
+    { site: 'http://site.example/', entry: 'http://feed.example/posts/1' }
+  )
+  // Two shapes the URL parser would rewrite -- a trailing slash on the bare
+  // host, punycode on the unicode one -- so a copy that fell through to it is
+  // caught. Both rewrites come out of the same new URL() call, but that does
+  // not make either assertion redundant: a branch that skipped only path-less
+  // URLs, or only non-ASCII ones, fails exactly one of them.
+  t.true(normalizes.includes('src="http://h.example"'), normalizes)
+  t.true(normalizes.includes('src="http://ex\u00e4mple.com/x.png"'), normalizes)
+  t.true(
+    contentOf('<img src="\u00a0//h.example/x.png\u00a0" />', {
+      site: '',
+      entry: ''
+    }).includes('src="https://h.example/x.png"')
+  )
+})
+
+test('#parseRss survives an entry link element carrying no text', (t) => {
+  // <link href="..."/> -- attributes and no text -- is a shape xml2js hands
+  // over as [{ $ }], and joinValuesOrEmptyString's object branch then returns
+  // undefined, which its inferred string type does not admit. The !rawLink
+  // guard in absolutizeEntryLink is what keeps resolveUrl from calling .trim()
+  // on it and taking the whole feed's parse down, every entry with it. No
+  // string input can reach that guard -- '' takes the same path either way --
+  // so it needs this fixture or nothing pins it.
+  //
+  // The guard saves the parse, not the run: insertEntry passes entry.link to
+  // knex unguarded where insertSite coalesces it, so an undefined link still
+  // fails the sqlite build downstream. That is pre-existing and not this
+  // function's to fix -- noted so the assertion below is not read as saying an
+  // entry without a link is handled end to end.
+  const site = parseRss('Test Feed', {
+    rss: {
+      channel: [
+        {
+          link: ['https://site.example/'],
+          description: ['Test feed'],
+          lastBuildDate: ['2026-01-01T00:00:00Z'],
+          generator: ['test'],
+          item: [
+            {
+              title: ['Entry 1'],
+              link: [{ $: { href: 'https://feed.example/posts/1' } }],
+              pubDate: ['2026-01-01T00:00:00Z'],
+              description: ['<a href="/x">l</a>']
+            }
+          ]
+        }
+      ]
+    }
+  })
+
+  t.is(site.entries.length, 1)
+  t.falsy(site.entries[0].link)
+  // With no entry link to use as a base, content falls back to the site link.
+  t.true(site.entries[0].content.includes('href="https://site.example/x"'))
+})
+
+test('#parseRss survives a URL the parser rejects', (t) => {
+  // A feed is free to publish a URL with a space in it. Resolution has to hand
+  // it back rather than throw, or one bad href takes the whole feed's parse
+  // down -- every entry, not just the one that carries it.
+  const site = parseRss(
+    'Test Feed',
+    rssWithContent(
+      '<a href="http://a b c">bad</a><a href="/posts/other">good</a>'
+    )
+  )
+  t.is(site.entries.length, 1)
+  t.true(site.entries[0].content.includes('href="http://a b c"'))
+  t.true(
+    site.entries[0].content.includes('href="https://feed.example/posts/other"')
+  )
+})
+
+test('#parseRss resolves a scheme-prefixed URL like a browser', (t) => {
+  // `http:x/y` with no `//` is relative when its scheme matches the base's. The
+  // action used to treat it as absolute while the reader resolved it, so the
+  // two stored different URLs for it; sharing resolveAgainstBase settles that
+  // on the reader's answer, which is also the browser's.
+  const links = {
+    site: 'http://site.example/',
+    entry: 'http://site.example/blog/post/'
+  }
+  t.true(
+    contentOf('<a href="http:example.com/x">x</a>', links).includes(
+      'href="http://site.example/blog/post/example.com/x"'
+    )
+  )
+  t.true(
+    contentOf('<img src="http:/x.jpg" />', links).includes(
+      'src="http://site.example/x.jpg"'
+    )
+  )
+  // The entry link itself is exempt: absolutizeEntryLink hands back anything
+  // the URL parser accepts as an http(s) URL on its own, byte for byte, because
+  // it is a key.
+  const entryLink = (entry: string, site = links.site) =>
+    parseRss('Test Feed', rssWithContent('<p>x</p>', { site, entry }))
+      .entries[0].link
+  t.is(entryLink('http:example.com/x'), 'http:example.com/x')
+  // A link on any other scheme is not exempt: it falls through and is
+  // re-serialized against the site link, when there is one. Asserted because
+  // the guard is what keeps the exemption to http(s) -- widened to accept any
+  // URL the parser takes, nothing above would notice, and every entry keyed
+  // under one of these links would be re-keyed.
+  t.is(entryLink('FTP://F.example/x'), 'ftp://f.example/x')
+  t.is(entryLink('MAILTO:a@b.example'), 'mailto:a@b.example')
+  t.is(entryLink('FILE:///etc/passwd'), 'file:///etc/passwd')
+  // With no site link there is nothing to re-serialize against, so it stays.
+  t.is(entryLink('FTP://F.example/x', ''), 'FTP://F.example/x')
+})
+
+test('#parseRss picks one base rather than trying both', (t) => {
+  // The site link is the fallback for a feed that gives no usable entry link,
+  // not a second attempt at a URL that failed against a good one. On a
+  // mixed-scheme feed the difference shows: `http:?q` is absolute against the
+  // https entry link, so the parser rejects it and it stays as published --
+  // resolving it against the http site link instead would move it onto another
+  // origin entirely, and downgrade a URL the entry published over https to
+  // plaintext http on the way.
+  const links = {
+    site: 'http://other.example/',
+    entry: 'https://site.example/blog/post/'
+  }
+  for (const url of ['http:?q', 'http:', 'http:/', 'http:#f']) {
+    const output = contentOf(`<a href="${url}">x</a>`, links)
+    t.true(
+      output.includes(`href="${url}"`),
+      `${url} should be left as published, got ${output}`
+    )
+  }
+})
+
 test('#parseRss gives a scheme-less entry link one', (t) => {
   const entryLink = (links: { site?: string; entry?: string }) =>
     parseRss('Test Feed', rssWithContent('<p>x</p>', links)).entries[0].link
@@ -395,6 +608,16 @@ test('#parseRss gives a scheme-less entry link one', (t) => {
   t.is(
     entryLink({ site: 'http://site.example/', entry: '//other.example/p' }),
     'http://other.example/p'
+  )
+  // With no site link to take a scheme from, an entry link reaches resolveUrl's
+  // own https default -- the one path to it that does not go through media.
+  t.is(
+    entryLink({ site: '', entry: '//other.example/p' }),
+    'https://other.example/p'
+  )
+  t.is(
+    entryLink({ site: 'not a url', entry: '//other.example/p' }),
+    'https://other.example/p'
   )
   // With nothing to resolve against, the link stays as published and the
   // reader's own resolution degrades to a no-op for that entry.
@@ -464,7 +687,7 @@ test('#parseRss agrees with the reader on every relative URL', (t) => {
     for (const storedUrl of storedUrls) {
       t.is(
         storedUrl,
-        resolveEntryUrl(url, entry),
+        resolveAgainstEntry(url, entry),
         `action and reader disagree on ${url}`
       )
     }

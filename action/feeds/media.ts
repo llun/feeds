@@ -7,7 +7,7 @@ import {
   LOCAL_MEDIA_PATH,
   localMediaFileName,
   type UrlTarget
-} from '../../lib/media'
+} from '../../lib/entry-urls'
 import { USER_AGENT } from './http'
 import { normalizeImageExtension } from './images'
 import { mapContentUrls, type Site } from './parsers'

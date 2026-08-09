@@ -1,7 +1,12 @@
 import { parseString } from 'xml2js'
 import sanitizeHtml from 'sanitize-html'
 
-import { mapUrlAttributes, type UrlTarget } from '../../lib/media'
+import {
+  mapUrlAttributes,
+  parseHttpUrl,
+  resolveAgainstBase,
+  type UrlTarget
+} from '../../lib/entry-urls'
 
 export interface Entry {
   title: string
@@ -29,47 +34,34 @@ function joinValuesOrEmptyString(values: Values) {
   return (values && values.join('').trim()) || ''
 }
 
-function parseAbsoluteHttpUrl(input?: string | null) {
-  if (!input) return null
-  try {
-    const parsed = new URL(input)
-    if (!['http:', 'https:'].includes(parsed.protocol)) return null
-    return parsed
-  } catch {
-    return null
-  }
-}
-
+/**
+ * Resolves a URL against the base a feed offers, preferring the first and
+ * falling back to the second when the first is not a usable http(s) URL. The
+ * base is chosen once, up front: the fallback covers a feed that gives no
+ * usable entry link, not a URL that fails to resolve against a good one. A URL
+ * that does not resolve against the chosen base is handed back trimmed, which
+ * is where the action parts from the reader -- the reader returns the input
+ * untouched instead, since it has no sanitizer downstream to drop a blank
+ * attribute for it. A URL that does resolve against that base comes back
+ * resolved, and both halves land on the same string for it whenever their bases
+ * agree. The scheme-less branch below is the exception: it takes no base, and
+ * the two halves part on it deliberately.
+ */
 function resolveUrl(
   inputUrl: string,
   primaryBase: string,
   fallbackBase: string
 ) {
   const trimmed = inputUrl.trim()
-  if (!trimmed) return trimmed
-  if (trimmed.startsWith('data:')) return trimmed
+  const base = parseHttpUrl(primaryBase) ?? parseHttpUrl(fallbackBase)
 
-  if (trimmed.startsWith('//')) {
-    const protocol =
-      parseAbsoluteHttpUrl(primaryBase)?.protocol ||
-      parseAbsoluteHttpUrl(fallbackBase)?.protocol ||
-      'https:'
-    return `${protocol}${trimmed}`
-  }
+  // Deliberately not the reader's rule, which pins these to https. A
+  // scheme-less URL takes no base, so this is decided here rather than in
+  // resolveAgainstBase: the action inherits the feed's own scheme, and only
+  // falls back to https when the feed offers no usable base to inherit from.
+  if (trimmed.startsWith('//')) return `${base?.protocol ?? 'https:'}${trimmed}`
 
-  const absolute = parseAbsoluteHttpUrl(trimmed)
-  if (absolute) return absolute.toString()
-
-  const base =
-    parseAbsoluteHttpUrl(primaryBase)?.toString() ||
-    parseAbsoluteHttpUrl(fallbackBase)?.toString()
-  if (!base) return trimmed
-
-  try {
-    return new URL(trimmed, base).toString()
-  } catch {
-    return trimmed
-  }
+  return resolveAgainstBase(trimmed, base?.href) ?? trimmed
 }
 
 /**
@@ -84,8 +76,8 @@ function resolveUrl(
  * run after this ships: its stored entries reappear under new keys and the old
  * ones are cleaned up. That is the cost of the fix, not a bug to undo.
  */
-function absoluteEntryLink(rawLink: string, siteLink: string) {
-  if (!rawLink || parseAbsoluteHttpUrl(rawLink)) return rawLink
+function absolutizeEntryLink(rawLink: string, siteLink: string) {
+  if (!rawLink || parseHttpUrl(rawLink)) return rawLink
   return resolveUrl(rawLink, siteLink, '')
 }
 
@@ -136,9 +128,10 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
   allowedAttributes: {
     // An attribute added here that carries a URL has to be listed in
-    // URL_ATTRIBUTES in lib/media.ts too, or it keeps whatever relative URL the
-    // feed published and lands on the reader's own domain -- and its tag needs
-    // an allowedSchemesByTag entry below if http(s) is not the right set.
+    // URL_ATTRIBUTES in lib/entry-urls.ts too, or it keeps whatever relative
+    // URL the feed published and lands on the reader's own domain -- and its
+    // tag needs an allowedSchemesByTag entry below if http(s) is not the right
+    // set.
     ...sanitizeHtml.defaults.allowedAttributes,
     img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset'],
     // Kept so the source of a quotation survives into the stored JSON, and
@@ -246,7 +239,7 @@ export function parseRss(feedTitle: string, xml: any): Site {
             pubDate,
             description: entryDescription
           } = item
-          const entryLink = absoluteEntryLink(
+          const entryLink = absolutizeEntryLink(
             joinValuesOrEmptyString(entryLinks),
             siteLink
           )
@@ -295,7 +288,7 @@ export function parseAtom(feedTitle: string, xml: any): Site {
             : summary
               ? summary[0]._
               : ''
-          const entryLink = absoluteEntryLink(
+          const entryLink = absolutizeEntryLink(
             (itemLink && itemLink.$.href) || '',
             siteUrl
           )
