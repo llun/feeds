@@ -281,10 +281,12 @@ test('#parseRss falls back between the entry and site URL', (t) => {
   // An absolute one included, which the parser could have normalized without a
   // base. The reader leaves it alone, so the action does too: with nothing to
   // resolve against, a URL that takes a base is no longer normalized either.
-  // Two things still change it. The action trims, here and everywhere, so a
-  // padded URL comes back without its padding and a blank one comes back empty
-  // for the sanitizer to drop. And a scheme-less URL takes no base at all, so
-  // it still gets a scheme -- asserted below.
+  // Two things still change it. Content URLs are trimmed, so a padded one comes
+  // back without its padding and a blank one comes back empty for the sanitizer
+  // to drop. And a scheme-less URL takes no base at all, so it still gets a
+  // scheme -- asserted below. The entry link is the exception to the trimming,
+  // deliberately, since it is half a storage key; see "#parseRss keeps an
+  // absolute entry link byte for byte".
   t.true(
     contentOf('<a href="HTTPS://Other.Example/Page">l</a>', {
       site: '',
@@ -386,6 +388,34 @@ test('#parseRss keeps an absolute entry link byte for byte', (t) => {
       link
     )
   }
+
+  // Padding included. An RSS string link is trimmed by joinValuesOrEmptyString
+  // before absolutizeEntryLink ever sees it, so the cases above cannot reach
+  // this axis; an Atom link arrives as published. Trimming here would re-key
+  // every entry under a padded link, which is what the loop above exists to
+  // prevent -- it just could not see this half of it.
+  for (const href of [
+    '  https://feed.example/x  ',
+    '\thttps://feed.example/x\n'
+  ])
+    t.is(
+      parseAtom('Test Feed', {
+        feed: {
+          title: ['Test'],
+          updated: ['2026-01-01T00:00:00Z'],
+          link: [{ $: { rel: 'alternate', href: 'https://site.example/' } }],
+          entry: [
+            {
+              title: ['Entry 1'],
+              link: [{ $: { rel: 'alternate', href } }],
+              published: ['2026-01-01T00:00:00Z'],
+              content: [{ _: '<p>x</p>' }]
+            }
+          ]
+        }
+      }).entries[0].link,
+      href
+    )
 })
 
 test('#parseRss re-serializes an absolute URL in content', (t) => {
@@ -427,7 +457,7 @@ test('#parseRss trims a scheme-less URL before giving it a scheme', (t) => {
   // Two shapes the URL parser would rewrite -- a trailing slash on the bare
   // host, punycode on the unicode one -- so a copy that fell through to it is
   // caught. Both rewrites come out of the same new URL() call, but that does
-  // not make either assertion redundant: a branch that skipped only hostless
+  // not make either assertion redundant: a branch that skipped only path-less
   // URLs, or only non-ASCII ones, fails exactly one of them.
   t.true(normalizes.includes('src="http://h.example"'), normalizes)
   t.true(normalizes.includes('src="http://ex\u00e4mple.com/x.png"'), normalizes)
