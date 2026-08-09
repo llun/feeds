@@ -32,9 +32,10 @@ test('#extensionFromContentType reads the last type a repeated header declares',
   t.is(extensionFromContentType('image/png, image/h265'), null)
   // Carrying the whole class covers the 44 characters image/png does not use:
   // drop any of them and this last value stops parsing, so image/png wins and
-  // the answer flips. The seven that image/png does use need no assertion here
-  // -- dropping one of those fails every test in the suite that expects an
-  // image at all.
+  // the answer flips. The seven that image/png does use cannot be covered this
+  // way -- dropping one of those stops the leading value parsing too, and the
+  // answer stays null. They need no assertion here regardless: image/png
+  // itself becomes unparseable, which fails four tests in this file alone.
   t.is(
     extensionFromContentType(
       "image/png, image/!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyz"
@@ -43,7 +44,16 @@ test('#extensionFromContentType reads the last type a repeated header declares',
   )
 })
 
-test('#extensionFromContentType skips a value the spec cannot use', (t) => {
+test('#extensionFromContentType passes over a value it cannot use', (t) => {
+  // Skipping is not stopping, and every case below puts the unusable value
+  // last, where passing over it and abandoning the scan at it agree. These
+  // four put it in the middle, which is the only position that tells the two
+  // apart -- and stopping there is the fail-open direction, since it leaves an
+  // earlier image/png standing as the answer.
+  t.is(extensionFromContentType('nonsense, image/png'), '.png')
+  t.is(extensionFromContentType('image/png, nonsense, text/html'), null)
+  t.is(extensionFromContentType('image/png, */*, text/html'), null)
+  t.is(extensionFromContentType('image/png,, text/html'), null)
   // Empty, wildcard, or unparseable values are passed over rather than
   // becoming the answer, so junk appended by a proxy cannot erase a real type.
   t.is(extensionFromContentType('image/png,'), '.png')
@@ -56,11 +66,11 @@ test('#extensionFromContentType skips a value the spec cannot use', (t) => {
   t.is(extensionFromContentType('image/png, a/b/c'), '.png')
   t.is(extensionFromContentType('image/png, image /png'), '.png')
   // splitHeaderValue keeps the quote characters, so a quoted value fails
-  // MEDIA_TYPE and is skipped. A closed quote cannot show that on its own --
-  // a quoted candidate never resolves to an extension, so skipping it and
-  // accepting it both answer null whatever leads. Only a quote that opens a
-  // value separates them: skipping preserves the type before it, accepting
-  // erases it.
+  // MEDIA_TYPE and is skipped. A closed quote cannot show that on its own: its
+  // closing quote survives any mutation of the opening one, so the candidate
+  // stays unparseable and the answer is the same either way. Only a quote that
+  // opens a value separates them, and it is the pair below that does the work
+  // -- skipping preserves the type before it, accepting erases it.
   t.is(extensionFromContentType('image/png, "text/html'), '.png')
   t.is(extensionFromContentType('text/html, "image/png'), null)
   t.is(extensionFromContentType('image/png, "text/html"'), '.png')
@@ -116,17 +126,22 @@ test('#extensionFromContentType strips a long whitespace run in linear time', (t
   }
   const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6
   // The regex form took ~137ms per call, so 40 of them took 5.5 seconds. The
-  // scan is under 0.01ms; a one second bound leaves room for a slow machine
-  // without admitting the regression back.
+  // scan costs ~0.14ms per call here -- almost all of it splitHeaderValue
+  // walking 16 KiB, not the strip -- so these 40 run in about 5ms. A one
+  // second bound leaves room for a slow machine without letting the
+  // regression back.
   t.true(elapsedMs < 1000, `40 refusals took ${elapsedMs.toFixed(0)}ms`)
 })
 
 test('#extensionFromContentType refuses a type naming an object property', (t) => {
   // The type comes from the response, and `constructor` survives lowercasing
   // where toString and valueOf do not.
+  // These two are what pin the guard: without the media-type test they reach
+  // the lookup, hit Object.prototype, and throw rather than refuse.
   t.is(extensionFromContentType('constructor'), null)
   t.is(extensionFromContentType('__proto__'), null)
-  // Slash-shaped, so it reaches the lookup where the bare keys never do.
+  // Slash-shaped, so it does reach the lookup -- and misses it like any other
+  // unserved type. Here to mark that boundary, not to pin it.
   t.is(extensionFromContentType('image/constructor'), null)
 })
 
