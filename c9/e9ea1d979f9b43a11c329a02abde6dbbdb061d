@@ -1,0 +1,31 @@
+action/feeds/parsers#media-url-resolution.test.ts
+  s_13a19bfce06dbc::t_c188038447cbd5 402-407,409-414
+  s_13a19bfce06dbc::t_70a2d717c1b001 468-470,472
+  s_13a19bfce06dbc::t_fae16d12531d39 408
+  s_13a19bfce06dbc::t_8180fec4d0da42 452-453
+lib/entry-urls.ts
+  s_13a19bfce06dbc::t_ffa62c3a0c4345 13-22
+  s_13a19bfce06dbc::t_b21652e9082d09 186-196
+lib/entry-urls.test.ts
+  s_13a19bfce06dbc::t_fae16d12531d39 218,222,352
+  s_13a19bfce06dbc::t_02e9618a89817f 346-351,353-354
+action/feeds/parsers.ts
+  s_13a19bfce06dbc::t_7318d9a735d408 54,60
+  s_13a19bfce06dbc::t_15cb312065362f 42-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "c9e9ea1d979f9b43a11c329a02abde6dbbdb061d",
+  "prompts": {},
+  "sessions": {
+    "s_13a19bfce06dbc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e2b80f1f-2fbe-4cda-9890-1b65ea88b570",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
