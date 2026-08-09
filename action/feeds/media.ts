@@ -63,9 +63,10 @@ const HTTP_WHITESPACE = new Set(['\t', '\n', '\r', ' '])
  *
  * Scanned rather than matched with /[\t\n\r ]+$/, which is quadratic on an
  * interior run: the engine has to try the trailing alternative at every
- * position inside it. A 16 KiB header of one long run -- well inside Node's
- * default maxHeaderSize -- costs 137ms of blocked event loop per refusal that
- * way, and a feed's image host picks the header.
+ * position inside it. A header of one run just under Node's default
+ * maxHeaderSize -- 16 KiB, and it caps the whole header block -- costs 137ms
+ * of blocked event loop per refusal that way, and a feed's image host picks
+ * the header.
  */
 function stripHttpWhitespace(value: string) {
   let start = 0
