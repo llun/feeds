@@ -390,11 +390,13 @@ test('#parseRss keeps an absolute entry link byte for byte', (t) => {
     )
   }
 
-  // Padding included. An RSS string link is trimmed by joinValuesOrEmptyString
-  // before absolutizeEntryLink ever sees it, so the cases above cannot reach
-  // this axis; an Atom link arrives as published. Trimming here would re-key
-  // every entry under a padded link, which is what the loop above exists to
-  // prevent -- it just could not see this half of it.
+  // Padding included. A bare RSS <link> is a string, which
+  // joinValuesOrEmptyString trims before absolutizeEntryLink ever sees it, so
+  // the cases above cannot reach this axis. An Atom link arrives as published,
+  // and so does an RSS <link> carrying an attribute, which xml2js gives as
+  // {_, $} and joinValuesOrEmptyString returns untrimmed. Trimming here would
+  // re-key every entry under a padded link, which is what the loop above exists
+  // to prevent -- it just could not see this half of it.
   const atomEntryLink = (href: string) =>
     parseAtom('Test Feed', {
       feed: {
@@ -479,6 +481,41 @@ test('#parseRss trims a scheme-less URL before giving it a scheme', (t) => {
       entry: ''
     }).includes('src="https://h.example/x.png"')
   )
+})
+
+test('#parseRss survives an entry link element carrying no text', (t) => {
+  // <link href="..."/> -- attributes and no text -- is a shape xml2js hands
+  // over as [{ $ }], and joinValuesOrEmptyString's object branch then returns
+  // undefined, which its inferred string type does not admit. The !rawLink
+  // guard in absolutizeEntryLink is what keeps resolveUrl from calling .trim()
+  // on it and taking the whole feed's parse down, every entry with it. No
+  // string input can reach that guard -- '' takes the same path either way --
+  // so it needs this fixture or nothing pins it.
+  const site = parseRss('Test Feed', {
+    rss: {
+      channel: [
+        {
+          link: ['https://site.example/'],
+          description: ['Test feed'],
+          lastBuildDate: ['2026-01-01T00:00:00Z'],
+          generator: ['test'],
+          item: [
+            {
+              title: ['Entry 1'],
+              link: [{ $: { href: 'https://feed.example/posts/1' } }],
+              pubDate: ['2026-01-01T00:00:00Z'],
+              description: ['<a href="/x">l</a>']
+            }
+          ]
+        }
+      ]
+    }
+  })
+
+  t.is(site.entries.length, 1)
+  t.falsy(site.entries[0].link)
+  // With no entry link to use as a base, content falls back to the site link.
+  t.true(site.entries[0].content.includes('href="https://site.example/x"'))
 })
 
 test('#parseRss survives a URL the parser rejects', (t) => {
