@@ -27,6 +27,7 @@ import {
   createMediaStore,
   getMediaDirectory
 } from './media'
+import { enrichSiteWithHackerNewsComments } from './hackernews'
 import { loadFeed, readOpml } from './opml'
 import type { Site } from './parsers'
 
@@ -41,7 +42,10 @@ async function createLocalizingFeedLoader(githubActionPath: string) {
   const feedLoader = async (title: string, url: string) => {
     const site: Site | null = await loadFeed(title, url)
     if (!site) return null
-    return store.localizeSite(site)
+    // HN entries carry only a "Comments" link, so the discussion is fetched
+    // and appended before media localization walks the content.
+    const enriched = await enrichSiteWithHackerNewsComments(site)
+    return store.localizeSite(enriched)
   }
   return { feedLoader, mediaDirectory }
 }

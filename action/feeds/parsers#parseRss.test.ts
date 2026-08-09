@@ -28,6 +28,8 @@ test('#parseAtom returns site information with empty string for fields that does
     link: firstEntry.link.join('').trim(),
     date: new Date('2021-02-08T10:05:48Z').getTime(),
     content: firstEntry['content:encoded'].join('').trim(),
-    author: 'icez'
+    author: 'icez',
+    comments:
+      'https://www.icez.net/blog/167459/rsyslog-log-remote-host-to-separate-file#respond'
   })
 })

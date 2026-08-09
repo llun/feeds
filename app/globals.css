@@ -448,4 +448,29 @@
     color: var(--text-primary);
     font-weight: 600;
   }
+
+  /* Hacker News discussions baked into an entry at build time. The feed's own
+     "Comments" link stays on top; this is the thread below it. */
+  .feeds-prose .hn-comments {
+    margin-top: 1.6em;
+    padding-top: 0.4em;
+    border-top: 1px solid var(--border);
+  }
+
+  .feeds-prose .hn-comment {
+    margin: 1.1em 0;
+  }
+
+  .feeds-prose .hn-comment-meta {
+    margin: 0 0 0.35em;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .feeds-prose .hn-comment-children {
+    margin-top: 0.6em;
+    margin-left: 0.6em;
+    padding-left: 0.9em;
+    border-left: 2px solid var(--border);
+  }
 }

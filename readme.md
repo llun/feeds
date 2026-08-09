@@ -36,6 +36,10 @@ Images that cannot be downloaded keep their original URL and are rendered with `
 
 Each run restores the media files of the published branch before downloading, so only images that have not been seen before are fetched, and files no longer referenced by any entry are removed. Schedule only one run at a time (a workflow `concurrency` group) because the publish step force pushes the whole site.
 
+## Hacker News comments
+
+Hacker News feeds (the official RSS, hnrss, or any mirror) publish entries whose content is only a "Comments" link. For those entries the action fetches the discussion from the HN Algolia API and appends it to the entry, so the reader shows the story text and the top 20 comments, nested 3 levels deep, right below the link. Threads cut short by those caps end with a link to the full discussion on Hacker News, and an entry whose discussion cannot be fetched keeps its original content.
+
 ## Configurations
 
 This action can be configured to use a custom domain and different types of storage. Here are the available configuration options:
