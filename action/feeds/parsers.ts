@@ -42,8 +42,10 @@ function joinValuesOrEmptyString(values: Values) {
  * that does not resolve against the chosen base is handed back trimmed, which
  * is where the action parts from the reader -- the reader returns the input
  * untouched instead, since it has no sanitizer downstream to drop a blank
- * attribute for it. A URL that does resolve comes back resolved, and the two
- * halves agree on it exactly.
+ * attribute for it. A URL that does resolve against that base comes back
+ * resolved, and both halves land on the same string for it whenever their bases
+ * agree. The scheme-less branch below is the exception: it takes no base, and
+ * the two halves part on it deliberately.
  */
 function resolveUrl(
   inputUrl: string,

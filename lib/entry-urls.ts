@@ -15,8 +15,10 @@
  * https before the first sees it -- and the reader's in resolveAgainstEntry
  * below.
  *
- * Of the resolution functions here, resolveAgainstBase is the one both halves
- * go through and parseHttpUrl is its gate. resolveAgainstEntry is the reader's
+ * Of the resolution functions here, resolveAgainstBase and parseHttpUrl are the
+ * two both halves go through: parseHttpUrl gates resolveAgainstBase, and the
+ * action also calls it directly, to pick a base and to test an entry link for
+ * absoluteness. resolveAgainstEntry is the reader's
  * alone; it sits here so the action's agreement test can import it without
  * pulling in lib/utils.ts and its storage layer, not because the action itself
  * uses it.
@@ -189,7 +191,8 @@ export function parseHttpUrl(input?: string | null) {
  *
  * The two copies differed in two further ways, neither about the fallback and
  * so neither settled by the `??`. A scheme-less URL takes no base, so that rule
- * stays with each caller. A scheme-prefixed one -- `http:x/y`, no slashes --
+ * stays with each caller. A scheme-prefixed one -- `http:x/y`, no `//` after
+ * the scheme --
  * the action used to short-circuit as absolute where the reader resolved it;
  * sharing this function settles that on the reader's answer, which is the
  * browser's. See #resolveAgainstBase resolves a scheme-prefixed url like a

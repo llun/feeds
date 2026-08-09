@@ -402,14 +402,34 @@ test('#parseRss re-serializes an absolute URL in content', (t) => {
 test('#parseRss trims a scheme-less URL before giving it a scheme', (t) => {
   // The scheme-less branch never reaches resolveAgainstBase, so the trim there
   // pins nothing here -- both of the action's copies of this rule need their
-  // own whitespace case. On an http feed, so a copy that tested the untrimmed
-  // URL and fell through to the base is caught by the link's scheme too.
+  // own whitespace case. On an http feed, so resolveContentUrl's copy testing
+  // the untrimmed URL, and falling through to resolveUrl, is caught by the
+  // link's scheme.
   const output = contentOf(
     '<a href="\u00a0//h.example/x\u00a0">l</a><img src="\u00a0//h.example/x.png\u00a0" />',
     { site: 'http://site.example/', entry: 'http://feed.example/posts/1' }
   )
   t.true(output.includes('href="https://h.example/x"'), output)
   t.true(output.includes('src="http://h.example/x.png"'), output)
+
+  // resolveUrl's own copy needs more than that. With a usable base, falling
+  // through to resolveAgainstBase produces the same string this branch emits,
+  // so only a URL the parser would normalize can tell the two apart -- and a
+  // feed with no usable base at all, where falling through resolves nothing.
+  const normalizes = contentOf(
+    '<img src="\u00a0//h.example\u00a0" /><img src="\u00a0//ex\u00e4mple.com/x.png\u00a0" />',
+    { site: 'http://site.example/', entry: 'http://feed.example/posts/1' }
+  )
+  // A bare host and a unicode host: the parser would give the first a trailing
+  // slash and punycode the second, so a copy that fell through to it is caught.
+  t.true(normalizes.includes('src="http://h.example"'), normalizes)
+  t.true(normalizes.includes('src="http://ex\u00e4mple.com/x.png"'), normalizes)
+  t.true(
+    contentOf('<img src="\u00a0//h.example/x.png\u00a0" />', {
+      site: '',
+      entry: ''
+    }).includes('src="https://h.example/x.png"')
+  )
 })
 
 test('#parseRss survives a URL the parser rejects', (t) => {
@@ -450,14 +470,21 @@ test('#parseRss resolves a scheme-prefixed URL like a browser', (t) => {
   )
   // The entry link itself is exempt: absolutizeEntryLink hands back anything
   // the URL parser accepts as an http(s) URL on its own, byte for byte, because
-  // it is a key. A link on any other scheme falls through and is re-serialized.
-  t.is(
-    parseRss(
-      'Test Feed',
-      rssWithContent('<p>x</p>', { ...links, entry: 'http:example.com/x' })
-    ).entries[0].link,
-    'http:example.com/x'
-  )
+  // it is a key.
+  const entryLink = (entry: string, site = links.site) =>
+    parseRss('Test Feed', rssWithContent('<p>x</p>', { site, entry }))
+      .entries[0].link
+  t.is(entryLink('http:example.com/x'), 'http:example.com/x')
+  // A link on any other scheme is not exempt: it falls through and is
+  // re-serialized against the site link, when there is one. Asserted because
+  // the guard is what keeps the exemption to http(s) -- widened to accept any
+  // URL the parser takes, nothing above would notice, and every entry keyed
+  // under one of these links would be re-keyed.
+  t.is(entryLink('FTP://F.example/x'), 'ftp://f.example/x')
+  t.is(entryLink('MAILTO:a@b.example'), 'mailto:a@b.example')
+  t.is(entryLink('FILE:///etc/passwd'), 'file:///etc/passwd')
+  // With no site link there is nothing to re-serialize against, so it stays.
+  t.is(entryLink('FTP://F.example/x', ''), 'FTP://F.example/x')
 })
 
 test('#parseRss picks one base rather than trying both', (t) => {

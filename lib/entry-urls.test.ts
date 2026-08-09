@@ -347,7 +347,7 @@ test('#resolveAgainstEntry resolves relative urls against the entry', (t) => {
   // copy that dropped the trim, or that tested the untrimmed URL and fell
   // through to the base, is caught rather than agreeing by accident. This is
   // the one branch that never reaches resolveAgainstBase, so it needs its own
-  // whitespace case --   is what a feed writes as &nbsp;.
+  // whitespace case -- \u00a0 is what a feed writes as &nbsp;.
   t.is(
     resolveAgainstEntry('\u00a0//x.example/y\u00a0', 'http://feed.example/p'),
     'https://x.example/y'
