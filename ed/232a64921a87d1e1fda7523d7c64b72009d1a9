@@ -1,0 +1,77 @@
+action/feeds/parsers#media-url-resolution.test.ts
+  s_03c23a8974bbf4::t_4eec32b8674002 5-28,30,32-34,39-41,55-56,149-182,190-209,258-267,274-279,485-487,516
+  s_03c23a8974bbf4::t_3327e5e6559308 37
+  s_03c23a8974bbf4::t_81ba1effd9820b 280,503
+  s_03c23a8974bbf4::t_afe1449b266254 35-36,491,505,512,514
+  s_03c23a8974bbf4::t_8a302c1446999b 210-216
+  s_ccb2fdd69c48ca::t_487dcbc245a3d5 474
+  s_ccb2fdd69c48ca::t_668af5fe09240b 268-273
+  s_ccb2fdd69c48ca::t_973c0ccd4d38e1 504,508
+  s_ccb2fdd69c48ca::t_70789015c13438 434-438,443-466,468-473
+  s_ccb2fdd69c48ca::t_c42c112515edbe 38,43,46,49-51,53-71
+  s_ccb2fdd69c48ca::t_4099e2002478f1 513
+lib/utils.test.ts
+  s_03c23a8974bbf4::t_e56d536a766c6c 3-5,7,9-11,13-15,17-19,21-22,30-31,33,35-37,39-40,61,64-66,86
+  s_03c23a8974bbf4::t_af92e789c3606a 76-77,82,84-87
+lib/media.test.ts
+  s_03c23a8974bbf4::t_aaf045d27594ca 34-48,50-67,82-87
+  s_03c23a8974bbf4::t_3d96617325ad03 3
+  s_03c23a8974bbf4::t_0ed0e1042a6b57 89-101,116-143,184-191
+action/feeds/media.test.ts
+  s_03c23a8974bbf4::t_91f412ed099d32 121-128,131-138,235-237
+  s_03c23a8974bbf4::t_7ff785e8958466 509-520,533-534
+  s_03c23a8974bbf4::t_f6afc1b43cdb4f 87
+lib/components/ItemContent.tsx
+  s_03c23a8974bbf4::t_afe1449b266254 101-104
+  s_03c23a8974bbf4::t_f8bd2fe608e06c 82-84,91-93,95-97,110
+  s_03c23a8974bbf4::t_cd27ffd9e35a13 7
+action/feeds/parsers.ts
+  s_03c23a8974bbf4::t_f0924504c5e4e5 43-47
+  s_03c23a8974bbf4::t_2012b133000afd 4
+  s_03c23a8974bbf4::t_39033112e2f34c 54-55,64-65,117-122
+  s_03c23a8974bbf4::t_ddac5f23efe678 133-134
+  s_03c23a8974bbf4::t_0c0dc81bd9f709 185-186,188
+  s_03c23a8974bbf4::t_094a2382d1890a 143,146-147
+  s_ccb2fdd69c48ca::t_e60829a584d5d6 168,173,177
+action/feeds/media.ts
+  s_03c23a8974bbf4::t_d656b1e842b353 6-7,9-10
+  s_03c23a8974bbf4::t_a756d8de74c4c6 331-332,334-336,340
+  s_03c23a8974bbf4::t_94d0b09dfaa916 103,105,119-120,136
+  s_03c23a8974bbf4::t_06e56065a04e44 125-127,130
+lib/utils.ts
+  s_03c23a8974bbf4::t_1717bdd8962d5f 37,40,48,50-52,58,62-66
+  s_03c23a8974bbf4::t_de3c117e237535 44-47,59-61
+lib/media.ts
+  s_03c23a8974bbf4::t_ed062346701b1d 93,98-101,106-110,112,118-130,134,135,137-138
+  s_03c23a8974bbf4::t_76b0fe6b050be8 111,113
+  s_03c23a8974bbf4::t_b7dfa1c98af259 32-33,36-41,43-60,67-80
+  s_03c23a8974bbf4::t_9d6fea8caf753d 131-133
+  s_ccb2fdd69c48ca::t_b67b3bd6d48278 94-96
+lib/components/ItemContent.test.tsx
+  s_03c23a8974bbf4::t_5139645200ea1b 1-37,41-56,64-65,67,70-72,81-87,113,135-137,141,145-149,153,157-158
+  s_03c23a8974bbf4::t_a8108bc74c87df 38-40,150-152,154-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "ed232a64921a87d1e1fda7523d7c64b72009d1a9",
+  "prompts": {},
+  "sessions": {
+    "s_03c23a8974bbf4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a167a7d7-7639-41e0-8658-ab688b2cf7f0",
+        "model": "claude-opus-5"
+      },
+      "human_author": null
+    },
+    "s_ccb2fdd69c48ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2de07599-1b21-4616-9a10-6097b578cc70",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
