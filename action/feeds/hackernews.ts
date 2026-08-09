@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import sanitizeHtml from 'sanitize-html'
 
 import { USER_AGENT } from './http'
 import {
@@ -12,9 +13,10 @@ import {
 const ALGOLIA_ITEM_API = 'https://hn.algolia.com/api/v1/items'
 const FETCH_TIMEOUT_MS = 10_000
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024
-// One budget per site, so a slow Algolia cannot eat into the media store's
-// localization deadline -- that clock starts when the loader is created,
-// before any enrichment runs.
+// One budget per run, shared across sites through createHackerNewsEnricher:
+// the media store's localization deadline starts when the loader is created,
+// so enrichment as a whole gets this much time no matter how many HN feeds
+// the OPML lists.
 const ENRICHMENT_DEADLINE_MS = 60_000
 const MAX_TOP_LEVEL_COMMENTS = 20
 const MAX_COMMENT_DEPTH = 3
@@ -24,10 +26,41 @@ const MAX_TOTAL_COMMENTS = 100
 
 // HN renders no images in comments, and enrichment runs before the media
 // store -- an img left in here would hand URLs chosen by any commenter to the
-// downloader and republish them from this site's own origin.
-const COMMENT_ALLOWED_TAGS = (
+// downloader and republish them from this site's own origin. Derived by
+// property rather than by naming img, so a media-carrying tag added to the
+// shared options later is excluded here automatically.
+const MEDIA_ATTRIBUTES = new Set(['src', 'srcset'])
+export const COMMENT_ALLOWED_TAGS = (
   (ENTRY_CONTENT_SANITIZE_OPTIONS.allowedTags as string[]) || []
-).filter((tag) => tag !== 'img')
+).filter((tag) => {
+  const allowedAttributes = ENTRY_CONTENT_SANITIZE_OPTIONS.allowedAttributes as
+    Record<string, string[]> | undefined
+  const tagAttributes = [
+    ...(allowedAttributes?.[tag] || []),
+    ...(allowedAttributes?.['*'] || [])
+  ]
+  return !tagAttributes.some((attribute) => MEDIA_ATTRIBUTES.has(attribute))
+})
+
+// Commenter-authored HTML is sanitized on its own before it is embedded in the
+// generated chrome, with every class dropped: the outer pass lets the hn-*
+// classes through for the chrome, and comment HTML must not wear them.
+const COMMENT_TEXT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  ...ENTRY_CONTENT_SANITIZE_OPTIONS,
+  allowedAttributes: {
+    ...(ENTRY_CONTENT_SANITIZE_OPTIONS.allowedAttributes as Record<
+      string,
+      string[]
+    >),
+    div: [],
+    p: []
+  },
+  allowedClasses: {}
+}
+
+function sanitizeCommentText(text: string) {
+  return sanitizeHtml(text, COMMENT_TEXT_SANITIZE_OPTIONS)
+}
 
 /**
  * The shape of the Algolia HN API (`/api/v1/items/:id`), which returns a story
@@ -47,6 +80,23 @@ type LiveComment = AlgoliaItem & { author: string; text: string }
 
 function isLiveComment(comment: AlgoliaItem): comment is LiveComment {
   return Boolean(comment.author && comment.text)
+}
+
+/**
+ * Is there anything a reader could see on HN below any of these comments --
+ * a live comment, or a dead one with a live descendant? Iterative because the
+ * tree is network input of unbounded depth. This is what the truncated flag
+ * means; counting dead leaves would render a More-comments link over a thread
+ * that shows nothing new.
+ */
+function hasLiveComment(items: AlgoliaItem[]): boolean {
+  const stack = [...items]
+  while (stack.length > 0) {
+    const item = stack.pop()!
+    if (isLiveComment(item)) return true
+    if (item.children) stack.push(...item.children)
+  }
+  return false
 }
 
 /**
@@ -83,7 +133,7 @@ function formatCommentDate(timestamp?: number) {
   // Untrusted input: JSON parses a literal like 1e999 to Infinity, and
   // date-fns format throws a RangeError on an invalid Date, which the
   // per-entry catch would turn into the whole thread being dropped.
-  if (!timestamp || !Number.isFinite(timestamp)) return ''
+  if (!timestamp || !Number.isFinite(timestamp) || timestamp < 0) return ''
   const date = new Date(timestamp * 1000)
   if (Number.isNaN(date.getTime())) return ''
   return format(date, 'PP')
@@ -105,9 +155,9 @@ function renderChildren(
 ): Rendered {
   const parts: string[] = []
   let truncated = false
-  for (const child of children) {
+  for (const [index, child] of children.entries()) {
     if (budget.remaining <= 0) {
-      truncated = true
+      truncated = hasLiveComment(children.slice(index))
       break
     }
     const rendered = renderComment(child, depth, budget)
@@ -130,15 +180,17 @@ function renderComment(
   const children = comment.children ?? []
 
   // Dead and deleted comments have no author or text. HN keeps their live
-  // replies under a [deleted] marker, so render the children in the dead
-  // comment's place rather than vanishing the whole subtree.
+  // replies under a [deleted] marker, so render the children under the same
+  // marker rather than vanishing the whole subtree.
   if (!isLiveComment(comment)) {
     if (!children.length) return { html: '', truncated: false }
-    if (depth >= MAX_COMMENT_DEPTH) return { html: '', truncated: true }
+    if (depth >= MAX_COMMENT_DEPTH) {
+      return { html: '', truncated: hasLiveComment(children) }
+    }
     const rendered = renderChildren(children, depth + 1, budget)
     return {
       html: rendered.html
-        ? `<div class="hn-comment-children">${rendered.html}</div>`
+        ? `<div class="hn-comment"><p class="hn-comment-meta">[deleted]</p><div class="hn-comment-children">${rendered.html}</div></div>`
         : '',
       truncated: rendered.truncated
     }
@@ -150,9 +202,10 @@ function renderComment(
   const authorLink = `<a href="https://news.ycombinator.com/user?id=${encodeURIComponent(
     comment.author
   )}">${author}</a>`
-  // The id comes from the network; only a positive integer is interpolated
-  // into the permalink.
-  const id = Number.isInteger(comment.id) && comment.id > 0 ? comment.id : null
+  // The id comes from the network; only a safe positive integer is
+  // interpolated into the permalink.
+  const id =
+    Number.isSafeInteger(comment.id) && comment.id > 0 ? comment.id : null
   const date = formatCommentDate(comment.created_at_i)
   const dateLink = date
     ? id
@@ -164,7 +217,7 @@ function renderComment(
   let childrenHtml = ''
   let truncated = false
   if (depth >= MAX_COMMENT_DEPTH) {
-    truncated = children.length > 0
+    truncated = hasLiveComment(children)
   } else {
     const rendered = renderChildren(children, depth + 1, budget)
     childrenHtml = rendered.html
@@ -175,7 +228,9 @@ function renderComment(
     : ''
 
   return {
-    html: `<div class="hn-comment">${meta}<div class="hn-comment-body">${comment.text}</div>${childrenBlock}</div>`,
+    html: `<div class="hn-comment">${meta}<div class="hn-comment-body">${sanitizeCommentText(
+      comment.text
+    )}</div>${childrenBlock}</div>`,
     truncated
   }
 }
@@ -190,7 +245,7 @@ function renderComment(
 function renderItem(item: AlgoliaItem, id: string): string {
   const parts: string[] = []
   if (item.text) {
-    parts.push(`<div class="hn-story">${item.text}</div>`)
+    parts.push(`<div class="hn-story">${sanitizeCommentText(item.text)}</div>`)
   }
 
   const budget = { remaining: MAX_TOTAL_COMMENTS }
@@ -205,7 +260,7 @@ function renderItem(item: AlgoliaItem, id: string): string {
   }
 
   const truncated =
-    topLevel.length > MAX_TOP_LEVEL_COMMENTS || rendered.truncated
+    hasLiveComment(topLevel.slice(MAX_TOP_LEVEL_COMMENTS)) || rendered.truncated
   if (truncated) {
     parts.push(
       `<p class="hn-more"><a href="https://news.ycombinator.com/item?id=${id}">More comments on Hacker News</a></p>`
@@ -268,29 +323,35 @@ async function fetchItem(
 /**
  * Appends the HN comment tree to every entry that links to a HN item, leaving
  * the feed's own content -- the "Comments" link -- at the top. The generated
- * HTML goes through the same sanitize pass as feed content (minus img, which
- * HN comments never render), so the reader keeps trusting stored content and
- * relative links in comments resolve against the item page.
+ * HTML goes through the same sanitize pass as feed content (minus any
+ * media-carrying tag, which HN comments never render), so the reader keeps
+ * trusting stored content and relative links in comments resolve against the
+ * item page.
  *
  * A failed fetch never fails the build: the entry keeps its original content.
  */
 export async function enrichSiteWithHackerNewsComments(
   site: Site,
   fetchApi: typeof globalThis.fetch = globalThis.fetch,
-  now: () => number = Date.now
+  now: () => number = Date.now,
+  deadline: number = now() + ENRICHMENT_DEADLINE_MS
 ): Promise<Site> {
-  const deadline = now() + ENRICHMENT_DEADLINE_MS
   const entries: Entry[] = []
+  let deadlineExceeded = false
   for (const entry of site.entries) {
     const id = hackerNewsItemId(entry.comments) ?? hackerNewsItemId(entry.link)
     if (!id) {
       entries.push(entry)
       continue
     }
-    if (now() > deadline) {
-      console.error(
-        `Skip Hacker News comments for ${entry.link}: enrichment deadline exceeded`
-      )
+    if (deadlineExceeded || now() > deadline) {
+      // Logged once per site rather than per entry left behind.
+      if (!deadlineExceeded) {
+        console.error(
+          `Skip remaining Hacker News comments for ${site.title}: enrichment deadline exceeded`
+        )
+        deadlineExceeded = true
+      }
       entries.push(entry)
       continue
     }
@@ -320,4 +381,18 @@ export async function enrichSiteWithHackerNewsComments(
     }
   }
   return { ...site, entries }
+}
+
+/**
+ * The enricher the feed loader uses: one deadline per run, shared across every
+ * site, so a slow Algolia cannot eat into the media store's localization
+ * deadline no matter how many HN feeds the OPML lists.
+ */
+export function createHackerNewsEnricher(
+  fetchApi: typeof globalThis.fetch = globalThis.fetch,
+  now: () => number = Date.now
+) {
+  const deadline = now() + ENRICHMENT_DEADLINE_MS
+  return (site: Site) =>
+    enrichSiteWithHackerNewsComments(site, fetchApi, now, deadline)
 }

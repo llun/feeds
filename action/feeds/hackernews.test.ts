@@ -2,11 +2,13 @@ import test from 'ava'
 import sinon from 'sinon'
 
 import {
+  COMMENT_ALLOWED_TAGS,
+  createHackerNewsEnricher,
   enrichSiteWithHackerNewsComments,
   hackerNewsItemId
 } from './hackernews'
 import { collectDownloadableMediaUrls, rewriteLocalizedUrls } from './media'
-import type { Site } from './parsers'
+import { ENTRY_CONTENT_SANITIZE_OPTIONS, type Site } from './parsers'
 
 const HN_ITEM_LINK = 'https://news.ycombinator.com/item?id=40001'
 const ARTICLE_LINK = 'https://example.com/posts/story-1'
@@ -371,6 +373,52 @@ test('#enrichSiteWithHackerNewsComments renders live replies of a dead comment',
   ).entries
   t.true(entry.content.includes('<p>reply to a dead comment</p>'))
   t.false(entry.content.includes('user40003'))
+  // The replies sit under the same [deleted] marker HN shows.
+  t.true(entry.content.includes('<p class="hn-comment-meta">[deleted]</p>'))
+})
+
+test('#enrichSiteWithHackerNewsComments omits the more link when only dead comments were cut', async (t) => {
+  // 25 top-level comments, everything past the cap dead: nothing a reader
+  // could see was cut, so the More link would be a false promise.
+  const children = Array.from({ length: 25 }, (_, index) =>
+    index < 5
+      ? comment(40100 + index, `<p>live ${index + 1}</p>`)
+      : { id: 40200 + index, author: null, text: null, children: [] }
+  )
+  const fetchStub = sinon
+    .stub()
+    .resolves(algoliaResponse({ id: 40001, children }))
+  const [entry] = (
+    await enrichSiteWithHackerNewsComments(
+      createSite(HN_ITEM_LINK),
+      fetchStub as any
+    )
+  ).entries
+  t.false(entry.content.includes('More comments on Hacker News'))
+
+  // Same at the depth cap: a live comment whose only replies are dead.
+  const deadReplies = sinon.stub().resolves(
+    algoliaResponse({
+      id: 40001,
+      children: [
+        comment(40002, '<p>level 1</p>', [
+          comment(40003, '<p>level 2</p>', [
+            comment(40004, '<p>level 3</p>', [
+              { id: 40005, author: null, text: null, children: [] }
+            ])
+          ])
+        ])
+      ]
+    })
+  )
+  const [deadReplyEntry] = (
+    await enrichSiteWithHackerNewsComments(
+      createSite(HN_ITEM_LINK),
+      deadReplies as any
+    )
+  ).entries
+  t.true(deadReplyEntry.content.includes('<p>level 3</p>'))
+  t.false(deadReplyEntry.content.includes('More comments on Hacker News'))
 })
 
 test('#enrichSiteWithHackerNewsComments bounds the total comments rendered', async (t) => {
@@ -508,4 +556,157 @@ test('#enrichSiteWithHackerNewsComments keeps the original content when the resp
     await enrichSiteWithHackerNewsComments(site, fetchStub as any)
   ).entries
   t.is(entry.content, site.entries[0].content)
+})
+
+test('#enrichSiteWithHackerNewsComments refuses a declared oversize content-length before reading', async (t) => {
+  const fetchStub = sinon.stub().resolves(
+    new Response('{"id":40001,"children":[]}', {
+      status: 200,
+      headers: {
+        'content-type': 'application/json',
+        'content-length': String(10 * 1024 * 1024)
+      }
+    })
+  )
+  const site = createSite(HN_ITEM_LINK)
+  const [entry] = (
+    await enrichSiteWithHackerNewsComments(site, fetchStub as any)
+  ).entries
+  t.is(entry.content, site.entries[0].content)
+})
+
+test('#enrichSiteWithHackerNewsComments strips commenter classes but keeps the chrome', async (t) => {
+  // The outer sanitize pass lets the hn-* classes through for the generated
+  // chrome; commenter HTML must not wear them.
+  const fetchStub = sinon.stub().resolves(
+    algoliaResponse({
+      id: 40001,
+      children: [
+        comment(
+          40002,
+          '<p class="hn-more"><a href="https://evil.example">More comments</a></p><div class="hn-comment-meta">forged</div>'
+        )
+      ]
+    })
+  )
+  const [entry] = (
+    await enrichSiteWithHackerNewsComments(
+      createSite(HN_ITEM_LINK),
+      fetchStub as any
+    )
+  ).entries
+  t.false(
+    entry.content.includes('<p class="hn-more"><a href="https://evil.example">')
+  )
+  t.false(entry.content.includes('class="hn-comment-meta">forged'))
+  // The genuine chrome classes are unaffected.
+  t.true(entry.content.includes('class="hn-comments"'))
+  t.true(entry.content.includes('class="hn-comment-meta"'))
+})
+
+test('#enrichSiteWithHackerNewsComments renders no permalink for an unsafe comment id', async (t) => {
+  // Number.isInteger(1e21) is true; the permalink must not serialize 1e+21.
+  const fetchStub = sinon
+    .stub()
+    .resolves(
+      new Response(
+        '{"id":40001,"children":[{"id":1e21,"author":"user1","text":"<p>hi</p>","created_at_i":1700000002,"children":[]}]}',
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      )
+    )
+  const [entry] = (
+    await enrichSiteWithHackerNewsComments(
+      createSite(HN_ITEM_LINK),
+      fetchStub as any
+    )
+  ).entries
+  t.false(entry.content.includes('1e+21'))
+  t.false(entry.content.includes('1e21'))
+  // The date survives as plain text.
+  t.true(entry.content.includes('user1</a> · '))
+})
+
+test('#enrichSiteWithHackerNewsComments renders no date for a negative timestamp', async (t) => {
+  const fetchStub = sinon.stub().resolves(
+    algoliaResponse({
+      id: 40001,
+      children: [
+        {
+          id: 40002,
+          author: 'user40002',
+          text: '<p>hi</p>',
+          created_at_i: -5,
+          children: []
+        }
+      ]
+    })
+  )
+  const [entry] = (
+    await enrichSiteWithHackerNewsComments(
+      createSite(HN_ITEM_LINK),
+      fetchStub as any
+    )
+  ).entries
+  t.true(entry.content.includes('<p>hi</p>'))
+  t.false(entry.content.includes('item?id=40002'))
+})
+
+test('#enrichSiteWithHackerNewsComments enriches at the deadline boundary', async (t) => {
+  const fetchStub = sinon.stub().resolves(
+    algoliaResponse({
+      id: 40001,
+      children: [comment(40002, '<p>boundary</p>')]
+    })
+  )
+  const now = sinon.stub()
+  now.onCall(0).returns(0) // deadline = 60_000
+  now.onCall(1).returns(60_000) // exactly at the deadline: still inside
+  const [entry] = (
+    await enrichSiteWithHackerNewsComments(
+      createSite(HN_ITEM_LINK),
+      fetchStub as any,
+      now
+    )
+  ).entries
+  t.true(entry.content.includes('<p>boundary</p>'))
+})
+
+test('#createHackerNewsEnricher shares one deadline across sites', async (t) => {
+  const fetchStub = sinon.stub().resolves(
+    algoliaResponse({
+      id: 40001,
+      children: [comment(40002, '<p>thread</p>')]
+    })
+  )
+  const now = sinon.stub()
+  now.onCall(0).returns(0) // enricher creation: deadline = 60_000
+  now.onCall(1).returns(1_000) // first site's entry: inside
+  now.onCall(2).returns(70_000) // second site's entry: past the shared budget
+  const enrich = createHackerNewsEnricher(fetchStub as any, now)
+  const first = await enrich(createSite(HN_ITEM_LINK))
+  const second = await enrich(createSite(HN_ITEM_LINK))
+  t.true(first.entries[0].content.includes('<p>thread</p>'))
+  t.is(
+    second.entries[0].content,
+    '<a href="https://news.ycombinator.com/item?id=40001">Comments</a>'
+  )
+  t.is(fetchStub.callCount, 1)
+})
+
+test('#COMMENT_ALLOWED_TAGS permits no media-carrying tag', (t) => {
+  // The img exclusion is derived, not named: a media attribute added to the
+  // shared sanitize options later must not become downloadable from comments.
+  const allowedAttributes = ENTRY_CONTENT_SANITIZE_OPTIONS.allowedAttributes as
+    Record<string, string[]> | undefined
+  for (const tag of COMMENT_ALLOWED_TAGS) {
+    const attributes = [
+      ...(allowedAttributes?.[tag] || []),
+      ...(allowedAttributes?.['*'] || [])
+    ]
+    t.false(
+      attributes.some((attribute) => ['src', 'srcset'].includes(attribute)),
+      `${tag} permits a media attribute`
+    )
+  }
+  t.false(COMMENT_ALLOWED_TAGS.includes('img'))
 })

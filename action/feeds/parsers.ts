@@ -203,7 +203,9 @@ export function mapContentUrls(
 ) {
   return sanitizeHtml(content, {
     ...ENTRY_CONTENT_SANITIZE_OPTIONS,
-    ...(allowedTags ? { allowedTags } : {}),
+    // !== undefined, not truthiness: an empty array is a real tag set (strip
+    // every tag), not a request for the defaults.
+    ...(allowedTags !== undefined ? { allowedTags } : {}),
     transformTags: {
       '*': (tagName, attribs) => ({
         tagName,
