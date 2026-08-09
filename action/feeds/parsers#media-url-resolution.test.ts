@@ -284,9 +284,10 @@ test('#parseRss falls back between the entry and site URL', (t) => {
   // Two things still change it. Content URLs are trimmed, so a padded one comes
   // back without its padding and a blank one comes back empty for the sanitizer
   // to drop. And a scheme-less URL takes no base at all, so it still gets a
-  // scheme -- asserted below. The entry link is the exception to the trimming,
-  // deliberately, since it is half a storage key; see "#parseRss keeps an
-  // absolute entry link byte for byte".
+  // scheme -- asserted below. An entry link that is already an absolute http(s)
+  // URL is the exception to the trimming, deliberately, since it is half a
+  // storage key; a relative or other-scheme one is trimmed like anything else.
+  // See "#parseRss keeps an absolute entry link byte for byte".
   t.true(
     contentOf('<a href="HTTPS://Other.Example/Page">l</a>', {
       site: '',
@@ -394,28 +395,39 @@ test('#parseRss keeps an absolute entry link byte for byte', (t) => {
   // this axis; an Atom link arrives as published. Trimming here would re-key
   // every entry under a padded link, which is what the loop above exists to
   // prevent -- it just could not see this half of it.
+  const atomEntryLink = (href: string) =>
+    parseAtom('Test Feed', {
+      feed: {
+        title: ['Test'],
+        updated: ['2026-01-01T00:00:00Z'],
+        link: [{ $: { rel: 'alternate', href: 'https://site.example/' } }],
+        entry: [
+          {
+            title: ['Entry 1'],
+            link: [{ $: { rel: 'alternate', href } }],
+            published: ['2026-01-01T00:00:00Z'],
+            content: [{ _: '<p>x</p>' }]
+          }
+        ]
+      }
+    }).entries[0].link
+
   for (const href of [
     '  https://feed.example/x  ',
     '\thttps://feed.example/x\n'
   ])
-    t.is(
-      parseAtom('Test Feed', {
-        feed: {
-          title: ['Test'],
-          updated: ['2026-01-01T00:00:00Z'],
-          link: [{ $: { rel: 'alternate', href: 'https://site.example/' } }],
-          entry: [
-            {
-              title: ['Entry 1'],
-              link: [{ $: { rel: 'alternate', href } }],
-              published: ['2026-01-01T00:00:00Z'],
-              content: [{ _: '<p>x</p>' }]
-            }
-          ]
-        }
-      }).entries[0].link,
-      href
-    )
+    t.is(atomEntryLink(href), href)
+
+  // Non-ASCII padding is a separate axis, and the answer flips. new URL()
+  // strips ASCII space, tab and newline itself, so the cases above cannot tell
+  // parseHttpUrl apart from a version that trims its input first. It does not
+  // strip  , so a link padded with one is not an absolute URL as far as
+  // the guard is concerned: it resolves against the site link instead, and the
+  // padding is gone from the key.
+  t.is(
+    atomEntryLink('\u00a0https://feed.example/x\u00a0'),
+    'https://feed.example/x'
+  )
 })
 
 test('#parseRss re-serializes an absolute URL in content', (t) => {
