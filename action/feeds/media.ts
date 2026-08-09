@@ -54,13 +54,23 @@ function createMediaHash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
 }
 
+// Only the whitespace the spec strips. String.trim would also take U+00A0 and
+// the other Unicode spaces, laundering a value the reader's browser refuses
+// into a clean type here.
+const HTTP_WHITESPACE = /^[\t\n\r ]+|[\t\n\r ]+$/g
+// What "parses as a media type" comes to: a type and a subtype, each a
+// non-empty run of HTTP token characters. Anchored and unnested, so it cannot
+// backtrack on a long header.
+const MEDIA_TYPE = /^[!#$%&'*+\-.^_`|~0-9a-z]+\/[!#$%&'*+\-.^_`|~0-9a-z]+$/
+
 /**
  * Splits a header value on the commas that separate repeated headers, which is
- * how headers.get returns them. Commas inside a quoted parameter do not count,
- * the same rule Fetch splits by: on a bare split, an unterminated quote in
- * `text/html;x="a,image/png` hides a type the reader's browser never sees.
+ * how headers.get returns them. A double quote opens a run that lasts to its
+ * closing quote or to the end of the value, and commas inside that run are not
+ * separators -- the same rule Fetch splits by. A bare split on
+ * `text/html;x="a,image/png` would answer image/png, a type no browser sees.
  */
-function splitHeaderValues(value: string) {
+function splitHeaderValue(value: string) {
   const values: string[] = []
   let current = ''
   let quoted = false
@@ -68,6 +78,8 @@ function splitHeaderValues(value: string) {
     const character = value[index]
     if (quoted) {
       current += character
+      // An escaped quote must not close the run, or the comma after it splits
+      // a value Fetch keeps whole.
       if (character === '\\' && index + 1 < value.length)
         current += value[++index]
       else if (character === '"') quoted = false
@@ -93,18 +105,21 @@ export function extensionFromContentType(contentType?: string | null) {
   // resolves them to the last one it can parse -- so reading the first would
   // judge the body by a header the reader's browser ignores.
   let essence = ''
-  for (const value of splitHeaderValues(contentType)) {
-    const candidate = value.split(';')[0].trim().toLowerCase()
-    // Fetch skips a value it cannot parse and any */*, rather than letting
-    // either be the answer, so neither a trailing comma nor a junk repeat can
-    // erase the real type.
-    if (!candidate.includes('/') || candidate === '*/*') continue
+  for (const value of splitHeaderValue(contentType)) {
+    const candidate = value
+      .split(';')[0]
+      .replace(HTTP_WHITESPACE, '')
+      .toLowerCase()
+    // Fetch skips a value it cannot parse and any */* rather than letting
+    // either be the answer, so junk a proxy appended cannot erase a real type.
+    //
+    // Requiring a media type here is also what keeps `constructor` and
+    // `__proto__` -- the only Object.prototype keys that survive lowercasing --
+    // away from the lookup below, which would otherwise fall through to the
+    // prototype and hand normalizeImageExtension a function to trim.
+    if (!MEDIA_TYPE.test(candidate) || candidate === '*/*') continue
     essence = candidate
   }
-  // Requiring the slash is what keeps a response naming `constructor` off the
-  // lookup below: no Object.prototype key contains one, and `constructor`
-  // otherwise survives lowercasing where toString and valueOf do not.
-  //
   // Routed through images.ts rather than returned straight from the map, so an
   // entry added here that is not downloadable -- svg above all -- becomes a
   // refused download instead of a file served from our own origin.
@@ -342,10 +357,10 @@ export function createMediaStore({
       await fs.writeFile(path.join(mediaDirectory, fileName), buffer)
       return `${LOCAL_MEDIA_PATH}/${fileName}`
     } catch (error: any) {
-      // The early throws -- a bad status, a refused type, no usable extension
-      // -- all leave the body unread, and an unread body holds its socket
-      // until the remote end drops it. clearTimeout below has already retired
-      // the download timeout by then, so nothing else would ever release it.
+      // Every throw that lands before readBodyWithinLimit starts streaming
+      // leaves the body unread, and an unread body holds its socket until the
+      // remote end drops it. The finally below clears the download timeout on
+      // the way out, so that timer will never fire and release it for us.
       controller.abort()
       console.error(`Fail to download media ${url}: ${error.message}`)
       return null
