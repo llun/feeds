@@ -10,6 +10,14 @@ action/feeds/parsers#media-url-resolution.test.ts
   s_ccb2fdd69c48ca::t_70789015c13438 434-438,443-466,468-473
   s_ccb2fdd69c48ca::t_c42c112515edbe 38,43,46,49-51,53-71
   s_ccb2fdd69c48ca::t_4099e2002478f1 513
+  s_ccb2fdd69c48ca::t_244d968cd62227 3
+  s_ccb2fdd69c48ca::t_8afa3b0b101106 282-284,287-288,313-314,321-326,331
+  s_ccb2fdd69c48ca::t_627a3d5843f08d 73-74
+  s_ccb2fdd69c48ca::t_fee8d44124d921 75-101,103-107,109
+  s_ccb2fdd69c48ca::t_6c136dd7e32299 250
+  s_ccb2fdd69c48ca::t_cb7b8e30a205d4 183-184,187
+  s_ccb2fdd69c48ca::t_3e229bdb7cff6a 467
+  s_ccb2fdd69c48ca::t_b86c3b1c011fb7 439-442
 lib/utils.test.ts
   s_03c23a8974bbf4::t_e56d536a766c6c 3-5,7,9-11,13-15,17-19,21-22,30-31,33,35-37,39-40,61,64-66,86
   s_03c23a8974bbf4::t_af92e789c3606a 76-77,82,84-87
@@ -21,10 +29,13 @@ action/feeds/media.test.ts
   s_03c23a8974bbf4::t_91f412ed099d32 121-128,131-138,235-237
   s_03c23a8974bbf4::t_7ff785e8958466 509-520,533-534
   s_03c23a8974bbf4::t_f6afc1b43cdb4f 87
+  s_ccb2fdd69c48ca::t_ff346bc4e2c5f6 232
+  s_ccb2fdd69c48ca::t_fed62f6358e1eb 204-205
 lib/components/ItemContent.tsx
   s_03c23a8974bbf4::t_afe1449b266254 101-104
   s_03c23a8974bbf4::t_f8bd2fe608e06c 82-84,91-93,95-97,110
   s_03c23a8974bbf4::t_cd27ffd9e35a13 7
+  s_ccb2fdd69c48ca::t_33822411abdef2 88-90
 action/feeds/parsers.ts
   s_03c23a8974bbf4::t_f0924504c5e4e5 43-47
   s_03c23a8974bbf4::t_2012b133000afd 4
@@ -33,11 +44,14 @@ action/feeds/parsers.ts
   s_03c23a8974bbf4::t_0c0dc81bd9f709 185-186,188
   s_03c23a8974bbf4::t_094a2382d1890a 143,146-147
   s_ccb2fdd69c48ca::t_e60829a584d5d6 168,173,177
+  s_ccb2fdd69c48ca::t_de74f859ce9ed1 92-106,116,126-131
+  s_ccb2fdd69c48ca::t_dc716519b700ed 107-115
 action/feeds/media.ts
   s_03c23a8974bbf4::t_d656b1e842b353 6-7,9-10
   s_03c23a8974bbf4::t_a756d8de74c4c6 331-332,334-336,340
   s_03c23a8974bbf4::t_94d0b09dfaa916 103,105,119-120,136
   s_03c23a8974bbf4::t_06e56065a04e44 125-127,130
+  s_ccb2fdd69c48ca::t_7a46b4c7cfb0b0 22-24
 lib/utils.ts
   s_03c23a8974bbf4::t_1717bdd8962d5f 37,40,48,50-52,58,62-66
   s_03c23a8974bbf4::t_de3c117e237535 44-47,59-61
@@ -50,6 +64,10 @@ lib/media.ts
 lib/components/ItemContent.test.tsx
   s_03c23a8974bbf4::t_5139645200ea1b 1-37,41-56,64-65,67,70-72,81-87,113,135-137,141,145-149,153,157-158
   s_03c23a8974bbf4::t_a8108bc74c87df 38-40,150-152,154-156
+action/feeds/images.test.ts
+  s_ccb2fdd69c48ca::t_1096f93bc28755 3,6,14-17,27-32
+action/feeds/images.ts
+  s_ccb2fdd69c48ca::t_b8b8907a697f4b 2-4,6-9
 ---
 {
   "schema_version": "authorship/3.0.0",
