@@ -1,0 +1,29 @@
+action/feeds/hackernews.test.ts
+  s_4e02b770eae775::t_cc6d0493e5eba8 735-741
+  s_4e02b770eae775::t_1f622669b7bcd8 696-734,742-796,799-802
+  s_4e02b770eae775::t_7f06b71d98fc7b 797-798
+action/feeds/hackernews.ts
+  s_4e02b770eae775::t_15fe59bc999748 271,276
+  s_4e02b770eae775::t_fcdb0a0b067e87 222-225,227
+  s_4e02b770eae775::t_cc6d0493e5eba8 90,287
+  s_4e02b770eae775::t_86c931fcb9ef85 48-49,57
+  s_4e02b770eae775::t_11b94fdb9d7da1 84-89,91-95,108-109,111-113
+  s_4e02b770eae775::t_c8c110438966e1 176-178
+  s_4e02b770eae775::t_5280604f21619c 198-201
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "26afd877123985f6217de922373a0e595a55e11a",
+  "prompts": {},
+  "sessions": {
+    "s_4e02b770eae775": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_018b2eaeaffeHT6VwDuSokmfuR",
+        "model": "kimi-k3"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
