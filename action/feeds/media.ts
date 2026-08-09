@@ -118,6 +118,15 @@ function splitHeaderValue(value: string) {
   return values
 }
 
+const LOGGED_TYPE_LIMIT = 120
+
+/** Enough of a refused type to recognise it, without logging a 16 KiB header. */
+function summarizeType(contentType: string) {
+  return contentType.length > LOGGED_TYPE_LIMIT
+    ? `${contentType.slice(0, LOGGED_TYPE_LIMIT)}... (${contentType.length} chars)`
+    : contentType
+}
+
 export function extensionFromContentType(contentType?: string | null) {
   if (!contentType) return null
   // headers.get joins repeated Content-Type headers, and the fetch spec
@@ -354,7 +363,12 @@ export function createMediaStore({
       const contentType = response.headers.get('content-type')
       const contentTypeExtension = extensionFromContentType(contentType)
       if (contentType !== null && !contentTypeExtension) {
-        throw new Error(`Unsupported media type "${contentType}"`)
+        // Truncated because the remote picks this header and the log is public:
+        // a 16 KiB one costs a 16 KiB line per refused URL, and on main these
+        // responses were downloaded rather than logged at all.
+        throw new Error(
+          `Unsupported media type "${summarizeType(contentType)}"`
+        )
       }
 
       // Anything reaching here without a content type extension had no header

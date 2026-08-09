@@ -538,6 +538,39 @@ test('#localizeSite aborts the request when it refuses the response', async (t) 
   t.false(responses[0].bodyUsed)
 })
 
+test('#localizeSite does not log a whole hostile content type', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-logsize-')
+  // Unique so the captured lines can be filtered to this test: ava runs a
+  // file's tests concurrently, and console.error is shared.
+  const url = 'https://example.com/log-size-photo.png'
+  // The remote picks this header and the action log is public, so a refusal
+  // must not echo 16 KiB of it. On main these responses were downloaded rather
+  // than logged at all, so the whole line is new cost.
+  const hostile = `a${' '.repeat(16198)}b`
+  const captured: string[] = []
+  const restore = console.error
+  console.error = (message: string) => void captured.push(message)
+  try {
+    const fetchStub = sinon
+      .stub()
+      .resolves(imageResponse('<html>blocked</html>', hostile))
+    const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+    const localized = await store.localizeSite(
+      createSite(`<img src="${url}" />`)
+    )
+    t.true(localized.entries[0].content.includes(`src="${url}"`))
+  } finally {
+    console.error = restore
+  }
+
+  const logged = captured.filter((line) => line.includes(url))
+  t.is(logged.length, 1)
+  t.true(logged[0].length < 300, `logged ${logged[0].length} characters`)
+  // Still recognisable as the header it refused, and honest about the cut.
+  t.true(logged[0].includes('Unsupported media type "a   '))
+  t.true(logged[0].includes('(16200 chars)'))
+})
+
 test('#localizeSite leaves the request alone when it accepts the response', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-noabort-')
   const signals: AbortSignal[] = []
