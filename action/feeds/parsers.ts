@@ -16,7 +16,9 @@ export interface Entry {
   author: string
   // The RSS <comments> URL, when the feed offers one. Hacker News feeds link
   // entries at the article and put the item page here, which is what the
-  // comment enrichment (action/feeds/hackernews.ts) keys on.
+  // comment enrichment (action/feeds/hackernews.ts) keys on. Build-time-only
+  // data: files storage persists it in the entry JSON, sqlite drops it (no
+  // column), and nothing reads it back either way.
   comments?: string
 }
 
@@ -189,13 +191,19 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
  * Every tag is visited rather than img and a alone, so a relative URL is
  * resolved wherever it hides. Schemes are filtered after this runs, so a
  * javascript: href is still dropped even though it is resolved here.
+ *
+ * A caller that generates content rather than reading a feed can narrow the
+ * tag set -- the Hacker News enrichment drops img, since comment HTML is
+ * written by arbitrary internet users and must never reach the media store.
  */
 export function mapContentUrls(
   content: string,
-  mapUrl: (url: string, target: UrlTarget) => string
+  mapUrl: (url: string, target: UrlTarget) => string,
+  allowedTags?: string[]
 ) {
   return sanitizeHtml(content, {
     ...ENTRY_CONTENT_SANITIZE_OPTIONS,
+    ...(allowedTags ? { allowedTags } : {}),
     transformTags: {
       '*': (tagName, attribs) => ({
         tagName,

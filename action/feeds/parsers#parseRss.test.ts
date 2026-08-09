@@ -7,7 +7,7 @@ import { parseRss, parseXML } from './parsers'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-test('#parseAtom returns site information with empty string for fields that does not have information', async (t) => {
+test('#parseRss returns site information with empty string for fields that does not have information', async (t) => {
   const data = fs
     .readFileSync(path.join(__dirname, 'stubs', 'rss1.xml'))
     .toString('utf8')
@@ -32,4 +32,29 @@ test('#parseAtom returns site information with empty string for fields that does
     comments:
       'https://www.icez.net/blog/167459/rsyslog-log-remote-host-to-separate-file#respond'
   })
+})
+
+test('#parseRss leaves comments undefined when the item has no comments element', async (t) => {
+  const xml = await parseXML(
+    '<rss version="2.0"><channel>' +
+      '<link>https://example.com</link>' +
+      '<item><title>x</title><link>https://example.com/1</link></item>' +
+      '</channel></rss>'
+  )
+  const site = parseRss('site', xml)
+  t.is(site?.entries[0].comments, undefined)
+  // And the key stays out of the stored JSON entirely.
+  t.false('comments' in JSON.parse(JSON.stringify(site?.entries[0])))
+})
+
+test('#parseRss resolves a relative comments url against the site link', async (t) => {
+  const xml = await parseXML(
+    '<rss version="2.0"><channel>' +
+      '<link>https://news.ycombinator.com/</link>' +
+      '<item><title>x</title><link>https://example.com/1</link>' +
+      '<comments>item?id=42</comments></item>' +
+      '</channel></rss>'
+  )
+  const site = parseRss('site', xml)
+  t.is(site?.entries[0].comments, 'https://news.ycombinator.com/item?id=42')
 })
