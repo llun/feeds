@@ -85,8 +85,9 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
               // base path. Everything else resolves against the entry, which is
               // what stops a URL stored before the action resolved them from
               // pointing at the reader's own domain. Links and media both take
-              // the entry as their base here: the site link the action prefers
-              // for media is not part of the stored entry.
+              // the entry as their base here, and so does the action, so a
+              // given relative URL lands on the same absolute one whichever
+              // half of the pipeline handles it.
               node.attribs = mapUrlAttributes(node.attribs, (url) =>
                 isLocalMediaPath(url)
                   ? withBasePath(url, basePath)

@@ -91,8 +91,9 @@ export function withBasePath(url: string, basePath: string) {
 
 /**
  * Where a URL attribute points: `link` at another document, `media` at a
- * subresource the page loads. Relative URLs of the two resolve against
- * different bases, see resolveContentUrl in action/feeds/parsers.ts.
+ * subresource the page loads. Both resolve against the same base; the
+ * distinction is what the media store downloads, see collectImageUrls in
+ * action/feeds/media.ts.
  */
 export type UrlTarget = 'link' | 'media'
 

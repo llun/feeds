@@ -1,5 +1,6 @@
 import test from 'ava'
 import { ENTRY_CONTENT_SANITIZE_OPTIONS, parseAtom, parseRss } from './parsers'
+import { resolveEntryUrl } from '../../lib/utils'
 
 const SITE_LINK = 'https://site.example/'
 const ENTRY_LINK = 'https://feed.example/posts/entry-1'
@@ -34,83 +35,78 @@ const contentOf = (
 ) =>
   parseRss('Test Feed', rssWithContent(description, links)).entries[0].content
 
-test('#parseRss resolves relative media URLs using site domain', (t) => {
+test('#parseRss resolves relative media URLs using the entry URL', (t) => {
   const outputContent = contentOf(
     '<p><img src="/images/cover.jpg" srcset="/images/cover.jpg 1x, images/cover@2x.jpg 2x" /><a href="/images/download.webp">Download</a></p>'
   )
 
-  t.true(outputContent.includes('src="https://site.example/images/cover.jpg"'))
+  t.true(outputContent.includes('src="https://feed.example/images/cover.jpg"'))
   t.true(
     outputContent.includes(
-      'srcset="https://site.example/images/cover.jpg 1x, https://site.example/images/cover@2x.jpg 2x"'
+      'srcset="https://feed.example/images/cover.jpg 1x, https://feed.example/posts/images/cover@2x.jpg 2x"'
     )
   )
-  // A link to an image shares the media base so it matches the src the media
-  // store downloads and can be swapped for the local copy.
+  // A link to an image is resolved like any other link. Media takes the same
+  // base, so the two still agree and the media store can swap either for the
+  // downloaded copy.
   t.true(
-    outputContent.includes('href="https://site.example/images/download.webp"')
+    outputContent.includes('href="https://feed.example/images/download.webp"')
   )
 })
 
-test('#parseRss resolves media against the site even without a downloadable extension', (t) => {
-  // The link rule would send these to the entry base. Media does not follow it:
-  // the media hash is computed from this URL, so the base must not drift.
+test('#parseRss resolves a document-relative image against the entry directory', (t) => {
+  // The shape that made this the entry base: a feed whose channel link is the
+  // homepage and whose items sit deeper, carrying a bare filename beside the
+  // post. Resolving against the site gives /photo.jpg, which 404s.
+  t.true(
+    contentOf('<img src="photo.jpg" />', {
+      site: 'https://blog.example/',
+      entry: 'https://blog.example/2024/01/post/'
+    }).includes('src="https://blog.example/2024/01/post/photo.jpg"')
+  )
+  t.true(
+    contentOf('<img src="../assets/photo.jpg" />', {
+      site: 'https://blog.example/',
+      entry: 'https://blog.example/2024/01/post/'
+    }).includes('src="https://blog.example/2024/01/assets/photo.jpg"')
+  )
+})
+
+test('#parseRss resolves media against the entry whatever its extension', (t) => {
+  // Media used to take the site base, and an extension-less URL was the case
+  // that made the split visible. One base means the extension decides nothing.
   const output = contentOf('<img src="/photo" srcset="/diagram.svg 2x" />')
-  t.true(output.includes('src="https://site.example/photo"'))
-  t.true(output.includes('srcset="https://site.example/diagram.svg 2x"'))
+  t.true(output.includes('src="https://feed.example/photo"'))
+  t.true(output.includes('srcset="https://feed.example/diagram.svg 2x"'))
 })
 
-test('#parseRss picks the link base on the extension alone', (t) => {
-  // The extension is what decides the base now, so a query or a fragment must
-  // not hide it -- these links would otherwise stop matching downloaded media.
-  t.true(
-    contentOf('<a href="/images/a.png?w=100">q</a>').includes(
-      'href="https://site.example/images/a.png?w=100"'
+test('#parseRss picks the same base whatever the extension looks like', (t) => {
+  // A link to a downloadable image used to be pulled onto the media base so it
+  // would match the image the store downloaded. Links and media now share a
+  // base outright, so nothing inspects the extension -- and these cases, which
+  // existed to pin down where that inspection started and stopped, are here to
+  // catch the exception coming back.
+  for (const [url, expected] of [
+    ['/images/a.png?w=100', 'https://feed.example/images/a.png?w=100'],
+    ['/images/a.png#x', 'https://feed.example/images/a.png#x'],
+    ['/images/a', 'https://feed.example/images/a'],
+    ['diagram.svg', 'https://feed.example/posts/diagram.svg'],
+    ['/images/A.PNG', 'https://feed.example/images/A.PNG'],
+    ['/images/D.SVG', 'https://feed.example/images/D.SVG'],
+    ['/download?file=a.png', 'https://feed.example/download?file=a.png'],
+    ['/v1.2/page', 'https://feed.example/v1.2/page']
+  ]) {
+    t.true(
+      contentOf(`<a href="${url}">x</a>`).includes(`href="${expected}"`),
+      `${url} should resolve to ${expected}`
     )
-  )
-  t.true(
-    contentOf('<a href="/images/a.png#x">f</a>').includes(
-      'href="https://site.example/images/a.png#x"'
+    // And the image itself lands on the same URL, which is what lets the media
+    // store swap a link for the copy it downloaded.
+    t.true(
+      contentOf(`<img src="${url}" />`).includes(`src="${expected}"`),
+      `${url} as media should resolve to ${expected}`
     )
-  )
-  // No extension, so it is an ordinary link and takes the entry base.
-  t.true(
-    contentOf('<a href="/images/a">n</a>').includes(
-      'href="https://feed.example/images/a"'
-    )
-  )
-  // The store never downloads svg, so the media base could never pay off and
-  // the link resolves against the document like any other.
-  t.true(
-    contentOf('<a href="diagram.svg">Diagram</a>').includes(
-      'href="https://feed.example/posts/diagram.svg"'
-    )
-  )
-  // The extension match is case folded, so a feed shouting its filenames still
-  // lines its links up with the images they point at.
-  t.true(
-    contentOf('<a href="/images/A.PNG">u</a>').includes(
-      'href="https://site.example/images/A.PNG"'
-    )
-  )
-  t.true(
-    contentOf('<a href="/images/D.SVG">s</a>').includes(
-      'href="https://feed.example/images/D.SVG"'
-    )
-  )
-  // A query parameter that merely ends in an image extension is not an image,
-  // so the link keeps the document base.
-  t.true(
-    contentOf('<a href="/download?file=a.png">d</a>').includes(
-      'href="https://feed.example/download?file=a.png"'
-    )
-  )
-  // A dot in an earlier path segment is not an extension either.
-  t.true(
-    contentOf('<a href="/v1.2/page">v</a>').includes(
-      'href="https://feed.example/v1.2/page"'
-    )
-  )
+  }
 })
 
 // Attributes that are allowed through but genuinely carry no URL. Anything not
@@ -184,11 +180,11 @@ test('#parseRss resolves URLs outside of a and img tags', (t) => {
       'cite="https://feed.example/posts/source.html"'
     )
   )
-  // Every link attribute picks its base the same way, so a cite ending in an
-  // image extension takes the media base like a lightbox href would.
+  // Every attribute picks its base the same way, so a cite ending in an image
+  // extension resolves against the entry like any other URL.
   t.true(
     contentOf('<q cite="photo.png">Quoted</q>').includes(
-      'cite="https://site.example/photo.png"'
+      'cite="https://feed.example/posts/photo.png"'
     )
   )
 })
@@ -251,7 +247,7 @@ test('#parseRss leaves URLs it must not rewrite alone', (t) => {
   )
   t.true(
     contentOf('<img srcset="javascript:alert(1) 1x, /ok.png 2x" />').includes(
-      'srcset="https://site.example/ok.png 2x"'
+      'srcset="https://feed.example/ok.png 2x"'
     )
   )
   t.true(
@@ -269,12 +265,12 @@ test('#parseRss falls back between the entry and site URL', (t) => {
   t.true(withoutSite.includes('href="https://feed.example/x"'))
   t.true(withoutSite.includes('src="https://feed.example/y.png"'))
 
-  // No entry link, so links fall back to the site.
-  t.true(
-    contentOf('<a href="/x">l</a>', { entry: '' }).includes(
-      'href="https://site.example/x"'
-    )
-  )
+  // No entry link, so links and media both fall back to the site.
+  const withoutEntry = contentOf('<a href="/x">l</a><img src="/y.png" />', {
+    entry: ''
+  })
+  t.true(withoutEntry.includes('href="https://site.example/x"'))
+  t.true(withoutEntry.includes('src="https://site.example/y.png"'))
 
   // Nothing to resolve against leaves the URL as it is.
   t.true(
@@ -283,11 +279,13 @@ test('#parseRss falls back between the entry and site URL', (t) => {
     )
   )
 
-  // A protocol-relative URL takes its scheme from the base it resolves
-  // against, and falls back to https when there is none.
+  // A protocol-relative image takes its scheme from the base it resolves
+  // against -- now the entry, like everything else -- and falls back to https
+  // when there is none.
   t.true(
     contentOf('<img src="//cdn.example/x.png" />', {
-      site: 'http://site.example/'
+      site: 'https://site.example/',
+      entry: 'http://feed.example/posts/1'
     }).includes('src="http://cdn.example/x.png"')
   )
   t.true(
@@ -312,21 +310,25 @@ test('#parseRss falls back between the entry and site URL', (t) => {
       entry: 'http://feed.example/posts/1'
     }).includes('href="https://h.example/x"')
   )
-  // Media keeps taking the scheme of the site it is loaded alongside.
+  // Media keeps the feed's own scheme, because the action fetches it server
+  // side rather than from the reader's page.
   t.true(
     contentOf('<img src="//cdn.example/x.png" />', {
       site: 'http://site.example/',
       entry: 'http://feed.example/posts/1'
     }).includes('src="http://cdn.example/x.png"')
   )
-  // A scheme-less link to a downloadable image follows the image instead, so
-  // the two still agree and the link can be swapped for the local copy. Only
-  // this ordering keeps them matching on an http feed.
+  // Scheme-less is the one shape where a link and an image on the same URL
+  // still part ways, and only on an http feed: the link is pinned to https and
+  // the image keeps http, so the media store cannot swap that link for the copy
+  // it downloaded. The extension test that used to hold them together is gone
+  // with the split base it existed to bridge, and it bought nothing anywhere
+  // else -- every URL that takes a base now resolves identically for both.
   const schemeless = contentOf(
     '<a href="//cdn.example/x.png">L</a><img src="//cdn.example/x.png" />',
     { site: 'http://site.example/', entry: 'http://feed.example/posts/1' }
   )
-  t.true(schemeless.includes('href="http://cdn.example/x.png"'))
+  t.true(schemeless.includes('href="https://cdn.example/x.png"'))
   t.true(schemeless.includes('src="http://cdn.example/x.png"'))
 })
 
@@ -429,7 +431,47 @@ test('#parseAtom makes a relative entry link absolute', (t) => {
   )
 })
 
-test('#parseAtom resolves relative media URLs using site domain', (t) => {
+test('#parseRss agrees with the reader on every relative URL', (t) => {
+  // The action resolves when it stores an entry, the reader when it renders one
+  // stored before the action did that. A URL that resolved differently in the
+  // two halves would render one way or the other depending only on when the
+  // entry was fetched, so they have to agree by construction.
+  //
+  // Every URL that takes a base is covered here. A scheme-less one is not: it
+  // takes no base, and the action deliberately pins a scheme-less link to https
+  // rather than to the feed's own scheme, which the reader has no reason to do.
+  const site = 'https://blog.example/'
+  const entry = 'https://blog.example/2024/01/post/'
+  const relativeUrls = [
+    'photo.jpg',
+    '/images/cover.png',
+    '../assets/diagram.svg',
+    'gallery/full.webp',
+    'chapter-two.html',
+    '#footnote',
+    '?page=2'
+  ]
+
+  for (const url of relativeUrls) {
+    const stored = contentOf(`<img src="${url}" /><a href="${url}">l</a>`, {
+      site,
+      entry
+    })
+    const storedUrls = [...stored.matchAll(/(?:src|href)="([^"]*)"/g)].map(
+      (match) => match[1]
+    )
+    t.is(storedUrls.length, 2)
+    for (const storedUrl of storedUrls) {
+      t.is(
+        storedUrl,
+        resolveEntryUrl(url, entry),
+        `action and reader disagree on ${url}`
+      )
+    }
+  }
+})
+
+test('#parseAtom resolves relative media URLs using the entry URL', (t) => {
   const xml = {
     feed: {
       title: ['Test Feed'],
@@ -459,16 +501,16 @@ test('#parseAtom resolves relative media URLs using site domain', (t) => {
 
   const outputContent = site.entries[0].content
   t.true(
-    outputContent.includes('src="https://site.example/base/media/photo.png"')
+    outputContent.includes('src="https://feed.example/posts/media/photo.png"')
   )
   t.true(
     outputContent.includes(
-      'srcset="https://site.example/base/media/one.png 1x, https://site.example/media/two.png 2x"'
+      'srcset="https://feed.example/posts/media/one.png 1x, https://feed.example/media/two.png 2x"'
     )
   )
   t.true(
     outputContent.includes(
-      'href="https://site.example/base/media/download.jpg"'
+      'href="https://feed.example/posts/media/download.jpg"'
     )
   )
   t.true(outputContent.includes('href="https://feed.example/archive"'))

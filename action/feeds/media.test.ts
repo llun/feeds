@@ -201,7 +201,8 @@ test('#localizeSite localizes a relative lightbox href with its image', async (t
   const mediaDirectory = await createMediaDirectory('feeds-media-relative-')
   const fetchStub = sinon.stub().resolves(imageResponse())
   // Real feeds publish relative URLs; the parser and the store only agree
-  // because the link and the image resolve to the same absolute URL.
+  // because the link and the image resolve to the same absolute URL, which they
+  // do for every relative shape now that both take the entry as their base.
   const site = parseRss('Test Feed', {
     rss: {
       channel: [
@@ -228,7 +229,7 @@ test('#localizeSite localizes a relative lightbox href with its image', async (t
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
   const localized = await store.localizeSite(site)
 
-  const localPath = `/media/${mediaHash('https://site.example/images/one.png')}.png`
+  const localPath = `/media/${mediaHash('https://feed.example/images/one.png')}.png`
   t.true(localized.entries[0].content.includes(`href="${localPath}"`))
   t.true(localized.entries[0].content.includes(`src="${localPath}"`))
   t.is(fetchStub.callCount, 1)

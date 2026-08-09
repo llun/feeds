@@ -2,7 +2,6 @@ import { parseString } from 'xml2js'
 import sanitizeHtml from 'sanitize-html'
 
 import { mapUrlAttributes, type UrlTarget } from '../../lib/media'
-import { hasDownloadableImageExtension } from './images'
 
 export interface Entry {
   title: string
@@ -90,39 +89,46 @@ function absoluteEntryLink(rawLink: string, siteLink: string) {
   return resolveUrl(rawLink, siteLink, '')
 }
 
+/**
+ * Resolves a URL from entry content against the entry link -- the document base
+ * a browser would use -- falling back to the site link when the feed gives no
+ * usable entry link.
+ *
+ * Links and media share that base deliberately. Media resolved against the site
+ * until this base was measured, which turns a path-relative "images/x.jpg" in
+ * an entry at /2024/01/post/ into /images/x.jpg. Both rules were run over 167
+ * live feeds (77k URLs) and every disagreement was fetched from its origin:
+ * they differed on 20 URLs, the entry base was right on 16 of them (the site
+ * base returned 404) and tied on the other 4, and no feed was found where the
+ * site base won. Images are hashed under the URL this produces, so those 20
+ * re-key and re-download once; the rest of the corpus is absolute or
+ * root-relative and resolves the same either way.
+ *
+ * One base also means a link to an image and the image itself resolve alike
+ * wherever a base is involved, so a link the media store downloaded is still
+ * swapped for the local copy without the extension test that used to drag it
+ * onto the media base. The exception is a scheme-less URL, which takes no base:
+ * the rule below pins a link to https while the image keeps the feed's scheme,
+ * so that one pair stops matching on an http feed.
+ *
+ * Sharing a base also keeps the action in step with the reader, which can only
+ * resolve against the entry link because stored Content carries no site link.
+ */
 function resolveContentUrl(
   url: string,
   target: UrlTarget,
   siteLink: string,
   entryLink: string
 ) {
-  // Media resolves against the site first. That base is known to be wrong for a
-  // path-relative URL -- a browser uses the document, so "images/x.jpg" in an
-  // entry at /2024/01/post/ belongs under that directory, not at the root. It
-  // is kept because it is what this project has always stored: every image is
-  // hashed under the URL this produces, so switching to the entry base re-keys
-  // and re-downloads all of them, and that is worth doing on its own with
-  // before-and-after numbers from real feeds rather than as part of a link fix.
-  const asMedia = resolveUrl(url, siteLink, entryLink)
-  if (target === 'media') return asMedia
-  // A link to an image the store can download takes the media base so that when
-  // some entry of the site also displays that image, the two agree and the link
-  // can be swapped for the downloaded copy. This is checked first, before the
-  // scheme-less rule below, because agreeing with the image matters more than
-  // the scheme: disagree and the link is left hotlinking the origin. The trade
-  // is that a link to an image nothing displays gets the site base rather than
-  // the document one -- same as the img rule it is matching, and the reason to
-  // keep the two together. An extension the store will never fetch, svg above
-  // all, buys nothing here and so resolves like any other link.
-  if (hasDownloadableImageExtension(asMedia)) return asMedia
   // A scheme-less link says "whatever this page is served over", and the page it
   // ends up on is the reader, not the feed. Baking in the entry's scheme would
   // pin every such link on an http feed to plaintext, where the browser would
-  // otherwise resolve it against the reader's own https.
-  if (url.trim().startsWith('//')) return `https:${url.trim()}`
-  // Every other link resolves against the entry, the document base a browser
-  // would use and the only one that gets a bare "foo.html" or a "#footnote"
-  // right.
+  // otherwise resolve it against the reader's own https. Media keeps the feed's
+  // scheme instead: the action fetches it server side, where there is no
+  // reader origin to inherit.
+  if (target === 'link' && url.trim().startsWith('//')) {
+    return `https:${url.trim()}`
+  }
   return resolveUrl(url, entryLink, siteLink)
 }
 

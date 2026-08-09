@@ -19,9 +19,9 @@ const MAX_CONCURRENT_DOWNLOADS_PER_HOST = 2
 const LOCALIZE_DEADLINE_MS = 10 * 60 * 1000
 
 // Which content types name a downloadable image. The extensions themselves
-// live in images.ts, which the link resolver reads too, and every value here
-// goes back through it -- so an entry that is not downloadable simply never
-// resolves. SVG is absent from both, see images.ts for why.
+// live in images.ts, and every value here goes back through it -- so an entry
+// that is not downloadable simply never resolves. SVG is absent from both, see
+// images.ts for why.
 export const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
   'image/avif': '.avif',
   'image/gif': '.gif',
