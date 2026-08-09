@@ -538,37 +538,55 @@ test('#localizeSite aborts the request when it refuses the response', async (t) 
   t.false(responses[0].bodyUsed)
 })
 
-test('#localizeSite does not log a whole hostile content type', async (t) => {
+test('#localizeSite caps a hostile content type in the log', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-logsize-')
-  // Unique so the captured lines can be filtered to this test: ava runs a
-  // file's tests concurrently, and console.error is shared.
-  const url = 'https://example.com/log-size-photo.png'
+  // One test rather than two: console.error is shared, and ava runs a file's
+  // tests concurrently, so a second stub window would clobber this one.
+  const hostileUrl = 'https://example.com/log-hostile.png'
+  const shortUrl = 'https://example.com/log-short.png'
   // The remote picks this header and the action log is public, so a refusal
   // must not echo 16 KiB of it. On main these responses were downloaded rather
   // than logged at all, so the whole line is new cost.
   const hostile = `a${' '.repeat(16198)}b`
+  // 119 characters, one under the cap: without something near the boundary,
+  // every other fixture here is 36 characters or 16 KiB and the cap has no
+  // edge to test.
+  const borderline = `text/x-${'a'.repeat(112)}`
   const captured: string[] = []
   const restore = console.error
   console.error = (message: string) => void captured.push(message)
   try {
     const fetchStub = sinon
       .stub()
-      .resolves(imageResponse('<html>blocked</html>', hostile))
+      .callsFake(async (input: string) =>
+        imageResponse(
+          '<html>blocked</html>',
+          input === hostileUrl ? hostile : borderline
+        )
+      )
     const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
     const localized = await store.localizeSite(
-      createSite(`<img src="${url}" />`)
+      createSite(`<img src="${hostileUrl}" /><img src="${shortUrl}" />`)
     )
-    t.true(localized.entries[0].content.includes(`src="${url}"`))
+    t.true(localized.entries[0].content.includes(`src="${hostileUrl}"`))
   } finally {
     console.error = restore
   }
 
-  const logged = captured.filter((line) => line.includes(url))
-  t.is(logged.length, 1)
-  t.true(logged[0].length < 300, `logged ${logged[0].length} characters`)
+  const forHostile = captured.filter((line) => line.includes(hostileUrl))
+  t.is(forHostile.length, 1)
+  t.true(
+    forHostile[0].length < 300,
+    `logged ${forHostile[0].length} characters`
+  )
   // Still recognisable as the header it refused, and honest about the cut.
-  t.true(logged[0].includes('Unsupported media type "a   '))
-  t.true(logged[0].includes('(16200 chars)'))
+  t.true(forHostile[0].includes('Unsupported media type "a   '))
+  t.true(forHostile[0].includes('(16200 chars)'))
+
+  const forShort = captured.filter((line) => line.includes(shortUrl))
+  t.is(forShort.length, 1)
+  t.true(forShort[0].includes(`"${borderline}"`), 'one under the cap, uncut')
+  t.false(forShort[0].includes('chars)'))
 })
 
 test('#localizeSite leaves the request alone when it accepts the response', async (t) => {

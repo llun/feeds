@@ -42,6 +42,17 @@ test('#extensionFromContentType reads the last type a repeated header declares',
     ),
     null
   )
+  // And again on the other side of the slash. The class is applied twice, and
+  // a subtype-only value pins only one of them: every other type half in the
+  // suite is image, text, application, a or *, so narrowing the left class
+  // alone passed everything while turning `image/png, x-image/x-png` into a
+  // download.
+  t.is(
+    extensionFromContentType(
+      "image/png, !#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyz/png"
+    ),
+    null
+  )
 })
 
 test('#extensionFromContentType passes over a value it cannot use', (t) => {
