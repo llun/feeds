@@ -253,7 +253,8 @@ test('#resolveAgainstBase returns null for a url that takes no base', (t) => {
   // Null rather than the input, so each caller says for itself what "leave it
   // alone" hands back -- the action the trimmed URL, the reader the original,
   // whitespace and all. These are the cases where the two copies of this
-  // function took separate branches; three produced different strings, and all
+  // function took separate branches; of the inputs asserted here three produced
+  // different strings, and all
   // three needed the input to carry whitespace or to meet an unusable base:
   // '   ', '  data:text/plain,a b  ', and an absolute URL with no base.
   t.is(resolveAgainstBase('', ENTRY_URL), null)
@@ -264,6 +265,16 @@ test('#resolveAgainstBase returns null for a url that takes no base', (t) => {
     null
   )
   t.is(resolveAgainstBase('  data:text/plain,a b  ', ENTRY_URL), null)
+  // The colon is load-bearing: `data` is an ordinary directory name, and a feed
+  // is free to publish a path under one.
+  t.is(
+    resolveAgainstBase('data/chart.png', ENTRY_URL),
+    'https://feed.example/posts/data/chart.png'
+  )
+  t.is(
+    resolveAgainstBase('/data/chart.png', ENTRY_URL),
+    'https://feed.example/data/chart.png'
+  )
 })
 
 test('#resolveAgainstBase returns null for a url the parser rejects', (t) => {
@@ -313,8 +324,9 @@ test('#resolveAgainstBase returns null without a usable http base', (t) => {
   t.is(resolveAgainstBase('/posts/other', ''), null)
   t.is(resolveAgainstBase('/posts/other'), null)
   // Including an absolute URL, which the parser could have resolved on its own.
-  // A feed with no usable link anywhere leaves the URLs it publishes exactly as
-  // it published them, rather than normalizing some of them and not others.
+  // With no usable base, every URL that takes one comes back as published,
+  // rather than some of them normalized and some not. A scheme-less URL takes
+  // no base and is the exception; it is each caller's, not this function's.
   t.is(resolveAgainstBase('HTTPS://Other.Example/Page', ''), null)
 })
 

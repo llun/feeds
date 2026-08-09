@@ -18,10 +18,9 @@
  * Of the resolution functions here, resolveAgainstBase and parseHttpUrl are the
  * two both halves go through: parseHttpUrl gates resolveAgainstBase, and the
  * action also calls it directly, to pick a base and to test an entry link for
- * absoluteness. resolveAgainstEntry is the reader's
- * alone; it sits here so the action's agreement test can import it without
- * pulling in lib/utils.ts and its storage layer, not because the action itself
- * uses it.
+ * absoluteness. resolveAgainstEntry is the reader's alone; it sits here so the
+ * action's agreement test can import it without pulling in lib/utils.ts and its
+ * storage layer, not because the action itself uses it.
  *
  * What the action may download is likewise its own policy and lives in
  * action/feeds/images.ts.
@@ -192,11 +191,11 @@ export function parseHttpUrl(input?: string | null) {
  * The two copies differed in two further ways, neither about the fallback and
  * so neither settled by the `??`. A scheme-less URL takes no base, so that rule
  * stays with each caller. A scheme-prefixed one -- `http:x/y`, no `//` after
- * the scheme --
- * the action used to short-circuit as absolute where the reader resolved it;
- * sharing this function settles that on the reader's answer, which is the
- * browser's. See #resolveAgainstBase resolves a scheme-prefixed url like a
- * browser.
+ * the scheme -- the action used to short-circuit as absolute where the reader
+ * resolved it against a base of the same scheme; sharing this function settles
+ * that on the reader's answer, which is the browser's. Against a base of a
+ * different scheme both always agreed that it is absolute. See
+ * #resolveAgainstBase resolves a scheme-prefixed url like a browser.
  *
  * An absolute URL keeps its target but comes back re-serialized by the URL
  * parser, so it can differ from the input by a trailing slash or by

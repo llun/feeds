@@ -279,8 +279,10 @@ test('#parseRss falls back between the entry and site URL', (t) => {
     )
   )
   // An absolute one included, which the parser could have normalized without a
-  // base. The reader leaves it alone, so the action does too: a feed with no
-  // usable link anywhere now changes nothing about the URLs it publishes.
+  // base. The reader leaves it alone, so the action does too: with nothing to
+  // resolve against, a URL that takes a base is no longer normalized either.
+  // Only a URL that takes no base still changes -- a scheme-less one still gets
+  // a scheme, asserted below.
   t.true(
     contentOf('<a href="HTTPS://Other.Example/Page">l</a>', {
       site: '',
@@ -420,8 +422,12 @@ test('#parseRss trims a scheme-less URL before giving it a scheme', (t) => {
     '<img src="\u00a0//h.example\u00a0" /><img src="\u00a0//ex\u00e4mple.com/x.png\u00a0" />',
     { site: 'http://site.example/', entry: 'http://feed.example/posts/1' }
   )
-  // A bare host and a unicode host: the parser would give the first a trailing
-  // slash and punycode the second, so a copy that fell through to it is caught.
+  // Two shapes the URL parser would rewrite -- a trailing slash on the bare
+  // host, punycode on the unicode one -- so a copy that fell through to it is
+  // caught. Not two independent detectors: both rewrites come from the one
+  // new URL() call in resolveAgainstBase, so either assertion alone catches
+  // everything the pair does. The second is belt and braces on a rule that
+  // exists in three copies.
   t.true(normalizes.includes('src="http://h.example"'), normalizes)
   t.true(normalizes.includes('src="http://ex\u00e4mple.com/x.png"'), normalizes)
   t.true(
