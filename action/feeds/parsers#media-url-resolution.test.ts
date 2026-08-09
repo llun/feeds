@@ -120,7 +120,10 @@ const NON_URL_ATTRIBUTES = new Set([
   'title',
   'width',
   'height',
-  'loading'
+  'loading',
+  // Allowed on div and p for the Hacker News discussion markup; a class name
+  // is not a URL.
+  'class'
 ])
 
 test('#parseRss resolves every allowed attribute that carries a URL', (t) => {

@@ -27,6 +27,7 @@ import {
   createMediaStore,
   getMediaDirectory
 } from './media'
+import { createHackerNewsEnricher } from './hackernews'
 import { loadFeed, readOpml } from './opml'
 import type { Site } from './parsers'
 
@@ -38,10 +39,14 @@ async function createLocalizingFeedLoader(githubActionPath: string) {
   await restorePublishedMedia(getPublicPath(githubActionPath))
   const mediaDirectory = getMediaDirectory(githubActionPath)
   const store = createMediaStore({ mediaDirectory })
+  // HN entries carry only a "Comments" link, so the discussion is fetched and
+  // appended before media localization walks the content. One enricher per
+  // run: its deadline is shared across sites, like the media store's.
+  const enricher = createHackerNewsEnricher()
   const feedLoader = async (title: string, url: string) => {
     const site: Site | null = await loadFeed(title, url)
     if (!site) return null
-    return store.localizeSite(site)
+    return store.localizeSite(await enricher(site))
   }
   return { feedLoader, mediaDirectory }
 }

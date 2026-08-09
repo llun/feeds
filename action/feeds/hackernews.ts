@@ -1,0 +1,422 @@
+import { format } from 'date-fns'
+import sanitizeHtml from 'sanitize-html'
+
+import { USER_AGENT } from './http'
+import {
+  ENTRY_CONTENT_SANITIZE_OPTIONS,
+  mapContentUrls,
+  resolveContentUrl,
+  type Entry,
+  type Site
+} from './parsers'
+
+const ALGOLIA_ITEM_API = 'https://hn.algolia.com/api/v1/items'
+const FETCH_TIMEOUT_MS = 10_000
+const MAX_RESPONSE_BYTES = 5 * 1024 * 1024
+// One budget per run, shared across sites through createHackerNewsEnricher:
+// the media store's localization deadline starts when the loader is created,
+// so enrichment as a whole gets this much time no matter how many HN feeds
+// the OPML lists.
+const ENRICHMENT_DEADLINE_MS = 60_000
+const MAX_TOP_LEVEL_COMMENTS = 20
+const MAX_COMMENT_DEPTH = 3
+// The depth and top-level caps alone do not bound reply breadth (20 comments
+// can each carry hundreds of replies), so the total is capped too.
+const MAX_TOTAL_COMMENTS = 100
+
+// HN renders no images in comments, and enrichment runs before the media
+// store -- an img left in here would hand URLs chosen by any commenter to the
+// downloader and republish them from this site's own origin. Derived by
+// property rather than by naming img, so a media-carrying tag added to the
+// shared options later is excluded here automatically.
+const MEDIA_ATTRIBUTES = new Set(['src', 'srcset'])
+export const COMMENT_ALLOWED_TAGS = (
+  (ENTRY_CONTENT_SANITIZE_OPTIONS.allowedTags as string[]) || []
+).filter((tag) => {
+  const allowedAttributes = ENTRY_CONTENT_SANITIZE_OPTIONS.allowedAttributes as
+    Record<string, string[]> | undefined
+  const tagAttributes = [
+    ...(allowedAttributes?.[tag] || []),
+    ...(allowedAttributes?.['*'] || [])
+  ]
+  return !tagAttributes.some((attribute) => MEDIA_ATTRIBUTES.has(attribute))
+})
+
+// Commenter-authored HTML is sanitized on its own before it is embedded in the
+// generated chrome, with every class dropped: the outer pass lets the hn-*
+// classes through for the chrome, and comment HTML must not wear them.
+// Anchors keep only href -- the reader overwrites target/rel at render time,
+// and name has no legitimate use in a comment.
+const COMMENT_TEXT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  ...ENTRY_CONTENT_SANITIZE_OPTIONS,
+  allowedAttributes: {
+    ...(ENTRY_CONTENT_SANITIZE_OPTIONS.allowedAttributes as Record<
+      string,
+      string[]
+    >),
+    a: ['href'],
+    div: [],
+    p: []
+  },
+  allowedClasses: {}
+}
+
+function sanitizeCommentText(text: string) {
+  return sanitizeHtml(text, COMMENT_TEXT_SANITIZE_OPTIONS)
+}
+
+/**
+ * The shape of the Algolia HN API (`/api/v1/items/:id`), which returns a story
+ * with its whole comment tree in one request -- the official Firebase API
+ * would take one request per comment instead. Dead and deleted comments come
+ * back with null author and text.
+ */
+interface AlgoliaItem {
+  id: number
+  author?: string | null
+  text?: string | null
+  created_at_i?: number
+  children?: AlgoliaItem[]
+}
+
+type LiveComment = AlgoliaItem & { author: string; text: string }
+
+// The tree is network input: nodes can be null, non-objects, or carry their
+// fields under the wrong types, and none of that may cost the whole thread.
+function isLiveComment(comment: unknown): comment is LiveComment {
+  if (!comment || typeof comment !== 'object') return false
+  const { author, text } = comment as AlgoliaItem
+  return Boolean(
+    typeof author === 'string' && author && typeof text === 'string' && text
+  )
+}
+
+function liveChildrenOf(comment: AlgoliaItem): AlgoliaItem[] {
+  return Array.isArray(comment.children) ? comment.children : []
+}
+
+/**
+ * Is there anything a reader could see on HN below any of these comments --
+ * a live comment, or a dead one with a live descendant? Iterative because the
+ * tree is network input of unbounded depth. This is what the truncated flag
+ * means; counting dead leaves would render a More-comments link over a thread
+ * that shows nothing new.
+ */
+function hasLiveComment(items: AlgoliaItem[]): boolean {
+  const stack = [...items]
+  while (stack.length > 0) {
+    const item = stack.pop()
+    if (!item || typeof item !== 'object') continue
+    if (isLiveComment(item)) return true
+    // A loop, not stack.push(...children): the spread form hits V8's
+    // argument-count limit on a node with hundreds of thousands of children.
+    for (const child of liveChildrenOf(item)) stack.push(child)
+  }
+  return false
+}
+
+/**
+ * The HN item id a URL points at, or null when it is not a HN item page.
+ * Hacker News feeds -- the official RSS, hnrss, or any other mirror -- put the
+ * item page in the entry's <comments> element (the entry link itself is the
+ * article), so that is checked first; the entry link covers feeds that point
+ * their entries straight at the item page.
+ */
+export function hackerNewsItemId(url?: string) {
+  if (!url) return null
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname !== 'news.ycombinator.com') return null
+    if (parsed.pathname !== '/item') return null
+    const id = parsed.searchParams.get('id')
+    // An empty id would slip past ?? at the call site and block the entry-link
+    // fallback; a non-numeric one has no business in the fetch path.
+    return id && /^\d+$/.test(id) ? id : null
+  } catch {
+    return null
+  }
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function formatCommentDate(timestamp?: number) {
+  // Untrusted input: JSON parses a literal like 1e999 to Infinity, and
+  // date-fns format throws a RangeError on an invalid Date, which the
+  // per-entry catch would turn into the whole thread being dropped.
+  if (!timestamp || !Number.isFinite(timestamp) || timestamp < 0) return ''
+  const date = new Date(timestamp * 1000)
+  if (Number.isNaN(date.getTime())) return ''
+  return format(date, 'PP')
+}
+
+interface Rendered {
+  html: string
+  truncated: boolean
+}
+
+interface Budget {
+  remaining: number
+}
+
+function renderChildren(
+  children: AlgoliaItem[],
+  depth: number,
+  budget: Budget
+): Rendered {
+  const parts: string[] = []
+  let truncated = false
+  for (const [index, child] of children.entries()) {
+    if (budget.remaining <= 0) {
+      // Accumulate, never assign: an earlier sibling may already have had
+      // visible content cut, and an all-dead remainder must not wipe that.
+      truncated = truncated || hasLiveComment(children.slice(index))
+      break
+    }
+    const rendered = renderComment(child, depth, budget)
+    parts.push(rendered.html)
+    truncated = truncated || rendered.truncated
+  }
+  return { html: parts.filter(Boolean).join(''), truncated }
+}
+
+/**
+ * Renders one comment and its replies. Replies nest inside a bordered block up
+ * to MAX_COMMENT_DEPTH levels; a comment deeper than that still exists on the
+ * item page, which is what the truncated flag bubbles up for.
+ */
+function renderComment(
+  comment: AlgoliaItem,
+  depth: number,
+  budget: Budget
+): Rendered {
+  if (!comment || typeof comment !== 'object') {
+    return { html: '', truncated: false }
+  }
+  const children = liveChildrenOf(comment)
+
+  // Dead and deleted comments have no author or text. HN keeps their live
+  // replies under a [deleted] marker, so render the children under the same
+  // marker rather than vanishing the whole subtree.
+  if (!isLiveComment(comment)) {
+    if (!children.length) return { html: '', truncated: false }
+    if (depth >= MAX_COMMENT_DEPTH) {
+      return { html: '', truncated: hasLiveComment(children) }
+    }
+    const rendered = renderChildren(children, depth + 1, budget)
+    return {
+      html: rendered.html
+        ? `<div class="hn-comment"><p class="hn-comment-meta">[deleted]</p><div class="hn-comment-children">${rendered.html}</div></div>`
+        : '',
+      truncated: rendered.truncated
+    }
+  }
+
+  budget.remaining--
+
+  // toWellFormed replaces lone surrogates, which JSON.parse produces happily
+  // and encodeURIComponent throws on.
+  const authorName = comment.author.toWellFormed()
+  const author = escapeHtml(authorName)
+  const authorLink = `<a href="https://news.ycombinator.com/user?id=${encodeURIComponent(
+    authorName
+  )}">${author}</a>`
+  // The id comes from the network; only a safe positive integer is
+  // interpolated into the permalink.
+  const id =
+    Number.isSafeInteger(comment.id) && comment.id > 0 ? comment.id : null
+  const date = formatCommentDate(comment.created_at_i)
+  const dateLink = date
+    ? id
+      ? ` · <a href="https://news.ycombinator.com/item?id=${id}">${date}</a>`
+      : ` · ${date}`
+    : ''
+  const meta = `<p class="hn-comment-meta">${authorLink}${dateLink}</p>`
+
+  let childrenHtml = ''
+  let truncated = false
+  if (depth >= MAX_COMMENT_DEPTH) {
+    truncated = hasLiveComment(children)
+  } else {
+    const rendered = renderChildren(children, depth + 1, budget)
+    childrenHtml = rendered.html
+    truncated = rendered.truncated
+  }
+  const childrenBlock = childrenHtml
+    ? `<div class="hn-comment-children">${childrenHtml}</div>`
+    : ''
+
+  return {
+    html: `<div class="hn-comment">${meta}<div class="hn-comment-body">${sanitizeCommentText(
+      comment.text
+    )}</div>${childrenBlock}</div>`,
+    truncated
+  }
+}
+
+/**
+ * Turns a fetched item into the HTML appended to the entry: the story text for
+ * self-posts (Ask HN), then the top MAX_TOP_LEVEL_COMMENTS comments, and a
+ * link back to the item page whenever the caps cut the thread short. The More
+ * link keys on the request id rather than item.id, which a drifting response
+ * shape could drop.
+ */
+function renderItem(item: AlgoliaItem, id: string): string {
+  const parts: string[] = []
+  if (typeof item.text === 'string' && item.text) {
+    parts.push(`<div class="hn-story">${sanitizeCommentText(item.text)}</div>`)
+  }
+
+  const budget = { remaining: MAX_TOTAL_COMMENTS }
+  const topLevel = liveChildrenOf(item)
+  const rendered = renderChildren(
+    topLevel.slice(0, MAX_TOP_LEVEL_COMMENTS),
+    1,
+    budget
+  )
+  if (rendered.html) {
+    parts.push(`<div class="hn-comments">${rendered.html}</div>`)
+  }
+
+  const truncated =
+    rendered.truncated || hasLiveComment(topLevel.slice(MAX_TOP_LEVEL_COMMENTS))
+  if (truncated) {
+    parts.push(
+      `<p class="hn-more"><a href="https://news.ycombinator.com/item?id=${id}">More comments on Hacker News</a></p>`
+    )
+  }
+  return parts.join('')
+}
+
+/**
+ * Reads an item response with a size cap, the way the media store reads
+ * downloads: the thread for a popular story is unbounded user content, and the
+ * 10s timeout alone does not stop a multi-hundred-MB body from buffering.
+ */
+async function readBodyWithLimit(response: Response) {
+  const declaredLength = Number(response.headers.get('content-length'))
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
+    throw new Error(`Item response is larger than ${MAX_RESPONSE_BYTES} bytes`)
+  }
+  if (!response.body) throw new Error('Item response has no body')
+
+  const chunks: Buffer[] = []
+  let total = 0
+  for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) {
+    total += chunk.length
+    if (total > MAX_RESPONSE_BYTES) {
+      throw new Error(
+        `Item response is larger than ${MAX_RESPONSE_BYTES} bytes`
+      )
+    }
+    chunks.push(Buffer.from(chunk))
+  }
+  return Buffer.concat(chunks).toString('utf8')
+}
+
+async function fetchItem(
+  id: string,
+  fetchApi: typeof globalThis.fetch
+): Promise<AlgoliaItem | null> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+  try {
+    const response = await fetchApi(`${ALGOLIA_ITEM_API}/${id}`, {
+      headers: { 'User-Agent': USER_AGENT },
+      signal: controller.signal
+    })
+    if (!response.ok) {
+      throw new Error(`Unexpected response status ${response.status}`)
+    }
+    return JSON.parse(await readBodyWithLimit(response)) as AlgoliaItem
+  } catch (error) {
+    // A throw before the body is fully read leaves the socket held until the
+    // remote end drops it; abort releases it.
+    controller.abort()
+    throw error
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+/**
+ * Appends the HN comment tree to every entry that links to a HN item, leaving
+ * the feed's own content -- the "Comments" link -- at the top. The generated
+ * HTML goes through the same sanitize pass as feed content (minus any
+ * media-carrying tag, which HN comments never render), so the reader keeps
+ * trusting stored content and relative links in comments resolve against the
+ * item page.
+ *
+ * A failed fetch never fails the build: the entry keeps its original content.
+ */
+export async function enrichSiteWithHackerNewsComments(
+  site: Site,
+  fetchApi: typeof globalThis.fetch = globalThis.fetch,
+  now: () => number = Date.now,
+  deadline: number = now() + ENRICHMENT_DEADLINE_MS
+): Promise<Site> {
+  const entries: Entry[] = []
+  let deadlineExceeded = false
+  for (const entry of site.entries) {
+    const id = hackerNewsItemId(entry.comments) ?? hackerNewsItemId(entry.link)
+    if (!id) {
+      entries.push(entry)
+      continue
+    }
+    if (deadlineExceeded || now() > deadline) {
+      // Logged once per site rather than per entry left behind.
+      if (!deadlineExceeded) {
+        console.error(
+          `Skip remaining Hacker News comments for ${site.title}: enrichment deadline exceeded`
+        )
+        deadlineExceeded = true
+      }
+      entries.push(entry)
+      continue
+    }
+    try {
+      const item = await fetchItem(id, fetchApi)
+      const addition = item ? renderItem(item, id) : ''
+      if (!addition) {
+        entries.push(entry)
+        continue
+      }
+      // Comment HTML lives on the item page, so that is its document base --
+      // not the entry link, which for a HN feed is the article itself.
+      const itemUrl = `https://news.ycombinator.com/item?id=${id}`
+      const content =
+        entry.content +
+        mapContentUrls(
+          addition,
+          (url, target) => resolveContentUrl(url, target, site.link, itemUrl),
+          COMMENT_ALLOWED_TAGS
+        )
+      entries.push({ ...entry, content })
+    } catch (error: any) {
+      console.error(
+        `Fail to load Hacker News comments for ${entry.link}: ${error.message}`
+      )
+      entries.push(entry)
+    }
+  }
+  return { ...site, entries }
+}
+
+/**
+ * The enricher the feed loader uses: one deadline per run, shared across every
+ * site, so a slow Algolia cannot eat into the media store's localization
+ * deadline no matter how many HN feeds the OPML lists.
+ */
+export function createHackerNewsEnricher(
+  fetchApi: typeof globalThis.fetch = globalThis.fetch,
+  now: () => number = Date.now
+) {
+  const deadline = now() + ENRICHMENT_DEADLINE_MS
+  return (site: Site) =>
+    enrichSiteWithHackerNewsComments(site, fetchApi, now, deadline)
+}

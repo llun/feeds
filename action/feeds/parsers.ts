@@ -14,6 +14,12 @@ export interface Entry {
   date: number
   content: string
   author: string
+  // The RSS <comments> URL, when the feed offers one. Hacker News feeds link
+  // entries at the article and put the item page here, which is what the
+  // comment enrichment (action/feeds/hackernews.ts) keys on. Build-time-only
+  // data: files storage persists it in the entry JSON, sqlite drops it (no
+  // column), and nothing reads it back either way.
+  comments?: string
 }
 
 export interface Site {
@@ -106,7 +112,7 @@ function absolutizeEntryLink(rawLink: string, siteLink: string) {
  * Sharing a base also keeps the action in step with the reader, which can only
  * resolve against the entry link because stored Content carries no site link.
  */
-function resolveContentUrl(
+export function resolveContentUrl(
   url: string,
   target: UrlTarget,
   siteLink: string,
@@ -137,7 +143,25 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     // Kept so the source of a quotation survives into the stored JSON, and
     // resolved like any other URL rather than left pointing at this site.
     blockquote: ['cite'],
-    q: ['cite']
+    q: ['cite'],
+    // The Hacker News discussion markup (action/feeds/hackernews.ts) styles
+    // the thread through classes. Every pass over stored content goes through
+    // these options, so class has to survive here or the media store's rewrite
+    // would strip it back off.
+    div: ['class'],
+    p: ['class']
+  },
+  // Only the classes the HN markup uses; a feed's own classes keep being
+  // discarded as before.
+  allowedClasses: {
+    div: [
+      'hn-story',
+      'hn-comments',
+      'hn-comment',
+      'hn-comment-body',
+      'hn-comment-children'
+    ],
+    p: ['hn-comment-meta', 'hn-more']
   },
   // Nothing beyond http(s) by default, so an attribute allowed later inherits
   // the safe set rather than data: or mailto:. Anything that needs more says so
@@ -167,13 +191,21 @@ export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
  * Every tag is visited rather than img and a alone, so a relative URL is
  * resolved wherever it hides. Schemes are filtered after this runs, so a
  * javascript: href is still dropped even though it is resolved here.
+ *
+ * A caller that generates content rather than reading a feed can narrow the
+ * tag set -- the Hacker News enrichment drops img, since comment HTML is
+ * written by arbitrary internet users and must never reach the media store.
  */
 export function mapContentUrls(
   content: string,
-  mapUrl: (url: string, target: UrlTarget) => string
+  mapUrl: (url: string, target: UrlTarget) => string,
+  allowedTags?: string[]
 ) {
   return sanitizeHtml(content, {
     ...ENTRY_CONTENT_SANITIZE_OPTIONS,
+    // !== undefined, not truthiness: an empty array is a real tag set (strip
+    // every tag), not a request for the defaults.
+    ...(allowedTags !== undefined ? { allowedTags } : {}),
     transformTags: {
       '*': (tagName, attribs) => ({
         tagName,
@@ -256,7 +288,12 @@ export function parseRss(feedTitle: string, xml: any): Site {
               siteLink,
               entryLink
             ),
-            author: joinValuesOrEmptyString(item['dc:creator'])
+            author: joinValuesOrEmptyString(item['dc:creator']),
+            comments:
+              absolutizeEntryLink(
+                joinValuesOrEmptyString(item.comments),
+                siteLink
+              ) || undefined
           }
         })) ||
       []
