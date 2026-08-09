@@ -316,6 +316,55 @@ test('#localizeSite keeps the remote url for non image responses', async (t) => 
   t.deepEqual(await listMediaFiles(mediaDirectory), [])
 })
 
+test('#localizeSite keeps the remote url for an html body served from an image url', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-html-png-')
+  const url = 'https://example.com/photo.png'
+  const fetchStub = sinon.stub().resolves(
+    new Response('<html><script>alert(document.domain)</script></html>', {
+      status: 200,
+      headers: { 'content-type': 'text/html' }
+    })
+  )
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.true(localized.entries[0].content.includes(`src="${url}"`))
+  t.deepEqual(await listMediaFiles(mediaDirectory), [])
+})
+
+test('#localizeSite keeps the remote url for an svg body served from an image url', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-svg-png-')
+  const url = 'https://example.com/logo.png'
+  const fetchStub = sinon
+    .stub()
+    .resolves(imageResponse('<svg onload="alert(1)" />', 'image/svg+xml'))
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.true(localized.entries[0].content.includes(`src="${url}"`))
+  t.deepEqual(await listMediaFiles(mediaDirectory), [])
+})
+
+test('#localizeSite names files from the url when the server declares no type', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-no-type-')
+  const url = 'https://example.com/a.png'
+  // A Buffer body leaves Response without a content-type, which is what a host
+  // that never sets the header looks like.
+  const fetchStub = sinon
+    .stub()
+    .resolves(new Response(Buffer.from('image-bytes'), { status: 200 }))
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.deepEqual(await listMediaFiles(mediaDirectory), [`${mediaHash(url)}.png`])
+  t.true(
+    localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.png"`)
+  )
+})
+
 test('#localizeSite names files from the content type when the url has no extension', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-content-type-')
   const url = 'https://example.com/photo?id=1'

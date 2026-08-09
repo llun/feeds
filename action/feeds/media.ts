@@ -54,13 +54,23 @@ function createMediaHash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
 }
 
+/**
+ * The type the server declared, stripped of its parameters, or null when it
+ * declared none. Separate from extensionFromContentType because the two nulls
+ * mean opposite things to downloadMedia: silence hands the decision to the URL,
+ * while a type outside the map refuses the download outright.
+ */
+function declaredMediaType(contentType?: string | null) {
+  return contentType?.split(';')[0].trim().toLowerCase() || null
+}
+
 export function extensionFromContentType(contentType?: string | null) {
-  if (!contentType) return null
-  const normalizedType = contentType.split(';')[0].trim().toLowerCase()
+  const declaredType = declaredMediaType(contentType)
+  if (!declaredType) return null
   // Routed through images.ts rather than returned straight from the map, so an
   // entry added here that is not downloadable -- svg above all -- becomes a
   // refused download instead of a file served from our own origin.
-  return normalizeImageExtension(CONTENT_TYPE_EXTENSIONS[normalizedType])
+  return normalizeImageExtension(CONTENT_TYPE_EXTENSIONS[declaredType])
 }
 
 export function extensionFromUrl(url: string) {
@@ -263,14 +273,24 @@ export function createMediaStore({
         throw new Error(`Unexpected response status ${response.status}`)
       }
 
-      const contentTypeExtension = extensionFromContentType(
+      const declaredType = declaredMediaType(
         response.headers.get('content-type')
       )
+      const contentTypeExtension = extensionFromContentType(declaredType)
+      // A server that names a type is taken at its word, and the URL extension
+      // does not get to overrule it. Otherwise a text/html or image/svg+xml
+      // body answering a .png url is written to public/media on the strength of
+      // the url alone, and since rewriteLocalizedUrls sends href and cite to the
+      // local copy too, those bytes become a one-click same-origin navigation
+      // under link text the feed chose. Silence still falls back to the url,
+      // which is what hosts that set no type header rely on.
+      if (declaredType && !contentTypeExtension) {
+        throw new Error(`Unsupported media type ${declaredType}`)
+      }
+
       const extension = contentTypeExtension || urlExtension
       if (!extension) {
-        throw new Error(
-          `Unsupported media type ${response.headers.get('content-type')}`
-        )
+        throw new Error('No media type declared and no image extension in url')
       }
 
       const buffer = await readBodyWithinLimit(response, controller)
