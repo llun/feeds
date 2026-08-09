@@ -4,8 +4,12 @@ import { formatDistance } from 'date-fns'
 import { ExternalLink } from 'lucide-react'
 import { BackButton } from './BackButton'
 import parse from 'html-react-parser'
-import { isLocalMediaPath, mapUrlAttributes, withBasePath } from '../media'
-import { resolveEntryUrl } from '../utils'
+import {
+  isLocalMediaPath,
+  mapUrlAttributes,
+  resolveAgainstEntry,
+  withBasePath
+} from '../entry-urls'
 
 interface ReactParserNode {
   name: string
@@ -91,7 +95,7 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
               node.attribs = mapUrlAttributes(node.attribs, (url) =>
                 isLocalMediaPath(url)
                   ? withBasePath(url, basePath)
-                  : resolveEntryUrl(url, content.url)
+                  : resolveAgainstEntry(url, content.url)
               )
 
               if (node.name === 'a') {

@@ -1,9 +1,19 @@
 /**
- * Shared between the action that downloads feed images and the reader that
- * renders them, so both sides always agree on where media lives -- and, through
- * URL_ATTRIBUTES below, on which attributes of entry content carry a URL at all
- * and whether each points at a document or at media. What the action may
- * download is its own policy and lives in action/feeds/images.ts.
+ * Everything the action that stores entries and the reader that renders them
+ * have to agree on about the URLs inside entry content: where downloaded media
+ * lives, which attributes carry a URL at all and whether each points at a
+ * document or at media, and how a URL resolves against a base.
+ *
+ * The action resolves a URL once, when it stores an entry; the reader resolves
+ * again when it renders one stored before the action did that. The two halves
+ * therefore have to land on the same absolute URL for the same input, which is
+ * why resolveAgainstBase below is shared rather than written twice -- it was
+ * written twice, and they drifted. What each half does with a URL it cannot
+ * resolve, and what it does with a scheme-less one, is its own policy and is
+ * stated at its own call site.
+ *
+ * What the action may download is likewise its own policy and lives in
+ * action/feeds/images.ts.
  */
 export const LOCAL_MEDIA_PATH = '/media'
 
@@ -136,4 +146,74 @@ export function mapUrlAttributes(
     nextAttribs[name] = attribute.srcset ? mapSrcSet(value, map) : map(value)
   }
   return nextAttribs
+}
+
+/**
+ * The http(s) URL `input` names, or null when it is not one.
+ *
+ * A resolution base goes through here rather than straight into `new URL`: an
+ * entry link is whatever the feed chose to publish, and resolving against a
+ * `javascript:` base would turn every "#footnote" in the entry into a script
+ * URL.
+ */
+export function parseHttpUrl(input?: string | null) {
+  if (!input) return null
+  try {
+    const parsed = new URL(input)
+    if (!['http:', 'https:'].includes(parsed.protocol)) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+/**
+ * `url` resolved against `base`, or null when it has to be left as it is --
+ * because it is blank, because it is a `data:` URI, because `base` is not an
+ * http(s) URL, or because the URL parser rejects the pair.
+ *
+ * Null rather than the input itself, because "as it is" is precisely what the
+ * two callers have never agreed on: the action hands back the trimmed URL and
+ * the reader the original, whitespace and all. Every difference between the two
+ * copies of this function was one of these four cases, so returning null moves
+ * the disagreement into a `??` at each call site instead of duplicating all the
+ * rules that lead up to it.
+ *
+ * An absolute URL keeps its target but comes back re-serialized by the URL
+ * parser, so it can differ from the input by a trailing slash or by
+ * percent-encoding. A `data:` URI is held back from that because it would
+ * rewrite the payload rather than a URL.
+ */
+export function resolveAgainstBase(url: string, base?: string) {
+  const trimmed = url.trim()
+  if (!trimmed || trimmed.startsWith('data:')) return null
+
+  const parsedBase = parseHttpUrl(base)
+  if (!parsedBase) return null
+
+  try {
+    return new URL(trimmed, parsedBase).toString()
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Resolves any URL from entry content against the entry it came from -- media
+ * as well as links, since the reader has no site link to fall back on: stored
+ * Content carries the entry URL and nothing else. Entries stored before the
+ * action started resolving URLs still hold relative ones, which would otherwise
+ * point at the reader's own domain.
+ */
+export function resolveAgainstEntry(url: string, entryUrl?: string) {
+  const trimmed = url.trim()
+  // Deliberately not the action's rule. A scheme-less URL takes the scheme of
+  // the page it ends up on, which here is always the reader's own, so it is
+  // pinned to https and takes no base at all. The action keeps the feed's
+  // scheme for media instead, because it fetches that server side where there
+  // is no reader origin to inherit. Inheriting an http feed's scheme here would
+  // render a legacy //host link as plaintext, and an image that way is blocked
+  // outright as mixed content.
+  if (trimmed.startsWith('//')) return `https:${trimmed}`
+  return resolveAgainstBase(url, entryUrl) ?? url
 }

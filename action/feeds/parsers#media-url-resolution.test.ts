@@ -1,6 +1,6 @@
 import test from 'ava'
 import { ENTRY_CONTENT_SANITIZE_OPTIONS, parseAtom, parseRss } from './parsers'
-import { resolveEntryUrl } from '../../lib/utils'
+import { resolveAgainstEntry } from '../../lib/entry-urls'
 
 const SITE_LINK = 'https://site.example/'
 const ENTRY_LINK = 'https://feed.example/posts/entry-1'
@@ -134,7 +134,7 @@ test('#parseRss resolves every allowed attribute that carries a URL', (t) => {
       const output = contentOf(`<${tag} ${attribute}="/rel">x</${tag}>`)
       t.false(
         output.includes(`${attribute}="/rel"`),
-        `${tag}[${attribute}] kept a relative URL -- add it to URL_ATTRIBUTES in lib/media.ts, or to NON_URL_ATTRIBUTES here if it carries no URL`
+        `${tag}[${attribute}] kept a relative URL -- add it to URL_ATTRIBUTES in lib/entry-urls.ts, or to NON_URL_ATTRIBUTES here if it carries no URL`
       )
       // Asserted both ways, or a tag dropped for not being in allowedTags
       // would look like an attribute that resolved.
@@ -277,6 +277,15 @@ test('#parseRss falls back between the entry and site URL', (t) => {
     contentOf('<a href="/x">l</a>', { site: '', entry: '' }).includes(
       'href="/x"'
     )
+  )
+  // An absolute one included, which the parser could have normalized without a
+  // base. The reader leaves it alone, so the action does too: a feed with no
+  // usable link anywhere now changes nothing about the URLs it publishes.
+  t.true(
+    contentOf('<a href="HTTPS://Other.Example/Page">l</a>', {
+      site: '',
+      entry: ''
+    }).includes('href="HTTPS://Other.Example/Page"')
   )
 
   // A protocol-relative image takes its scheme from the base it resolves
@@ -464,7 +473,7 @@ test('#parseRss agrees with the reader on every relative URL', (t) => {
     for (const storedUrl of storedUrls) {
       t.is(
         storedUrl,
-        resolveEntryUrl(url, entry),
+        resolveAgainstEntry(url, entry),
         `action and reader disagree on ${url}`
       )
     }
