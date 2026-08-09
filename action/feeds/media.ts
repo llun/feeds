@@ -3,11 +3,14 @@ import { Dirent } from 'fs'
 import fs from 'fs/promises'
 import path from 'path'
 
-import sanitizeHtml from 'sanitize-html'
-
-import { LOCAL_MEDIA_PATH, mapSrcSet } from '../../lib/media'
+import {
+  LOCAL_MEDIA_PATH,
+  localMediaFileName,
+  type UrlTarget
+} from '../../lib/media'
 import { USER_AGENT } from './http'
-import { ENTRY_CONTENT_SANITIZE_OPTIONS, type Site } from './parsers'
+import { normalizeImageExtension } from './images'
+import { mapContentUrls, type Site } from './parsers'
 
 const MAX_MEDIA_BYTES = 20 * 1024 * 1024
 const DOWNLOAD_TIMEOUT_MS = 15_000
@@ -15,25 +18,11 @@ const MAX_CONCURRENT_DOWNLOADS = 4
 const MAX_CONCURRENT_DOWNLOADS_PER_HOST = 2
 const LOCALIZE_DEADLINE_MS = 10 * 60 * 1000
 
-// Which images may be downloaded and served from our own origin. SVG is
-// deliberately absent from both maps: a localized file is navigable on the
-// published origin, and a feed could otherwise plant a scripted SVG there.
-// parsers.ts keeps a wider list for URL resolution; do not merge the two.
-const KNOWN_IMAGE_EXTENSIONS = new Set([
-  '.avif',
-  '.gif',
-  '.heic',
-  '.heif',
-  '.jpeg',
-  '.jpg',
-  '.jxl',
-  '.png',
-  '.tif',
-  '.tiff',
-  '.webp'
-])
-
-const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
+// Which content types name a downloadable image. The extensions themselves
+// live in images.ts, which the link resolver reads too, and every value here
+// goes back through it -- so an entry that is not downloadable simply never
+// resolves. SVG is absent from both, see images.ts for why.
+export const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
   'image/avif': '.avif',
   'image/gif': '.gif',
   'image/heic': '.heic',
@@ -65,17 +54,13 @@ function createMediaHash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
 }
 
-function normalizeImageExtension(extension?: string | null) {
-  if (!extension) return null
-  const normalized = extension.trim().toLowerCase()
-  if (!KNOWN_IMAGE_EXTENSIONS.has(normalized)) return null
-  return normalized
-}
-
 export function extensionFromContentType(contentType?: string | null) {
   if (!contentType) return null
   const normalizedType = contentType.split(';')[0].trim().toLowerCase()
-  return CONTENT_TYPE_EXTENSIONS[normalizedType] ?? null
+  // Routed through images.ts rather than returned straight from the map, so an
+  // entry added here that is not downloadable -- svg above all -- becomes a
+  // refused download instead of a file served from our own origin.
+  return normalizeImageExtension(CONTENT_TYPE_EXTENSIONS[normalizedType])
 }
 
 export function extensionFromUrl(url: string) {
@@ -105,65 +90,50 @@ function isDownloadableUrl(url: string) {
   }
 }
 
-function extractMediaFileNameFromLocalPath(value: string) {
-  const prefix = `${LOCAL_MEDIA_PATH}/`
-  const trimmed = value.trim()
-  if (!trimmed.startsWith(prefix)) return null
-  const fileName = trimmed
-    .substring(prefix.length)
-    .split('?')[0]
-    .split('#')[0]
-    .trim()
-  return fileName || null
-}
-
 /**
- * Walks entry content with the same sanitizer configuration used to store it,
- * visiting every image URL in `src` and `srcset`. sanitize-html transforms are
- * synchronous, so downloading happens between a collect pass and a rewrite pass
- * instead of inside the transform itself.
+ * Visits every URL entry content carries, reporting whether it is media the
+ * page loads or a link it points at, and replaces it with whatever the visitor
+ * returns. sanitize-html transforms are synchronous, so downloading happens
+ * between a collect pass and a rewrite pass instead of inside the transform.
+ *
+ * Expects content that is already sanitized, which is all a feed ever produces
+ * here: the walk runs before tags are discarded, so on raw HTML it would also
+ * visit URLs on tags that never survive to render.
  */
-function walkImageUrls(
+function walkContentUrls(
   content: string,
-  visitImageUrl: (url: string) => string | void
+  visitUrl: (url: string, target: UrlTarget) => string | void
 ) {
-  const visit = (url: string) => {
-    const nextUrl = visitImageUrl(url)
+  return mapContentUrls(content, (url, target) => {
+    const nextUrl = visitUrl(url, target)
     return typeof nextUrl === 'string' ? nextUrl : url
-  }
-
-  return sanitizeHtml(content, {
-    ...ENTRY_CONTENT_SANITIZE_OPTIONS,
-    transformTags: {
-      img: (tagName, attribs) => {
-        const nextAttribs = { ...attribs }
-        if (nextAttribs.src) {
-          nextAttribs.src = visit(nextAttribs.src)
-        }
-        if (nextAttribs.srcset) {
-          nextAttribs.srcset = mapSrcSet(nextAttribs.srcset, visit)
-        }
-        return { tagName, attribs: nextAttribs }
-      }
-    }
   })
 }
 
-export function collectImageUrls(content: string) {
+export function collectDownloadableMediaUrls(content: string) {
   const urls = new Set<string>()
   if (!content) return urls
-  walkImageUrls(content, (url) => {
-    if (isDownloadableUrl(url)) urls.add(url)
+  // Only media an entry actually displays is worth the download. A link to an
+  // image is followed by hand, so it is rewritten when some entry of the same
+  // site displays that image, but never pulls one down on its own.
+  walkContentUrls(content, (url, target) => {
+    if (target === 'media' && isDownloadableUrl(url)) urls.add(url)
   })
   return urls
 }
 
-export function rewriteImageUrls(
+/**
+ * Swaps every downloaded URL for its local path. This covers links as well as
+ * images, so a lightbox href to an image the store downloaded stops hotlinking
+ * the origin. Deliberately not the mirror of collectDownloadableMediaUrls,
+ * which only ever collects media: a link is rewritten but never downloaded for.
+ */
+export function rewriteLocalizedUrls(
   content: string,
   replacements: Map<string, string>
 ) {
   if (!content) return content
-  return walkImageUrls(content, (url) => replacements.get(url))
+  return walkContentUrls(content, (url) => replacements.get(url))
 }
 
 async function fileExists(filePath: string) {
@@ -189,7 +159,9 @@ async function resolveExistingMediaFile(
 
   try {
     const files = await fs.readdir(mediaDirectory)
-    return files.find((fileName) => fileName.startsWith(`${mediaHash}.`)) || null
+    return (
+      files.find((fileName) => fileName.startsWith(`${mediaHash}.`)) || null
+    )
   } catch {
     return null
   }
@@ -252,7 +224,10 @@ export function createMediaStore({
       return await download()
     } finally {
       activeDownloads--
-      activeDownloadsByHost.set(host, (activeDownloadsByHost.get(host) ?? 1) - 1)
+      activeDownloadsByHost.set(
+        host,
+        (activeDownloadsByHost.get(host) ?? 1) - 1
+      )
       // Every waiter re-checks its own host limit, so waking all of them keeps
       // the queue free of head-of-line blocking on a single busy host.
       waiting.splice(0).forEach((resume) => resume())
@@ -328,7 +303,9 @@ export function createMediaStore({
   async function localizeSite(site: Site) {
     const urls = new Set<string>()
     for (const entry of site.entries) {
-      for (const url of collectImageUrls(entry.content)) urls.add(url)
+      for (const url of collectDownloadableMediaUrls(entry.content)) {
+        urls.add(url)
+      }
     }
 
     const replacements = new Map<string, string>()
@@ -343,7 +320,7 @@ export function createMediaStore({
       ...site,
       entries: site.entries.map((entry) => ({
         ...entry,
-        content: rewriteImageUrls(entry.content, replacements)
+        content: rewriteLocalizedUrls(entry.content, replacements)
       }))
     }
   }
@@ -351,11 +328,17 @@ export function createMediaStore({
   return { localizeSite }
 }
 
+/**
+ * Every downloaded file the content still points at, so cleanup keeps it. Links
+ * count as well as images: rewriteLocalizedUrls sends a lightbox href to the local
+ * copy too, and deleting a file that is still referenced is worse than keeping
+ * one that is not.
+ */
 export function extractLocalMediaReferences(content: string) {
   const references = new Set<string>()
   if (!content) return references
-  walkImageUrls(content, (url) => {
-    const mediaFile = extractMediaFileNameFromLocalPath(url)
+  walkContentUrls(content, (url) => {
+    const mediaFile = localMediaFileName(url)
     if (mediaFile) references.add(mediaFile)
   })
   return references

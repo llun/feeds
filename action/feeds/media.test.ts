@@ -7,14 +7,14 @@ import sinon from 'sinon'
 
 import {
   cleanupUnusedMediaFiles,
-  collectImageUrls,
+  collectDownloadableMediaUrls,
   collectReferencedMediaFromContents,
   collectReferencedMediaFromEntryDirectory,
   createMediaStore,
   getMediaDirectory,
-  rewriteImageUrls
+  rewriteLocalizedUrls
 } from './media'
-import type { Site } from './parsers'
+import { parseRss, type Site } from './parsers'
 
 async function createMediaDirectory(prefix: string) {
   const rootPath = await fs.mkdtemp(path.join(os.tmpdir(), prefix))
@@ -84,11 +84,19 @@ test('#localizeSite downloads images and rewrites src and srcset', async (t) => 
     content,
     /srcset="\/media\/[a-f0-9]{64}\.png 1x, \/media\/[a-f0-9]{64}\.webp 2x"/
   )
-  t.true(content.includes('href="https://example.com/images/one.png"'))
-  t.deepEqual(await listMediaFiles(mediaDirectory), [
-    `${mediaHash('https://cdn.example.com/two.webp')}.webp`,
-    `${mediaHash('https://example.com/images/one.png')}.png`
-  ].sort())
+  // A lightbox link to an image we downloaded points at the local copy too.
+  t.true(
+    content.includes(
+      `href="/media/${mediaHash('https://example.com/images/one.png')}.png"`
+    )
+  )
+  t.deepEqual(
+    await listMediaFiles(mediaDirectory),
+    [
+      `${mediaHash('https://cdn.example.com/two.webp')}.webp`,
+      `${mediaHash('https://example.com/images/one.png')}.png`
+    ].sort()
+  )
   t.is(fetchStub.callCount, 2)
 })
 
@@ -103,8 +111,126 @@ test('#localizeSite downloads each url once across entries', async (t) => {
       '<img src="https://example.com/a.png" srcset="https://example.com/a.png 2x" />'
     )
   )
-  await store.localizeSite(createSite('<img src="https://example.com/a.png" />'))
+  await store.localizeSite(
+    createSite('<img src="https://example.com/a.png" />')
+  )
 
+  t.is(fetchStub.callCount, 1)
+})
+
+test('#localizeSite localizes a link to an image another entry displays', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-crossentry-')
+  const fetchStub = sinon.stub().resolves(imageResponse())
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(
+    createSite(
+      '<a href="https://example.com/a.png">Full size</a>',
+      '<img src="https://example.com/a.png" />',
+      '<a href="https://example.com/link-only.png">Never shown</a>'
+    )
+  )
+
+  // Images are collected across the whole site, so the entry that only links
+  // to one still reaches the local copy.
+  const localPath = `/media/${mediaHash('https://example.com/a.png')}.png`
+  t.true(localized.entries[0].content.includes(`href="${localPath}"`))
+  t.true(localized.entries[1].content.includes(`src="${localPath}"`))
+  // An image nothing displays is never downloaded, so the link that is its
+  // only reference keeps pointing at the origin.
+  t.true(
+    localized.entries[2].content.includes(
+      'href="https://example.com/link-only.png"'
+    )
+  )
+  t.is(fetchStub.callCount, 1)
+  t.deepEqual(await listMediaFiles(mediaDirectory), [
+    `${mediaHash('https://example.com/a.png')}.png`
+  ])
+})
+
+test('#localizeSite writes files the reference walker still recognises', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-roundtrip-')
+  const fetchStub = sinon.stub().resolves(imageResponse('x', 'image/jpeg'))
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(
+    createSite(
+      '<a href="https://example.com/a.jpeg"><img src="https://example.com/a.jpeg" srcset="https://example.com/a.jpeg 1x" /></a>'
+    )
+  )
+
+  // The name the store writes has to be the name cleanup keeps, or a run would
+  // delete the images the previous one downloaded.
+  const onDisk = await listMediaFiles(mediaDirectory)
+  t.true(onDisk.length > 0)
+  const referenced = collectReferencedMediaFromContents(
+    localized.entries.map((entry) => entry.content)
+  )
+  t.deepEqual([...referenced].sort(), onDisk)
+
+  await cleanupUnusedMediaFiles(mediaDirectory, referenced)
+  t.deepEqual(await listMediaFiles(mediaDirectory), onDisk)
+})
+
+test('#cleanupUnusedMediaFiles keeps a file only a link still points at', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-linkonly-')
+  const fetchStub = sinon.stub().resolves(imageResponse())
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(
+    createSite(
+      '<img src="https://example.com/a.png" />',
+      '<a href="https://example.com/a.png">Full size</a>'
+    )
+  )
+
+  // The entry that displayed the image is gone, and only the link remains --
+  // which is the case that decides whether counting links actually protects
+  // the file from being deleted.
+  const onDisk = await listMediaFiles(mediaDirectory)
+  t.true(onDisk.length > 0)
+  await cleanupUnusedMediaFiles(
+    mediaDirectory,
+    collectReferencedMediaFromContents([localized.entries[1].content])
+  )
+  t.deepEqual(await listMediaFiles(mediaDirectory), onDisk)
+})
+
+test('#localizeSite localizes a relative lightbox href with its image', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-relative-')
+  const fetchStub = sinon.stub().resolves(imageResponse())
+  // Real feeds publish relative URLs; the parser and the store only agree
+  // because the link and the image resolve to the same absolute URL.
+  const site = parseRss('Test Feed', {
+    rss: {
+      channel: [
+        {
+          link: ['https://site.example/'],
+          description: ['d'],
+          lastBuildDate: ['2026-01-01T00:00:00Z'],
+          generator: ['t'],
+          item: [
+            {
+              title: ['E'],
+              link: ['https://feed.example/posts/entry-1'],
+              pubDate: ['2026-01-01T00:00:00Z'],
+              description: [
+                '<a href="/images/one.png"><img src="/images/one.png" /></a>'
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  })
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(site)
+
+  const localPath = `/media/${mediaHash('https://site.example/images/one.png')}.png`
+  t.true(localized.entries[0].content.includes(`href="${localPath}"`))
+  t.true(localized.entries[0].content.includes(`src="${localPath}"`))
   t.is(fetchStub.callCount, 1)
 })
 
@@ -171,14 +297,12 @@ test('#localizeSite leaves data uri images untouched', async (t) => {
 
 test('#localizeSite keeps the remote url for non image responses', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-html-')
-  const fetchStub = sinon
-    .stub()
-    .resolves(
-      new Response('<html>blocked</html>', {
-        status: 200,
-        headers: { 'content-type': 'text/html' }
-      })
-    )
+  const fetchStub = sinon.stub().resolves(
+    new Response('<html>blocked</html>', {
+      status: 200,
+      headers: { 'content-type': 'text/html' }
+    })
+  )
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
   const localized = await store.localizeSite(
@@ -204,6 +328,16 @@ test('#localizeSite names files from the content type when the url has no extens
   t.deepEqual(await listMediaFiles(mediaDirectory), [`${mediaHash(url)}.webp`])
   t.true(
     localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.webp"`)
+  )
+  // Names built from the content type have to survive the walker too, or
+  // cleanup would delete what this path just downloaded.
+  t.deepEqual(
+    [
+      ...collectReferencedMediaFromContents(
+        localized.entries.map((entry) => entry.content)
+      )
+    ],
+    [`${mediaHash(url)}.webp`]
   )
 })
 
@@ -276,7 +410,9 @@ test('#localizeSite rejects oversized media without a content length', async (t)
 
   t.true(sentChunks <= 22, 'stops reading once the cap is exceeded')
   t.true(
-    localized.entries[0].content.includes('src="https://example.com/stream.png"')
+    localized.entries[0].content.includes(
+      'src="https://example.com/stream.png"'
+    )
   )
   t.deepEqual(await listMediaFiles(mediaDirectory), [])
 })
@@ -343,20 +479,20 @@ test('#localizeSite stops downloading after the deadline', async (t) => {
   )
 })
 
-test('#collectImageUrls returns absolute image urls only', (t) => {
-  const urls = collectImageUrls(
+test('#collectDownloadableMediaUrls returns absolute image urls only', (t) => {
+  const urls = collectDownloadableMediaUrls(
     '<img src="https://example.com/a.png" srcset="https://example.com/b.png 2x, data:image/gif;base64,AAA 3x" />' +
       '<img src="/media/local.png" /><a href="https://example.com/c.png">link</a>'
   )
 
-  t.deepEqual(
-    [...urls].sort(),
-    ['https://example.com/a.png', 'https://example.com/b.png']
-  )
+  t.deepEqual([...urls].sort(), [
+    'https://example.com/a.png',
+    'https://example.com/b.png'
+  ])
 })
 
-test('#rewriteImageUrls only replaces mapped urls', (t) => {
-  const content = rewriteImageUrls(
+test('#rewriteLocalizedUrls only replaces mapped urls', (t) => {
+  const content = rewriteLocalizedUrls(
     '<img src="https://example.com/a.png" srcset="https://example.com/a.png 1x, https://example.com/b.png 2x" />',
     new Map([['https://example.com/a.png', '/media/a.png']])
   )
@@ -367,25 +503,50 @@ test('#rewriteImageUrls only replaces mapped urls', (t) => {
   )
 })
 
-test('#collectReferencedMediaFromContents returns local image references', (t) => {
+test('#rewriteLocalizedUrls sends links to a cached image to the local copy', (t) => {
+  const content = rewriteLocalizedUrls(
+    '<a href="https://example.com/a.png"><img src="https://example.com/a.png" /></a>' +
+      '<a href="https://example.com/uncached.png">Full size</a>',
+    new Map([['https://example.com/a.png', '/media/a.png']])
+  )
+
+  t.true(content.includes('href="/media/a.png"'))
+  t.true(content.includes('src="/media/a.png"'))
+  // Nothing was downloaded for this one, so it keeps pointing at the origin.
+  t.true(content.includes('href="https://example.com/uncached.png"'))
+})
+
+test('#collectReferencedMediaFromContents returns every local media reference', (t) => {
+  const a = `${'a'.repeat(64)}.jpg`
+  const b = `${'b'.repeat(64)}.webp`
+  const c = `${'c'.repeat(64)}.png`
+  const d = `${'d'.repeat(64)}.gif`
   const media = collectReferencedMediaFromContents([
-    '<p><img src="/media/a.jpg" srcset="/media/b.webp 1x, /media/c.png 2x" /><a href="/media/d.gif">Download</a></p>',
-    '<img src="https://example.com/remote.png" />'
+    `<p><img src="/media/${a}" srcset="/media/${b} 1x, /media/${c} 2x" /><a href="/media/${d}">Download</a></p>`,
+    '<img src="https://example.com/remote.png" />',
+    // A feed's own /media path is not a file we wrote, so it must not be
+    // mistaken for one and keep an unrelated file alive.
+    '<img src="/media/2019/photo.jpg" />'
   ])
 
-  t.deepEqual([...media].sort(), ['a.jpg', 'b.webp', 'c.png'])
+  // Links count as well as images: a lightbox href is rewritten to the local
+  // copy too, so cleanup would otherwise delete a file still in use.
+  t.deepEqual([...media].sort(), [a, b, c, d].sort())
 })
 
 test('#collectReferencedMediaFromEntryDirectory reads entry files', async (t) => {
-  const rootPath = await fs.mkdtemp(path.join(os.tmpdir(), 'feeds-media-entry-'))
+  const rootPath = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'feeds-media-entry-')
+  )
+  const a = `${'a'.repeat(64)}.jpg`
   await fs.writeFile(
     path.join(rootPath, 'one.json'),
-    JSON.stringify({ content: '<img src="/media/a.jpg" />' })
+    JSON.stringify({ content: `<img src="/media/${a}" />` })
   )
   await fs.writeFile(path.join(rootPath, 'broken.json'), 'not json')
 
   const media = await collectReferencedMediaFromEntryDirectory(rootPath)
-  t.deepEqual([...media], ['a.jpg'])
+  t.deepEqual([...media], [a])
 
   const missing = await collectReferencedMediaFromEntryDirectory(
     path.join(rootPath, 'missing')

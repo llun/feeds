@@ -34,6 +34,36 @@ export const categoriesClassName = (pageState: PageState): string => {
   }
 }
 
+/**
+ * Resolves any URL from entry content against the entry it came from -- media
+ * as well as links, since the reader has no site link to fall back on. Entries
+ * stored before the action started resolving URLs still hold relative ones,
+ * which would otherwise point at the reader's own domain. An absolute URL
+ * keeps its target but comes back re-serialized by the URL parser, so it can
+ * differ from the input by a trailing slash or percent-encoding.
+ *
+ * The base has to be http(s), the same gate the action applies. An entry link
+ * is whatever the feed put in it, and resolving against a `javascript:` base
+ * would turn every "#footnote" in the entry into a script URL.
+ */
+export const resolveEntryUrl = (url: string, entryUrl?: string): string => {
+  const trimmed = url.trim()
+  if (!trimmed || !entryUrl) return url
+  if (trimmed.startsWith('data:')) return url
+  // Same rule the action applies: a scheme-less URL takes the scheme of the
+  // page it ends up on, which is this one, not the feed's. Inheriting the
+  // entry's would render a legacy //host URL from an http feed as plaintext,
+  // and an image that way is blocked outright as mixed content.
+  if (trimmed.startsWith('//')) return `https:${trimmed}`
+  try {
+    const base = new URL(entryUrl)
+    if (base.protocol !== 'http:' && base.protocol !== 'https:') return url
+    return new URL(trimmed, base).toString()
+  } catch {
+    return url
+  }
+}
+
 export type LocationState =
   | {
       type: 'category'

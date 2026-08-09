@@ -1,7 +1,8 @@
 import { parseString } from 'xml2js'
 import sanitizeHtml from 'sanitize-html'
 
-import { mapSrcSet } from '../../lib/media'
+import { mapUrlAttributes, type UrlTarget } from '../../lib/media'
+import { hasDownloadableImageExtension } from './images'
 
 export interface Entry {
   title: string
@@ -21,11 +22,6 @@ export interface Site {
 }
 
 type Values = string[] | { _: string; $: { type: 'text' } }[] | null
-// Which links look like an image, so their URL is worth resolving. This is
-// deliberately not the list of images media.ts downloads: svg belongs here but
-// must never be served from our own origin. Keep the two lists apart.
-const IMAGE_EXTENSION_REGEX =
-  /\.(avif|gif|heic|heif|jpeg|jpg|jxl|png|svg|tif|tiff|webp)$/i
 
 function joinValuesOrEmptyString(values: Values) {
   if (values && values.length > 0 && typeof values[0] !== 'string') {
@@ -45,15 +41,19 @@ function parseAbsoluteHttpUrl(input?: string | null) {
   }
 }
 
-function resolveMediaUrl(inputUrl: string, siteLink: string, entryLink: string) {
+function resolveUrl(
+  inputUrl: string,
+  primaryBase: string,
+  fallbackBase: string
+) {
   const trimmed = inputUrl.trim()
   if (!trimmed) return trimmed
   if (trimmed.startsWith('data:')) return trimmed
 
   if (trimmed.startsWith('//')) {
     const protocol =
-      parseAbsoluteHttpUrl(siteLink)?.protocol ||
-      parseAbsoluteHttpUrl(entryLink)?.protocol ||
+      parseAbsoluteHttpUrl(primaryBase)?.protocol ||
+      parseAbsoluteHttpUrl(fallbackBase)?.protocol ||
       'https:'
     return `${protocol}${trimmed}`
   }
@@ -62,8 +62,8 @@ function resolveMediaUrl(inputUrl: string, siteLink: string, entryLink: string) 
   if (absolute) return absolute.toString()
 
   const base =
-    parseAbsoluteHttpUrl(siteLink)?.toString() ||
-    parseAbsoluteHttpUrl(entryLink)?.toString()
+    parseAbsoluteHttpUrl(primaryBase)?.toString() ||
+    parseAbsoluteHttpUrl(fallbackBase)?.toString()
   if (!base) return trimmed
 
   try {
@@ -73,62 +73,125 @@ function resolveMediaUrl(inputUrl: string, siteLink: string, entryLink: string) 
   }
 }
 
-function resolveSrcSet(srcSet: string, siteLink: string, entryLink: string) {
-  return mapSrcSet(srcSet, (url) => resolveMediaUrl(url, siteLink, entryLink))
+/**
+ * The entry's own URL, made absolute against the site. Atom allows a relative
+ * link (RFC 4287) and RSS feeds publish them too, and a relative one is no use
+ * as a base: the entry's links would fall back to the site, and the reader
+ * stores it as the entry URL, so both its resolution and its "View Original"
+ * would point at the reader's own domain. An already absolute link is returned
+ * byte for byte, since it is part of the key an entry is stored under.
+ *
+ * A feed that does publish relative links is therefore re-keyed once, the first
+ * run after this ships: its stored entries reappear under new keys and the old
+ * ones are cleaned up. That is the cost of the fix, not a bug to undo.
+ */
+function absoluteEntryLink(rawLink: string, siteLink: string) {
+  if (!rawLink || parseAbsoluteHttpUrl(rawLink)) return rawLink
+  return resolveUrl(rawLink, siteLink, '')
 }
 
-function isImageLikeUrl(url: string) {
-  const pathOnly = url.trim().split('#')[0].split('?')[0]
-  return IMAGE_EXTENSION_REGEX.test(pathOnly)
+function resolveContentUrl(
+  url: string,
+  target: UrlTarget,
+  siteLink: string,
+  entryLink: string
+) {
+  // Media resolves against the site first. That base is known to be wrong for a
+  // path-relative URL -- a browser uses the document, so "images/x.jpg" in an
+  // entry at /2024/01/post/ belongs under that directory, not at the root. It
+  // is kept because it is what this project has always stored: every image is
+  // hashed under the URL this produces, so switching to the entry base re-keys
+  // and re-downloads all of them, and that is worth doing on its own with
+  // before-and-after numbers from real feeds rather than as part of a link fix.
+  const asMedia = resolveUrl(url, siteLink, entryLink)
+  if (target === 'media') return asMedia
+  // A link to an image the store can download takes the media base so that when
+  // some entry of the site also displays that image, the two agree and the link
+  // can be swapped for the downloaded copy. This is checked first, before the
+  // scheme-less rule below, because agreeing with the image matters more than
+  // the scheme: disagree and the link is left hotlinking the origin. The trade
+  // is that a link to an image nothing displays gets the site base rather than
+  // the document one -- same as the img rule it is matching, and the reason to
+  // keep the two together. An extension the store will never fetch, svg above
+  // all, buys nothing here and so resolves like any other link.
+  if (hasDownloadableImageExtension(asMedia)) return asMedia
+  // A scheme-less link says "whatever this page is served over", and the page it
+  // ends up on is the reader, not the feed. Baking in the entry's scheme would
+  // pin every such link on an http feed to plaintext, where the browser would
+  // otherwise resolve it against the reader's own https.
+  if (url.trim().startsWith('//')) return `https:${url.trim()}`
+  // Every other link resolves against the entry, the document base a browser
+  // would use and the only one that gets a bare "foo.html" or a "#footnote"
+  // right.
+  return resolveUrl(url, entryLink, siteLink)
 }
 
 export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
   allowedAttributes: {
+    // An attribute added here that carries a URL has to be listed in
+    // URL_ATTRIBUTES in lib/media.ts too, or it keeps whatever relative URL the
+    // feed published and lands on the reader's own domain -- and its tag needs
+    // an allowedSchemesByTag entry below if http(s) is not the right set.
     ...sanitizeHtml.defaults.allowedAttributes,
-    img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset']
+    img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset'],
+    // Kept so the source of a quotation survives into the stored JSON, and
+    // resolved like any other URL rather than left pointing at this site.
+    blockquote: ['cite'],
+    q: ['cite']
   },
-  allowedSchemes: ['http', 'https', 'mailto', 'data'],
+  // Nothing beyond http(s) by default, so an attribute allowed later inherits
+  // the safe set rather than data: or mailto:. Anything that needs more says so
+  // below.
+  allowedSchemes: ['http', 'https'],
   allowedSchemesByTag: {
-    img: ['http', 'https', 'data']
+    // Only an inline image has any use for data:.
+    img: ['http', 'https', 'data'],
+    // sanitize-html looks srcset up by attribute name rather than by tag, so
+    // this is what covers <img srcset>, not the img entry above.
+    srcset: ['http', 'https', 'data'],
+    a: ['http', 'https', 'mailto'],
+    // A citation is a document, so it has no use for either.
+    blockquote: ['http', 'https'],
+    q: ['http', 'https']
   },
   disallowedTagsMode: 'discard',
   enforceHtmlBoundary: true
 }
 
-function sanitizeEntryContent(content: string, siteLink: string, entryLink: string) {
+/**
+ * Rewrites every URL in entry content through `mapUrl`, under the sanitizer
+ * configuration the content is stored with. Both passes over entry content go
+ * through here -- this one and the media store's -- so neither can end up
+ * walking the content under different rules than the other.
+ *
+ * Every tag is visited rather than img and a alone, so a relative URL is
+ * resolved wherever it hides. Schemes are filtered after this runs, so a
+ * javascript: href is still dropped even though it is resolved here.
+ */
+export function mapContentUrls(
+  content: string,
+  mapUrl: (url: string, target: UrlTarget) => string
+) {
   return sanitizeHtml(content, {
     ...ENTRY_CONTENT_SANITIZE_OPTIONS,
     transformTags: {
-      img: (tagName, attribs) => {
-        const nextAttribs = { ...attribs }
-        if (nextAttribs.src) {
-          nextAttribs.src = resolveMediaUrl(
-            nextAttribs.src,
-            siteLink,
-            entryLink
-          )
-        }
-        if (nextAttribs.srcset) {
-          nextAttribs.srcset = resolveSrcSet(
-            nextAttribs.srcset,
-            siteLink,
-            entryLink
-          )
-        }
-        return { tagName, attribs: nextAttribs }
-      },
-      a: (tagName, attribs) => {
-        if (!attribs.href) return { tagName, attribs }
-        const nextAttribs = { ...attribs }
-        const resolvedHref = resolveMediaUrl(nextAttribs.href, siteLink, entryLink)
-        if (isImageLikeUrl(resolvedHref)) {
-          nextAttribs.href = resolvedHref
-        }
-        return { tagName, attribs: nextAttribs }
-      }
+      '*': (tagName, attribs) => ({
+        tagName,
+        attribs: mapUrlAttributes(attribs, mapUrl)
+      })
     }
   })
+}
+
+function sanitizeEntryContent(
+  content: string,
+  siteLink: string,
+  entryLink: string
+) {
+  return mapContentUrls(content, (url, target) =>
+    resolveContentUrl(url, target, siteLink, entryLink)
+  )
 }
 
 function parseDate(dateString: string): number {
@@ -177,7 +240,10 @@ export function parseRss(feedTitle: string, xml: any): Site {
             pubDate,
             description: entryDescription
           } = item
-          const entryLink = joinValuesOrEmptyString(entryLinks)
+          const entryLink = absoluteEntryLink(
+            joinValuesOrEmptyString(entryLinks),
+            siteLink
+          )
           return {
             title: joinValuesOrEmptyString(title).trim(),
             link: entryLink,
@@ -223,7 +289,10 @@ export function parseAtom(feedTitle: string, xml: any): Site {
             : summary
               ? summary[0]._
               : ''
-          const entryLink = (itemLink && itemLink.$.href) || ''
+          const entryLink = absoluteEntryLink(
+            (itemLink && itemLink.$.href) || '',
+            siteUrl
+          )
           return {
             title: joinValuesOrEmptyString(title).trim(),
             link: entryLink,
