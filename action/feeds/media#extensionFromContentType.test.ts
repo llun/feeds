@@ -3,10 +3,11 @@ import test from 'ava'
 import { extensionFromContentType } from './media'
 
 /**
- * The response names the type, so these cases are all reachable by any feed
- * whose image host is hostile or merely broken. The oracle throughout is what
- * a browser fetching the same URL would conclude, which is the fetch spec's
- * "extract a MIME type".
+ * The response names the type, so these cases are reachable by any feed whose
+ * image host is hostile or merely broken -- except the padded values below,
+ * which headers.get would have stripped, and which pin this parser's own
+ * stripping instead. The oracle throughout is what a browser fetching the same
+ * URL would conclude, which is the fetch spec's "extract a MIME type".
  */
 
 test('#extensionFromContentType reads the last type a repeated header declares', (t) => {
@@ -15,6 +16,11 @@ test('#extensionFromContentType reads the last type a repeated header declares',
   t.is(extensionFromContentType('image/png, image/png'), '.png')
   t.is(extensionFromContentType('image/png; charset=binary, text/html'), null)
   t.is(extensionFromContentType('text/html, image/png'), '.png')
+  // A last type that parses but names something we do not serve still wins.
+  // Both of these need the full token class to parse at all, so a narrower
+  // one would skip them and let the earlier image/png through.
+  t.is(extensionFromContentType('image/png, image/x-icon'), null)
+  t.is(extensionFromContentType('image/png, application/vnd.ms-excel'), null)
 })
 
 test('#extensionFromContentType skips a value the spec cannot use', (t) => {
@@ -52,11 +58,29 @@ test('#extensionFromContentType ignores a comma inside a quoted parameter', (t) 
 test('#extensionFromContentType strips only the whitespace the spec strips', (t) => {
   t.is(extensionFromContentType('  image/png  '), '.png')
   t.is(extensionFromContentType('\timage/png\t'), '.png')
-  // JS trim() also strips U+00A0, which the spec does not -- and a value the
+  // Escaped rather than literal: U+00A0 renders as a space, so these would
+  // otherwise read identically to the U+0020 assertions above while expecting
+  // the opposite. JS trim() takes U+00A0 and the spec does not, so a value the
   // browser refuses must not become an image here.
-  t.is(extensionFromContentType('image/png '), null)
-  t.is(extensionFromContentType(' image/png'), null)
-  t.is(extensionFromContentType('text/html, image/png'), null)
+  t.is(extensionFromContentType('image/png\u00a0'), null)
+  t.is(extensionFromContentType('\u00a0image/png'), null)
+  t.is(extensionFromContentType('text/html,\u00a0image/png'), null)
+})
+
+test('#extensionFromContentType strips a long whitespace run in linear time', (t) => {
+  // Scanned rather than matched with /[\t\n\r ]+$/, which is quadratic on an
+  // interior run. A feed's image host picks this header, and 16 KiB sits well
+  // inside Node's default maxHeaderSize.
+  const hostile = `a${' '.repeat(16198)}b`
+  const started = process.hrtime.bigint()
+  for (let attempt = 0; attempt < 40; attempt++) {
+    t.is(extensionFromContentType(hostile), null)
+  }
+  const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6
+  // The regex form took ~137ms per call, so 40 of them took 5.5 seconds. The
+  // scan is under 0.01ms; a one second bound leaves room for a slow machine
+  // without admitting the regression back.
+  t.true(elapsedMs < 1000, `40 refusals took ${elapsedMs.toFixed(0)}ms`)
 })
 
 test('#extensionFromContentType refuses a type naming an object property', (t) => {

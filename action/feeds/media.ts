@@ -54,13 +54,31 @@ function createMediaHash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
 }
 
-// Only the whitespace the spec strips. String.trim would also take U+00A0 and
-// the other Unicode spaces, laundering a value the reader's browser refuses
-// into a clean type here.
-const HTTP_WHITESPACE = /^[\t\n\r ]+|[\t\n\r ]+$/g
+const HTTP_WHITESPACE = new Set(['\t', '\n', '\r', ' '])
+
+/**
+ * Strips only the whitespace the spec strips. String.trim would also take
+ * U+00A0 and the other Unicode spaces, laundering a value the reader's browser
+ * refuses into a clean type here.
+ *
+ * Scanned rather than matched with /[\t\n\r ]+$/, which is quadratic on an
+ * interior run: the engine has to try the trailing alternative at every
+ * position inside it. A 16 KiB header of one long run -- well inside Node's
+ * default maxHeaderSize -- costs 137ms of blocked event loop per refusal that
+ * way, and a feed's image host picks the header.
+ */
+function stripHttpWhitespace(value: string) {
+  let start = 0
+  let end = value.length
+  while (start < end && HTTP_WHITESPACE.has(value[start])) start++
+  while (end > start && HTTP_WHITESPACE.has(value[end - 1])) end--
+  return value.slice(start, end)
+}
+
 // What "parses as a media type" comes to: a type and a subtype, each a
-// non-empty run of HTTP token characters. Anchored and unnested, so it cannot
-// backtrack on a long header.
+// non-empty run of HTTP token characters. The candidate is lowercased before
+// this runs, so the class needs no A-Z. Anchored and unnested, so a long
+// header costs one linear pass rather than exponential backtracking.
 const MEDIA_TYPE = /^[!#$%&'*+\-.^_`|~0-9a-z]+\/[!#$%&'*+\-.^_`|~0-9a-z]+$/
 
 /**
@@ -106,17 +124,15 @@ export function extensionFromContentType(contentType?: string | null) {
   // judge the body by a header the reader's browser ignores.
   let essence = ''
   for (const value of splitHeaderValue(contentType)) {
-    const candidate = value
-      .split(';')[0]
-      .replace(HTTP_WHITESPACE, '')
-      .toLowerCase()
+    const candidate = stripHttpWhitespace(value.split(';')[0]).toLowerCase()
     // Fetch skips a value it cannot parse and any */* rather than letting
     // either be the answer, so junk a proxy appended cannot erase a real type.
     //
     // Requiring a media type here is also what keeps `constructor` and
     // `__proto__` -- the only Object.prototype keys that survive lowercasing --
     // away from the lookup below, which would otherwise fall through to the
-    // prototype and hand normalizeImageExtension a function to trim.
+    // prototype and hand normalizeImageExtension something with no trim to
+    // call: Object for constructor, Object.prototype for __proto__.
     if (!MEDIA_TYPE.test(candidate) || candidate === '*/*') continue
     essence = candidate
   }
