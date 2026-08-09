@@ -1,0 +1,47 @@
+app/globals.css
+  s_4e02b770eae775::t_8e897befc68bc8 451-475
+readme.md
+  s_4e02b770eae775::t_78f760f9efd42c 39-42
+action/feeds/parsers#media-url-resolution.test.ts
+  s_4e02b770eae775::t_92b8bdfc163383 123-126
+action/feeds/parsers#parseRss.test.ts
+  s_4e02b770eae775::t_80d287b93a5cbb 31-33
+action/feeds/hackernews.ts
+  s_4e02b770eae775::t_bdc97ce0da8599 1-30,36,39,44-174,176-186,190-192,194-204
+  s_4e02b770eae775::t_1c4d58a311822d 31-35,37-38,40-43
+  s_4e02b770eae775::t_8434d26829ee1b 175,187-189,193
+action/feeds/hackernews.test.ts
+  s_4e02b770eae775::t_455f84166c3cf0 286-288
+  s_4e02b770eae775::t_62a234026a8e68 53,63-64,69,76-91
+  s_4e02b770eae775::t_ec0f24f58201a4 103,111,144,166,192,211,230,252,282,299,318
+  s_4e02b770eae775::t_f181bdd7f49c14 1-7,9-10,13,18-23,25,27-28,31-52,54-55,60-62,65-68,70-75,92-102,104-110,112-123,132-143,145-157,159-165,167-186,190-191,193-210,212-229,231-251,253-281,283-285,289-298,300-306,308-317,319-323
+  s_4e02b770eae775::t_1e1b539679d8c1 8
+  s_4e02b770eae775::t_5724d088b5a624 124-131
+  s_4e02b770eae775::t_3132dfe617fa10 56-59,158,187-189,307
+  s_4e02b770eae775::t_16d36b25dd0328 11-12,14-17,24,26,29-30
+action/feeds/index.ts
+  s_4e02b770eae775::t_cd682db58b89ba 45-48
+  s_4e02b770eae775::t_d822324034aacf 30
+action/feeds/parsers.ts
+  s_4e02b770eae775::t_1e2b9466294f40 113
+  s_4e02b770eae775::t_97c179df36a049 282-286
+  s_4e02b770eae775::t_8fa1d81b7a26e1 144-162
+  s_4e02b770eae775::t_9802df78d71556 17-20
+  s_4e02b770eae775::t_8c3b24792bcc10 281
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "af5bdd090a5ce4a70b2e5d28580c7556ff5b3e37",
+  "prompts": {},
+  "sessions": {
+    "s_4e02b770eae775": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_018b2eaeaffeHT6VwDuSokmfuR",
+        "model": "kimi-k3"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
