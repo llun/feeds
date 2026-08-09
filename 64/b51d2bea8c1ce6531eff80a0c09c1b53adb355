@@ -1,0 +1,19 @@
+package.json
+  s_0e0da9eefa0926::t_ec5e1274c3e6b6 73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "64b51d2bea8c1ce6531eff80a0c09c1b53adb355",
+  "prompts": {},
+  "sessions": {
+    "s_0e0da9eefa0926": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0181f04caffek3wks2erPimd05",
+        "model": "kimi-k3"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
