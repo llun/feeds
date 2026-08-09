@@ -3,11 +3,15 @@ import test from 'ava'
 import { extensionFromContentType } from './media'
 
 /**
- * The response names the type, so these cases are reachable by any feed whose
- * image host is hostile or merely broken. Measured against a real socket rather
- * than the Response constructor, which normalizes where the wire does not:
- * headers.get strips leading HTTP whitespace and nothing else, so trailing
- * whitespace and U+00A0 on either side arrive verbatim.
+ * Measured against a real socket rather than the Response constructor, which
+ * normalizes where the wire does not: headers.get strips leading SP and HTAB
+ * and nothing else, so a trailing SP or HTAB, and U+00A0 on either side, all
+ * arrive verbatim. Those cases are reachable by any feed whose image host is
+ * hostile or merely broken.
+ *
+ * A value carrying CR, LF, \v or \f never arrives at all -- undici rejects the
+ * response before headers.get sees it -- so those assertions pin the whitespace
+ * set's definition rather than a shape off the wire.
  *
  * The oracle throughout is what a browser fetching the same URL would conclude,
  * which is the fetch spec's "extract a MIME type".
@@ -22,11 +26,13 @@ test('#extensionFromContentType reads the last type a repeated header declares',
   // A last type that parses but names something we do not serve still wins.
   // These need the full token class to parse at all, so a narrower one would
   // skip them and let the earlier image/png through -- the fail-open
-  // direction, since a skipped value does not overwrite the answer. The third
-  // carries every token character the other two do not.
+  // direction, since a skipped value does not overwrite the answer. Between
+  // them they carry every character of the class except `+`, which
+  // `image/png, image/svg+xml` pins over in images.test.ts.
   t.is(extensionFromContentType('image/png, image/x-icon'), null)
   t.is(extensionFromContentType('image/png, application/vnd.ms-excel'), null)
   t.is(extensionFromContentType("image/png, image/!#$%&'*^_`|~"), null)
+  t.is(extensionFromContentType('image/png, image/h265'), null)
 })
 
 test('#extensionFromContentType skips a value the spec cannot use', (t) => {
@@ -41,7 +47,13 @@ test('#extensionFromContentType skips a value the spec cannot use', (t) => {
   t.is(extensionFromContentType('image/png, /png'), '.png')
   t.is(extensionFromContentType('image/png, a/b/c'), '.png')
   t.is(extensionFromContentType('image/png, image /png'), '.png')
-  t.is(extensionFromContentType('image/png, "image/png"'), '.png')
+  // Quotes are not token characters. Led by text/html rather than image/png,
+  // or accepting the quoted value would give the same answer as skipping it
+  // and the assertion would pass either way.
+  t.is(extensionFromContentType('text/html, "image/png"'), null)
+  // A parameter is not a value: the segment after the ; can never become the
+  // essence, however much it looks like one.
+  t.is(extensionFromContentType('text/html; image/png'), null)
 })
 
 test('#extensionFromContentType ignores a comma inside a quoted parameter', (t) => {

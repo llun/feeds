@@ -513,14 +513,17 @@ test('#localizeSite names files from the content type when the url names a diffe
 test('#localizeSite aborts the request when it refuses the response', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-abort-')
   const signals: AbortSignal[] = []
+  const responses: Response[] = []
   // An unread body holds its socket until the remote end drops it, so a
   // refusal has to abort rather than just walk away.
   const fetchStub = sinon.stub().callsFake(async (_url: string, init: any) => {
     signals.push(init.signal)
-    return new Response('<html>blocked</html>', {
+    const response = new Response('<html>blocked</html>', {
       status: 200,
       headers: { 'content-type': 'text/html' }
     })
+    responses.push(response)
+    return response
   })
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
@@ -530,6 +533,9 @@ test('#localizeSite aborts the request when it refuses the response', async (t) 
 
   t.is(signals.length, 1)
   t.true(signals[0].aborted)
+  // And the refusal has to happen before the body is read, or the abort is
+  // saving a socket we already paid to drain.
+  t.false(responses[0].bodyUsed)
 })
 
 test('#localizeSite leaves the request alone when it accepts the response', async (t) => {
