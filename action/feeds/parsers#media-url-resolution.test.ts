@@ -399,6 +399,19 @@ test('#parseRss re-serializes an absolute URL in content', (t) => {
   )
 })
 
+test('#parseRss trims a scheme-less URL before giving it a scheme', (t) => {
+  // The scheme-less branch never reaches resolveAgainstBase, so the trim there
+  // pins nothing here -- both of the action's copies of this rule need their
+  // own whitespace case. On an http feed, so a copy that tested the untrimmed
+  // URL and fell through to the base is caught by the link's scheme too.
+  const output = contentOf(
+    '<a href="\u00a0//h.example/x\u00a0">l</a><img src="\u00a0//h.example/x.png\u00a0" />',
+    { site: 'http://site.example/', entry: 'http://feed.example/posts/1' }
+  )
+  t.true(output.includes('href="https://h.example/x"'), output)
+  t.true(output.includes('src="http://h.example/x.png"'), output)
+})
+
 test('#parseRss survives a URL the parser rejects', (t) => {
   // A feed is free to publish a URL with a space in it. Resolution has to hand
   // it back rather than throw, or one bad href takes the whole feed's parse
@@ -436,7 +449,8 @@ test('#parseRss resolves a scheme-prefixed URL like a browser', (t) => {
     )
   )
   // The entry link itself is exempt: absolutizeEntryLink hands back anything
-  // the URL parser accepts on its own, byte for byte, because it is a key.
+  // the URL parser accepts as an http(s) URL on its own, byte for byte, because
+  // it is a key. A link on any other scheme falls through and is re-serialized.
   t.is(
     parseRss(
       'Test Feed',
@@ -451,10 +465,11 @@ test('#parseRss picks one base rather than trying both', (t) => {
   // not a second attempt at a URL that failed against a good one. On a
   // mixed-scheme feed the difference shows: `http:?q` is absolute against the
   // https entry link, so the parser rejects it and it stays as published --
-  // resolving it against the http site link instead would silently move it to
-  // a host the feed never named.
+  // resolving it against the http site link instead would move it onto another
+  // origin entirely, and downgrade a URL the entry published over https to
+  // plaintext http on the way.
   const links = {
-    site: 'http://site.example/',
+    site: 'http://other.example/',
     entry: 'https://site.example/blog/post/'
   }
   for (const url of ['http:?q', 'http:', 'http:/', 'http:#f']) {

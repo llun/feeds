@@ -39,10 +39,11 @@ function joinValuesOrEmptyString(values: Values) {
  * falling back to the second when the first is not a usable http(s) URL. The
  * base is chosen once, up front: the fallback covers a feed that gives no
  * usable entry link, not a URL that fails to resolve against a good one. A URL
- * that resolves against the chosen base is handed back trimmed, which is where
- * the action parts from the reader -- the reader returns the input untouched
- * instead, since it has no sanitizer downstream to drop a blank attribute for
- * it.
+ * that does not resolve against the chosen base is handed back trimmed, which
+ * is where the action parts from the reader -- the reader returns the input
+ * untouched instead, since it has no sanitizer downstream to drop a blank
+ * attribute for it. A URL that does resolve comes back resolved, and the two
+ * halves agree on it exactly.
  */
 function resolveUrl(
   inputUrl: string,
@@ -50,20 +51,14 @@ function resolveUrl(
   fallbackBase: string
 ) {
   const trimmed = inputUrl.trim()
+  const base = parseHttpUrl(primaryBase) ?? parseHttpUrl(fallbackBase)
 
   // Deliberately not the reader's rule, which pins these to https. A
   // scheme-less URL takes no base, so this is decided here rather than in
   // resolveAgainstBase: the action inherits the feed's own scheme, and only
   // falls back to https when the feed offers no usable base to inherit from.
-  if (trimmed.startsWith('//')) {
-    const protocol =
-      parseHttpUrl(primaryBase)?.protocol ||
-      parseHttpUrl(fallbackBase)?.protocol ||
-      'https:'
-    return `${protocol}${trimmed}`
-  }
+  if (trimmed.startsWith('//')) return `${base?.protocol ?? 'https:'}${trimmed}`
 
-  const base = parseHttpUrl(primaryBase) ?? parseHttpUrl(fallbackBase)
   return resolveAgainstBase(trimmed, base?.href) ?? trimmed
 }
 

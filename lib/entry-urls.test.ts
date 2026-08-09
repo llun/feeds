@@ -215,11 +215,11 @@ test('#resolveAgainstBase resolves against an http(s) base', (t) => {
   // C0 controls itself, so a plain '  /posts/other  ' passes with the trim()
   // removed and pins nothing. A feed writing &nbsp; beside a URL does not.
   t.is(
-    resolveAgainstBase(' /posts/other ', ENTRY_URL),
+    resolveAgainstBase('\u00a0/posts/other\u00a0', ENTRY_URL),
     'https://feed.example/posts/other'
   )
   t.is(
-    resolveAgainstBase('　/posts/other', ENTRY_URL),
+    resolveAgainstBase('\u3000/posts/other', ENTRY_URL),
     'https://feed.example/posts/other'
   )
   t.is(
@@ -343,6 +343,15 @@ test('#resolveAgainstEntry resolves relative urls against the entry', (t) => {
     'https://x.example/y'
   )
   t.is(resolveAgainstEntry('//x.example/y'), 'https://x.example/y')
+  // Trimmed before the scheme is prepended, and asserted on an http entry so a
+  // copy that dropped the trim, or that tested the untrimmed URL and fell
+  // through to the base, is caught rather than agreeing by accident. This is
+  // the one branch that never reaches resolveAgainstBase, so it needs its own
+  // whitespace case --   is what a feed writes as &nbsp;.
+  t.is(
+    resolveAgainstEntry('\u00a0//x.example/y\u00a0', 'http://feed.example/p'),
+    'https://x.example/y'
+  )
 })
 
 test('#resolveAgainstEntry keeps urls it must not rewrite', (t) => {

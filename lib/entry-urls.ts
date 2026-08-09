@@ -10,10 +10,16 @@
  * why resolveAgainstBase below is shared rather than written twice -- it was
  * written twice, and they drifted. What each half does with a URL it cannot
  * resolve, and what it does with a scheme-less one, is its own policy: the
- * action states both in its own resolveUrl, the reader in resolveAgainstEntry
- * below. Only resolveAgainstBase and parseHttpUrl are common to both halves --
- * resolveAgainstEntry lives here to keep the reader from importing lib/utils.ts
- * and its storage layer, not because the action has any use for it.
+ * action's lives in resolveUrl and resolveContentUrl in action/feeds/parsers.ts
+ * -- the first inherits the feed's scheme, the second pins a content link to
+ * https before the first sees it -- and the reader's in resolveAgainstEntry
+ * below.
+ *
+ * Of the resolution functions here, resolveAgainstBase is the one both halves
+ * go through and parseHttpUrl is its gate. resolveAgainstEntry is the reader's
+ * alone; it sits here so the action's agreement test can import it without
+ * pulling in lib/utils.ts and its storage layer, not because the action itself
+ * uses it.
  *
  * What the action may download is likewise its own policy and lives in
  * action/feeds/images.ts.
@@ -177,11 +183,17 @@ export function parseHttpUrl(input?: string | null) {
  *
  * Null rather than the input itself, because "as it is" is precisely what the
  * two callers do not agree on: the action hands back the trimmed URL and the
- * reader the original, whitespace and all. Set the scheme-less rule aside --
- * that one takes no base and stays with each caller -- and every difference
- * between the two copies of this function was one of these four cases, so
- * returning null moves the disagreement into a `??` at each call site instead
- * of duplicating all the rules that lead up to it.
+ * reader the original, whitespace and all. These four cases are the whole of
+ * that disagreement, so returning null moves it into a `??` at each call site
+ * instead of duplicating all the rules that lead up to it.
+ *
+ * The two copies differed in two further ways, neither about the fallback and
+ * so neither settled by the `??`. A scheme-less URL takes no base, so that rule
+ * stays with each caller. A scheme-prefixed one -- `http:x/y`, no slashes --
+ * the action used to short-circuit as absolute where the reader resolved it;
+ * sharing this function settles that on the reader's answer, which is the
+ * browser's. See #resolveAgainstBase resolves a scheme-prefixed url like a
+ * browser.
  *
  * An absolute URL keeps its target but comes back re-serialized by the URL
  * parser, so it can differ from the input by a trailing slash or by
