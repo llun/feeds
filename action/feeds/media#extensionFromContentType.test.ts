@@ -4,10 +4,10 @@ import { extensionFromContentType } from './media'
 
 /**
  * Measured against a real socket rather than the Response constructor, which
- * normalizes where the wire does not: headers.get strips leading SP and HTAB
- * and nothing else, so a trailing SP or HTAB, and U+00A0 on either side, all
- * arrive verbatim. Those cases are reachable by any feed whose image host is
- * hostile or merely broken.
+ * normalizes where the wire does not: the wire delivers leading SP and HTAB
+ * already stripped and nothing else, so a trailing SP or HTAB, and U+00A0 on
+ * either side, all arrive verbatim. Those cases are reachable by any feed
+ * whose image host is hostile or merely broken.
  *
  * A value carrying CR, LF, \v or \f never arrives at all -- undici rejects the
  * response before headers.get sees it -- so those assertions pin the whitespace
@@ -26,13 +26,21 @@ test('#extensionFromContentType reads the last type a repeated header declares',
   // A last type that parses but names something we do not serve still wins.
   // These need the full token class to parse at all, so a narrower one would
   // skip them and let the earlier image/png through -- the fail-open
-  // direction, since a skipped value does not overwrite the answer. Between
-  // them they carry every character of the class except `+`, which
-  // `image/png, image/svg+xml` pins over in images.test.ts.
+  // direction, since a skipped value does not overwrite the answer.
   t.is(extensionFromContentType('image/png, image/x-icon'), null)
   t.is(extensionFromContentType('image/png, application/vnd.ms-excel'), null)
-  t.is(extensionFromContentType("image/png, image/!#$%&'*^_`|~"), null)
   t.is(extensionFromContentType('image/png, image/h265'), null)
+  // Carrying the whole class covers the 44 characters image/png does not use:
+  // drop any of them and this last value stops parsing, so image/png wins and
+  // the answer flips. The seven that image/png does use need no assertion here
+  // -- dropping one of those fails every test in the suite that expects an
+  // image at all.
+  t.is(
+    extensionFromContentType(
+      "image/png, image/!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyz"
+    ),
+    null
+  )
 })
 
 test('#extensionFromContentType skips a value the spec cannot use', (t) => {
@@ -47,10 +55,15 @@ test('#extensionFromContentType skips a value the spec cannot use', (t) => {
   t.is(extensionFromContentType('image/png, /png'), '.png')
   t.is(extensionFromContentType('image/png, a/b/c'), '.png')
   t.is(extensionFromContentType('image/png, image /png'), '.png')
-  // Quotes are not token characters. Led by text/html rather than image/png,
-  // or accepting the quoted value would give the same answer as skipping it
-  // and the assertion would pass either way.
-  t.is(extensionFromContentType('text/html, "image/png"'), null)
+  // splitHeaderValue keeps the quote characters, so a quoted value fails
+  // MEDIA_TYPE and is skipped. A closed quote cannot show that on its own --
+  // a quoted candidate never resolves to an extension, so skipping it and
+  // accepting it both answer null whatever leads. Only a quote that opens a
+  // value separates them: skipping preserves the type before it, accepting
+  // erases it.
+  t.is(extensionFromContentType('image/png, "text/html'), '.png')
+  t.is(extensionFromContentType('text/html, "image/png'), null)
+  t.is(extensionFromContentType('image/png, "text/html"'), '.png')
   // A parameter is not a value: the segment after the ; can never become the
   // essence, however much it looks like one.
   t.is(extensionFromContentType('text/html; image/png'), null)
