@@ -1,0 +1,34 @@
+action/feeds/hackernews.test.ts
+  s_4e02b770eae775::t_870bbec00d3eaa 349-428,439-511
+  s_4e02b770eae775::t_c5be0790050aef 65-71
+  s_4e02b770eae775::t_f2d4d316ce3a8c 8
+  s_4e02b770eae775::t_af453504428c3e 101-118
+  s_4e02b770eae775::t_6919897bf66762 429-438
+action/feeds/parsers.ts
+  s_4e02b770eae775::t_6f52b248040c93 19-21
+  s_4e02b770eae775::t_f0357e983d3137 194-197,201-202,206
+action/feeds/hackernews.ts
+  s_4e02b770eae775::t_6919897bf66762 157-160,234-236
+  s_4e02b770eae775::t_221890e9e8e7c2 5,14-18,21-30,46-51,65-68,82-91,97-119,125-147,153-156,169-171,186-188,190,196,198-204,208,211,217-233,237-242,257-262,271-273,279-280,282,290-296,299,309-312
+action/feeds/parsers#parseRss.test.ts
+  s_4e02b770eae775::t_9a77084d70709c 47
+  s_4e02b770eae775::t_29c915bd18a559 10
+  s_4e02b770eae775::t_6919897bf66762 59
+  s_4e02b770eae775::t_889393d8c74beb 36-46,48-58,60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "bb8d201c11c777154376fab78fd5bee2727db5cb",
+  "prompts": {},
+  "sessions": {
+    "s_4e02b770eae775": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_018b2eaeaffeHT6VwDuSokmfuR",
+        "model": "kimi-k3"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
