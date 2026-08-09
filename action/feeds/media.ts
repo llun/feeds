@@ -54,13 +54,102 @@ function createMediaHash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
 }
 
+const HTTP_WHITESPACE = new Set(['\t', '\n', '\r', ' '])
+
+/**
+ * Strips only the whitespace the spec strips. String.trim would also take
+ * U+00A0 and the other Unicode spaces, laundering a value the reader's browser
+ * refuses into a clean type here.
+ *
+ * Scanned rather than matched with /[\t\n\r ]+$/, which is quadratic on an
+ * interior run: the engine has to try the trailing alternative at every
+ * position inside it. A header of one run just under Node's default
+ * maxHeaderSize -- 16 KiB, and it caps the whole header block -- costs 137ms
+ * of blocked event loop per refusal that way, and a feed's image host picks
+ * the header.
+ */
+function stripHttpWhitespace(value: string) {
+  let start = 0
+  let end = value.length
+  while (start < end && HTTP_WHITESPACE.has(value[start])) start++
+  while (end > start && HTTP_WHITESPACE.has(value[end - 1])) end--
+  return value.slice(start, end)
+}
+
+// What "parses as a media type" comes to: a type and a subtype, each a
+// non-empty run of HTTP token characters. The candidate is lowercased before
+// this runs, so the class needs no A-Z. Anchored and unnested, so a long
+// header costs one linear pass rather than exponential backtracking.
+const MEDIA_TYPE = /^[!#$%&'*+\-.^_`|~0-9a-z]+\/[!#$%&'*+\-.^_`|~0-9a-z]+$/
+
+/**
+ * Splits a header value on the commas that separate repeated headers, which is
+ * how headers.get returns them. A double quote opens a run that lasts to its
+ * closing quote or to the end of the value, and commas inside that run are not
+ * separators -- the same rule Fetch splits by. A bare split on
+ * `text/html;x="a,image/png` would answer image/png, a type no browser sees.
+ */
+function splitHeaderValue(value: string) {
+  const values: string[] = []
+  let current = ''
+  let quoted = false
+  for (let index = 0; index < value.length; index++) {
+    const character = value[index]
+    if (quoted) {
+      current += character
+      // An escaped quote must not close the run, or the comma after it splits
+      // a value Fetch keeps whole.
+      if (character === '\\' && index + 1 < value.length)
+        current += value[++index]
+      else if (character === '"') quoted = false
+      continue
+    }
+    if (character === '"') {
+      quoted = true
+      current += character
+    } else if (character === ',') {
+      values.push(current)
+      current = ''
+    } else {
+      current += character
+    }
+  }
+  values.push(current)
+  return values
+}
+
+const LOGGED_TYPE_LIMIT = 120
+
+/** Enough of a refused type to recognise it, without logging a 16 KiB header. */
+function summarizeType(contentType: string) {
+  return contentType.length > LOGGED_TYPE_LIMIT
+    ? `${contentType.slice(0, LOGGED_TYPE_LIMIT)}... (${contentType.length} chars)`
+    : contentType
+}
+
 export function extensionFromContentType(contentType?: string | null) {
   if (!contentType) return null
-  const normalizedType = contentType.split(';')[0].trim().toLowerCase()
+  // headers.get joins repeated Content-Type headers, and the fetch spec
+  // resolves them to the last one it can parse -- so reading the first would
+  // judge the body by a header the reader's browser ignores.
+  let essence = ''
+  for (const value of splitHeaderValue(contentType)) {
+    const candidate = stripHttpWhitespace(value.split(';')[0]).toLowerCase()
+    // Fetch skips a value it cannot parse and any */* rather than letting
+    // either be the answer, so junk a proxy appended cannot erase a real type.
+    //
+    // Requiring a media type here is also what keeps `constructor` and
+    // `__proto__` -- the only Object.prototype keys that survive lowercasing --
+    // away from the lookup below, which would otherwise fall through to the
+    // prototype and hand normalizeImageExtension something with no trim to
+    // call: Object for constructor, Object.prototype for __proto__.
+    if (!MEDIA_TYPE.test(candidate) || candidate === '*/*') continue
+    essence = candidate
+  }
   // Routed through images.ts rather than returned straight from the map, so an
   // entry added here that is not downloadable -- svg above all -- becomes a
   // refused download instead of a file served from our own origin.
-  return normalizeImageExtension(CONTENT_TYPE_EXTENSIONS[normalizedType])
+  return normalizeImageExtension(CONTENT_TYPE_EXTENSIONS[essence])
 }
 
 export function extensionFromUrl(url: string) {
@@ -263,13 +352,31 @@ export function createMediaStore({
         throw new Error(`Unexpected response status ${response.status}`)
       }
 
-      const contentTypeExtension = extensionFromContentType(
-        response.headers.get('content-type')
-      )
+      // A server that sent the header at all is taken at its word, and the URL
+      // extension does not get to overrule it. Otherwise a text/html or
+      // image/svg+xml body answering a .png URL is written to public/media on
+      // the strength of the URL alone, and since rewriteLocalizedUrls sends a
+      // lightbox href to the local copy too, those bytes become a one-click
+      // same-origin navigation under link text the feed chose. headers.get
+      // returns null only for a header that is absent, so an empty or
+      // parameters-only one is refused rather than mistaken for silence.
+      const contentType = response.headers.get('content-type')
+      const contentTypeExtension = extensionFromContentType(contentType)
+      if (contentType !== null && !contentTypeExtension) {
+        // Truncated because the remote picks this header and the log is public:
+        // a 16 KiB one costs a 16 KiB line per refused URL, and on main these
+        // responses were downloaded rather than logged at all.
+        throw new Error(
+          `Unsupported media type "${summarizeType(contentType)}"`
+        )
+      }
+
+      // Anything reaching here without a content type extension had no header
+      // at all, so the URL is the only thing left naming a type.
       const extension = contentTypeExtension || urlExtension
       if (!extension) {
         throw new Error(
-          `Unsupported media type ${response.headers.get('content-type')}`
+          'Media response declares no type and its URL names no image extension'
         )
       }
 
@@ -281,6 +388,11 @@ export function createMediaStore({
       await fs.writeFile(path.join(mediaDirectory, fileName), buffer)
       return `${LOCAL_MEDIA_PATH}/${fileName}`
     } catch (error: any) {
+      // Every throw that lands before readBodyWithinLimit starts streaming
+      // leaves the body unread, and an unread body holds its socket until the
+      // remote end drops it. The finally below clears the download timeout on
+      // the way out, so that timer will never fire and release it for us.
+      controller.abort()
       console.error(`Fail to download media ${url}: ${error.message}`)
       return null
     } finally {
