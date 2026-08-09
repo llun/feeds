@@ -9,8 +9,11 @@
  * therefore have to land on the same absolute URL for the same input, which is
  * why resolveAgainstBase below is shared rather than written twice -- it was
  * written twice, and they drifted. What each half does with a URL it cannot
- * resolve, and what it does with a scheme-less one, is its own policy and is
- * stated at its own call site.
+ * resolve, and what it does with a scheme-less one, is its own policy: the
+ * action states both in its own resolveUrl, the reader in resolveAgainstEntry
+ * below. Only resolveAgainstBase and parseHttpUrl are common to both halves --
+ * resolveAgainstEntry lives here to keep the reader from importing lib/utils.ts
+ * and its storage layer, not because the action has any use for it.
  *
  * What the action may download is likewise its own policy and lives in
  * action/feeds/images.ts.
@@ -102,8 +105,8 @@ export function withBasePath(url: string, basePath: string) {
 /**
  * Where a URL attribute points: `link` at another document, `media` at a
  * subresource the page loads. Both resolve against the same base; the
- * distinction is what the media store downloads, see collectImageUrls in
- * action/feeds/media.ts.
+ * distinction is what the media store downloads, see
+ * collectDownloadableMediaUrls in action/feeds/media.ts.
  */
 export type UrlTarget = 'link' | 'media'
 
@@ -173,11 +176,12 @@ export function parseHttpUrl(input?: string | null) {
  * http(s) URL, or because the URL parser rejects the pair.
  *
  * Null rather than the input itself, because "as it is" is precisely what the
- * two callers have never agreed on: the action hands back the trimmed URL and
- * the reader the original, whitespace and all. Every difference between the two
- * copies of this function was one of these four cases, so returning null moves
- * the disagreement into a `??` at each call site instead of duplicating all the
- * rules that lead up to it.
+ * two callers do not agree on: the action hands back the trimmed URL and the
+ * reader the original, whitespace and all. Set the scheme-less rule aside --
+ * that one takes no base and stays with each caller -- and every difference
+ * between the two copies of this function was one of these four cases, so
+ * returning null moves the disagreement into a `??` at each call site instead
+ * of duplicating all the rules that lead up to it.
  *
  * An absolute URL keeps its target but comes back re-serialized by the URL
  * parser, so it can differ from the input by a trailing slash or by

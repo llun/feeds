@@ -211,8 +211,15 @@ test('#resolveAgainstBase resolves against an http(s) base', (t) => {
     resolveAgainstBase('#footnote', ENTRY_URL),
     'https://feed.example/posts/entry-1#footnote'
   )
+  // Non-ASCII whitespace specifically. The URL parser strips ASCII spaces and
+  // C0 controls itself, so a plain '  /posts/other  ' passes with the trim()
+  // removed and pins nothing. A feed writing &nbsp; beside a URL does not.
   t.is(
-    resolveAgainstBase('  /posts/other  ', ENTRY_URL),
+    resolveAgainstBase(' /posts/other ', ENTRY_URL),
+    'https://feed.example/posts/other'
+  )
+  t.is(
+    resolveAgainstBase('　/posts/other', ENTRY_URL),
     'https://feed.example/posts/other'
   )
   t.is(
@@ -245,8 +252,10 @@ test('#resolveAgainstBase re-serializes an absolute url', (t) => {
 test('#resolveAgainstBase returns null for a url that takes no base', (t) => {
   // Null rather than the input, so each caller says for itself what "leave it
   // alone" hands back -- the action the trimmed URL, the reader the original,
-  // whitespace and all. Every case in this test and the next is one the two
-  // copies of this function used to answer differently.
+  // whitespace and all. These are the cases where the two copies of this
+  // function took separate branches; three produced different strings, and all
+  // three needed the input to carry whitespace or to meet an unusable base:
+  // '   ', '  data:text/plain,a b  ', and an absolute URL with no base.
   t.is(resolveAgainstBase('', ENTRY_URL), null)
   t.is(resolveAgainstBase('   ', ENTRY_URL), null)
   // Re-serializing a data: URI would rewrite its payload rather than a URL.
@@ -255,6 +264,42 @@ test('#resolveAgainstBase returns null for a url that takes no base', (t) => {
     null
   )
   t.is(resolveAgainstBase('  data:text/plain,a b  ', ENTRY_URL), null)
+})
+
+test('#resolveAgainstBase returns null for a url the parser rejects', (t) => {
+  // A feed publishes these, and none of them is caught by the guards above: they
+  // are not blank, not data:, not scheme-less, and the base is fine. Without the
+  // try/catch they throw out of here and take the whole feed's parse with them.
+  for (const url of [
+    'http://a b c',
+    'https://%',
+    'http://',
+    'https://]',
+    'http://[',
+    'https://a%zz'
+  ]) {
+    t.is(resolveAgainstBase(url, ENTRY_URL), null, `${url} should not throw`)
+  }
+})
+
+test('#resolveAgainstBase resolves a scheme-prefixed url like a browser', (t) => {
+  // `http:x/y` with no `//` is relative when its scheme matches the base's --
+  // what the URL parser does, and so what the reader has always done. The
+  // action used to treat it as absolute; sharing this function is what brought
+  // the two into line.
+  t.is(
+    resolveAgainstBase('http:example.com/x', 'http://site.example/blog/post/'),
+    'http://site.example/blog/post/example.com/x'
+  )
+  t.is(
+    resolveAgainstBase('http:/x.jpg', 'http://site.example/blog/post/'),
+    'http://site.example/x.jpg'
+  )
+  // A scheme that differs from the base's is absolute, base or no base.
+  t.is(
+    resolveAgainstBase('http:example.com/x', 'https://site.example/blog/post/'),
+    'http://example.com/x'
+  )
 })
 
 test('#resolveAgainstBase returns null without a usable http base', (t) => {

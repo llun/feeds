@@ -303,8 +303,11 @@ test('#parseRss falls back between the entry and site URL', (t) => {
       entry: ''
     }).includes('href="https://h.example/x"')
   )
-  // Media is the only caller that reaches resolveUrl's own https default, since
-  // a link is short-circuited by the scheme-less rule before it gets there.
+  // Media is the only *content* URL that reaches resolveUrl's own https
+  // default, since a content link is short-circuited in resolveContentUrl
+  // before it gets there. An entry link reaches it too, through
+  // absolutizeEntryLink, which has no such short-circuit -- see
+  // "#parseRss gives a scheme-less entry link one" below.
   t.true(
     contentOf('<img src="//h.example/x.png" />', {
       site: '',
@@ -396,6 +399,73 @@ test('#parseRss re-serializes an absolute URL in content', (t) => {
   )
 })
 
+test('#parseRss survives a URL the parser rejects', (t) => {
+  // A feed is free to publish a URL with a space in it. Resolution has to hand
+  // it back rather than throw, or one bad href takes the whole feed's parse
+  // down -- every entry, not just the one that carries it.
+  const site = parseRss(
+    'Test Feed',
+    rssWithContent(
+      '<a href="http://a b c">bad</a><a href="/posts/other">good</a>'
+    )
+  )
+  t.is(site.entries.length, 1)
+  t.true(site.entries[0].content.includes('href="http://a b c"'))
+  t.true(
+    site.entries[0].content.includes('href="https://feed.example/posts/other"')
+  )
+})
+
+test('#parseRss resolves a scheme-prefixed URL like a browser', (t) => {
+  // `http:x/y` with no `//` is relative when its scheme matches the base's. The
+  // action used to treat it as absolute while the reader resolved it, so the
+  // two stored different URLs for it; sharing resolveAgainstBase settles that
+  // on the reader's answer, which is also the browser's.
+  const links = {
+    site: 'http://site.example/',
+    entry: 'http://site.example/blog/post/'
+  }
+  t.true(
+    contentOf('<a href="http:example.com/x">x</a>', links).includes(
+      'href="http://site.example/blog/post/example.com/x"'
+    )
+  )
+  t.true(
+    contentOf('<img src="http:/x.jpg" />', links).includes(
+      'src="http://site.example/x.jpg"'
+    )
+  )
+  // The entry link itself is exempt: absolutizeEntryLink hands back anything
+  // the URL parser accepts on its own, byte for byte, because it is a key.
+  t.is(
+    parseRss(
+      'Test Feed',
+      rssWithContent('<p>x</p>', { ...links, entry: 'http:example.com/x' })
+    ).entries[0].link,
+    'http:example.com/x'
+  )
+})
+
+test('#parseRss picks one base rather than trying both', (t) => {
+  // The site link is the fallback for a feed that gives no usable entry link,
+  // not a second attempt at a URL that failed against a good one. On a
+  // mixed-scheme feed the difference shows: `http:?q` is absolute against the
+  // https entry link, so the parser rejects it and it stays as published --
+  // resolving it against the http site link instead would silently move it to
+  // a host the feed never named.
+  const links = {
+    site: 'http://site.example/',
+    entry: 'https://site.example/blog/post/'
+  }
+  for (const url of ['http:?q', 'http:', 'http:/', 'http:#f']) {
+    const output = contentOf(`<a href="${url}">x</a>`, links)
+    t.true(
+      output.includes(`href="${url}"`),
+      `${url} should be left as published, got ${output}`
+    )
+  }
+})
+
 test('#parseRss gives a scheme-less entry link one', (t) => {
   const entryLink = (links: { site?: string; entry?: string }) =>
     parseRss('Test Feed', rssWithContent('<p>x</p>', links)).entries[0].link
@@ -404,6 +474,16 @@ test('#parseRss gives a scheme-less entry link one', (t) => {
   t.is(
     entryLink({ site: 'http://site.example/', entry: '//other.example/p' }),
     'http://other.example/p'
+  )
+  // With no site link to take a scheme from, an entry link reaches resolveUrl's
+  // own https default -- the one path to it that does not go through media.
+  t.is(
+    entryLink({ site: '', entry: '//other.example/p' }),
+    'https://other.example/p'
+  )
+  t.is(
+    entryLink({ site: 'not a url', entry: '//other.example/p' }),
+    'https://other.example/p'
   )
   // With nothing to resolve against, the link stays as published and the
   // reader's own resolution degrades to a no-op for that entry.

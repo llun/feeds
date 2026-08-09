@@ -35,11 +35,14 @@ function joinValuesOrEmptyString(values: Values) {
 }
 
 /**
- * Resolves a URL against the two bases a feed offers, preferring the first and
- * falling back to the second. A URL that resolves against neither is handed
- * back trimmed, which is where the action parts from the reader: the reader
- * returns the input untouched instead, since it has no sanitizer downstream to
- * drop a blank attribute for it.
+ * Resolves a URL against the base a feed offers, preferring the first and
+ * falling back to the second when the first is not a usable http(s) URL. The
+ * base is chosen once, up front: the fallback covers a feed that gives no
+ * usable entry link, not a URL that fails to resolve against a good one. A URL
+ * that resolves against the chosen base is handed back trimmed, which is where
+ * the action parts from the reader -- the reader returns the input untouched
+ * instead, since it has no sanitizer downstream to drop a blank attribute for
+ * it.
  */
 function resolveUrl(
   inputUrl: string,
@@ -60,11 +63,8 @@ function resolveUrl(
     return `${protocol}${trimmed}`
   }
 
-  return (
-    resolveAgainstBase(trimmed, primaryBase) ??
-    resolveAgainstBase(trimmed, fallbackBase) ??
-    trimmed
-  )
+  const base = parseHttpUrl(primaryBase) ?? parseHttpUrl(fallbackBase)
+  return resolveAgainstBase(trimmed, base?.href) ?? trimmed
 }
 
 /**
