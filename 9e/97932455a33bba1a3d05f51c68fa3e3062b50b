@@ -1,0 +1,43 @@
+lib/entry-urls.test.ts
+  s_13a19bfce06dbc::t_1c357d4ef5c7dc 1-2,10-12,15-199
+  s_13a19bfce06dbc::t_26f6fa2cdcd5a0 253-256
+  s_13a19bfce06dbc::t_36d566684298ad 3-9,13-14
+  s_13a19bfce06dbc::t_668aa90c87bd4c 200-252,257-363
+action/feeds/parsers.ts
+  s_13a19bfce06dbc::t_5fdd47392ede7a 37-43,51-54,57-58,63-67
+  s_13a19bfce06dbc::t_cb72c582a2cdf9 134-137
+  s_13a19bfce06dbc::t_bba581e2c6ef0e 4-9
+  s_13a19bfce06dbc::t_2748895987d097 82-83
+  s_13a19bfce06dbc::t_0c03f51f83e498 245,294
+lib/utils.test.ts
+  s_13a19bfce06dbc::t_3b6122ed526c0f 2
+lib/entry-urls.ts
+  s_13a19bfce06dbc::t_18840c350e03de 1,17,25,30,33,40,44,46,52,88,91,95,100,102,107,116,118,122,128,130,134,147,149-219
+  s_13a19bfce06dbc::t_3e1151714278fc 2-16
+lib/components/ItemContent.tsx
+  s_13a19bfce06dbc::t_7d5db8e892a9fa 98
+  s_13a19bfce06dbc::t_d19a99f11b38a8 7-12
+action/feeds/media.ts
+  s_13a19bfce06dbc::t_1c357d4ef5c7dc 10
+action/feeds/parsers#media-url-resolution.test.ts
+  s_13a19bfce06dbc::t_dfedd1b2a807ae 281-289
+  s_13a19bfce06dbc::t_0c03f51f83e498 137
+  s_13a19bfce06dbc::t_c7638becf95f79 476
+  s_13a19bfce06dbc::t_f99b92938dc745 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "9e97932455a33bba1a3d05f51c68fa3e3062b50b",
+  "prompts": {},
+  "sessions": {
+    "s_13a19bfce06dbc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e2b80f1f-2fbe-4cda-9890-1b65ea88b570",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
