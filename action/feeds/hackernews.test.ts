@@ -693,6 +693,113 @@ test('#createHackerNewsEnricher shares one deadline across sites', async (t) => 
   t.is(fetchStub.callCount, 1)
 })
 
+test('#enrichSiteWithHackerNewsComments keeps an earlier truncation when the budget breaks on dead siblings', async (t) => {
+  // T1's subtree hits the depth cap (truncated = true), T2's replies exhaust
+  // the 100-comment budget exactly, and every remaining top-level comment is
+  // dead: the break path must not overwrite the earlier true with the
+  // remainder's false.
+  const deep = comment(40002, '<p>level 1</p>', [
+    comment(40003, '<p>level 2</p>', [
+      comment(40004, '<p>level 3</p>', [comment(40005, '<p>level 4</p>')])
+    ])
+  ])
+  const wide = comment(
+    40010,
+    '<p>wide</p>',
+    Array.from({ length: 96 }, (_, index) =>
+      comment(41000 + index, `<p>reply ${index + 1}</p>`)
+    )
+  )
+  const dead = Array.from({ length: 18 }, (_, index) => ({
+    id: 42000 + index,
+    author: null,
+    text: null,
+    children: []
+  }))
+  const fetchStub = sinon
+    .stub()
+    .resolves(algoliaResponse({ id: 40001, children: [deep, wide, ...dead] }))
+  const [entry] = (
+    await enrichSiteWithHackerNewsComments(
+      createSite(HN_ITEM_LINK),
+      fetchStub as any
+    )
+  ).entries
+  t.is(entry.content.match(/class="hn-comment"/g)?.length, 100)
+  t.true(entry.content.includes('More comments on Hacker News'))
+})
+
+test('#enrichSiteWithHackerNewsComments tolerates malformed nodes', async (t) => {
+  // null entries and a non-array children field are network input like any
+  // other; they must not cost the healthy parts of the thread.
+  const fetchStub = sinon
+    .stub()
+    .resolves(
+      new Response(
+        '{"id":40001,"children":[null,{"id":40002,"author":"user40002","text":"<p>healthy</p>","created_at_i":1700000002,"children":{}}]}',
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      )
+    )
+  const [entry] = (
+    await enrichSiteWithHackerNewsComments(
+      createSite(HN_ITEM_LINK),
+      fetchStub as any
+    )
+  ).entries
+  t.true(entry.content.includes('<p>healthy</p>'))
+})
+
+test('#enrichSiteWithHackerNewsComments normalizes lone surrogates in author names', async (t) => {
+  // JSON.parse produces lone surrogates happily and encodeURIComponent throws
+  // on them; toWellFormed replaces them with U+FFFD first.
+  const fetchStub = sinon.stub().resolves(
+    algoliaResponse({
+      id: 40001,
+      children: [
+        {
+          id: 40002,
+          author: 'bad\ud800name',
+          text: '<p>hi</p>',
+          created_at_i: 1700000002,
+          children: []
+        }
+      ]
+    })
+  )
+  const [entry] = (
+    await enrichSiteWithHackerNewsComments(
+      createSite(HN_ITEM_LINK),
+      fetchStub as any
+    )
+  ).entries
+  t.true(entry.content.includes('<p>hi</p>'))
+  t.true(entry.content.includes('bad\ufffdname'))
+})
+
+test('#enrichSiteWithHackerNewsComments strips name and target from comment anchors', async (t) => {
+  const fetchStub = sinon.stub().resolves(
+    algoliaResponse({
+      id: 40001,
+      children: [
+        comment(
+          40002,
+          '<a href="https://example.com" name="clobber0" target="_top">link</a>'
+        )
+      ]
+    })
+  )
+  const [entry] = (
+    await enrichSiteWithHackerNewsComments(
+      createSite(HN_ITEM_LINK),
+      fetchStub as any
+    )
+  ).entries
+  // (The href gains a trailing slash from the outer pass's URL resolution.)
+  t.true(entry.content.includes('<a href="https://example.com/">link</a>'))
+  t.false(entry.content.includes('clobber0'))
+  t.false(entry.content.includes('_top'))
+})
+
 test('#COMMENT_ALLOWED_TAGS permits no media-carrying tag', (t) => {
   // The img exclusion is derived, not named: a media attribute added to the
   // shared sanitize options later must not become downloadable from comments.

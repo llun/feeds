@@ -45,6 +45,8 @@ export const COMMENT_ALLOWED_TAGS = (
 // Commenter-authored HTML is sanitized on its own before it is embedded in the
 // generated chrome, with every class dropped: the outer pass lets the hn-*
 // classes through for the chrome, and comment HTML must not wear them.
+// Anchors keep only href -- the reader overwrites target/rel at render time,
+// and name has no legitimate use in a comment.
 const COMMENT_TEXT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   ...ENTRY_CONTENT_SANITIZE_OPTIONS,
   allowedAttributes: {
@@ -52,6 +54,7 @@ const COMMENT_TEXT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
       string,
       string[]
     >),
+    a: ['href'],
     div: [],
     p: []
   },
@@ -78,8 +81,18 @@ interface AlgoliaItem {
 
 type LiveComment = AlgoliaItem & { author: string; text: string }
 
-function isLiveComment(comment: AlgoliaItem): comment is LiveComment {
-  return Boolean(comment.author && comment.text)
+// The tree is network input: nodes can be null, non-objects, or carry their
+// fields under the wrong types, and none of that may cost the whole thread.
+function isLiveComment(comment: unknown): comment is LiveComment {
+  if (!comment || typeof comment !== 'object') return false
+  const { author, text } = comment as AlgoliaItem
+  return Boolean(
+    typeof author === 'string' && author && typeof text === 'string' && text
+  )
+}
+
+function liveChildrenOf(comment: AlgoliaItem): AlgoliaItem[] {
+  return Array.isArray(comment.children) ? comment.children : []
 }
 
 /**
@@ -92,9 +105,12 @@ function isLiveComment(comment: AlgoliaItem): comment is LiveComment {
 function hasLiveComment(items: AlgoliaItem[]): boolean {
   const stack = [...items]
   while (stack.length > 0) {
-    const item = stack.pop()!
+    const item = stack.pop()
+    if (!item || typeof item !== 'object') continue
     if (isLiveComment(item)) return true
-    if (item.children) stack.push(...item.children)
+    // A loop, not stack.push(...children): the spread form hits V8's
+    // argument-count limit on a node with hundreds of thousands of children.
+    for (const child of liveChildrenOf(item)) stack.push(child)
   }
   return false
 }
@@ -157,7 +173,9 @@ function renderChildren(
   let truncated = false
   for (const [index, child] of children.entries()) {
     if (budget.remaining <= 0) {
-      truncated = hasLiveComment(children.slice(index))
+      // Accumulate, never assign: an earlier sibling may already have had
+      // visible content cut, and an all-dead remainder must not wipe that.
+      truncated = truncated || hasLiveComment(children.slice(index))
       break
     }
     const rendered = renderComment(child, depth, budget)
@@ -177,7 +195,10 @@ function renderComment(
   depth: number,
   budget: Budget
 ): Rendered {
-  const children = comment.children ?? []
+  if (!comment || typeof comment !== 'object') {
+    return { html: '', truncated: false }
+  }
+  const children = liveChildrenOf(comment)
 
   // Dead and deleted comments have no author or text. HN keeps their live
   // replies under a [deleted] marker, so render the children under the same
@@ -198,9 +219,12 @@ function renderComment(
 
   budget.remaining--
 
-  const author = escapeHtml(comment.author)
+  // toWellFormed replaces lone surrogates, which JSON.parse produces happily
+  // and encodeURIComponent throws on.
+  const authorName = comment.author.toWellFormed()
+  const author = escapeHtml(authorName)
   const authorLink = `<a href="https://news.ycombinator.com/user?id=${encodeURIComponent(
-    comment.author
+    authorName
   )}">${author}</a>`
   // The id comes from the network; only a safe positive integer is
   // interpolated into the permalink.
@@ -244,12 +268,12 @@ function renderComment(
  */
 function renderItem(item: AlgoliaItem, id: string): string {
   const parts: string[] = []
-  if (item.text) {
+  if (typeof item.text === 'string' && item.text) {
     parts.push(`<div class="hn-story">${sanitizeCommentText(item.text)}</div>`)
   }
 
   const budget = { remaining: MAX_TOTAL_COMMENTS }
-  const topLevel = item.children ?? []
+  const topLevel = liveChildrenOf(item)
   const rendered = renderChildren(
     topLevel.slice(0, MAX_TOP_LEVEL_COMMENTS),
     1,
@@ -260,7 +284,7 @@ function renderItem(item: AlgoliaItem, id: string): string {
   }
 
   const truncated =
-    hasLiveComment(topLevel.slice(MAX_TOP_LEVEL_COMMENTS)) || rendered.truncated
+    rendered.truncated || hasLiveComment(topLevel.slice(MAX_TOP_LEVEL_COMMENTS))
   if (truncated) {
     parts.push(
       `<p class="hn-more"><a href="https://news.ycombinator.com/item?id=${id}">More comments on Hacker News</a></p>`
