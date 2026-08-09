@@ -491,6 +491,12 @@ test('#parseRss survives an entry link element carrying no text', (t) => {
   // on it and taking the whole feed's parse down, every entry with it. No
   // string input can reach that guard -- '' takes the same path either way --
   // so it needs this fixture or nothing pins it.
+  //
+  // The guard saves the parse, not the run: insertEntry passes entry.link to
+  // knex unguarded where insertSite coalesces it, so an undefined link still
+  // fails the sqlite build downstream. That is pre-existing and not this
+  // function's to fix -- noted so the assertion below is not read as saying an
+  // entry without a link is handled end to end.
   const site = parseRss('Test Feed', {
     rss: {
       channel: [
