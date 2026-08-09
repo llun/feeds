@@ -54,19 +54,19 @@ function createMediaHash(input: string) {
   return crypto.createHash('sha256').update(input).digest('hex')
 }
 
-/**
- * The type the server declared, stripped of its parameters, or null when it
- * declared none. Separate from extensionFromContentType because the two nulls
- * mean opposite things to downloadMedia: silence hands the decision to the URL,
- * while a type outside the map refuses the download outright.
- */
-function declaredMediaType(contentType?: string | null) {
-  return contentType?.split(';')[0].trim().toLowerCase() || null
-}
-
 export function extensionFromContentType(contentType?: string | null) {
-  const declaredType = declaredMediaType(contentType)
-  if (!declaredType) return null
+  if (!contentType) return null
+  // headers.get joins repeated Content-Type headers with ", " and the fetch
+  // spec reads the last of them, as every browser does -- so judging a body by
+  // the first would judge it by a header the reader's own browser ignores.
+  const declaredTypes = contentType.split(',')
+  const declaredType = declaredTypes[declaredTypes.length - 1]
+    .split(';')[0]
+    .trim()
+    .toLowerCase()
+  // hasOwn because the type is feed-controlled and `constructor` survives
+  // lowercasing, so a plain lookup hands normalizeImageExtension a function.
+  if (!Object.hasOwn(CONTENT_TYPE_EXTENSIONS, declaredType)) return null
   // Routed through images.ts rather than returned straight from the map, so an
   // entry added here that is not downloadable -- svg above all -- becomes a
   // refused download instead of a file served from our own origin.
@@ -273,24 +273,27 @@ export function createMediaStore({
         throw new Error(`Unexpected response status ${response.status}`)
       }
 
-      const declaredType = declaredMediaType(
-        response.headers.get('content-type')
-      )
-      const contentTypeExtension = extensionFromContentType(declaredType)
-      // A server that names a type is taken at its word, and the URL extension
-      // does not get to overrule it. Otherwise a text/html or image/svg+xml
-      // body answering a .png url is written to public/media on the strength of
-      // the url alone, and since rewriteLocalizedUrls sends href and cite to the
-      // local copy too, those bytes become a one-click same-origin navigation
-      // under link text the feed chose. Silence still falls back to the url,
-      // which is what hosts that set no type header rely on.
-      if (declaredType && !contentTypeExtension) {
-        throw new Error(`Unsupported media type ${declaredType}`)
+      // A server that sent the header at all is taken at its word, and the URL
+      // extension does not get to overrule it. Otherwise a text/html or
+      // image/svg+xml body answering a .png URL is written to public/media on
+      // the strength of the URL alone, and since rewriteLocalizedUrls sends a
+      // lightbox href to the local copy too, those bytes become a one-click
+      // same-origin navigation under link text the feed chose. headers.get
+      // returns null only for a header that is absent, so an empty or
+      // parameters-only one is refused rather than mistaken for silence.
+      const contentType = response.headers.get('content-type')
+      const contentTypeExtension = extensionFromContentType(contentType)
+      if (contentType !== null && !contentTypeExtension) {
+        throw new Error(`Unsupported media type ${JSON.stringify(contentType)}`)
       }
 
+      // Falling back to the URL is all there is to go on when a host sets no
+      // type header at all.
       const extension = contentTypeExtension || urlExtension
       if (!extension) {
-        throw new Error('No media type declared and no image extension in url')
+        throw new Error(
+          'Media response declares no type and its URL names no image extension'
+        )
       }
 
       const buffer = await readBodyWithinLimit(response, controller)
@@ -301,6 +304,10 @@ export function createMediaStore({
       await fs.writeFile(path.join(mediaDirectory, fileName), buffer)
       return `${LOCAL_MEDIA_PATH}/${fileName}`
     } catch (error: any) {
+      // Every throw above can leave the body unread, and an unread body holds
+      // its socket until the request times out. Aborting here covers all of
+      // them at once rather than cancelling at each throw site.
+      controller.abort()
       console.error(`Fail to download media ${url}: ${error.message}`)
       return null
     } finally {

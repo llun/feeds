@@ -365,6 +365,127 @@ test('#localizeSite names files from the url when the server declares no type', 
   )
 })
 
+test('#localizeSite keeps the remote url when a repeated content type header ends in a non image', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-dup-html-')
+  const url = 'https://example.com/photo.png'
+  // headers.get joins repeated headers, and the fetch spec reads the last of
+  // them, so the leading image/png must not be what decides this.
+  const fetchStub = sinon.stub().resolves(
+    new Response('<html>blocked</html>', {
+      status: 200,
+      headers: [
+        ['content-type', 'image/png; charset=binary'],
+        ['content-type', 'text/html']
+      ]
+    })
+  )
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.true(localized.entries[0].content.includes(`src="${url}"`))
+  t.deepEqual(await listMediaFiles(mediaDirectory), [])
+})
+
+test('#localizeSite downloads an image whose host repeats the content type header', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-dup-png-')
+  const url = 'https://example.com/a.png'
+  const fetchStub = sinon.stub().resolves(
+    new Response(Buffer.from('image-bytes'), {
+      status: 200,
+      headers: [
+        ['content-type', 'image/png'],
+        ['content-type', 'image/png']
+      ]
+    })
+  )
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.deepEqual(await listMediaFiles(mediaDirectory), [`${mediaHash(url)}.png`])
+  t.true(
+    localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.png"`)
+  )
+})
+
+test('#localizeSite keeps the remote url for an empty content type header', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-empty-type-')
+  const url = 'https://example.com/photo.png'
+  // Sending the header and naming nothing is still a declaration, and an
+  // unusable one -- unlike a host that omits the header altogether.
+  const fetchStub = sinon
+    .stub()
+    .resolves(imageResponse('<html>blocked</html>', ''))
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.true(localized.entries[0].content.includes(`src="${url}"`))
+  t.deepEqual(await listMediaFiles(mediaDirectory), [])
+})
+
+test('#localizeSite names files from a content type in upper case', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-upper-type-')
+  const url = 'https://example.com/a.png'
+  const fetchStub = sinon
+    .stub()
+    .resolves(imageResponse('image-bytes', 'IMAGE/PNG'))
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.deepEqual(await listMediaFiles(mediaDirectory), [`${mediaHash(url)}.png`])
+  t.true(
+    localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.png"`)
+  )
+})
+
+test('#localizeSite names files from a content type padded before its parameters', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-padded-type-')
+  const url = 'https://example.com/a.png'
+  const fetchStub = sinon
+    .stub()
+    .resolves(imageResponse('image-bytes', 'image/png ; charset=binary'))
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.deepEqual(await listMediaFiles(mediaDirectory), [`${mediaHash(url)}.png`])
+  t.true(
+    localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.png"`)
+  )
+})
+
+test('#localizeSite keeps the remote url when neither the response nor the url names a type', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-nameless-')
+  const url = 'https://example.com/photo'
+  const fetchStub = sinon
+    .stub()
+    .resolves(new Response(Buffer.from('image-bytes'), { status: 200 }))
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.true(localized.entries[0].content.includes(`src="${url}"`))
+  t.deepEqual(await listMediaFiles(mediaDirectory), [])
+})
+
+test('#localizeSite keeps the remote url for a content type naming an object property', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-proto-type-')
+  const url = 'https://example.com/photo.png'
+  // The type is feed-controlled, and `constructor` survives lowercasing.
+  const fetchStub = sinon
+    .stub()
+    .resolves(imageResponse('<html>blocked</html>', 'constructor'))
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.true(localized.entries[0].content.includes(`src="${url}"`))
+  t.deepEqual(await listMediaFiles(mediaDirectory), [])
+})
+
 test('#localizeSite names files from the content type when the url has no extension', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-content-type-')
   const url = 'https://example.com/photo?id=1'
