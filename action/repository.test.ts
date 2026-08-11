@@ -60,6 +60,10 @@ async function createPublishFixture() {
     originUrl,
     workspacePath
   ])
+  // publish() configures the identity before publishing, and the commit for the
+  // new tip reads it from the configuration rather than from the environment.
+  git(workspacePath, ['config', 'user.email', BOT_IDENTITY.GIT_AUTHOR_EMAIL])
+  git(workspacePath, ['config', 'user.name', BOT_IDENTITY.GIT_AUTHOR_NAME])
 
   return { originPath, seedPath, workspacePath }
 }
