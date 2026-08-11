@@ -1,0 +1,21 @@
+lib/reducers/path.test.ts
+  s_e0958bc566480a::t_97d69b4968e334 1-22
+lib/page.tsx
+  s_e0958bc566480a::t_25b5634df635ad 175-178,183
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9608ebce8e4e2f8084496a072f92762cec2cadc4",
+  "prompts": {},
+  "sessions": {
+    "s_e0958bc566480a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09a3ccb3-36f9-4029-ac70-eab9543d71b1",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
