@@ -10,7 +10,8 @@ import {
   getPreviousPublishedCommits,
   publishLimitedHistory,
   resolveSourceBranch,
-  restorePublishedMedia
+  restorePublishedMedia,
+  validatePublishBranch
 } from './repository'
 
 const BOT_IDENTITY = {
@@ -267,6 +268,59 @@ test('#publishLimitedHistory keeps the branch when the remote cannot be read', a
   )
   t.is(git(originPath, ['rev-parse', PUBLISHED_REF]), publishedTip)
   t.is(branchCommitCount(originPath), 3)
+})
+
+test('#validatePublishBranch rejects publishing onto the source branch', (t) => {
+  t.notThrows(() => validatePublishBranch('main', 'contents'))
+  t.throws(() => validatePublishBranch('main', 'main'), {
+    message: 'Branch main cannot be both the source and the publish branch'
+  })
+})
+
+test('#publishLimitedHistory keeps the branch when the fetch fails', async (t) => {
+  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  await seedPublishedBranch(seedPath, [
+    { message: PUBLISH_COMMIT_MESSAGE, content: 'published' }
+  ])
+  // A branch whose tip object is missing is listed by ls-remote and refused by
+  // fetch, which is the remote that answers and then fails to deliver.
+  const missingCommit = 'deadbeef'.repeat(5)
+  await fs.writeFile(
+    path.join(originPath, 'refs', 'heads', 'contents'),
+    `${missingCommit}\n`
+  )
+
+  await fs.writeFile(path.join(workspacePath, 'index.html'), 'next')
+  t.throws(
+    () =>
+      publishLimitedHistory({
+        repositoryPath: workspacePath,
+        branch: 'contents',
+        pushTarget: 'origin'
+      }),
+    { message: 'Fail to fetch published contents branch' }
+  )
+  t.is(git(originPath, ['rev-parse', PUBLISHED_REF]), missingCommit)
+})
+
+test('#publishLimitedHistory reports a push it could not complete', async (t) => {
+  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  await seedPublishedBranch(seedPath, [
+    { message: PUBLISH_COMMIT_MESSAGE, content: 'published' }
+  ])
+  const publishedTip = git(originPath, ['rev-parse', PUBLISHED_REF])
+
+  await fs.writeFile(path.join(workspacePath, 'index.html'), 'next')
+  t.throws(
+    () =>
+      publishLimitedHistory({
+        repositoryPath: workspacePath,
+        branch: 'contents',
+        pushTarget: `${git(workspacePath, ['remote', 'get-url', 'origin'])}-missing`
+      }),
+    { message: 'Fail to push feeds contents' }
+  )
+  t.is(git(originPath, ['rev-parse', PUBLISHED_REF]), publishedTip)
 })
 
 test('#publishLimitedHistory keeps the identity of the commits it rebuilds', async (t) => {

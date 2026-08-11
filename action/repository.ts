@@ -35,6 +35,25 @@ function validateBranchName(branch: string): void {
 }
 
 /**
+ * Refuses to publish onto the branch the workspace was built from.
+ *
+ * The published branch is replaced by a history this action owns, so pointing
+ * it at the source branch would drop every source commit rather than add to
+ * them. The run publishes the built site without the workflow that produced it
+ * either way, so this is only ever a misconfiguration, and failing before the
+ * clone keeps it a harmless one.
+ *
+ * @throws Error if the publish branch is also the source branch
+ */
+export function validatePublishBranch(sourceBranch: string, branch: string) {
+  if (sourceBranch === branch) {
+    throw new Error(
+      `Branch ${branch} cannot be both the source and the publish branch`
+    )
+  }
+}
+
+/**
  * Validates that a domain name is safe to write to CNAME file
  * @param domain The domain name to validate
  * @throws Error if the domain name contains potentially dangerous characters
@@ -253,11 +272,10 @@ export async function setup() {
     validateBranchName(branch)
     validateBranchName(sourceBranch)
 
-    if (sourceBranch !== branch) {
-      console.log(
-        `Use source branch ${sourceBranch} and publish to branch ${branch}`
-      )
-    }
+    validatePublishBranch(sourceBranch, branch)
+    console.log(
+      `Use source branch ${sourceBranch} and publish to branch ${branch}`
+    )
 
     const cloneUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
     const cloneResult = runCommand([
