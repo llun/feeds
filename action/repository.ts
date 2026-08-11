@@ -54,8 +54,37 @@ const DEFAULT_INPUTS: Record<string, string> = {
   customDomain: ''
 }
 
-function isCommandFailed(result: SpawnSyncReturns<Buffer>) {
+export const PUBLISH_COMMIT_MESSAGE = 'Update feeds contents'
+export const PUBLISH_COMMIT_LIMIT = 5
+
+const OBJECT_HASH_PATTERN = /^[0-9a-f]{40}([0-9a-f]{24})?$/
+
+interface PublishedCommit {
+  hash: string
+  tree: string
+  authorDate: string
+  committerDate: string
+  authorName: string
+  authorEmail: string
+  committerName: string
+  committerEmail: string
+  subject: string
+}
+
+function isCommandFailed(result: SpawnSyncReturns<Buffer | string>) {
   return Boolean(result.error || result.signal || result.status !== 0)
+}
+
+/**
+ * Guards against handing an empty string to a command that expects an object
+ * id. A blank commit in a push refspec reads as a branch deletion.
+ */
+function toObjectHash(value: string, message: string) {
+  const hash = value.trim()
+  if (!OBJECT_HASH_PATTERN.test(hash)) {
+    throw new Error(message)
+  }
+  return hash
 }
 
 function toInputEnvName(name: string) {
@@ -79,6 +108,18 @@ export function runCommand(commands: string[], cwd?: string) {
     stdio: 'inherit',
     cwd,
     env: process.env
+  })
+}
+
+function runCommandWithOutput(
+  commands: string[],
+  options?: { cwd?: string; env?: Record<string, string> }
+) {
+  return spawnSync(commands[0], commands.slice(1), {
+    stdio: ['ignore', 'pipe', 'inherit'],
+    cwd: options?.cwd,
+    encoding: 'utf8',
+    env: { ...process.env, ...options?.env }
   })
 }
 
@@ -114,6 +155,8 @@ export function resolveSourceBranch(
  * throwaway clone: publish() pushes from the workspace, and git can only leave
  * existing blobs out of the push pack when the local repository can walk the
  * remote tip. Seeding anywhere else would re-upload every media file each run.
+ * publishLimitedHistory() fetches the branch again right before pushing, so the
+ * thin pack no longer depends on this restore having run.
  */
 export async function restorePublishedMedia(publicDirectory: string) {
   const workSpace = getWorkspacePath()
@@ -123,7 +166,7 @@ export async function restorePublishedMedia(publicDirectory: string) {
   validateBranchName(branch)
 
   const fetchResult = runCommand(
-    ['git', 'fetch', '--depth=1', 'origin', branch],
+    ['git', 'fetch', '--depth=1', 'origin', `refs/heads/${branch}`],
     workSpace
   )
   if (isCommandFailed(fetchResult)) {
@@ -234,6 +277,244 @@ export async function setup() {
   }
 }
 
+// Unit and record separators keep the fields of a published commit
+// unambiguous. A foreign commit is free to carry either byte in its subject,
+// so a record that does not split into exactly nine fields ends the walk the
+// same way a foreign subject does.
+const PUBLISHED_COMMIT_FORMAT =
+  ['%H', '%T', '%aI', '%cI', '%an', '%ae', '%cn', '%ce', '%s'].join('%x1f') +
+  '%x1e'
+
+/**
+ * Reads the publish commits at the tip of a reference, newest first.
+ *
+ * Only the commits this action wrote are collected and the walk stops at the
+ * first foreign commit, which is what detaches an existing published branch
+ * from the source branch history it used to be built on top of.
+ *
+ * Dates are read as strict ISO 8601 rather than unix seconds so rebuilding a
+ * commit keeps its original UTC offset regardless of the runner timezone.
+ */
+export function getPreviousPublishedCommits(
+  repositoryPath: string,
+  reference = 'FETCH_HEAD',
+  limit = PUBLISH_COMMIT_LIMIT - 1
+): PublishedCommit[] {
+  const result = runCommandWithOutput(
+    [
+      'git',
+      'log',
+      `--max-count=${limit}`,
+      `--format=${PUBLISHED_COMMIT_FORMAT}`,
+      reference
+    ],
+    { cwd: repositoryPath }
+  )
+  if (isCommandFailed(result)) {
+    throw new Error(`Fail to read published history of ${reference}`)
+  }
+
+  const commits: PublishedCommit[] = []
+  for (const record of result.stdout.split('\x1e')) {
+    const fields = record.trim().split('\x1f')
+    if (fields.length !== 9) break
+
+    const [
+      hash,
+      tree,
+      authorDate,
+      committerDate,
+      authorName,
+      authorEmail,
+      committerName,
+      committerEmail,
+      subject
+    ] = fields
+    if (subject !== PUBLISH_COMMIT_MESSAGE) break
+    if (
+      !OBJECT_HASH_PATTERN.test(hash) ||
+      !OBJECT_HASH_PATTERN.test(tree) ||
+      !authorDate ||
+      !committerDate
+    ) {
+      break
+    }
+
+    commits.push({
+      hash,
+      tree,
+      authorDate,
+      committerDate,
+      authorName,
+      authorEmail,
+      committerName,
+      committerEmail,
+      subject
+    })
+  }
+  return commits
+}
+
+/**
+ * Recreates the given commits as an independent chain, oldest first, keeping
+ * their trees and identities. The oldest one is rebuilt without a parent, which
+ * is what drops everything published before the window.
+ */
+function rebuildPublishChain(
+  repositoryPath: string,
+  commits: PublishedCommit[]
+) {
+  let parent: string | null = null
+  for (let index = commits.length - 1; index >= 0; index--) {
+    const commit = commits[index]
+    const result = runCommandWithOutput(
+      [
+        'git',
+        'commit-tree',
+        commit.tree,
+        ...(parent ? ['-p', parent] : []),
+        '-m',
+        commit.subject
+      ],
+      {
+        cwd: repositoryPath,
+        env: {
+          GIT_AUTHOR_NAME: commit.authorName,
+          GIT_AUTHOR_EMAIL: commit.authorEmail,
+          GIT_AUTHOR_DATE: commit.authorDate,
+          GIT_COMMITTER_NAME: commit.committerName,
+          GIT_COMMITTER_EMAIL: commit.committerEmail,
+          GIT_COMMITTER_DATE: commit.committerDate
+        }
+      }
+    )
+    if (isCommandFailed(result)) {
+      throw new Error(`Fail to rebuild published commit ${commit.hash}`)
+    }
+    parent = toObjectHash(
+      result.stdout,
+      `Fail to rebuild published commit ${commit.hash}`
+    )
+  }
+  return parent
+}
+
+function fetchPreviousPublishedCommits(
+  repositoryPath: string,
+  branch: string,
+  limit: number
+) {
+  if (limit <= 0) return []
+
+  // A missing branch is the first run, while any other failure could be a
+  // network or permission problem. Fetching after one of those would look like
+  // an empty history and quietly throw the published commits away.
+  const remoteResult = runCommand(
+    ['git', 'ls-remote', '--exit-code', 'origin', `refs/heads/${branch}`],
+    repositoryPath
+  )
+  if (remoteResult.status === 2) {
+    console.log(`No published ${branch} branch, publishing a new history`)
+    return []
+  }
+  if (isCommandFailed(remoteResult)) {
+    throw new Error(`Fail to read published ${branch} branch`)
+  }
+
+  // Fully qualified because git resolves a fetch refname against refs/tags
+  // before refs/heads, so a tag sharing the branch name would be fetched
+  // instead and the published commits would silently be dropped.
+  const fetchResult = runCommand(
+    ['git', 'fetch', `--depth=${limit}`, 'origin', `refs/heads/${branch}`],
+    repositoryPath
+  )
+  if (isCommandFailed(fetchResult)) {
+    throw new Error(`Fail to fetch published ${branch} branch`)
+  }
+  return getPreviousPublishedCommits(repositoryPath, 'FETCH_HEAD', limit)
+}
+
+/**
+ * Publishes the workspace as the tip of a branch that never holds more than
+ * maxCommits commits.
+ *
+ * The workspace is a shallow clone of the source branch, so committing in place
+ * would publish the whole source history again. Instead the new tree is
+ * committed on top of a rebuilt copy of the previous publish commits, which
+ * keeps a few revisions around without carrying any history behind them.
+ */
+export function publishLimitedHistory(options: {
+  repositoryPath: string
+  branch: string
+  pushTarget?: string
+  maxCommits?: number
+  message?: string
+}) {
+  const {
+    repositoryPath,
+    branch,
+    pushTarget = 'origin',
+    maxCommits = PUBLISH_COMMIT_LIMIT,
+    message = PUBLISH_COMMIT_MESSAGE
+  } = options
+  validateBranchName(branch)
+
+  const addResult = runCommand(['git', 'add', '-f', '--all'], repositoryPath)
+  if (isCommandFailed(addResult)) {
+    throw new Error('Fail to stage feeds contents')
+  }
+
+  const treeResult = runCommandWithOutput(['git', 'write-tree'], {
+    cwd: repositoryPath
+  })
+  if (isCommandFailed(treeResult)) {
+    throw new Error('Fail to write feeds contents tree')
+  }
+  const tree = toObjectHash(
+    treeResult.stdout,
+    'Fail to write feeds contents tree'
+  )
+
+  const previousCommits = fetchPreviousPublishedCommits(
+    repositoryPath,
+    branch,
+    maxCommits - 1
+  )
+  const parent = rebuildPublishChain(repositoryPath, previousCommits)
+
+  const commitResult = runCommandWithOutput(
+    [
+      'git',
+      'commit-tree',
+      tree,
+      ...(parent ? ['-p', parent] : []),
+      '-m',
+      message
+    ],
+    { cwd: repositoryPath }
+  )
+  if (isCommandFailed(commitResult)) {
+    throw new Error('Fail to commit feeds contents')
+  }
+  const commit = toObjectHash(
+    commitResult.stdout,
+    'Fail to commit feeds contents'
+  )
+
+  const pushResult = runCommand(
+    ['git', 'push', '-f', pushTarget, `${commit}:refs/heads/${branch}`],
+    repositoryPath
+  )
+  if (isCommandFailed(pushResult)) {
+    throw new Error('Fail to push feeds contents')
+  }
+
+  console.log(
+    `Publish ${branch} branch with ${previousCommits.length + 1} commits`
+  )
+  return commit
+}
+
 export async function publish() {
   const workSpace = getWorkspacePath()
   if (workSpace) {
@@ -303,8 +584,10 @@ export async function publish() {
       ['git', 'config', '--global', 'user.name', '"Feed bots"'],
       workSpace
     )
-    runCommand(['git', 'add', '-f', '--all'], workSpace)
-    runCommand(['git', 'commit', '-m', 'Update feeds contents'], workSpace)
-    runCommand(['git', 'push', '-f', pushUrl, `HEAD:${branch}`], workSpace)
+    publishLimitedHistory({
+      repositoryPath: workSpace,
+      branch,
+      pushTarget: pushUrl
+    })
   }
 }
