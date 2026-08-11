@@ -1,0 +1,19 @@
+action/setup.test.ts
+  s_c49f314e4669e5::t_505193b221d057 1-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9e373287634e31c98ad7a3ea00b45718cd26ef12",
+  "prompts": {},
+  "sessions": {
+    "s_c49f314e4669e5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7943cdcd-d6e8-4e7d-bb66-10e0c18bec87",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
