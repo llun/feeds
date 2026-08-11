@@ -172,10 +172,15 @@ export const Page: FC<PageProps> = ({ version, buildTime }) => {
             buildTime={buildTime}
             selectCategory={(category: string) => {
               setListTitle(category)
+              // The reducer bails out on a same-path dispatch, so
+              // locationController won't run; switch the mobile panel here so
+              // re-selecting the current category still shows the list
+              setPageState('entries')
               dispatch(updatePath(`/categories/${category}`))
             }}
             selectSite={(siteKey: string, siteTitle: string) => {
               setListTitle(siteTitle)
+              setPageState('entries')
               dispatch(updatePath(`/sites/${siteKey}`))
             }}
           />
