@@ -65,7 +65,7 @@ async function createPublishFixture() {
   git(workspacePath, ['config', 'user.email', BOT_IDENTITY.GIT_AUTHOR_EMAIL])
   git(workspacePath, ['config', 'user.name', BOT_IDENTITY.GIT_AUTHOR_NAME])
 
-  return { originPath, seedPath, workspacePath }
+  return { rootPath, originPath, seedPath, workspacePath }
 }
 
 async function publishContents(workspacePath: string, content: string) {
@@ -77,22 +77,43 @@ async function publishContents(workspacePath: string, content: string) {
   })
 }
 
-async function seedPublishedBranch(
-  seedPath: string,
-  commits: { message: string; content: string; date?: string }[]
-) {
+interface SeedCommit {
+  message: string
+  content: string
+  date?: string
+  committerDate?: string
+  // Defaults to the same identity the workspace is configured with, so a test
+  // that checks an identity is preserved has to ask for a different one.
+  identity?: { name: string; email: string }
+  media?: string
+}
+
+async function seedPublishedBranch(seedPath: string, commits: SeedCommit[]) {
   git(seedPath, ['checkout', '--orphan', 'contents'])
   git(seedPath, ['rm', '-rf', '.'])
   for (const commit of commits) {
     await fs.writeFile(path.join(seedPath, 'index.html'), commit.content)
+    if (commit.media !== undefined) {
+      await fs.mkdir(path.join(seedPath, 'media'), { recursive: true })
+      await fs.writeFile(
+        path.join(seedPath, 'media', 'image.txt'),
+        commit.media
+      )
+    }
     git(seedPath, ['add', '--all'])
-    git(
-      seedPath,
-      ['commit', '-m', commit.message],
-      commit.date
-        ? { GIT_AUTHOR_DATE: commit.date, GIT_COMMITTER_DATE: commit.date }
-        : undefined
-    )
+
+    const env: Record<string, string> = {}
+    if (commit.date) {
+      env.GIT_AUTHOR_DATE = commit.date
+      env.GIT_COMMITTER_DATE = commit.committerDate ?? commit.date
+    }
+    if (commit.identity) {
+      env.GIT_AUTHOR_NAME = commit.identity.name
+      env.GIT_AUTHOR_EMAIL = commit.identity.email
+      env.GIT_COMMITTER_NAME = commit.identity.name
+      env.GIT_COMMITTER_EMAIL = commit.identity.email
+    }
+    git(seedPath, ['commit', '-m', commit.message], env)
   }
   git(seedPath, ['push', 'origin', 'HEAD:contents'])
 }
@@ -160,6 +181,41 @@ test('#restorePublishedMedia skips when there is no workspace', async (t) => {
   t.false(await restorePublishedMedia('public'))
 })
 
+// Serial because it is driven through the action input environment, which ava
+// shares between the concurrent tests in this file.
+test.serial(
+  '#restorePublishedMedia reads the branch when a tag shares its name',
+  async (t) => {
+    const { rootPath, seedPath, workspacePath } = await createPublishFixture()
+    await seedPublishedBranch(seedPath, [
+      { message: PUBLISH_COMMIT_MESSAGE, content: 'published', media: 'image' }
+    ])
+    // main carries no media, so reading the tag instead restores nothing.
+    git(seedPath, ['tag', 'contents', 'main'])
+    git(seedPath, ['push', 'origin', 'refs/tags/contents'])
+
+    const originalWorkspace = process.env['GITHUB_WORKSPACE']
+    t.teardown(() => {
+      if (originalWorkspace === undefined) {
+        delete process.env['GITHUB_WORKSPACE']
+        return
+      }
+      process.env['GITHUB_WORKSPACE'] = originalWorkspace
+    })
+    process.env['GITHUB_WORKSPACE'] = workspacePath
+
+    const publicDirectory = path.join(rootPath, 'public')
+    t.true(await restorePublishedMedia(publicDirectory))
+    t.is(
+      await fs.readFile(
+        path.join(publicDirectory, 'media', 'image.txt'),
+        'utf8'
+      ),
+      'image'
+    )
+  }
+)
+
 test('#publishLimitedHistory publishes a branch without the source history', async (t) => {
   const { originPath, workspacePath } = await createPublishFixture()
 
@@ -169,6 +225,78 @@ test('#publishLimitedHistory publishes a branch without the source history', asy
   t.is(git(originPath, ['rev-parse', PUBLISHED_REF]), commit)
   t.is(git(originPath, ['log', '--format=%P', '-1', PUBLISHED_REF]), '')
   t.deepEqual(branchSubjects(originPath), [PUBLISH_COMMIT_MESSAGE])
+})
+
+test('#publishLimitedHistory publishes the contents of the workspace', async (t) => {
+  const { originPath, workspacePath } = await createPublishFixture()
+
+  await publishContents(workspacePath, 'first')
+  t.is(git(originPath, ['show', `${PUBLISHED_REF}:index.html`]), 'first')
+
+  await publishContents(workspacePath, 'second')
+  t.is(git(originPath, ['show', `${PUBLISHED_REF}:index.html`]), 'second')
+  // The retained commit keeps the tree it was published with rather than the
+  // one on the tip.
+  t.is(git(originPath, ['show', `${PUBLISHED_REF}~1:index.html`]), 'first')
+})
+
+test('#publishLimitedHistory keeps the branch when the remote cannot be read', async (t) => {
+  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  await seedPublishedBranch(seedPath, [
+    { message: PUBLISH_COMMIT_MESSAGE, content: 'one' },
+    { message: PUBLISH_COMMIT_MESSAGE, content: 'two' },
+    { message: PUBLISH_COMMIT_MESSAGE, content: 'three' }
+  ])
+  const publishedTip = git(originPath, ['rev-parse', PUBLISHED_REF])
+
+  // Reading the published branch and pushing it use separate remotes, so an
+  // unreadable origin is a remote that failed to answer rather than a branch
+  // that does not exist yet.
+  const originUrl = git(workspacePath, ['remote', 'get-url', 'origin'])
+  git(workspacePath, ['remote', 'set-url', 'origin', `${originUrl}-missing`])
+  await fs.writeFile(path.join(workspacePath, 'index.html'), 'next')
+
+  t.throws(
+    () =>
+      publishLimitedHistory({
+        repositoryPath: workspacePath,
+        branch: 'contents',
+        pushTarget: originUrl
+      }),
+    { message: 'Fail to read published contents branch' }
+  )
+  t.is(git(originPath, ['rev-parse', PUBLISHED_REF]), publishedTip)
+  t.is(branchCommitCount(originPath), 3)
+})
+
+test('#publishLimitedHistory keeps the identity of the commits it rebuilds', async (t) => {
+  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  const identity = { name: 'Earlier bots', email: 'earlier@llun.dev' }
+  const committerDate = '2024-03-04T05:06:07+02:00'
+  await seedPublishedBranch(seedPath, [
+    {
+      message: PUBLISH_COMMIT_MESSAGE,
+      content: 'published',
+      date: publishedAt(1),
+      committerDate,
+      identity
+    }
+  ])
+
+  await publishContents(workspacePath, 'next')
+
+  const root = git(originPath, ['rev-list', '--max-parents=0', PUBLISHED_REF])
+  t.is(git(originPath, ['log', '--format=%an', '-1', root]), identity.name)
+  t.is(git(originPath, ['log', '--format=%ae', '-1', root]), identity.email)
+  t.is(git(originPath, ['log', '--format=%cn', '-1', root]), identity.name)
+  t.is(git(originPath, ['log', '--format=%ce', '-1', root]), identity.email)
+  t.is(git(originPath, ['log', '--format=%aI', '-1', root]), publishedAt(1))
+  t.is(git(originPath, ['log', '--format=%cI', '-1', root]), committerDate)
+  // The commit this run creates is the one that takes the configured identity.
+  t.is(
+    git(originPath, ['log', '--format=%an', '-1', PUBLISHED_REF]),
+    BOT_IDENTITY.GIT_AUTHOR_NAME
+  )
 })
 
 test('#publishLimitedHistory keeps at most five commits on the branch', async (t) => {

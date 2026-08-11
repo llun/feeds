@@ -152,11 +152,10 @@ export function resolveSourceBranch(
  * a run only downloads images it has never seen before.
  *
  * The fetch deliberately runs inside the workspace repository rather than a
- * throwaway clone: publish() pushes from the workspace, and git can only leave
- * existing blobs out of the push pack when the local repository can walk the
- * remote tip. Seeding anywhere else would re-upload every media file each run.
- * publishLimitedHistory() fetches the branch again right before pushing, so the
- * thin pack no longer depends on this restore having run.
+ * throwaway clone: publishLimitedHistory() fetches the same branch from the
+ * workspace before it pushes, so restoring here leaves those objects already
+ * local and its own fetch costs almost nothing. Seeding elsewhere would
+ * download the published tree twice, once into each repository.
  */
 export async function restorePublishedMedia(publicDirectory: string) {
   const workSpace = getWorkspacePath()
