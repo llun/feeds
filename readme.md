@@ -26,7 +26,7 @@ jobs:
 
 After this, enable GitHub Pages on the `contents` branch and the content will be available on that page.
 
-The action always reads the OPML file from the branch that triggered the workflow (for example `main`), then publishes generated output to the configured `branch`.
+The action always reads the OPML file from the branch that triggered the workflow (for example `main`), then publishes generated output to the configured `branch`. The two have to be different branches: the published branch is replaced by a history the action owns, so the run stops before it clones rather than publish over the branch it read the feeds from.
 
 ## Images in feed content
 
@@ -35,6 +35,10 @@ Images referenced by feed entries are downloaded while the feeds are loaded and 
 Images that cannot be downloaded keep their original URL and are rendered with `referrerpolicy="no-referrer"`. Because feeds are re-read on every run, a publisher that was temporarily unavailable is picked up again on a later run. SVG images are always kept remote, since a published SVG would be a script running on the site's own origin.
 
 Each run restores the media files of the published branch before downloading, so only images that have not been seen before are fetched, and files no longer referenced by any entry are removed. Schedule only one run at a time (a workflow `concurrency` group) because the publish step force pushes the whole site.
+
+## Published branch history
+
+The published branch keeps only the last 5 runs. Each run rebuilds those commits without the history behind them and drops the oldest one, so the branch stays a small, self contained snapshot of the site instead of growing with the source branch it was generated from. Branches published by earlier versions are trimmed on their next run, and only commits written by this action are kept.
 
 ## Hacker News comments
 
