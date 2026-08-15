@@ -1,0 +1,37 @@
+action/feeds/blognone.test.ts
+  s_17c97a0465a1ba::t_62cf94b61ce843 81-82
+  s_17c97a0465a1ba::t_4b7568576d6fcd 1-80,83-134
+action/feeds/sanitize.ts
+  s_17c97a0465a1ba::t_508d5670d68aff 1-65
+action/feeds/parsers.ts
+  s_17c97a0465a1ba::t_aa6a6c807d5a79 246,248,257
+  s_17c97a0465a1ba::t_d4aad426bc7991 135-138
+  s_17c97a0465a1ba::t_70f4eb4d249614 302,304,307-312
+  s_17c97a0465a1ba::t_729d43f7c0d179 10-11
+  s_17c97a0465a1ba::t_edc75143c1000e 173-181,184,188-191
+action/feeds/stubs/blognone.xml
+  s_17c97a0465a1ba::t_3e99abb68215d8 1-10
+  s_17c97a0465a1ba::t_5f9d634d625960 11-54
+action/feeds/blognone.ts
+  s_17c97a0465a1ba::t_918f27809e5667 119-122
+  s_17c97a0465a1ba::t_6398490350c0b4 84-88
+  s_17c97a0465a1ba::t_db535bfa955cce 1-83,89-118,123-130
+package.json
+  s_17c97a0465a1ba::t_204fa7cc23658b 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "1bbb1b7736996208c4a4dedfffbdb62201370563",
+  "prompts": {},
+  "sessions": {
+    "s_17c97a0465a1ba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bf2c79f1-eb16-4f91-93d5-ded87a590860",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
