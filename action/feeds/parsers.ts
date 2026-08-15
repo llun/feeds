@@ -7,6 +7,8 @@ import {
   resolveAgainstBase,
   type UrlTarget
 } from '../../lib/entry-urls'
+import { isBlognoneEntry, stripBlognoneChrome } from './blognone'
+import { ENTRY_CONTENT_SANITIZE_OPTIONS } from './sanitize'
 
 export interface Entry {
   title: string
@@ -130,57 +132,10 @@ export function resolveContentUrl(
   return resolveUrl(url, entryLink, siteLink)
 }
 
-export const ENTRY_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-  allowedAttributes: {
-    // An attribute added here that carries a URL has to be listed in
-    // URL_ATTRIBUTES in lib/entry-urls.ts too, or it keeps whatever relative
-    // URL the feed published and lands on the reader's own domain -- and its
-    // tag needs an allowedSchemesByTag entry below if http(s) is not the right
-    // set.
-    ...sanitizeHtml.defaults.allowedAttributes,
-    img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'srcset'],
-    // Kept so the source of a quotation survives into the stored JSON, and
-    // resolved like any other URL rather than left pointing at this site.
-    blockquote: ['cite'],
-    q: ['cite'],
-    // The Hacker News discussion markup (action/feeds/hackernews.ts) styles
-    // the thread through classes. Every pass over stored content goes through
-    // these options, so class has to survive here or the media store's rewrite
-    // would strip it back off.
-    div: ['class'],
-    p: ['class']
-  },
-  // Only the classes the HN markup uses; a feed's own classes keep being
-  // discarded as before.
-  allowedClasses: {
-    div: [
-      'hn-story',
-      'hn-comments',
-      'hn-comment',
-      'hn-comment-body',
-      'hn-comment-children'
-    ],
-    p: ['hn-comment-meta', 'hn-more']
-  },
-  // Nothing beyond http(s) by default, so an attribute allowed later inherits
-  // the safe set rather than data: or mailto:. Anything that needs more says so
-  // below.
-  allowedSchemes: ['http', 'https'],
-  allowedSchemesByTag: {
-    // Only an inline image has any use for data:.
-    img: ['http', 'https', 'data'],
-    // sanitize-html looks srcset up by attribute name rather than by tag, so
-    // this is what covers <img srcset>, not the img entry above.
-    srcset: ['http', 'https', 'data'],
-    a: ['http', 'https', 'mailto'],
-    // A citation is a document, so it has no use for either.
-    blockquote: ['http', 'https'],
-    q: ['http', 'https']
-  },
-  disallowedTagsMode: 'discard',
-  enforceHtmlBoundary: true
-}
+// Re-exported so every module that already reads it here keeps doing so; the
+// constant itself lives in ./sanitize, out of the import cycle this file's own
+// import of ./blognone would otherwise close.
+export { ENTRY_CONTENT_SANITIZE_OPTIONS } from './sanitize'
 
 /**
  * Rewrites every URL in entry content through `mapUrl`, under the sanitizer
@@ -215,12 +170,25 @@ export function mapContentUrls(
   })
 }
 
+/**
+ * Entry content, ready to store: the chrome a site wraps its articles in taken
+ * off first, then every URL in what is left resolved and the whole thing
+ * sanitized.
+ *
+ * A site-specific parser runs here rather than on the parsed Site, the way the
+ * Hacker News enrichment does, because it reads the classes the feed published
+ * and the sanitize pass below drops them.
+ */
 function sanitizeEntryContent(
   content: string,
+  title: string,
   siteLink: string,
   entryLink: string
 ) {
-  return mapContentUrls(content, (url, target) =>
+  const article = isBlognoneEntry(entryLink, siteLink)
+    ? stripBlognoneChrome(content, title)
+    : content
+  return mapContentUrls(article, (url, target) =>
     resolveContentUrl(url, target, siteLink, entryLink)
   )
 }
@@ -275,8 +243,9 @@ export function parseRss(feedTitle: string, xml: any): Site {
             joinValuesOrEmptyString(entryLinks),
             siteLink
           )
+          const entryTitle = joinValuesOrEmptyString(title).trim()
           return {
-            title: joinValuesOrEmptyString(title).trim(),
+            title: entryTitle,
             link: entryLink,
             date: parseDate(
               joinValuesOrEmptyString(pubDate || item['dc:date'])
@@ -285,6 +254,7 @@ export function parseRss(feedTitle: string, xml: any): Site {
               joinValuesOrEmptyString(
                 item['content:encoded'] || entryDescription
               ),
+              entryTitle,
               siteLink,
               entryLink
             ),
@@ -329,11 +299,17 @@ export function parseAtom(feedTitle: string, xml: any): Site {
             (itemLink && itemLink.$.href) || '',
             siteUrl
           )
+          const entryTitle = joinValuesOrEmptyString(title).trim()
           return {
-            title: joinValuesOrEmptyString(title).trim(),
+            title: entryTitle,
             link: entryLink,
             date: parseDate(joinValuesOrEmptyString(published || updated)),
-            content: sanitizeEntryContent(feedContent, siteUrl, entryLink),
+            content: sanitizeEntryContent(
+              feedContent,
+              entryTitle,
+              siteUrl,
+              entryLink
+            ),
             author:
               (author && joinValuesOrEmptyString(author[0].name)) || siteAuthor
           }
