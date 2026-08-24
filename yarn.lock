@@ -3803,7 +3803,7 @@ __metadata:
     sqlite3: "npm:^6.0.1"
     tailwindcss: "npm:^4.3.3"
     tailwindcss-cli: "npm:^0.1.2"
-    tsx: "npm:^4.23.11"
+    tsx: "npm:^4.23.12"
     tw-animate-css: "npm:^1.4.0"
     typescript: "npm:^7.0.2"
     xml2js: "npm:^0.6.2"
@@ -7152,9 +7152,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsx@npm:^4.23.11":
-  version: 4.23.11
-  resolution: "tsx@npm:4.23.11"
+"tsx@npm:^4.23.12":
+  version: 4.23.12
+  resolution: "tsx@npm:4.23.12"
   dependencies:
     esbuild: "npm:~0.28.0"
     fsevents: "npm:~2.3.3"
@@ -7163,7 +7163,7 @@ __metadata:
       optional: true
   bin:
     tsx: dist/cli.mjs
-  checksum: 10c0/6f72cfea4aec04ab17450b0b6764f85839f2f8b207255a86b3c704e91df5b68d550a93b2975d3916b996f0b651999e7bdbc71ef60abd83563b60f53bcd3bf95a
+  checksum: 10c0/cdd7f03754021fb337c13839f25f5f5edee01ed12e1e176da50cc34bc5c5fc4e7b533aeba89127055be969d4ff292c6accdb6b9d977ed022c524349eca6ff841
   languageName: node
   linkType: hard
 
