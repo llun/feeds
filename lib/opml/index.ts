@@ -11,6 +11,14 @@ export interface OpmlCategory {
   items: OpmlItem[]
 }
 
+const XML_ENTITIES: Record<string, string> = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&apos;': "'"
+}
+
 /**
  * Escapes characters for XML attribute values and text content.
  */
@@ -24,15 +32,13 @@ export function escapeXml(unsafe: string): string {
 }
 
 /**
- * Unescapes standard XML entities.
+ * Unescapes standard XML entities in a single pass to prevent double-unescaping.
  */
 export function unescapeXml(safe: string): string {
-  return safe
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
+  return safe.replace(
+    /&(?:amp|lt|gt|quot|apos);/g,
+    (entity) => XML_ENTITIES[entity] ?? entity
+  )
 }
 
 /**
@@ -53,6 +59,19 @@ function parseAttributes(attrString: string): Record<string, string> {
 }
 
 /**
+ * Strips XML comments iteratively until no comment markers remain.
+ */
+function stripXmlComments(input: string): string {
+  let prev: string
+  let current = input
+  do {
+    prev = current
+    current = current.replace(/<!--[\s\S]*?-->/g, '')
+  } while (current !== prev)
+  return current
+}
+
+/**
  * Parses OPML XML string into a structured OpmlCategory array.
  * Works uniformly in browser (client) and Node.js without external dependencies.
  */
@@ -61,8 +80,7 @@ export function parseOpml(opmlContent: string): OpmlCategory[] {
     return []
   }
 
-  // Remove XML comments
-  const cleanXml = opmlContent.replace(/<!--[\s\S]*?-->/g, '')
+  const cleanXml = stripXmlComments(opmlContent)
 
   const bodyMatch = cleanXml.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
   if (!bodyMatch) {

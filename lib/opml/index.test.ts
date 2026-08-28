@@ -22,6 +22,11 @@ test('unescapeXml unescapes special XML entities', (t) => {
   )
 })
 
+test('unescapeXml does not double-unescape entities', (t) => {
+  t.is(unescapeXml('&amp;lt;'), '&lt;')
+  t.is(unescapeXml('&amp;amp;'), '&amp;')
+})
+
 test('parseOpml parses categories and RSS items', (t) => {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
@@ -29,6 +34,7 @@ test('parseOpml parses categories and RSS items', (t) => {
     <title>Feeds</title>
   </head>
   <body>
+    <!-- Category for tech blogs -->
     <outline title="Tech" text="Tech">
       <outline type="rss" text="TechCrunch" title="TechCrunch" xmlUrl="https://techcrunch.com/feed" htmlUrl="https://techcrunch.com" />
       <outline type="rss" text="The Verge" title="The Verge" xmlUrl="https://theverge.com/rss/index.xml" htmlUrl="https://theverge.com" />
