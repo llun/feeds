@@ -1,0 +1,22 @@
+lib/components/opml/OpmlCategoryDialog.tsx
+  h_580a04e334fef4 1-108
+lib/components/opml/OpmlEditor.tsx
+  h_580a04e334fef4 1-339
+lib/components/opml/OpmlFeedDialog.tsx
+  h_580a04e334fef4 1-196
+lib/components/opml/OpmlImportDialog.tsx
+  h_580a04e334fef4 1-128
+lib/components/opml/OpmlXmlPreview.tsx
+  h_580a04e334fef4 1-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "03573ac47ca79d7eb98aa03b5af237db006ed734",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
