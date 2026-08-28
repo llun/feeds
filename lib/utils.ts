@@ -126,12 +126,16 @@ export const locationController = async (
     }
     case 'category': {
       setContent(null)
-      setPageState('entries')
+      setPageState((current) =>
+        current === 'categories' ? 'categories' : 'entries'
+      )
       return
     }
     case 'site': {
       setContent(null)
-      setPageState('entries')
+      setPageState((current) =>
+        current === 'categories' ? 'categories' : 'entries'
+      )
       return
     }
     case 'entry': {
