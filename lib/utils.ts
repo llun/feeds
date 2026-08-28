@@ -3,7 +3,7 @@ import React from 'react'
 import { getStorage } from './storage'
 import { Content } from './storage/types'
 
-export type PageState = 'categories' | 'entries' | 'article'
+export type PageState = 'categories' | 'entries' | 'article' | 'opml'
 
 export const articleClassName = (pageState: PageState): string => {
   switch (pageState) {
@@ -19,6 +19,7 @@ export const entriesClassName = (pageState: PageState): string => {
     case 'entries':
       return 'md:block'
     case 'article':
+    case 'opml':
     default:
       return 'hidden md:block'
   }
@@ -28,6 +29,7 @@ export const categoriesClassName = (pageState: PageState): string => {
   switch (pageState) {
     case 'article':
     case 'entries':
+    case 'opml':
       return 'hidden md:block'
     default:
       return 'md:block'
@@ -51,6 +53,9 @@ export type LocationState =
         key: string
       }
     }
+  | {
+      type: 'opml'
+    }
   | null
 
 export const parseLocation = (url: string): LocationState => {
@@ -60,6 +65,7 @@ export const parseLocation = (url: string): LocationState => {
   /**
    * Path structure
    *
+   * - /opml, showing OPML editor (opml)
    * - /categories/[name], showing entries in category (categories)
    * - /sites/all, showing all entries (sites)
    * - /sites/[name], showing specific site entries (sites)
@@ -67,6 +73,10 @@ export const parseLocation = (url: string): LocationState => {
    * - /sites/all/entries/[entry], showing specific entry (entry)
    * - /sites/[name]/entries/[entry], showing specific entry (entry)
    */
+  if (parts.length === 1 && parts[0] === 'opml') {
+    return { type: 'opml' }
+  }
+
   if (![2, 4].includes(parts.length)) return null
   if (parts.length === 2) {
     if (!parts[1].trim()) return null
@@ -109,14 +119,23 @@ export const locationController = async (
 
   const storage = getStorage(basePath)
   switch (locationState.type) {
+    case 'opml': {
+      setContent(null)
+      setPageState('opml')
+      return
+    }
     case 'category': {
       setContent(null)
-      setPageState('entries')
+      setPageState((current) =>
+        current === 'categories' ? 'categories' : 'entries'
+      )
       return
     }
     case 'site': {
       setContent(null)
-      setPageState('entries')
+      setPageState((current) =>
+        current === 'categories' ? 'categories' : 'entries'
+      )
       return
     }
     case 'entry': {

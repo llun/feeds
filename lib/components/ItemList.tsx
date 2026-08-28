@@ -219,7 +219,9 @@ export const ItemList = ({
       ? locationState.parent.key
       : locationState.type === 'category'
         ? locationState.category
-        : locationState.siteKey
+        : locationState.type === 'site'
+          ? locationState.siteKey
+          : ''
 
   return (
     <section
