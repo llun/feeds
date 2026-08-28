@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { formatDistance } from 'date-fns'
-import { Folder, Inbox } from 'lucide-react'
+import { Folder, Inbox, FileCode } from 'lucide-react'
 import { Category } from '../storage/types'
 import { ThemeToggle } from './ThemeToggle'
 import { Logo } from './Logo'
@@ -49,7 +50,17 @@ export const CategoryList = ({
           <Logo size={30} />
           <h1 className="text-xl font-bold tracking-wide">FEEDS</h1>
         </span>
-        <ThemeToggle />
+        <div className="flex items-center gap-1">
+          <Link
+            href="/opml"
+            className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-3 hover:text-foreground focus-ring"
+            title="OPML Editor"
+            aria-label="OPML Editor"
+          >
+            <FileCode size={18} />
+          </Link>
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* pt-1 keeps the first row's focus ring clear of the scroll clip */}
