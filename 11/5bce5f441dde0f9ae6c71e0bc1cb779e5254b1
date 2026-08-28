@@ -1,0 +1,19 @@
+lib/opml/index.test.ts
+  s_573a4f61d609a9::t_b0b904d7b05cc1 1-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "115bce5f441dde0f9ae6c71e0bc1cb779e5254b1",
+  "prompts": {},
+  "sessions": {
+    "s_573a4f61d609a9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d903a10c-deef-49cb-ae5b-2198fabb750e",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
