@@ -1,6 +1,12 @@
 import test from 'ava'
 import { parseLocation } from './utils'
 
+test('#parseLocation returns opml type', (t) => {
+  t.deepEqual(parseLocation('/opml'), {
+    type: 'opml'
+  })
+})
+
 test('#parseLocation returns category type', (t) => {
   t.deepEqual(parseLocation('/categories/Apple'), {
     type: 'category',

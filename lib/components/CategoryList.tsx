@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
-import Link from 'next/link'
 import { formatDistance } from 'date-fns'
-import { Folder, Inbox, FileCode } from 'lucide-react'
+import { Folder, Inbox, Settings } from 'lucide-react'
 import { Category } from '../storage/types'
 import { ThemeToggle } from './ThemeToggle'
 import { Logo } from './Logo'
@@ -11,8 +10,10 @@ interface CategoryListProps {
   totalEntries: number | null
   version?: string
   buildTime?: string | null
+  currentLocationType?: string
   selectCategory?: (category: string) => void
   selectSite?: (siteKey: string, siteTitle: string) => void
+  selectOpml?: () => void
 }
 
 // Idle and selected are kept mutually exclusive rather than layered: Tailwind
@@ -36,10 +37,15 @@ export const CategoryList = ({
   totalEntries,
   version,
   buildTime,
+  currentLocationType,
   selectCategory,
-  selectSite
+  selectSite,
+  selectOpml
 }: CategoryListProps) => {
   const [currentCategory, setCurrentCategory] = useState<string | undefined>()
+
+  const isOpml = currentLocationType === 'opml'
+
   return (
     <nav
       className="flex h-full flex-col border-border bg-sidebar text-sidebar-foreground md:border-r"
@@ -50,17 +56,7 @@ export const CategoryList = ({
           <Logo size={30} />
           <h1 className="text-xl font-bold tracking-wide">FEEDS</h1>
         </span>
-        <div className="flex items-center gap-1">
-          <Link
-            href="/opml"
-            className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-3 hover:text-foreground focus-ring"
-            title="OPML Editor"
-            aria-label="OPML Editor"
-          >
-            <FileCode size={18} />
-          </Link>
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
       </div>
 
       {/* pt-1 keeps the first row's focus ring clear of the scroll clip */}
@@ -71,9 +67,20 @@ export const CategoryList = ({
             setCurrentCategory(undefined)
             selectSite?.('all', 'All Items')
           }}
-          className={`${navItemClassName} ${idleNavItemClassName}`}
+          className={`${navItemClassName} ${
+            !currentCategory && !isOpml
+              ? selectedNavItemClassName
+              : idleNavItemClassName
+          }`}
         >
-          <Inbox size={16} className="shrink-0 text-muted-foreground" />
+          <Inbox
+            size={16}
+            className={`shrink-0 ${
+              !currentCategory && !isOpml
+                ? 'text-brand'
+                : 'text-muted-foreground'
+            }`}
+          />
           <span className="flex-1 truncate">All Items</span>
           <span className={countClassName}>{totalEntries ?? 0}</span>
         </button>
@@ -83,7 +90,7 @@ export const CategoryList = ({
         )}
 
         {categories.map((category) => {
-          const selected = category.title === currentCategory
+          const selected = category.title === currentCategory && !isOpml
           return (
             <div key={category.title}>
               <button
@@ -136,6 +143,27 @@ export const CategoryList = ({
             No categories found.
           </p>
         )}
+
+        <p className="feeds-eyebrow mx-2 mt-4 mb-1.5">Subscriptions</p>
+        <button
+          type="button"
+          onClick={() => {
+            setCurrentCategory(undefined)
+            selectOpml?.()
+          }}
+          className={`${navItemClassName} ${
+            isOpml ? selectedNavItemClassName : idleNavItemClassName
+          }`}
+          aria-current={isOpml ? true : undefined}
+        >
+          <Settings
+            size={16}
+            className={`shrink-0 ${
+              isOpml ? 'text-brand' : 'text-muted-foreground'
+            }`}
+          />
+          <span className="flex-1 truncate">Edit OPML</span>
+        </button>
       </div>
 
       <div className="flex items-center justify-between gap-2 border-t border-border px-3.5 py-2.5 text-xs text-muted-foreground">

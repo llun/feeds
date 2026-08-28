@@ -1,14 +1,21 @@
 import { FC } from 'react'
 import type { Metadata } from 'next'
-import { OpmlEditor } from '../../lib/components/opml/OpmlEditor'
+import { Page } from '../../lib/page'
+import { version } from '../../package.json'
 
 export const metadata: Metadata = {
-  title: 'OPML Editor - Feeds',
-  description: 'In-memory OPML Feed and Category Editor'
+  title: 'Feeds — feeds.opml',
+  description: 'Feeds OPML subscription editor'
 }
 
-const OpmlPage: FC = () => {
-  return <OpmlEditor />
+const OpmlPage: FC = async () => {
+  return (
+    <Page
+      version={version}
+      buildTime={process.env.NEXT_PUBLIC_BUILD_TIME}
+      initialPath="/opml"
+    />
+  )
 }
 
 export default OpmlPage
