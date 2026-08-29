@@ -109,6 +109,19 @@ export const parseLocation = (url: string): LocationState => {
   }
 }
 
+export const getInitialPageState = (location: LocationState): PageState => {
+  if (!location) return 'entries'
+  switch (location.type) {
+    case 'opml':
+      return 'opml'
+    case 'entry':
+      return 'article'
+    case 'category':
+    case 'site':
+      return 'entries'
+  }
+}
+
 export const locationController = async (
   locationState: LocationState,
   basePath: string,
@@ -126,16 +139,12 @@ export const locationController = async (
     }
     case 'category': {
       setContent(null)
-      setPageState((current) =>
-        current === 'categories' ? 'categories' : 'entries'
-      )
+      setPageState('entries')
       return
     }
     case 'site': {
       setContent(null)
-      setPageState((current) =>
-        current === 'categories' ? 'categories' : 'entries'
-      )
+      setPageState('entries')
       return
     }
     case 'entry': {
