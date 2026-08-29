@@ -1,0 +1,36 @@
+action/feeds/database.test.ts
+  h_580a04e334fef4 154,183-198
+action/feeds/database.ts
+  h_580a04e334fef4 67,71-74,300,304-310,419
+action/feeds/file.ts
+  h_580a04e334fef4 27-28,95,232-234,298-300
+action/feeds/index.ts
+  h_580a04e334fef4 49
+action/feeds/opml.ts
+  h_580a04e334fef4 16-18
+action/feeds/parsers.ts
+  h_580a04e334fef4 34
+lib/components/OpmlView.tsx
+  h_580a04e334fef4 57-58
+lib/opml.test.ts
+  h_580a04e334fef4 96-118
+lib/storage/file.test.ts
+  h_580a04e334fef4 1-50
+lib/storage/file.ts
+  h_580a04e334fef4 15,18,21-23
+lib/storage/sqlite.ts
+  h_580a04e334fef4 48,53-54,89-91,97-103
+lib/storage/types.ts
+  h_580a04e334fef4 7-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "da41a8e772ae8cf751516f287f193c7505c36447",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
