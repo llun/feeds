@@ -14,6 +14,7 @@ import {
   articleClassName,
   categoriesClassName,
   entriesClassName,
+  getInitialPageState,
   locationController,
   parseLocation
 } from '../lib/utils'
@@ -27,17 +28,20 @@ interface PageProps {
 
 export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
-  const [pageState, setPageState] = useState<PageState>('categories')
+  const router = useRouter()
+  const originalPath = usePathname() || initialPath || '/'
+  const currentPath = initialPath || originalPath
+  const initialLocation = parseLocation(currentPath)
+  const [pageState, setPageState] = useState<PageState>(() =>
+    getInitialPageState(initialLocation)
+  )
   const [categories, setCategories] = useState<Category[]>([])
   const [listTitle, setListTitle] = useState<string>('')
   const [content, setContent] = useState<Content | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
-  const router = useRouter()
-  const originalPath = usePathname() || initialPath || '/'
-  const currentPath = initialPath || originalPath
   const [state, dispatch] = useReducer(PathReducer, {
     pathname: currentPath,
-    location: parseLocation(currentPath)
+    location: initialLocation
   })
 
   // Handle browser history updates when pathname changes
