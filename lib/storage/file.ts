@@ -12,13 +12,15 @@ export class FileStorage implements Storage {
     if (response.status !== 200) throw new Error('Fail to load categories')
 
     const categories = await response.json()
-    return categories.map((category) => ({
+    return categories.map((category: any) => ({
       title: category.name,
       totalEntries: category.totalEntries,
-      sites: category.sites.map((site) => ({
+      sites: category.sites.map((site: any) => ({
         key: site.siteHash,
         title: site.title,
-        totalEntries: site.totalEntries
+        totalEntries: site.totalEntries,
+        xmlUrl: site.xmlUrl ?? '',
+        htmlUrl: site.htmlUrl ?? site.link ?? ''
       }))
     }))
   }

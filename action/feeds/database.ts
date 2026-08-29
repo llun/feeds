@@ -64,8 +64,13 @@ export async function createTables(knex: Knex) {
       table.string('key').primary()
       table.string('title').notNullable()
       table.string('url').nullable()
+      table.string('xmlUrl').nullable()
       table.string('description')
       table.integer('createdAt')
+    })
+  } else if (!(await knex.schema.hasColumn('Sites', 'xmlUrl'))) {
+    await knex.schema.alterTable('Sites', (table) => {
+      table.string('xmlUrl').nullable()
     })
   }
 
@@ -292,9 +297,17 @@ export async function insertSite(knex: Knex, category: string, site: Site) {
           key,
           title: site.title,
           url: site.link || null,
+          xmlUrl: site.xmlUrl || null,
           description: site.description || null,
           createdAt: Math.floor(updatedAt / 1000)
         })
+      } else if (site.xmlUrl || site.link) {
+        await trx('Sites')
+          .where('key', key)
+          .update({
+            url: site.link || null,
+            xmlUrl: site.xmlUrl || null
+          })
       }
       if (!(await isSiteCategoryExists(trx, category, key))) {
         await trx('SiteCategories').insert({
@@ -403,6 +416,7 @@ export async function createOrUpdateDatabase(
       if (!site) {
         continue
       }
+      site.xmlUrl = item.xmlUrl
       console.log(`Load ${site.title}`)
       const siteKey = await insertSite(db, categoryName, site)
       await removeOldEntries(db, site)

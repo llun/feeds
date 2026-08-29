@@ -31,6 +31,7 @@ export interface Site {
   updatedAt: number
   generator: string
   entries: Entry[]
+  xmlUrl?: string
 }
 
 type Values = string[] | { _: string; $: { type: 'text' } }[] | null

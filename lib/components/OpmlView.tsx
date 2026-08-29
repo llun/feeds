@@ -54,8 +54,8 @@ function categoriesToOpmlModel(categories?: Category[]): OpmlCategory[] {
       type: 'rss',
       title: s.title,
       text: s.title,
-      xmlUrl: `https://${s.key}.com/rss.xml`,
-      htmlUrl: `https://${s.key}.com`
+      xmlUrl: s.xmlUrl || s.htmlUrl || '',
+      htmlUrl: s.htmlUrl || ''
     }))
   }))
 }

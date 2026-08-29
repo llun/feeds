@@ -4,6 +4,8 @@ export interface Category {
     key: string
     title: string
     totalEntries: number
+    xmlUrl?: string
+    htmlUrl?: string
   }[]
   totalEntries: number
 }

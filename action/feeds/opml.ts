@@ -13,6 +13,9 @@ export async function loadFeed(title: string, url: string) {
     }
 
     const site = 'rss' in xml ? parseRss(title, xml) : parseAtom(title, xml)
+    if (site) {
+      site.xmlUrl = url
+    }
     return site
   } catch (error: any) {
     console.error(
