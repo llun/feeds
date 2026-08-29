@@ -151,6 +151,7 @@ test('#insertSite', async (t) => {
     key: hash(site.title),
     title: site.title,
     url: site.link,
+    xmlUrl: site.xmlUrl ?? null,
     description: site.description,
     createdAt: Math.floor(site.updatedAt / 1000)
   })
@@ -177,6 +178,22 @@ test('#insertSite', async (t) => {
   t.is(categoryCount2.total, 2)
   const siteCount2 = await db('Sites').count('* as total').first()
   t.is(siteCount2.total, 1)
+})
+
+test('#insertSite with xmlUrl', async (t) => {
+  const { db, fixtures } = t.context
+  const { site } = fixtures
+  await insertCategory(db, 'category1')
+  const siteWithXml: Site = {
+    ...site,
+    title: 'Site with XML',
+    xmlUrl: 'https://llun.dev/feed.xml'
+  }
+  const siteWithXmlKey = await insertSite(db, 'category1', siteWithXml)
+  const persistedSiteWithXml = await db('Sites')
+    .where('key', siteWithXmlKey)
+    .first()
+  t.is(persistedSiteWithXml.xmlUrl, 'https://llun.dev/feed.xml')
 })
 
 test('#deleteSiteCategory', async (t) => {

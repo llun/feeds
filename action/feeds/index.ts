@@ -46,6 +46,7 @@ async function createLocalizingFeedLoader(githubActionPath: string) {
   const feedLoader = async (title: string, url: string) => {
     const site: Site | null = await loadFeed(title, url)
     if (!site) return null
+    site.xmlUrl = url
     return store.localizeSite(await enricher(site))
   }
   return { feedLoader, mediaDirectory }

@@ -24,6 +24,8 @@ interface SiteData {
   updatedAt: number
   siteHash: string
   totalEntries: number
+  xmlUrl?: string
+  htmlUrl?: string
 }
 
 interface CategoryData {
@@ -90,6 +92,7 @@ export async function loadOPMLAndWriteFiles(
       if (!feedData) {
         continue
       }
+      feedData.xmlUrl = item.xmlUrl
       console.log(`Load ${feedData.title}`)
       const sha256 = crypto.createHash('sha256')
       sha256.update(feedData.title)
@@ -226,7 +229,9 @@ export async function createSitesData(
       updatedAt: json.updatedAt,
       siteHash,
       entries: entries.sort((a, b) => b.date - a.date),
-      totalEntries: entries.length
+      totalEntries: entries.length,
+      xmlUrl: json.xmlUrl || '',
+      htmlUrl: json.link || ''
     }
     await fs.writeFile(
       path.join(sitesDataPath, `${siteHash}.json`),
@@ -290,7 +295,9 @@ export async function createCategoryData(paths: Paths) {
         link: data.link,
         updatedAt: data.updatedAt,
         siteHash: data.siteHash,
-        totalEntries: data.entries.length
+        totalEntries: data.entries.length,
+        xmlUrl: data.xmlUrl || '',
+        htmlUrl: data.htmlUrl || data.link || ''
       })),
       totalEntries: totalCategoriesEntries
     }

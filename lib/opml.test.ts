@@ -93,3 +93,26 @@ test('#generateOpml generates valid OPML XML', (t) => {
   const roundtrip = parseOpml(xml)
   t.is(roundtrip.length, 2)
 })
+
+test('#generateOpml preserves exact xmlUrl and htmlUrl without dummy templates', (t) => {
+  const categories: OpmlCategory[] = [
+    {
+      category: 'Apple',
+      items: [
+        {
+          type: 'rss',
+          title: 'Macworld',
+          text: 'Macworld',
+          xmlUrl: 'http://www.macworld.com/index.rss',
+          htmlUrl: 'https://www.macworld.com'
+        }
+      ]
+    }
+  ]
+
+  const xml = generateOpml(categories, 'Feeds')
+  t.true(xml.includes('xmlUrl="http://www.macworld.com/index.rss"'))
+  t.true(xml.includes('htmlUrl="https://www.macworld.com"'))
+  t.false(xml.includes('.com/rss.xml'))
+})
+

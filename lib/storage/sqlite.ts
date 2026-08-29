@@ -45,11 +45,13 @@ export class SqliteStorage implements Storage {
   async getCategories(): Promise<Category[]> {
     const worker = await this.getWorker(this.config, this.basePath)
     const categories = (await worker.db.query(
-      `select category, siteKey, siteTitle from SiteCategories`
+      `select sc.category, sc.siteKey, sc.siteTitle, s.url as htmlUrl, s.xmlUrl from SiteCategories sc left join Sites s on sc.siteKey = s.key`
     )) as {
       category: string
       siteKey: string
       siteTitle: string
+      htmlUrl?: string
+      xmlUrl?: string
     }[]
     const categoryEntryCounts = (
       (await worker.db.query(
@@ -84,13 +86,21 @@ export class SqliteStorage implements Storage {
         map[item.category].sites.push({
           key: item.siteKey,
           title: item.siteTitle,
-          totalEntries: siteEntryCounts[item.siteKey]
+          totalEntries: siteEntryCounts[item.siteKey],
+          xmlUrl: item.xmlUrl ?? '',
+          htmlUrl: item.htmlUrl ?? ''
         })
         return map
       },
       {} as {
         [key in string]: {
-          sites: { key: string; title: string; totalEntries: number }[]
+          sites: {
+            key: string
+            title: string
+            totalEntries: number
+            xmlUrl?: string
+            htmlUrl?: string
+          }[]
           totalEntries: number
         }
       }
