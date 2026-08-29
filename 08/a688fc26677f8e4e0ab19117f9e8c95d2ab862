@@ -1,0 +1,18 @@
+lib/page.tsx
+  h_580a04e334fef4 17,31-37,44
+lib/utils.test.ts
+  h_580a04e334fef4 2-9,75-201
+lib/utils.ts
+  h_580a04e334fef4 112-124,142,147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "08a688fc26677f8e4e0ab19117f9e8c95d2ab862",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
