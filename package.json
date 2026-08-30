@@ -1,6 +1,6 @@
 {
   "name": "feeds-fetcher",
-  "version": "4.4.3",
+  "version": "4.5.0",
   "description": "Websites feed fetcher and static feeds aggregator",
   "main": "index.js",
   "type": "module",
