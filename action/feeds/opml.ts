@@ -1,12 +1,13 @@
-import { USER_AGENT } from './http'
-import { parseAtom, parseRss, parseXML } from './parsers'
+import { fetchFeedWithBrowser } from './browser'
+import { DEFAULT_FEED_HEADERS } from './http'
+import { parseAtom, parseRss, parseXML, type Site } from './parsers'
 
-export async function loadFeed(title: string, url: string) {
+async function parseFeedXML(
+  title: string,
+  url: string,
+  text: string
+): Promise<Site | null> {
   try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': USER_AGENT }
-    })
-    const text = await response.text()
     const xml = await parseXML(text)
     if (!('rss' in xml || 'feed' in xml)) {
       return null
@@ -17,7 +18,52 @@ export async function loadFeed(title: string, url: string) {
       site.xmlUrl = url
     }
     return site
+  } catch {
+    return null
+  }
+}
+
+export async function loadFeed(
+  title: string,
+  url: string
+): Promise<Site | null> {
+  try {
+    const response = await fetch(url, {
+      headers: DEFAULT_FEED_HEADERS
+    })
+
+    if (response.status === 404) {
+      return null
+    }
+
+    if (response.ok) {
+      const text = await response.text()
+      const site = await parseFeedXML(title, url, text)
+      if (site) {
+        return site
+      }
+    }
+
+    // Direct fetch failed, returned 403/503 or HTML challenge: fall back to browser fetch
+    const browserText = await fetchFeedWithBrowser(url)
+    if (browserText) {
+      const site = await parseFeedXML(title, url, browserText)
+      if (site) {
+        return site
+      }
+    }
+
+    return null
   } catch (error: any) {
+    try {
+      const browserText = await fetchFeedWithBrowser(url)
+      if (browserText) {
+        return await parseFeedXML(title, url, browserText)
+      }
+    } catch {
+      // Ignore fallback error
+    }
+
     console.error(
       `Fail to load - ${title} (${url}) because of ${error.message}`
     )
