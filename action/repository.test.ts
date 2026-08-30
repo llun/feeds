@@ -148,10 +148,11 @@ test('#resolveSourceBranch defaults to main for unknown refs', (t) => {
   t.is(resolveSourceBranch('refs/pull/741/merge'), 'main')
 })
 
-test('#getGithubActionPath resolves action repository root path', (t) => {
+test('#getGithubActionPath resolves action repository root path', async (t) => {
   const actionPath = getGithubActionPath()
   t.truthy(actionPath)
-  t.is(path.basename(actionPath), 'feeds')
+  const stat = await fs.stat(path.join(actionPath, 'package.json'))
+  t.true(stat.isFile())
 })
 
 test('#getActionInput reads from action input environment', (t) => {

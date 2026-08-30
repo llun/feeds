@@ -27,6 +27,7 @@ import {
   createMediaStore,
   getMediaDirectory
 } from './media'
+import { closeBrowser } from './browser'
 import { createHackerNewsEnricher } from './hackernews'
 import { loadFeed, readOpml } from './opml'
 import type { Site } from './parsers'
@@ -84,6 +85,8 @@ export async function createFeedDatabase(githubActionPath: string) {
     console.error(error.message)
     console.error(error.stack)
     throw error
+  } finally {
+    await closeBrowser()
   }
 }
 
@@ -120,5 +123,7 @@ export async function createFeedFiles(githubActionPath: string) {
     console.error(error.message)
     console.error(error.stack)
     throw error
+  } finally {
+    await closeBrowser()
   }
 }

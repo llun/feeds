@@ -96,6 +96,13 @@ if (
   )
   assertCommandSucceeded(
     runCommand(
+      'install playwright chromium',
+      [corepackCommand, 'yarn', 'playwright', 'install', 'chromium'],
+      actionPath
+    )
+  )
+  assertCommandSucceeded(
+    runCommand(
       'site builder',
       [process.execPath, '--import', 'tsx', 'index.ts'],
       actionPath
