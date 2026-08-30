@@ -1,0 +1,16 @@
+lib/page.tsx
+  h_580a04e334fef4 3-4,41,49-63,66-78,84,107
+package.json
+  h_580a04e334fef4 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "3271ba3522a3599d4dcf87b388d84c49c60cab7b",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
