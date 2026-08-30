@@ -1,7 +1,7 @@
 'use client'
 
-import { FC, useState, useEffect, useReducer } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { FC, useState, useEffect, useReducer, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 
 import { ItemList } from './components/ItemList'
 import { ItemContent } from './components/ItemContent'
@@ -28,7 +28,6 @@ interface PageProps {
 
 export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
-  const router = useRouter()
   const originalPath = usePathname() || initialPath || '/'
   const currentPath = initialPath || originalPath
   const initialLocation = parseLocation(currentPath)
@@ -39,6 +38,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const [listTitle, setListTitle] = useState<string>('')
   const [content, setContent] = useState<Content | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
+  const navSourceRef = useRef<'user' | 'popstate' | 'replace'>('user')
   const [state, dispatch] = useReducer(PathReducer, {
     pathname: currentPath,
     location: initialLocation
@@ -46,15 +46,42 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 
   // Handle browser history updates when pathname changes
   useEffect(() => {
-    if (state.pathname !== originalPath) {
+    const source = navSourceRef.current
+    navSourceRef.current = 'user'
+
+    if (source === 'popstate') return
+
+    if (source === 'replace') {
+      window.history.replaceState(
+        { location: state.location },
+        '',
+        state.pathname
+      )
+      return
+    }
+
+    if (window.location.pathname !== state.pathname) {
       window.history.pushState({ location: state.location }, '', state.pathname)
     }
-  }, [state.pathname, state.location, originalPath])
+  }, [state.pathname, state.location])
+
+  // Handle browser back/forward buttons and swipe gestures
+  useEffect(() => {
+    const historyPopHandler = (event: PopStateEvent) => {
+      navSourceRef.current = 'popstate'
+      dispatch(updatePath(window.location.pathname))
+    }
+    window.addEventListener('popstate', historyPopHandler)
+    return () => {
+      window.removeEventListener('popstate', historyPopHandler)
+    }
+  }, [])
 
   useEffect(() => {
     ;(async () => {
       if (!state.location) {
         const targetPath = '/sites/all'
+        navSourceRef.current = 'replace'
         dispatch(updatePath(targetPath))
         return
       }
@@ -77,15 +104,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         setPageState
       )
     })()
-
-    const historyPopHandler = (event: PopStateEvent) => {
-      dispatch(updatePath(originalPath))
-    }
-    window.addEventListener('popstate', historyPopHandler)
-    return () => {
-      window.removeEventListener('popstate', historyPopHandler)
-    }
-  }, [status, state, router, originalPath])
+  }, [status, state])
 
   useEffect(() => {
     const storage = getStorage(process.env.NEXT_PUBLIC_BASE_PATH ?? '')
