@@ -1,0 +1,32 @@
+.github/workflows/dev.yml
+  h_580a04e334fef4 22
+action.mjs
+  h_580a04e334fef4 97-103
+action/feeds/browser.ts
+  h_580a04e334fef4 1-118
+action/feeds/http.ts
+  h_580a04e334fef4 4-13
+action/feeds/index.ts
+  h_580a04e334fef4 30,88-89,126-127
+action/feeds/loadFeed.test.ts
+  h_580a04e334fef4 1-29
+action/feeds/opml.ts
+  h_580a04e334fef4 1-3,5-9,21-56,58-66
+action/repository.test.ts
+  h_580a04e334fef4 151,154-155
+package.json
+  h_580a04e334fef4 46
+yarn.lock
+  h_580a04e334fef4 3663,3807-3816,3827-3835,5573-5596
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "68223a7dc375d5cfb62b9518a866a6a972a6bc45",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
