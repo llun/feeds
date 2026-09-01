@@ -118,4 +118,15 @@ export class FileStorage implements Storage {
       timestamp: Math.floor(json.date / 1000)
     }
   }
+
+  async getOpml(): Promise<string | null> {
+    try {
+      const response = await fetch(`${this.basePath}/feeds.opml`)
+      if (response.status !== 200) return null
+      return await response.text()
+    } catch {
+      return null
+    }
+  }
 }
+

@@ -220,4 +220,18 @@ export class SqliteStorage implements Storage {
     if (entry.length === 0) return null
     return entry[0] as Content
   }
+
+  async getOpml(): Promise<string | null> {
+    try {
+      let response = await fetch(`${this.basePath}/data/feeds.opml`)
+      if (response.status !== 200) {
+        response = await fetch(`${this.basePath}/feeds.opml`)
+      }
+      if (response.status !== 200) return null
+      return await response.text()
+    } catch {
+      return null
+    }
+  }
 }
+

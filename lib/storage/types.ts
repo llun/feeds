@@ -38,4 +38,6 @@ export interface Storage {
   countCategoryEntries(category: string): Promise<number>
   getAllEntries(page?: number): Promise<SiteEntry[]>
   getContent(key: string): Promise<Content>
+  getOpml?(): Promise<string | null>
 }
+

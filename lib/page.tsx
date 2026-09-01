@@ -35,6 +35,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
     getInitialPageState(initialLocation)
   )
   const [categories, setCategories] = useState<Category[]>([])
+  const [initialOpml, setInitialOpml] = useState<string | undefined>()
   const [listTitle, setListTitle] = useState<string>('')
   const [content, setContent] = useState<Content | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
@@ -88,12 +89,14 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 
       if (status === 'loading') {
         const storage = getStorage(process.env.NEXT_PUBLIC_BASE_PATH ?? '')
-        const [categories, totalEntries] = await Promise.all([
+        const [categories, totalEntries, opml] = await Promise.all([
           storage.getCategories(),
-          storage.countAllEntries()
+          storage.countAllEntries(),
+          storage.getOpml ? storage.getOpml() : Promise.resolve(null)
         ])
         setTotalEntries(totalEntries)
         setCategories(categories)
+        if (opml) setInitialOpml(opml)
         setStatus('loaded')
       }
 
@@ -229,6 +232,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
             }`}
           >
             <OpmlView
+              initialOpml={initialOpml}
               categories={categories}
               active={true}
               onBack={() => {
