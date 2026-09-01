@@ -116,3 +116,53 @@ test('#generateOpml preserves exact xmlUrl and htmlUrl without dummy templates',
   t.false(xml.includes('.com/rss.xml'))
 })
 
+test('#parseOpml preserves newly added empty feed in category', (t) => {
+  const categories: OpmlCategory[] = [
+    {
+      category: 'Tech',
+      items: [
+        {
+          type: 'rss',
+          title: 'Existing Feed',
+          text: 'Existing Feed',
+          xmlUrl: 'https://example.com/rss.xml',
+          htmlUrl: 'https://example.com'
+        },
+        {
+          type: 'rss',
+          title: '',
+          text: '',
+          xmlUrl: '',
+          htmlUrl: ''
+        }
+      ]
+    }
+  ]
+
+  const xml = generateOpml(categories, 'Feeds')
+  const result = parseOpml(xml)
+
+  t.is(result.length, 1)
+  t.is(result[0].category, 'Tech')
+  t.is(result[0].items.length, 2)
+  t.is(result[0].items[1].title, '')
+  t.is(result[0].items[1].xmlUrl, '')
+})
+
+test('#parseOpml preserves empty category', (t) => {
+  const categories: OpmlCategory[] = [
+    {
+      category: 'Empty Category',
+      items: []
+    }
+  ]
+
+  const xml = generateOpml(categories, 'Feeds')
+  const result = parseOpml(xml)
+
+  t.is(result.length, 1)
+  t.is(result[0].category, 'Empty Category')
+  t.is(result[0].items.length, 0)
+})
+
+

@@ -87,12 +87,12 @@ export const parseOpml = (xmlString: string): OpmlCategory[] => {
     const innerContent = topOutlineMatch[2]
     const topAttrs = parseAttributes(topAttrsStr)
 
-    if (topAttrs.xmlUrl) {
+    if (topAttrs.xmlUrl !== undefined || (topAttrs.type && !innerContent)) {
       const item: OpmlItem = {
         type: topAttrs.type || 'rss',
         text: topAttrs.text || topAttrs.title || '',
         title: topAttrs.title || topAttrs.text || '',
-        xmlUrl: topAttrs.xmlUrl,
+        xmlUrl: topAttrs.xmlUrl || '',
         htmlUrl: topAttrs.htmlUrl || '',
         description: topAttrs.description || ''
       }
@@ -112,17 +112,15 @@ export const parseOpml = (xmlString: string): OpmlCategory[] => {
         let nestedMatch: RegExpExecArray | null
         while ((nestedMatch = nestedTagRegex.exec(innerContent)) !== null) {
           const nestedAttrs = parseAttributes(nestedMatch[1])
-          if (nestedAttrs.xmlUrl) {
-            const item: OpmlItem = {
-              type: nestedAttrs.type || 'rss',
-              text: nestedAttrs.text || nestedAttrs.title || '',
-              title: nestedAttrs.title || nestedAttrs.text || '',
-              xmlUrl: nestedAttrs.xmlUrl,
-              htmlUrl: nestedAttrs.htmlUrl || '',
-              description: nestedAttrs.description || ''
-            }
-            categoryMap.get(categoryName)!.push(item)
+          const item: OpmlItem = {
+            type: nestedAttrs.type || 'rss',
+            text: nestedAttrs.text || nestedAttrs.title || '',
+            title: nestedAttrs.title || nestedAttrs.text || '',
+            xmlUrl: nestedAttrs.xmlUrl || '',
+            htmlUrl: nestedAttrs.htmlUrl || '',
+            description: nestedAttrs.description || ''
           }
+          categoryMap.get(categoryName)!.push(item)
         }
       }
     }
@@ -151,7 +149,7 @@ export const generateOpml = (
   const formatItem = (item: OpmlItem, pad: string): string => {
     const text = escapeXml(item.text || item.title || '')
     const itemTitle = escapeXml(item.title || item.text || '')
-    const xmlUrl = escapeXml(item.xmlUrl)
+    const xmlUrl = escapeXml(item.xmlUrl || '')
     const htmlUrlAttr = item.htmlUrl ? ` htmlUrl="${escapeXml(item.htmlUrl)}"` : ''
     const typeAttr = item.type ? ` type="${escapeXml(item.type)}"` : ' type="rss"'
     return `${pad}<outline${typeAttr} text="${text}" title="${itemTitle}" xmlUrl="${xmlUrl}"${htmlUrlAttr}/>`

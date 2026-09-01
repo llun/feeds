@@ -59,8 +59,9 @@ export async function createFeedDatabase(githubActionPath: string) {
     // This feed site uses files
     if (storageType !== 'sqlite') return
     const feedsFile = getActionInput('opmlFile', { required: true })
+    const opmlFilePath = path.join(getWorkspacePath(), feedsFile)
     const opmlContent = (
-      await fs.readFile(path.join(getWorkspacePath(), feedsFile))
+      await fs.readFile(opmlFilePath)
     ).toString('utf8')
     const opml = await readOpml(opmlContent)
     const publicPath = getPublicPath(githubActionPath)
@@ -81,6 +82,9 @@ export async function createFeedDatabase(githubActionPath: string) {
     )
     await cleanup(database)
     await database.destroy()
+    const dataDir = path.join(publicPath, 'data')
+    await fs.mkdir(dataDir, { recursive: true })
+    await fs.copyFile(opmlFilePath, path.join(dataDir, 'feeds.opml'))
   } catch (error: any) {
     console.error(error.message)
     console.error(error.stack)
@@ -96,6 +100,7 @@ export async function createFeedFiles(githubActionPath: string) {
     // This feed site uses database
     if (storageType === 'sqlite') return
     const feedsFile = getActionInput('opmlFile', { required: true })
+    const opmlFilePath = path.join(getWorkspacePath(), feedsFile)
     const publicPath = githubActionPath
       ? path.join(githubActionPath, 'contents')
       : path.join('contents')
@@ -103,7 +108,7 @@ export async function createFeedFiles(githubActionPath: string) {
       await createLocalizingFeedLoader(githubActionPath)
     await loadOPMLAndWriteFiles(
       publicPath,
-      path.join(getWorkspacePath(), feedsFile),
+      opmlFilePath,
       feedLoader
     )
     const customDomainName = getActionInput('customDomain')
@@ -113,6 +118,7 @@ export async function createFeedFiles(githubActionPath: string) {
     await createRepositoryData(DEFAULT_PATHS, githubRootName, customDomainName)
     await createCategoryData(DEFAULT_PATHS)
     await createAllEntriesData()
+    await fs.copyFile(opmlFilePath, path.join(DEFAULT_PATHS.dataPath, 'feeds.opml'))
     await cleanupUnusedMediaFiles(
       mediaDirectory,
       await collectReferencedMediaFromEntryDirectory(
