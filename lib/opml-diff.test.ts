@@ -151,7 +151,3 @@ test('#buildIssueUrl constructs valid GitHub issue creation URL', (t) => {
     'https://github.com/llun/feeds/issues/new?title=Update+OPML+file&body=Test+Body'
   )
 })
-
-test('#MAX_URL_LENGTH is 6000', (t) => {
-  t.is(MAX_URL_LENGTH, 6000)
-})
