@@ -1,0 +1,14 @@
+{
+  "name": "Feeds Reader",
+  "short_name": "Feeds",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ],
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}
