@@ -1,0 +1,21 @@
+name: Update OPML
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  update-opml:
+    if: startsWith(github.event.issue.title || github.event.pull_request.title, 'Update OPML file')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Run Action
+        uses: llun/feeds@main
+        with:
+          storageType: files

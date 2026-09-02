@@ -78,6 +78,37 @@ jobs:
           branch: public
 ```
 
+## Updating subscriptions via GitHub Issues
+
+The reader includes an in-app OPML editor (`/opml`) where you can add, remove, and reorganize feeds. Clicking **Save OPML** opens a prefilled GitHub issue describing what is being added or removed and containing the updated OPML.
+
+To automatically apply subscription updates when an issue is created, enable the `issues` trigger in your workflow with the required permissions:
+
+```yaml
+name: Feeds
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  issues:
+    types: [opened]
+
+jobs:
+  playground:
+    runs-on: ubuntu-latest
+    name: Build Feeds
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Run Action
+        uses: llun/feeds@4.0.0
+        with:
+          storageType: files
+```
+
+When an issue titled `Update OPML file` is opened by a repository owner or collaborator, the action extracts the OPML, commits and pushes only `feeds.opml` to your source branch, automatically closes the issue, and rebuilds the site.
+
 ## Sample Sites
 
 - https://feeds.llun.dev
