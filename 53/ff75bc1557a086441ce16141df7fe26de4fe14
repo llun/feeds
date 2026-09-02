@@ -1,0 +1,24 @@
+app/globals.css
+  h_580a04e334fef4 498-502,645-669
+lib/components/OpmlView.tsx
+  h_580a04e334fef4 4,103,116-124,126-146,160-163,165,169-171,223-226,242,249-266,268-269
+lib/opml-diff.test.ts
+  h_580a04e334fef4 146-154
+lib/opml-diff.ts
+  h_580a04e334fef4 127-132
+package.json
+  h_580a04e334fef4 3
+readme.md
+  h_580a04e334fef4 92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "53ff75bc1557a086441ce16141df7fe26de4fe14",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
