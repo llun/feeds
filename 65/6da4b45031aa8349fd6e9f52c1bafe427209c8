@@ -1,0 +1,14 @@
+package.json
+  h_580a04e334fef4 42-43,51,56,61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "656da4b45031aa8349fd6e9f52c1bafe427209c8",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
