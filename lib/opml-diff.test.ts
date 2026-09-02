@@ -3,7 +3,6 @@ import {
   describeOpmlDiff,
   formatOpmlIssueBody,
   buildIssueUrl,
-  MAX_URL_LENGTH,
   OPML_ISSUE_TITLE
 } from './opml-diff'
 
@@ -142,6 +141,15 @@ test('#formatOpmlIssueBody wraps summary and XML in code fence', (t) => {
   t.true(body.startsWith(summary))
   t.true(body.includes('## Updated OPML'))
   t.true(body.includes('```xml\n<opml version="2.0"><body/></opml>\n```'))
+})
+
+test('#formatOpmlIssueBody defaults to PASTE_OPML_HERE placeholder', (t) => {
+  const summary = '## Changes\n\n### Added\n- Feed 1'
+  const body = formatOpmlIssueBody(summary)
+
+  t.true(body.startsWith(summary))
+  t.true(body.includes('## Updated OPML'))
+  t.true(body.includes('```xml\nPASTE_OPML_HERE\n```'))
 })
 
 test('#buildIssueUrl constructs valid GitHub issue creation URL', (t) => {

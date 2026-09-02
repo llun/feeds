@@ -1,13 +1,12 @@
 'use client'
 
 import React, { FC, useState, useRef, useMemo } from 'react'
-import { Folder, Rss, GitPullRequest } from 'lucide-react'
+import { Folder, Rss, GitPullRequest, Info } from 'lucide-react'
 import { Button } from './Button'
 import {
   describeOpmlDiff,
   formatOpmlIssueBody,
   buildIssueUrl,
-  MAX_URL_LENGTH,
   OPML_ISSUE_TITLE
 } from '../opml-diff'
 import { generateOpml, parseOpml, type OpmlCategory } from '../opml'
@@ -101,6 +100,7 @@ export const OpmlView: FC<OpmlViewProps> = ({
   const [src, setSrc] = useState<string>(defaultInitial)
   const [mode, setMode] = useState<'form' | 'xml'>('form')
   const [copied, setCopied] = useState(false)
+  const [showClipboardNotice, setShowClipboardNotice] = useState(false)
   const [repo, setRepo] = useState<string>(() => getRepositoryName())
   const taRef = useRef<HTMLTextAreaElement>(null)
 
@@ -113,13 +113,37 @@ export const OpmlView: FC<OpmlViewProps> = ({
     [pristine, src]
   )
 
-  const issueUrl = useMemo(() => {
-    const targetRepo = repo || 'owner/repo'
-    const body = formatOpmlIssueBody(diffResult.summary, src)
-    return buildIssueUrl(targetRepo, OPML_ISSUE_TITLE, body)
-  }, [repo, diffResult.summary, src])
+  const copyToClipboard = (text: string) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {
+        fallbackCopy(text)
+      })
+    } else {
+      fallbackCopy(text)
+    }
+  }
 
-  const isUrlTooLarge = issueUrl.length > MAX_URL_LENGTH
+  const fallbackCopy = (text: string) => {
+    if (taRef.current && mode === 'xml') {
+      taRef.current.select()
+      try {
+        document.execCommand('copy')
+      } catch {}
+      window.getSelection()?.removeAllRanges()
+      return
+    }
+    try {
+      const el = document.createElement('textarea')
+      el.value = text
+      el.setAttribute('readonly', '')
+      el.style.position = 'absolute'
+      el.style.left = '-9999px'
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+    } catch {}
+  }
 
   const saveOpml = () => {
     let targetRepo = repo
@@ -133,37 +157,18 @@ export const OpmlView: FC<OpmlViewProps> = ({
     }
     if (!targetRepo) return
 
-    const body = formatOpmlIssueBody(diffResult.summary, src)
+    copyToClipboard(src)
+    setShowClipboardNotice(true)
+
+    const body = formatOpmlIssueBody(diffResult.summary)
     const url = buildIssueUrl(targetRepo, OPML_ISSUE_TITLE, body)
-    if (url.length <= MAX_URL_LENGTH) {
-      window.open(url, '_blank', 'noopener,noreferrer')
-    }
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   const copy = () => {
-    const done = () => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(src).then(done, () => {
-        fallback()
-        done()
-      })
-    } else {
-      fallback()
-      done()
-    }
-
-    function fallback() {
-      if (!taRef.current) return
-      taRef.current.select()
-      try {
-        document.execCommand('copy')
-      } catch {}
-      window.getSelection()?.removeAllRanges()
-    }
+    copyToClipboard(src)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const edit = (fn: (model: OpmlCategory[]) => void) => {
@@ -215,7 +220,10 @@ export const OpmlView: FC<OpmlViewProps> = ({
               variant="ghost"
               size="sm"
               disabled={!dirty}
-              onClick={() => setSrc(pristine)}
+              onClick={() => {
+                setSrc(pristine)
+                setShowClipboardNotice(false)
+              }}
             >
               Reset
             </Button>
@@ -231,22 +239,34 @@ export const OpmlView: FC<OpmlViewProps> = ({
               variant="brand"
               size="sm"
               iconLeft={<GitPullRequest size={14} />}
-              disabled={!dirty || Boolean(parsed.error) || isUrlTooLarge}
-              title={
-                isUrlTooLarge
-                  ? 'OPML is too large for GitHub URL limit. Please copy and commit manually.'
-                  : undefined
-              }
+              disabled={!dirty || Boolean(parsed.error)}
               onClick={saveOpml}
             >
               Save OPML
             </Button>
           </div>
         </div>
+        {showClipboardNotice && (
+          <div className="fk-opml-bar" role="status">
+            <div className="fk-opml-bar-content">
+              <Info size={15} />
+              <span>
+                OPML content copied to clipboard! Please paste it into the issue
+                body manually.
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              iconLeft="x"
+              aria-label="Dismiss message"
+              onClick={() => setShowClipboardNotice(false)}
+            />
+          </div>
+        )}
         <p className="fk-opml-hint">
-          {isUrlTooLarge
-            ? 'OPML content exceeds the GitHub URL limit. Copy the output and commit feeds.opml to your repository manually.'
-            : 'Save OPML creates a GitHub issue to update feeds.opml automatically, or you can copy and commit manually.'}
+          Save OPML opens a GitHub issue and copies the OPML content to your
+          clipboard to paste into the issue body.
         </p>
       </div>
 

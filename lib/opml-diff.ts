@@ -1,6 +1,5 @@
 import { parseOpml, type OpmlCategory, type OpmlItem } from './opml'
 
-export const MAX_URL_LENGTH = 60000
 export const OPML_ISSUE_TITLE = 'Update OPML file'
 
 export interface OpmlDiffResult {
@@ -125,8 +124,12 @@ export function describeOpmlDiff(
   }
 }
 
-export function formatOpmlIssueBody(summary: string, opmlXml: string): string {
-  return `${summary.trim()}\n\n## Updated OPML\n\n\`\`\`xml\n${opmlXml.trim()}\n\`\`\``
+export function formatOpmlIssueBody(
+  summary: string,
+  opmlXml: string = 'PASTE_OPML_HERE'
+): string {
+  const content = opmlXml && opmlXml.trim() ? opmlXml.trim() : 'PASTE_OPML_HERE'
+  return `${summary.trim()}\n\n## Updated OPML\n\n\`\`\`xml\n${content}\n\`\`\``
 }
 
 export function buildIssueUrl(

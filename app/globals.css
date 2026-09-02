@@ -495,7 +495,11 @@
     color: var(--_fg);
     cursor: pointer;
     user-select: none;
-    transition: color 120ms, background-color 120ms, border-color 120ms, box-shadow 120ms;
+    transition:
+      color 120ms,
+      background-color 120ms,
+      border-color 120ms,
+      box-shadow 120ms;
     text-decoration: none;
     outline: none;
   }
@@ -637,6 +641,31 @@
     display: flex;
     gap: 6px;
     flex-shrink: 0;
+  }
+  .fk-opml-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 16px 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm, 6px);
+    background: var(--sidebar-accent);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--foreground);
+  }
+  .fk-opml-bar-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .fk-opml-bar-content svg {
+    flex-shrink: 0;
+    color: var(--link, #2563eb);
   }
   .fk-opml-hint {
     margin: 0;
