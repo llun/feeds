@@ -9,6 +9,9 @@ export default () => {
         `/${githubRootName.split('/')[1]}`) ||
       ''
   process.env.NEXT_PUBLIC_BASE_PATH = basePath ?? '/'
+  process.env.NEXT_PUBLIC_GITHUB_REPOSITORY = githubRootName
+  process.env.NEXT_PUBLIC_OPML_FILE =
+    process.env['INPUT_OPMLFILE'] || 'feeds.opml'
   // The action rebuilds the site right after fetching feeds, so build time is
   // when the content was last refreshed.
   process.env.NEXT_PUBLIC_BUILD_TIME = new Date().toISOString()

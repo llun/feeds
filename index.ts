@@ -1,4 +1,5 @@
 import { createFeedDatabase, createFeedFiles } from './action/feeds'
+import { handleOpmlIssue } from './action/issue'
 import {
   buildSite,
   getGithubActionPath,
@@ -8,6 +9,7 @@ import {
 
 async function run() {
   await setup()
+  await handleOpmlIssue()
   await createFeedDatabase(getGithubActionPath())
   await createFeedFiles(getGithubActionPath())
   await buildSite()

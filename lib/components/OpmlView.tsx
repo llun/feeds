@@ -1,13 +1,16 @@
 'use client'
 
 import React, { FC, useState, useRef, useMemo } from 'react'
-import { Folder, Rss } from 'lucide-react'
+import { Folder, Rss, GitPullRequest } from 'lucide-react'
 import { Button } from './Button'
 import {
-  generateOpml,
-  parseOpml,
-  type OpmlCategory
-} from '../opml'
+  describeOpmlDiff,
+  formatOpmlIssueBody,
+  buildIssueUrl,
+  MAX_URL_LENGTH,
+  OPML_ISSUE_TITLE
+} from '../opml-diff'
+import { generateOpml, parseOpml, type OpmlCategory } from '../opml'
 import { Category } from '../storage/types'
 
 interface OpmlViewProps {
@@ -78,6 +81,24 @@ function parseOpmlSafe(src: string): { cats?: OpmlCategory[]; error?: string } {
   }
 }
 
+function getRepositoryName(): string {
+  if (process.env.NEXT_PUBLIC_GITHUB_REPOSITORY) {
+    return process.env.NEXT_PUBLIC_GITHUB_REPOSITORY
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname
+    if (host.endsWith('.github.io')) {
+      const owner = host.replace(/\.github\.io$/, '')
+      const parts = window.location.pathname.split('/').filter(Boolean)
+      const repo = parts[0] || 'feeds'
+      return `${owner}/${repo}`
+    }
+    const saved = window.localStorage.getItem('feeds_github_repo')
+    if (saved) return saved
+  }
+  return ''
+}
+
 export const OpmlView: FC<OpmlViewProps> = ({
   active = true,
   onBack,
@@ -92,11 +113,44 @@ export const OpmlView: FC<OpmlViewProps> = ({
   const [src, setSrc] = useState<string>(defaultInitial)
   const [mode, setMode] = useState<'form' | 'xml'>('form')
   const [copied, setCopied] = useState(false)
+  const [repo, setRepo] = useState<string>(() => getRepositoryName())
   const taRef = useRef<HTMLTextAreaElement>(null)
 
   const pristine = defaultInitial
   const dirty = src !== pristine
   const parsed = useMemo(() => parseOpmlSafe(src), [src])
+
+  const diffResult = useMemo(
+    () => describeOpmlDiff(pristine, src),
+    [pristine, src]
+  )
+
+  const issueUrl = useMemo(() => {
+    const targetRepo = repo || 'owner/repo'
+    const body = formatOpmlIssueBody(diffResult.summary, src)
+    return buildIssueUrl(targetRepo, OPML_ISSUE_TITLE, body)
+  }, [repo, diffResult.summary, src])
+
+  const isUrlTooLarge = issueUrl.length > MAX_URL_LENGTH
+
+  const saveOpml = () => {
+    let targetRepo = repo
+    if (!targetRepo && typeof window !== 'undefined') {
+      const input = window.prompt('Enter your GitHub repository (owner/repo):')
+      if (input) {
+        targetRepo = input.trim()
+        window.localStorage.setItem('feeds_github_repo', targetRepo)
+        setRepo(targetRepo)
+      }
+    }
+    if (!targetRepo) return
+
+    const body = formatOpmlIssueBody(diffResult.summary, src)
+    const url = buildIssueUrl(targetRepo, OPML_ISSUE_TITLE, body)
+    if (url.length <= MAX_URL_LENGTH) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    }
+  }
 
   const copy = () => {
     const done = () => {
@@ -178,18 +232,33 @@ export const OpmlView: FC<OpmlViewProps> = ({
               Reset
             </Button>
             <Button
-              variant="brand"
+              variant="secondary"
               size="sm"
               iconLeft={copied ? 'check' : undefined}
               onClick={copy}
             >
               {copied ? 'Copied' : 'Copy OPML'}
             </Button>
+            <Button
+              variant="brand"
+              size="sm"
+              iconLeft={<GitPullRequest size={14} />}
+              disabled={!dirty || Boolean(parsed.error) || isUrlTooLarge}
+              title={
+                isUrlTooLarge
+                  ? 'OPML is too large for GitHub URL limit. Please copy and commit manually.'
+                  : undefined
+              }
+              onClick={saveOpml}
+            >
+              Save OPML
+            </Button>
           </div>
         </div>
         <p className="fk-opml-hint">
-          Edits are not saved here. Copy the output and commit{' '}
-          <code>feeds.opml</code> to your repository yourself.
+          {isUrlTooLarge
+            ? 'OPML content exceeds the GitHub URL limit. Copy the output and commit feeds.opml to your repository manually.'
+            : 'Save OPML creates a GitHub issue to update feeds.opml automatically, or you can copy and commit manually.'}
         </p>
       </div>
 
