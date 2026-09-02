@@ -89,7 +89,7 @@ jobs:
 
 ## Updating subscriptions via GitHub Issues
 
-The reader includes an in-app OPML editor (`/opml`) where you can add, remove, and reorganize feeds. Clicking **Save OPML** opens a prefilled GitHub issue describing what is being added or removed and containing the updated OPML.
+The reader includes an in-app OPML editor (`/opml`) where you can add, remove, and reorganize feeds. Clicking **Save OPML** copies the updated OPML to your clipboard and opens a prefilled GitHub issue describing what is being added or removed. You then paste the OPML into the issue body to submit.
 
 To automatically apply subscription updates when an issue is created, enable the `issues` trigger in your workflow with the required permissions:
 
