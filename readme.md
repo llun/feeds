@@ -14,14 +14,20 @@ name: Schedule
 on:
   schedule:
     - cron: '0 * * * *'
+  workflow_dispatch:
+  issues:
+    types: [opened]
 
 jobs:
   playground:
     runs-on: ubuntu-latest
     name: Test
+    permissions:
+      contents: write
+      issues: write
     steps:
       - name: Run Action
-        uses: llun/feeds@4.0.0
+        uses: llun/feeds@4.6.0
 ```
 
 After this, enable GitHub Pages on the `contents` branch and the content will be available on that page.
@@ -64,6 +70,9 @@ name: Schedule
 on:
   schedule:
     - cron: '0 * * * *'
+  workflow_dispatch:
+  issues:
+    types: [opened]
 
 jobs:
   playground:
@@ -71,7 +80,7 @@ jobs:
     name: Generate Feeds
     steps:
       - name: Run Action
-        uses: llun/feeds@4.0.0
+        uses: llun/feeds@4.6.0
         with:
           storageType: files
           opmlFile: site.opml
@@ -90,6 +99,7 @@ name: Feeds
 on:
   schedule:
     - cron: '0 * * * *'
+  workflow_dispatch:
   issues:
     types: [opened]
 
@@ -102,7 +112,7 @@ jobs:
       issues: write
     steps:
       - name: Run Action
-        uses: llun/feeds@4.0.0
+        uses: llun/feeds@4.6.0
         with:
           storageType: files
 ```
