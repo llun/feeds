@@ -32,18 +32,6 @@ const DEFAULT_STARTER_OPML: OpmlCategory[] = [
         htmlUrl: 'https://www.llun.me/'
       }
     ]
-  },
-  {
-    category: 'Category2',
-    items: [
-      {
-        type: 'rss',
-        text: 'cheeaunblog',
-        title: 'cheeaunblog',
-        xmlUrl: 'https://cheeaun.com/blog/feed.xml',
-        htmlUrl: 'https://cheeaun.com/blog'
-      }
-    ]
   }
 ]
 
