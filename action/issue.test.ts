@@ -3,6 +3,7 @@ import fs from 'fs/promises'
 import os from 'os'
 import path from 'path'
 import sinon from 'sinon'
+import { parseOpml } from '../lib/opml'
 import {
   extractOpmlFromIssueBody,
   isAuthorizedAuthor,
@@ -14,7 +15,8 @@ test('#extractOpmlFromIssueBody extracts OPML from code fence', (t) => {
   const opml = extractOpmlFromIssueBody(body)
   t.truthy(opml)
   t.true(opml!.startsWith('<opml'))
-  t.true(opml!.includes('https://example.com/rss'))
+  const parsed = parseOpml(opml!)
+  t.is(parsed[0].items[0].xmlUrl, 'https://example.com/rss')
 })
 
 test('#extractOpmlFromIssueBody extracts OPML without code fence', (t) => {
