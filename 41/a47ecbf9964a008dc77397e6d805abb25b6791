@@ -1,0 +1,14 @@
+readme.md
+  h_580a04e334fef4 17-19,25-27,30,73-75,83,102,115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "41a47ecbf9964a008dc77397e6d805abb25b6791",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
