@@ -1,0 +1,24 @@
+app/layout.tsx
+  h_580a04e334fef4 5-6,20,30
+lib/components/CategoryList.test.tsx
+  h_580a04e334fef4 67-88
+lib/components/CategoryList.tsx
+  h_580a04e334fef4 92,141
+lib/feed-alternates.test.ts
+  h_580a04e334fef4 1-97
+lib/feed-alternates.ts
+  h_580a04e334fef4 1-113
+package.json
+  h_580a04e334fef4 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "3d9c9039b73513fb9e06a86b049991dfbdf964a6",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
