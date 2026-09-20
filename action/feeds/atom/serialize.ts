@@ -7,7 +7,10 @@ import { NormalizedEntry, NormalizedFeed } from './types'
  */
 export function sanitizeXmlString(str?: string | null): string {
   if (!str) return ''
-  return str.replace(/[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD]/gu, '')
+  return str.replace(
+    /[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/gu,
+    ''
+  )
 }
 
 /**
@@ -64,6 +67,9 @@ export function serializeAtomFeed(feed: NormalizedFeed): string {
       id: feed.id,
       title: sanitizeXmlString(feed.title),
       updated: formatRfc3339(feed.updatedMs),
+      author: {
+        name: 'Feeds'
+      },
       generator: {
         $: {
           uri: 'https://github.com/llun/feeds'

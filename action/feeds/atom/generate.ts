@@ -177,7 +177,15 @@ export async function writeFeedsAtomically(
   manifest: FeedManifest
 ) {
   const targetDir = path.join(publicPath, 'feeds')
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'feeds-atom-'))
+  await fs.mkdir(publicPath, { recursive: true })
+  const tempDir = path.join(
+    publicPath,
+    `.feeds-tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  )
+  const backupDir = path.join(
+    publicPath,
+    `.feeds-old-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  )
 
   try {
     const categoriesDir = path.join(tempDir, 'categories')
@@ -204,11 +212,27 @@ export async function writeFeedsAtomically(
       'utf8'
     )
 
-    // 4. Atomic directory replacement
-    await fs.rm(targetDir, { recursive: true, force: true })
-    await fs.mkdir(path.dirname(targetDir), { recursive: true })
-    await fs.cp(tempDir, targetDir, { recursive: true })
+    // 4. Atomic directory replacement on same filesystem
+    const targetExists = await fs
+      .stat(targetDir)
+      .then(() => true)
+      .catch(() => false)
+
+    if (targetExists) {
+      await fs.rename(targetDir, backupDir)
+    }
+    await fs.rename(tempDir, targetDir)
+  } catch (err) {
+    const backupExists = await fs
+      .stat(backupDir)
+      .then(() => true)
+      .catch(() => false)
+    if (backupExists) {
+      await fs.rename(backupDir, targetDir).catch(() => {})
+    }
+    throw err
   } finally {
+    await fs.rm(backupDir, { recursive: true, force: true }).catch(() => {})
     await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {})
   }
 }
@@ -400,7 +424,7 @@ export async function generateFeedsFromDatabase(options: {
       : undefined
     const storedMs =
       row.createdAt > 0 ? normalizeTimestampMs(row.createdAt) : undefined
-    const updatedMs = publishedMs ?? storedMs ?? 0
+    const updatedMs = publishedMs ?? 0
 
     entries.push({
       id: entryId,

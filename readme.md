@@ -27,7 +27,7 @@ jobs:
       issues: write
     steps:
       - name: Run Action
-        uses: llun/feeds@4.6.0
+        uses: llun/feeds@4.7.0
 ```
 
 After this, enable GitHub Pages on the `contents` branch and the content will be available on that page.
@@ -94,7 +94,7 @@ jobs:
     name: Generate Feeds
     steps:
       - name: Run Action
-        uses: llun/feeds@4.6.0
+        uses: llun/feeds@4.7.0
         with:
           storageType: files
           opmlFile: site.opml
@@ -126,7 +126,7 @@ jobs:
       issues: write
     steps:
       - name: Run Action
-        uses: llun/feeds@4.6.0
+        uses: llun/feeds@4.7.0
         with:
           storageType: files
 ```

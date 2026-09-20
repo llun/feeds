@@ -198,6 +198,9 @@ test('#serializeAtomFeed handles empty feed with deterministic updated timestamp
   t.truthy(parsed.feed)
   t.is(parsed.feed.updated[0], '1970-01-01T00:00:00Z')
   t.falsy(parsed.feed.entry)
+  // RFC 4287 4.1.1: empty feed must have feed-level author
+  t.truthy(parsed.feed.author)
+  t.is(parsed.feed.author[0].name[0], 'Feeds')
 })
 
 test('#serializeAtomFeed handles undated entries and author fallback', async (t) => {
@@ -232,4 +235,17 @@ test('#serializeAtomFeed handles undated entries and author fallback', async (t)
   t.is(entry.author[0].name[0], 'My Blog')
   // Empty content still produces valid entry
   t.is(entry.content[0].$.type, 'html')
+})
+
+test('#sanitizeXmlString preserves emojis and astral Unicode characters while stripping invalid controls', (t) => {
+  const inputWithEmoji = 'Rocket 🚀 Launch 🎉 & Math 𝕏 and CJK 𠀀'
+  t.is(sanitizeXmlString(inputWithEmoji), inputWithEmoji)
+
+  // Strips invalid ASCII controls: null byte, bell, escape
+  const inputWithControls = 'Hello\x00World\x07!\x1B'
+  t.is(sanitizeXmlString(inputWithControls), 'HelloWorld!')
+
+  // Allows tab, LF, CR
+  const inputWithValidControls = 'Line 1\tTab\r\nLine 2'
+  t.is(sanitizeXmlString(inputWithValidControls), inputWithValidControls)
 })

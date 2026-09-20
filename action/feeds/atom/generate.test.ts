@@ -224,9 +224,6 @@ test('Both storage adapters produce identical IDs, correct categories, and clean
       date: ITEM_TECH_UNDATED.date,
       author: ITEM_TECH_UNDATED.author
     })
-    await db('Entries')
-      .where('title', ITEM_TECH_UNDATED.title)
-      .update({ contentTime: null, createdAt: 0 })
 
     // Run database generation
     await generateFeedsFromDatabase({
