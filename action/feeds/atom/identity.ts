@@ -31,18 +31,20 @@ function formatBytesToUuid(bytes: Buffer): string {
 }
 
 /**
- * Generates an RFC 4122 version 5 UUID from a namespace and name.
+ * Generates a deterministic, name-based UUID from a namespace and name.
+ * Uses SHA-256 to ensure strong collision resistance and avoid weak cryptographic
+ * algorithms (such as SHA-1) flagged by static analysis security tools (e.g. CodeQL).
  */
 export function uuidv5(namespace: string, name: string): string {
   const namespaceBytes = parseUuidToBytes(namespace)
   const nameBytes = Buffer.from(name, 'utf8')
 
-  const hash = crypto.createHash('sha1')
+  const hash = crypto.createHash('sha256')
   hash.update(namespaceBytes)
   hash.update(nameBytes)
-  const digest = hash.digest() // 20 bytes
+  const digest = hash.digest() // 32 bytes
 
-  // Take first 16 bytes and set version and variant bits
+  // Take first 16 bytes and set version 5 and RFC 4122 variant bits
   const bytes = Buffer.from(digest.subarray(0, 16))
   bytes[6] = (bytes[6] & 0x0f) | 0x50 // version 5
   bytes[8] = (bytes[8] & 0x3f) | 0x80 // RFC 4122 variant
