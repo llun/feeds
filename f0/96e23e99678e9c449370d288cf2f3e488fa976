@@ -1,0 +1,58 @@
+.gitignore
+  h_580a04e334fef4 46
+action.yml
+  h_580a04e334fef4 27-30
+action/feeds/atom/generate.test.ts
+  h_580a04e334fef4 1-410
+action/feeds/atom/generate.ts
+  h_580a04e334fef4 1-433
+action/feeds/atom/identity.ts
+  h_580a04e334fef4 1-118
+action/feeds/atom/serialize.test.ts
+  h_580a04e334fef4 1-235
+action/feeds/atom/serialize.ts
+  h_580a04e334fef4 1-173
+action/feeds/atom/types.ts
+  h_580a04e334fef4 1-41
+action/feeds/file.test.ts
+  h_580a04e334fef4 54-64
+action/feeds/file.ts
+  h_580a04e334fef4 5,156-159
+action/feeds/index.ts
+  h_580a04e334fef4 15-18,67,74-84,86-94,119,127-130,137-142
+action/repository.ts
+  h_580a04e334fef4 29,73-74,114,156,265,538
+app/layout.tsx
+  h_580a04e334fef4 5,18-20,26-35
+lib/components/CategoryList.test.tsx
+  h_580a04e334fef4 1-86
+lib/components/CategoryList.tsx
+  h_580a04e334fef4 3,5,15,27,43,67,74-105,107,115,118,123-154,156
+lib/feed-manifest.test.ts
+  h_580a04e334fef4 1-71
+lib/feed-manifest.ts
+  h_580a04e334fef4 1-53
+lib/feed-urls.test.ts
+  h_580a04e334fef4 1-220
+lib/feed-urls.ts
+  h_580a04e334fef4 1-274
+lib/page.tsx
+  h_580a04e334fef4 12,43,93-95,98-99,104,213
+next.config.ts
+  h_580a04e334fef4 2,7-10
+package.json
+  h_580a04e334fef4 3
+readme.md
+  h_580a04e334fef4 53-65,71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f096e23e99678e9c449370d288cf2f3e488fa976",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
