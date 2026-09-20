@@ -64,6 +64,28 @@ test('#CategoryList renders sibling feed icon links with accessible attributes',
 
   // 5. Individual sites under categories do not have feed links
   t.false(html.includes('Open Atom feed for TechCrunch'))
+
+  // 6. Feed icon is positioned behind (after) the number of items
+  const allCountIdx = html.indexOf('>5</span>')
+  const allFeedIdx = html.indexOf('href="/project/feeds/all.xml"')
+  t.true(allCountIdx !== -1 && allFeedIdx !== -1 && allCountIdx < allFeedIdx)
+
+  const techFeedIdx = html.indexOf(
+    'href="/project/feeds/categories/tech123.xml"'
+  )
+  const techCategorySection = html.slice(
+    html.indexOf('Technology'),
+    html.indexOf('EmptyCategory')
+  )
+  const techCountSectionIdx = techCategorySection.indexOf('>5</span>')
+  const techFeedSectionIdx = techCategorySection.indexOf(
+    'href="/project/feeds/categories/tech123.xml"'
+  )
+  t.true(
+    techCountSectionIdx !== -1 &&
+      techFeedSectionIdx !== -1 &&
+      techCountSectionIdx < techFeedSectionIdx
+  )
 })
 
 test('#CategoryList gracefully handles missing manifest', (t) => {

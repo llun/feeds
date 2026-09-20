@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 
-import { getBrowserFeedHref, resolveBasePath } from '../lib/feed-urls'
+import { resolveBasePath } from '../lib/feed-urls'
+import { getFeedAlternates } from '../lib/feed-alternates'
 import './globals.css'
 
 const geistSans = Geist({
@@ -16,7 +17,7 @@ const geistMono = Geist_Mono({
 })
 
 const basePath = resolveBasePath()
-const allFeedHref = getBrowserFeedHref('feeds/all.xml', basePath)
+const feedAlternates = getFeedAlternates(basePath)
 
 export const metadata: Metadata = {
   title: 'Feeds',
@@ -26,12 +27,7 @@ export const metadata: Metadata = {
   },
   alternates: {
     types: {
-      'application/atom+xml': [
-        {
-          url: allFeedHref,
-          title: 'All Items — Atom'
-        }
-      ]
+      'application/atom+xml': feedAlternates
     }
   }
 }
