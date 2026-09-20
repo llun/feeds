@@ -89,6 +89,7 @@ export const CategoryList = ({
             />
             <span className="truncate">All Items</span>
           </button>
+          <span className={countClassName}>{totalEntries ?? 0}</span>
           {feedManifest?.allHref && (
             <a
               href={feedManifest.allHref}
@@ -103,7 +104,6 @@ export const CategoryList = ({
               <Rss size={13} aria-hidden="true" />
             </a>
           )}
-          <span className={countClassName}>{totalEntries ?? 0}</span>
         </div>
 
         {categories.length > 0 && (
@@ -138,6 +138,7 @@ export const CategoryList = ({
                   />
                   <span className="truncate">{category.title}</span>
                 </button>
+                <span className={countClassName}>{category.totalEntries}</span>
                 {categoryFeedHref && (
                   <a
                     href={categoryFeedHref}
@@ -152,7 +153,6 @@ export const CategoryList = ({
                     <Rss size={13} aria-hidden="true" />
                   </a>
                 )}
-                <span className={countClassName}>{category.totalEntries}</span>
               </div>
               {selected && (
                 <ul className="mt-0.5 space-y-0.5" role="list">
