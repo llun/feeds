@@ -43,4 +43,5 @@ lab.js
 *.sqlite3
 public/data
 public/media
+public/feeds
 contents

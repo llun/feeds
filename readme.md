@@ -27,7 +27,7 @@ jobs:
       issues: write
     steps:
       - name: Run Action
-        uses: llun/feeds@4.6.0
+        uses: llun/feeds@4.7.0
 ```
 
 After this, enable GitHub Pages on the `contents` branch and the content will be available on that page.
@@ -50,11 +50,25 @@ The published branch keeps only the last 5 runs. Each run rebuilds those commits
 
 Hacker News feeds (the official RSS, hnrss, or any mirror) publish entries whose content is only a "Comments" link. For those entries the action fetches the discussion from the HN Algolia API and appends it to the entry, so the reader shows the story text and the top 20 comments, nested 3 levels deep, right below the link. Threads cut short by those caps end with a link to the full discussion on Hacker News, and an entry whose discussion cannot be fetched keeps its original content.
 
+## Aggregate Atom Feeds
+
+The site generates static RFC 4287 Atom 1.0 feeds during each scheduled refresh:
+
+- **Global feed**: Located at `/feeds/all.xml` relative to the site root (e.g. `https://owner.github.io/repo/feeds/all.xml` or `https://example.com/feeds/all.xml`). It aggregates all distinct items currently stored by the app. Note that "all items" reflects the currently stored entries in the app dataset, not an unlimited historical archive.
+- **Category feeds**: Located at `/feeds/categories/<category-id>.xml`, containing all distinct stored items belonging to that category. Category IDs are derived from the SHA-256 hash of the exact UTF-8 category title. Renaming a category produces a new category feed ID and URL. Empty categories produce valid empty Atom feeds.
+- **Feed Manifest**: Located at `/feeds/manifest.json`. Maps the global feed and category titles to their respective site-relative feed paths.
+- **Sidebar Integration**: Small feed broadcast icons appear beside "All Items" and each category label in the sidebar. Clicking a feed icon opens the raw Atom XML in a new tab, and right-clicking allows copying the URL. Clicking the feed icon does not select, expand, or collapse the category.
+- **Autodiscovery**: The site includes a `<link rel="alternate" type="application/atom+xml" ...>` autodiscovery tag in the HTML `<head>`.
+- **Timestamps**: Entry and feed timestamps adhere to RFC 3339. Entries without publication dates and empty feeds use a deterministic fallback timestamp (`1970-01-01T00:00:00Z`). Build timestamps are deliberately avoided so unchanged content does not appear newly updated on every build.
+- **Browser Display**: Browsers render raw XML differently (some display a tree view, some show raw text). The URL can be copied directly into any standard feed reader.
+- **Upstream Subscriptions**: Subscriptions in `feeds.opml` continue to support both upstream RSS and Atom feed inputs unchanged.
+
 ## Configurations
 
 This action can be configured to use a custom domain and different types of storage. Here are the available configuration options:
 
 - `customDomain`: Specifies the custom domain for the feeds site. Required when generating a static site as it's needed to generate the `CNAME` file.
+- `siteUrl`: Explicit site URL override (e.g. `https://example.com/subpath` or via `SITE_URL` environment variable). Useful for local or non-GitHub generation where public URL cannot be inferred from repository configuration.
 - `branch`: Branch where the static site will be generated. The default value is `contents`. This is the branch you'll need to point the repository's GitHub Pages to.
 - `storageType`: **(Default is `files`)** Content storage type, currently supports `files` and `sqlite`.
   - `database`: Legacy alias that behaves like `files`
@@ -80,7 +94,7 @@ jobs:
     name: Generate Feeds
     steps:
       - name: Run Action
-        uses: llun/feeds@4.6.0
+        uses: llun/feeds@4.7.0
         with:
           storageType: files
           opmlFile: site.opml
@@ -112,7 +126,7 @@ jobs:
       issues: write
     steps:
       - name: Run Action
-        uses: llun/feeds@4.6.0
+        uses: llun/feeds@4.7.0
         with:
           storageType: files
 ```

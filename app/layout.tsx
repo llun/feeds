@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 
+import { getBrowserFeedHref, resolveBasePath } from '../lib/feed-urls'
 import './globals.css'
 
 const geistSans = Geist({
@@ -14,11 +15,24 @@ const geistMono = Geist_Mono({
   subsets: ['latin']
 })
 
+const basePath = resolveBasePath()
+const allFeedHref = getBrowserFeedHref('feeds/all.xml', basePath)
+
 export const metadata: Metadata = {
   title: 'Feeds',
   description: 'Static Feeds Aggregator',
   icons: {
     icon: '/favicon.ico'
+  },
+  alternates: {
+    types: {
+      'application/atom+xml': [
+        {
+          url: allFeedHref,
+          title: 'All Items — Atom'
+        }
+      ]
+    }
   }
 }
 

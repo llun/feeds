@@ -26,7 +26,7 @@ function validateBranchName(branch: string): void {
     /\/$/,
     /\.lock$/
   ]
-  
+
   for (const pattern of dangerousPatterns) {
     if (pattern.test(branch)) {
       throw new Error(`Invalid branch name: ${branch}`)
@@ -70,7 +70,8 @@ const DEFAULT_INPUTS: Record<string, string> = {
   opmlFile: 'feeds.opml',
   storageType: 'files',
   branch: 'contents',
-  customDomain: ''
+  customDomain: '',
+  siteUrl: ''
 }
 
 export const PUBLISH_COMMIT_MESSAGE = 'Update feeds contents'
@@ -110,10 +111,7 @@ function toInputEnvName(name: string) {
   return `INPUT_${name.replace(/ /g, '_').toUpperCase()}`
 }
 
-export function getActionInput(
-  name: string,
-  options?: { required?: boolean }
-) {
+export function getActionInput(name: string, options?: { required?: boolean }) {
   const envName = toInputEnvName(name)
   const value = (process.env[envName] ?? DEFAULT_INPUTS[name] ?? '').trim()
   if (options?.required && !value) {
@@ -155,10 +153,7 @@ export function getWorkspacePath() {
   return workSpace
 }
 
-export function resolveSourceBranch(
-  ref?: string,
-  defaultBranch = 'main'
-) {
+export function resolveSourceBranch(ref?: string, defaultBranch = 'main') {
   const branchPrefix = 'refs/heads/'
   if (ref && ref.startsWith(branchPrefix)) {
     return ref.substring(branchPrefix.length)
@@ -267,7 +262,7 @@ export async function setup() {
       github.context.ref,
       (github.context.payload as any)?.repository?.default_branch || 'main'
     )
-    
+
     // Validate branch names to prevent command injection
     validateBranchName(branch)
     validateBranchName(sourceBranch)
@@ -540,7 +535,7 @@ export async function publish() {
     const token = getActionInput('token', { required: true })
     const user = process.env['GITHUB_ACTOR']
     const pushUrl = `https://${user}:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}`
-    
+
     // Validate branch name to prevent command injection
     validateBranchName(branch)
 

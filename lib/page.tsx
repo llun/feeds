@@ -9,6 +9,7 @@ import { CategoryList } from '../lib/components/CategoryList'
 import { OpmlView } from '../lib/components/OpmlView'
 import { getStorage } from '../lib/storage'
 import { Category, Content } from '../lib/storage/types'
+import { loadFeedManifest, FeedManifestMap } from './feed-manifest'
 import {
   PageState,
   articleClassName,
@@ -39,6 +40,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const [listTitle, setListTitle] = useState<string>('')
   const [content, setContent] = useState<Content | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
+  const [feedManifest, setFeedManifest] = useState<FeedManifestMap | null>(null)
   const navSourceRef = useRef<'user' | 'popstate' | 'replace'>('user')
   const [state, dispatch] = useReducer(PathReducer, {
     pathname: currentPath,
@@ -88,15 +90,18 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
       }
 
       if (status === 'loading') {
-        const storage = getStorage(process.env.NEXT_PUBLIC_BASE_PATH ?? '')
-        const [categories, totalEntries, opml] = await Promise.all([
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+        const storage = getStorage(basePath)
+        const [categories, totalEntries, opml, manifest] = await Promise.all([
           storage.getCategories(),
           storage.countAllEntries(),
-          storage.getOpml ? storage.getOpml() : Promise.resolve(null)
+          storage.getOpml ? storage.getOpml() : Promise.resolve(null),
+          loadFeedManifest(basePath)
         ])
         setTotalEntries(totalEntries)
         setCategories(categories)
         if (opml) setInitialOpml(opml)
+        if (manifest) setFeedManifest(manifest)
         setStatus('loaded')
       }
 
@@ -205,6 +210,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
             version={version}
             buildTime={buildTime}
             currentLocationType={state.location?.type}
+            feedManifest={feedManifest}
             selectCategory={(category: string) => {
               setListTitle(category)
               // The reducer bails out on a same-path dispatch, so
