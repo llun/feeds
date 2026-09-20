@@ -1,0 +1,20 @@
+action/feeds/atom/generate.ts
+  h_580a04e334fef4 180-188,215-233,235,427
+action/feeds/atom/serialize.test.ts
+  h_580a04e334fef4 201-203,239-251
+action/feeds/atom/serialize.ts
+  h_580a04e334fef4 10-13,70-72
+readme.md
+  h_580a04e334fef4 30,97,129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "954081311b4da46976d4652f788e6fa0333304e5",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
