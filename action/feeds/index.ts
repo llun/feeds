@@ -13,6 +13,10 @@ import {
   getDatabase
 } from './database'
 import {
+  generateFeedsFromDatabase,
+  generateFeedsFromFiles
+} from './atom/generate'
+import {
   DEFAULT_PATHS,
   createAllEntriesData,
   createCategoryData,
@@ -60,28 +64,34 @@ export async function createFeedDatabase(githubActionPath: string) {
     if (storageType !== 'sqlite') return
     const feedsFile = getActionInput('opmlFile', { required: true })
     const opmlFilePath = path.join(getWorkspacePath(), feedsFile)
-    const opmlContent = (
-      await fs.readFile(opmlFilePath)
-    ).toString('utf8')
+    const opmlContent = (await fs.readFile(opmlFilePath)).toString('utf8')
     const opml = await readOpml(opmlContent)
     const publicPath = getPublicPath(githubActionPath)
     const { feedLoader, mediaDirectory } =
       await createLocalizingFeedLoader(githubActionPath)
     await copyExistingDatabase(publicPath)
     const database = getDatabase(publicPath)
-    await createTables(database)
-    await createOrUpdateDatabase(database, opml, feedLoader)
-    const entryContents = (await database('Entries').select('content')) as {
-      content: string
-    }[]
-    await cleanupUnusedMediaFiles(
-      mediaDirectory,
-      collectReferencedMediaFromContents(
-        entryContents.map((entry) => entry.content)
+    try {
+      await createTables(database)
+      await createOrUpdateDatabase(database, opml, feedLoader)
+      const entryContents = (await database('Entries').select('content')) as {
+        content: string
+      }[]
+      await cleanupUnusedMediaFiles(
+        mediaDirectory,
+        collectReferencedMediaFromContents(
+          entryContents.map((entry) => entry.content)
+        )
       )
-    )
-    await cleanup(database)
-    await database.destroy()
+      await cleanup(database)
+      await generateFeedsFromDatabase({
+        publicPath,
+        database,
+        opmlFilePath
+      })
+    } finally {
+      await database.destroy()
+    }
     const dataDir = path.join(publicPath, 'data')
     await fs.mkdir(dataDir, { recursive: true })
     await fs.copyFile(opmlFilePath, path.join(dataDir, 'feeds.opml'))
@@ -106,11 +116,7 @@ export async function createFeedFiles(githubActionPath: string) {
       : path.join('contents')
     const { feedLoader, mediaDirectory } =
       await createLocalizingFeedLoader(githubActionPath)
-    await loadOPMLAndWriteFiles(
-      publicPath,
-      opmlFilePath,
-      feedLoader
-    )
+    await loadOPMLAndWriteFiles(publicPath, opmlFilePath, feedLoader)
     const customDomainName = getActionInput('customDomain')
     const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
 
@@ -118,13 +124,22 @@ export async function createFeedFiles(githubActionPath: string) {
     await createRepositoryData(DEFAULT_PATHS, githubRootName, customDomainName)
     await createCategoryData(DEFAULT_PATHS)
     await createAllEntriesData()
-    await fs.copyFile(opmlFilePath, path.join(DEFAULT_PATHS.dataPath, 'feeds.opml'))
+    await fs.copyFile(
+      opmlFilePath,
+      path.join(DEFAULT_PATHS.dataPath, 'feeds.opml')
+    )
     await cleanupUnusedMediaFiles(
       mediaDirectory,
       await collectReferencedMediaFromEntryDirectory(
         DEFAULT_PATHS.entriesDataPath
       )
     )
+    await generateFeedsFromFiles({
+      publicPath: getPublicPath(githubActionPath),
+      dataPath: DEFAULT_PATHS.dataPath,
+      contentsPath: publicPath,
+      opmlFilePath
+    })
   } catch (error: any) {
     console.error(error.message)
     console.error(error.stack)

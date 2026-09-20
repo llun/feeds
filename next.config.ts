@@ -1,13 +1,13 @@
 import { NextConfig } from 'next'
+import { resolveBasePath } from './lib/feed-urls'
 
 export default () => {
   const customDomainName = process.env['INPUT_CUSTOMDOMAIN'] || ''
   const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
-  const basePath = customDomainName
-    ? ''
-    : (githubRootName.split('/').length > 1 &&
-        `/${githubRootName.split('/')[1]}`) ||
-      ''
+  const basePath = resolveBasePath({
+    customDomain: customDomainName,
+    githubRepository: githubRootName
+  })
   process.env.NEXT_PUBLIC_BASE_PATH = basePath ?? '/'
   process.env.NEXT_PUBLIC_GITHUB_REPOSITORY = githubRootName
   process.env.NEXT_PUBLIC_OPML_FILE =

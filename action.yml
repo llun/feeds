@@ -24,6 +24,10 @@ inputs:
     description: >
       Enable custom domain name for the site generator
     default: ''
+  siteUrl:
+    description: >
+      Explicit site URL override for feed generation
+    default: ''
 runs:
   using: 'node24'
   main: 'action.mjs'

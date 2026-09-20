@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { formatDistance } from 'date-fns'
-import { Folder, Inbox, Settings } from 'lucide-react'
+import { Folder, Inbox, Rss, Settings } from 'lucide-react'
 import { Category } from '../storage/types'
+import type { FeedManifestMap } from '../feed-manifest'
 import { ThemeToggle } from './ThemeToggle'
 import { Logo } from './Logo'
 
@@ -11,6 +12,7 @@ interface CategoryListProps {
   version?: string
   buildTime?: string | null
   currentLocationType?: string
+  feedManifest?: FeedManifestMap | null
   selectCategory?: (category: string) => void
   selectSite?: (siteKey: string, siteTitle: string) => void
   selectOpml?: () => void
@@ -22,7 +24,7 @@ interface CategoryListProps {
 // The sidebar sits one step above the page, so rows hover to surface-3 rather
 // than the page-level surface-2, which is the sidebar's own color.
 const navItemClassName =
-  'flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors focus-ring'
+  'flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors'
 
 const idleNavItemClassName =
   'font-medium text-subtle hover:bg-surface-3 hover:text-foreground'
@@ -38,6 +40,7 @@ export const CategoryList = ({
   version,
   buildTime,
   currentLocationType,
+  feedManifest,
   selectCategory,
   selectSite,
   selectOpml
@@ -61,29 +64,47 @@ export const CategoryList = ({
 
       {/* pt-1 keeps the first row's focus ring clear of the scroll clip */}
       <div className="flex-1 overflow-y-auto px-3 pt-1 pb-4">
-        <button
-          type="button"
-          onClick={() => {
-            setCurrentCategory(undefined)
-            selectSite?.('all', 'All Items')
-          }}
+        <div
           className={`${navItemClassName} ${
             !currentCategory && !isOpml
               ? selectedNavItemClassName
               : idleNavItemClassName
           }`}
         >
-          <Inbox
-            size={16}
-            className={`shrink-0 ${
-              !currentCategory && !isOpml
-                ? 'text-brand'
-                : 'text-muted-foreground'
-            }`}
-          />
-          <span className="flex-1 truncate">All Items</span>
+          <button
+            type="button"
+            onClick={() => {
+              setCurrentCategory(undefined)
+              selectSite?.('all', 'All Items')
+            }}
+            className="flex min-w-0 flex-1 items-center gap-2 text-left focus-ring rounded"
+          >
+            <Inbox
+              size={16}
+              className={`shrink-0 ${
+                !currentCategory && !isOpml
+                  ? 'text-brand'
+                  : 'text-muted-foreground'
+              }`}
+            />
+            <span className="truncate">All Items</span>
+          </button>
+          {feedManifest?.allHref && (
+            <a
+              href={feedManifest.allHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              type="application/atom+xml"
+              aria-label="Open Atom feed for All Items"
+              title="Open Atom feed for All Items"
+              className="flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-3 focus-ring"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Rss size={13} aria-hidden="true" />
+            </a>
+          )}
           <span className={countClassName}>{totalEntries ?? 0}</span>
-        </button>
+        </div>
 
         {categories.length > 0 && (
           <p className="feeds-eyebrow mx-2 mt-4 mb-1.5">Categories</p>
@@ -91,29 +112,48 @@ export const CategoryList = ({
 
         {categories.map((category) => {
           const selected = category.title === currentCategory && !isOpml
+          const categoryFeedHref = feedManifest?.categories.get(category.title)
           return (
             <div key={category.title}>
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentCategory(category.title)
-                  selectCategory?.(category.title)
-                }}
+              <div
                 className={`${navItemClassName} ${
                   selected ? selectedNavItemClassName : idleNavItemClassName
                 }`}
-                aria-expanded={selected}
-                aria-current={selected ? true : undefined}
               >
-                <Folder
-                  size={16}
-                  className={`shrink-0 ${
-                    selected ? 'text-brand' : 'text-muted-foreground'
-                  }`}
-                />
-                <span className="flex-1 truncate">{category.title}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentCategory(category.title)
+                    selectCategory?.(category.title)
+                  }}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left focus-ring rounded"
+                  aria-expanded={selected}
+                  aria-current={selected ? true : undefined}
+                >
+                  <Folder
+                    size={16}
+                    className={`shrink-0 ${
+                      selected ? 'text-brand' : 'text-muted-foreground'
+                    }`}
+                  />
+                  <span className="truncate">{category.title}</span>
+                </button>
+                {categoryFeedHref && (
+                  <a
+                    href={categoryFeedHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    type="application/atom+xml"
+                    aria-label={`Open Atom feed for ${category.title}`}
+                    title={`Open Atom feed for ${category.title}`}
+                    className="flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-3 focus-ring"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Rss size={13} aria-hidden="true" />
+                  </a>
+                )}
                 <span className={countClassName}>{category.totalEntries}</span>
-              </button>
+              </div>
               {selected && (
                 <ul className="mt-0.5 space-y-0.5" role="list">
                   {category.sites.map((site) => (

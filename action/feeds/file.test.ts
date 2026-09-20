@@ -51,6 +51,17 @@ test('#createRepositoryData generate repository information in repository file',
     JSON.parse(await fs.readFile(paths.repositoryDataPath, 'utf-8')),
     { repository: '/Hello-World' }
   )
+
+  t.deepEqual(
+    await createRepositoryData(paths, 'octocat/octocat.github.io', ''),
+    {
+      repository: ''
+    }
+  )
+  t.deepEqual(
+    JSON.parse(await fs.readFile(paths.repositoryDataPath, 'utf-8')),
+    { repository: '' }
+  )
 })
 
 test('#createEntryData create entry hash and persist entry information in entry hash file', async (t) => {

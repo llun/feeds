@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import fs from 'fs/promises'
 import path from 'path'
 import { getGithubActionPath } from '../repository'
+import { resolveBasePath } from '../../lib/feed-urls'
 import { loadFeed, readOpml } from './opml'
 import { Entry, Site } from './parsers'
 
@@ -150,14 +151,12 @@ export async function createRepositoryData(
   customDomainName: string
 ) {
   const { repositoryDataPath } = paths
-  const isCustomDomainEnabled = !!customDomainName
 
   const data: RepositoryData = {
-    repository:
-      (!isCustomDomainEnabled &&
-        githubRootName.split('/').length > 1 &&
-        `/${githubRootName.split('/')[1]}`) ||
-      ''
+    repository: resolveBasePath({
+      customDomain: customDomainName,
+      githubRepository: githubRootName
+    })
   }
   await fs.writeFile(repositoryDataPath, JSON.stringify(data))
   return data
