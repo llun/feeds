@@ -10,6 +10,7 @@
   <link rel="self" type="application/atom+xml" href="https://llun.github.io/feeds/feeds/all.xml"/>
   <link rel="alternate" type="text/html" href="https://llun.github.io/feeds/"/>
   <subtitle>All distinct items currently stored by the app</subtitle>
+  <icon>https://llun.github.io/feeds/favicon.ico</icon>
   <entry>
     <id>urn:uuid:10e64fa0-1c83-55a1-93aa-3bfa2b0879b1</id>
     <title>2025 in review</title>

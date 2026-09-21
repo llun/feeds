@@ -10,6 +10,7 @@
   <link rel="self" type="application/atom+xml" href="https://llun.github.io/feeds/feeds/categories/cdaa0a852f9919f9d3b9d35fe587abe466acab57ec21bcaef97495c0c1fb70a1.xml"/>
   <link rel="alternate" type="text/html" href="https://llun.github.io/feeds/"/>
   <subtitle>Distinct stored items belonging to Category1</subtitle>
+  <icon>https://llun.github.io/feeds/favicon.ico</icon>
   <entry>
     <id>urn:uuid:2ea98ebb-0bed-5a50-aad5-ab655f955946</id>
     <title>2025, Joining 40 Club</title>
