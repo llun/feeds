@@ -84,6 +84,10 @@ export function serializeAtomFeed(feed: NormalizedFeed): string {
     feedObj.feed.subtitle = sanitizeXmlString(feed.subtitle)
   }
 
+  if (feed.iconUrl && feed.iconUrl.trim()) {
+    feedObj.feed.icon = sanitizeXmlString(feed.iconUrl.trim())
+  }
+
   feedObj.feed.entry = feed.entries.map((entry) => {
     const authorName =
       sanitizeXmlString(entry.author?.trim()) ||

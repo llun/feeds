@@ -100,6 +100,7 @@ test('#serializeAtomFeed serializes valid Atom 1.0 XML and round-trips correctly
     siteBaseUrl: 'https://owner.github.io/project/',
     feedUrl: 'https://owner.github.io/project/feeds/all.xml',
     htmlUrl: 'https://owner.github.io/project/',
+    iconUrl: 'https://owner.github.io/project/favicon.ico',
     updatedMs: 1700000000000,
     entries: [
       {
@@ -137,6 +138,7 @@ test('#serializeAtomFeed serializes valid Atom 1.0 XML and round-trips correctly
   t.is(parsed.feed.id[0], feedData.id)
   t.is(parsed.feed.title[0], feedData.title)
   t.is(parsed.feed.subtitle[0], feedData.subtitle)
+  t.is(parsed.feed.icon[0], feedData.iconUrl)
   t.is(parsed.feed.generator[0]._, 'FeedsFetcher')
   t.is(parsed.feed.generator[0].$.uri, 'https://github.com/llun/feeds')
 
@@ -198,6 +200,10 @@ test('#serializeAtomFeed handles empty feed with deterministic updated timestamp
   t.truthy(parsed.feed)
   t.is(parsed.feed.updated[0], '1970-01-01T00:00:00Z')
   t.falsy(parsed.feed.entry)
+  t.falsy(
+    parsed.feed.icon,
+    'Empty feed without iconUrl does not serialize <icon>'
+  )
   // RFC 4287 4.1.1: empty feed must have feed-level author
   t.truthy(parsed.feed.author)
   t.is(parsed.feed.author[0].name[0], 'Feeds')
