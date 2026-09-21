@@ -3711,7 +3711,7 @@ __metadata:
     ava: "npm:^8.0.1"
     date-fns: "npm:^4.4.0"
     history: "npm:^5.3.0"
-    html-react-parser: "npm:^6.1.7"
+    html-react-parser: "npm:^6.1.8"
     knex: "npm:^3.3.0"
     lucide-react: "npm:1.45.0"
     next: "npm:^16.3.4"
@@ -4131,9 +4131,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-react-parser@npm:^6.1.7":
-  version: 6.1.7
-  resolution: "html-react-parser@npm:6.1.7"
+"html-react-parser@npm:^6.1.8":
+  version: 6.1.8
+  resolution: "html-react-parser@npm:6.1.8"
   dependencies:
     domhandler: "npm:6.0.1"
     html-dom-parser: "npm:8.0.2"
@@ -4145,7 +4145,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/079980199517036c67a2906feba6eae20f61ab7bae741f849c0f363f641e18b6594de4642031e919b5ae9655dce28af2c5f28c7de0b10c22be4aeb14b9dab3a9
+  checksum: 10c0/8b935bcd5233346567925f36b8c230e590ed847f655345cb29f643a06970be6a754e1f8213526057ece03b9f598349c1558d1f9b0c7d395e39a4bdab33b0215d
   languageName: node
   linkType: hard
 
