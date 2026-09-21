@@ -21,6 +21,7 @@ export interface NormalizedFeed {
   siteBaseUrl: string
   feedUrl: string
   htmlUrl: string
+  iconUrl?: string
   updatedMs: number
   entries: NormalizedEntry[]
 }

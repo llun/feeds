@@ -316,6 +316,11 @@ test('Both storage adapters produce identical IDs, correct categories, and clean
 
     const parsedAll = await parseStringPromise(allXml)
     t.is(
+      parsedAll.feed.icon[0],
+      'https://owner.github.io/project/favicon.ico',
+      `${mode}: all.xml declares icon`
+    )
+    t.is(
       parsedAll.feed.entry.length,
       2,
       `${mode}: Exactly 2 distinct entries in all.xml`
@@ -364,6 +369,11 @@ test('Both storage adapters produce identical IDs, correct categories, and clean
       'utf8'
     )
     const parsedTech = await parseStringPromise(techCatXml)
+    t.is(
+      parsedTech.feed.icon[0],
+      'https://owner.github.io/project/favicon.ico',
+      `${mode}: category feed declares icon`
+    )
     t.is(parsedTech.feed.entry.length, 2, `${mode}: Technology has 2 entries`)
 
     const sciCatXml = await fs.readFile(

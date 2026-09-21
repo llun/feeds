@@ -23,7 +23,8 @@ export const metadata: Metadata = {
   title: 'Feeds',
   description: 'Static Feeds Aggregator',
   icons: {
-    icon: '/favicon.ico'
+    icon: `${basePath}/favicon.ico`,
+    apple: `${basePath}/apple-touch-icon.png`
   },
   alternates: {
     types: {

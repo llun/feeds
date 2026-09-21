@@ -95,6 +95,10 @@ export function buildNormalizedFeeds(
       ? Math.max(...allDistinctEntries.map((e) => e.updatedMs))
       : 0
 
+  const iconUrl = siteBaseUrl
+    ? getAbsoluteFeedUrl(siteBaseUrl, 'favicon.ico')
+    : undefined
+
   const allFeed: NormalizedFeed = {
     id: getFeedId(siteBaseUrl, 'all'),
     title: 'All Items — Feeds',
@@ -102,6 +106,7 @@ export function buildNormalizedFeeds(
     siteBaseUrl,
     feedUrl: getAbsoluteFeedUrl(siteBaseUrl, getSiteRelativeFeedPath('all')),
     htmlUrl: siteBaseUrl,
+    iconUrl,
     updatedMs: allUpdatedMs,
     entries: allDistinctEntries
   }
@@ -139,6 +144,7 @@ export function buildNormalizedFeeds(
       siteBaseUrl,
       feedUrl: getAbsoluteFeedUrl(siteBaseUrl, categoryPath),
       htmlUrl: siteBaseUrl,
+      iconUrl,
       updatedMs: catUpdatedMs,
       entries: categoryEntries
     }
