@@ -1,0 +1,23 @@
+action/feeds/atom/generate.test.ts
+  s_39dac6617aeff8::t_2abc49169f63b9 318-322,372-376
+app/layout.tsx
+  s_39dac6617aeff8::t_6dda31b011fd74 26-27
+lib/icon-assets.test.ts
+  s_39dac6617aeff8::t_05e0057c70ea71 1-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "7c34681e3b38757128306ca3d2b57f0b4236946c",
+  "prompts": {},
+  "sessions": {
+    "s_39dac6617aeff8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f3a9a37dfffeuSxaJ7PT5I5ppx",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
