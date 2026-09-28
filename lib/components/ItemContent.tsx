@@ -4,12 +4,14 @@ import { formatDistance } from 'date-fns'
 import { ExternalLink } from 'lucide-react'
 import { BackButton } from './BackButton'
 import parse from 'html-react-parser'
+import sanitizeHtml from 'sanitize-html'
 import {
   isLocalMediaPath,
   mapUrlAttributes,
   resolveAgainstEntry,
   withBasePath
 } from '../entry-urls'
+import { ENTRY_CONTENT_SANITIZE_OPTIONS } from '../../action/feeds/sanitize'
 
 interface ReactParserNode {
   name: string
