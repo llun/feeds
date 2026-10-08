@@ -26,6 +26,7 @@ export const metadata: Metadata = {
     icon: `${basePath}/favicon.ico`,
     apple: `${basePath}/apple-touch-icon.png`
   },
+  manifest: `${basePath}/site.webmanifest`,
   alternates: {
     types: {
       'application/atom+xml': feedAlternates
