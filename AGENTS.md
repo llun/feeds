@@ -22,7 +22,7 @@ Yarn 4 (`packageManager` in `package.json`; run `corepack enable` first), Node 2
 - `yarn dev`: Next.js dev server (turbopack).
 - `yarn build`: `next build`.
 - `yarn start`: serve the built site.
-- `yarn load` / `yarn loadFile`: run `index.ts` against `feeds.opml` (both use file storage; set `INPUT_STORAGETYPE=sqlite` for the SQLite path). Outside Actions (no `GITHUB_WORKSPACE`), the clone, build and publish steps are skipped.
+- `yarn load` / `yarn loadFile`: run `index.ts` against `feeds.opml` with file storage (`loadFile` pins `INPUT_STORAGETYPE=files`; for the SQLite path run `INPUT_STORAGETYPE=sqlite yarn load`). Outside Actions (no `GITHUB_WORKSPACE`), the clone, build and publish steps are skipped.
 
 There is no lint script. Prettier is a devDependency configured in `.prettierrc.yml` (no semicolons, single quotes, no trailing commas, always-parenthesized arrow params); format changes with `yarn prettier --write <files>`.
 
@@ -47,7 +47,7 @@ The main thread (the top-level session the user talks to) always delegates work 
 - **Set model and effort on every sub-agent explicitly.** Never rely on the inherited default. Choose the cheapest model and lowest effort that will still do the task well, using the table below, and step up only where quality depends on it.
 - **Run independent tasks in parallel.** Launch sub-agents that do not depend on each other in a single message so they run concurrently. Read-only work (search, reading, review) parallelizes freely; give parallel implementers separate worktrees or non-overlapping files so they do not overwrite each other.
 - **Brief each sub-agent completely.** A sub-agent starts with no context: give it the goal, the relevant paths, the constraints from this file, whether it may edit files, commit or push, and the exact shape of the result you want back.
-- **Verify before trusting.** Check a sub-agent's claims (diffs, test output, `file:line` references) before building on them or reporting them. If a cheap sub-agent's result is wrong or shallow, re-run that task one step up the escalation ladder below rather than patching around it.
+- **Verify before trusting.** Check a sub-agent's claims (diffs, test output, `file:line` references) before building on them or reporting them: spot-check them yourself within the limits above, and send anything bigger (re-running tests, reading a large diff) to a `haiku`/`low` sub-agent. If a result is wrong or shallow because the brief left something out, fix the brief and re-run at the same tier; otherwise re-run that task one step up the escalation ladder below rather than patching around it.
 - **Review with a fresh sub-agent.** The code review loop always uses a separate reviewer sub-agent that did not write the change, and a new reviewer for each round; fixes go to an implementer sub-agent. Repeat until the reviewer comes back clean. If three rounds do not converge, stop and report the open findings to the user.
 
 ### Choosing model and effort
@@ -70,7 +70,7 @@ Guidelines:
 
 - When the table does not cover a task and you are unsure, use `sonnet` at `medium`, a good balance of quality and cost for most coding work.
 - Use `haiku` freely for retrieval and mechanical changes. It is the cheapest and fastest, and a wrong search result is cheap to redo.
-- Reserve `opus` and `high` effort for work where a mistake is expensive: design, security-sensitive code, subtle bugs, and review.
-- Escalate one step at a time. A `haiku` task that falls short moves to `sonnet` at the table's effort for that kind of task (or `medium`); do not raise `haiku` past `medium`. On `sonnet`, raise effort to `high`, then move to `opus` at `high`. On `opus`, raise effort `high` → `xhigh` → `max`. Use `max` only on `opus`, when `xhigh` has failed or the problem is unusually hard.
+- Start at `opus` or `high` effort only where a mistake is expensive: design, security-sensitive code, subtle bugs, and review. Reaching them by escalation is fine.
+- Escalate one step at a time, starting from the task's row in the table. The ladder is `haiku`/`low` → `haiku`/`medium` → `sonnet`/`medium` → `sonnet`/`high` → `opus`/`high` → `opus`/`xhigh` → `opus`/`max`; a task that starts at `sonnet`/`low` steps to `sonnet`/`medium`. Never set `haiku` above `medium`, and use `max` only on `opus` after `xhigh` has fallen short.
 - Do not pick other model values (for example `fable`) unless the user asks for them. When the available models change, map them onto the same three tiers (cheapest, balanced, strongest) rather than pinning these names.
 - These are the Claude Code values for the Agent tool's `model` and `effort`. Agents with other tooling follow the same split as closely as it allows (separate sub-agent or pass for review, cheapest adequate model per task) rather than skipping it.
