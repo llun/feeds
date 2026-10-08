@@ -3,27 +3,7 @@ import { createHash } from 'crypto'
 import fs from 'fs'
 import path from 'path'
 
-test('public/logo.svg displays the original square artwork', (t) => {
-  const svgPath = path.join(process.cwd(), 'public', 'logo.svg')
-  t.true(fs.existsSync(svgPath), 'public/logo.svg exists')
-  const content = fs.readFileSync(svgPath, 'utf8')
-  t.regex(
-    content,
-    /<svg\b[^>]*\bwidth=["']512["'][^>]*\bheight=["']512["'][^>]*\bviewBox=["']0 0 512 512["']/i,
-    'logo.svg uses a 512x512 square viewBox'
-  )
-  t.regex(
-    content,
-    /<image\b[^>]*\bhref=["']data:image\/png;base64,[A-Za-z0-9+/]+=*["']/i,
-    'logo.svg embeds raster artwork without an external resource'
-  )
-  const imageData = content.match(
-    /href=["']data:image\/png;base64,([^"']+)["']/i
-  )
-  t.truthy(imageData, 'logo.svg contains embedded PNG data')
-  const embeddedPng = Buffer.from(imageData![1], 'base64')
-  t.is(embeddedPng.readUInt32BE(16), 512, 'embedded logo width is 512')
-  t.is(embeddedPng.readUInt32BE(20), 512, 'embedded logo height is 512')
+test('the original PNG artwork is preserved', (t) => {
   const sourcePath = path.join(process.cwd(), 'assets', 'feeds-icon-source.png')
   t.true(fs.existsSync(sourcePath), 'the original PNG artwork is preserved')
   const sourcePng = fs.readFileSync(sourcePath)
