@@ -1,0 +1,28 @@
+app/layout.tsx
+  s_1118e9451ba154::t_440d3c85d680bd 29
+lib/icon-assets.test.ts
+  s_1118e9451ba154::t_440d3c85d680bd 6,12-16,19,37,42-54,60-62,87-99
+  s_1118e9451ba154::t_08f47970aab450 17-18,20-26
+  s_1118e9451ba154::t_13088b38597fa7 2,27-33
+  s_1118e9451ba154::t_9fffc5b2c7ef05 55-59
+public/logo.svg
+  s_1118e9451ba154::t_348a9182fa4b93 3
+public/site.webmanifest
+  s_1118e9451ba154::t_440d3c85d680bd 6-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5b1442dea83eafd653117f336e534e6f96eb6f33",
+  "prompts": {},
+  "sessions": {
+    "s_1118e9451ba154": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11c58-abb1-70f3-ab47-af493d17bc30",
+        "model": "gpt-6-luna"
+      },
+      "human_author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
