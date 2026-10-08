@@ -1,41 +1,45 @@
 import test from 'ava'
+import { createHash } from 'crypto'
 import fs from 'fs'
 import path from 'path'
 
-test('public/logo.svg contains solid white background rectangle matching dimensions', (t) => {
-  const svgPath = path.join(process.cwd(), 'public', 'logo.svg')
-  t.true(fs.existsSync(svgPath), 'public/logo.svg exists')
-  const content = fs.readFileSync(svgPath, 'utf8')
-  t.regex(
-    content,
-    /<rect\b[^>]*\bwidth=["']512["'][^>]*\bheight=["']512["'][^>]*\bfill=["']#ffffff["']/i,
-    'logo.svg includes full-size white fill rect covering 512x512'
+test('the original PNG artwork is preserved', (t) => {
+  const sourcePath = path.join(process.cwd(), 'assets', 'feeds-icon-source.png')
+  t.true(fs.existsSync(sourcePath), 'the original PNG artwork is preserved')
+  const sourcePng = fs.readFileSync(sourcePath)
+  t.is(
+    createHash('sha256').update(sourcePng).digest('hex'),
+    '5b597b57212b51d53afe31e2a5227625d1dbdb187045b4471e5a69b9f81f81b9',
+    'the preserved source matches the approved artwork'
   )
 })
 
-test('public/apple-touch-icon.png exists and is a valid square 180x180 PNG', (t) => {
-  const pngPath = path.join(process.cwd(), 'public', 'apple-touch-icon.png')
-  t.true(fs.existsSync(pngPath), 'public/apple-touch-icon.png exists')
-  const buffer = fs.readFileSync(pngPath)
-  t.true(buffer.length > 24)
-
+test('public app icons are valid square PNGs at their expected sizes', (t) => {
   // PNG signature: 89 50 4E 47 0D 0A 1A 0A
   const pngSignature = Buffer.from([
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a
   ])
-  t.true(
-    buffer.subarray(0, 8).equals(pngSignature),
-    'File has valid PNG header signature'
-  )
-
-  // IHDR chunk starts at byte 12: length (4), "IHDR" (4), width (4), height (4)
-  const chunkType = buffer.toString('ascii', 12, 16)
-  t.is(chunkType, 'IHDR', 'First chunk is IHDR')
-
-  const width = buffer.readUInt32BE(16)
-  const height = buffer.readUInt32BE(20)
-  t.is(width, 180, 'Apple touch icon width is 180')
-  t.is(height, 180, 'Apple touch icon height is 180')
+  for (const [filename, size] of [
+    ['apple-touch-icon.png', 180],
+    ['icon-192.png', 192],
+    ['icon-512.png', 512]
+  ] as const) {
+    const pngPath = path.join(process.cwd(), 'public', filename)
+    t.true(fs.existsSync(pngPath), `public/${filename} exists`)
+    const buffer = fs.readFileSync(pngPath)
+    t.true(buffer.length > 24, `${filename} contains PNG data`)
+    t.true(
+      buffer.subarray(0, 8).equals(pngSignature),
+      `${filename} has a valid PNG header signature`
+    )
+    t.is(
+      buffer.toString('ascii', 12, 16),
+      'IHDR',
+      `${filename} starts with IHDR`
+    )
+    t.is(buffer.readUInt32BE(16), size, `${filename} width is ${size}`)
+    t.is(buffer.readUInt32BE(20), size, `${filename} height is ${size}`)
+  }
 })
 
 test('public/favicon.ico contains valid multi-resolution icon entries', (t) => {
@@ -60,4 +64,17 @@ test('app/layout.tsx metadata configures icon and apple touch icon with basePath
   const content = fs.readFileSync(layoutPath, 'utf8')
   t.regex(content, /icon:\s*`\$\{basePath\}\/favicon\.ico`/)
   t.regex(content, /apple:\s*`\$\{basePath\}\/apple-touch-icon\.png`/)
+  t.regex(content, /manifest:\s*`\$\{basePath\}\/site\.webmanifest`/)
+})
+
+test('site manifest uses base-path-relative install icons', (t) => {
+  const manifestPath = path.join(process.cwd(), 'public', 'site.webmanifest')
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+  t.deepEqual(
+    manifest.icons.map(({ src, sizes, type }) => ({ src, sizes, type })),
+    [
+      { src: './icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: './icon-512.png', sizes: '512x512', type: 'image/png' }
+    ]
+  )
 })
