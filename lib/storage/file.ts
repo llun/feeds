@@ -26,7 +26,9 @@ export class FileStorage implements Storage {
   }
 
   async getCategoryEntries(category: string, page = 0) {
-    const response = await fetch(`${this.basePath}/categories/${category}.json`)
+    const response = await fetch(
+      `${this.basePath}/categories/${encodeURIComponent(category)}.json`
+    )
     if (response.status !== 200)
       throw new Error('Fail to load category entries')
 
@@ -43,7 +45,9 @@ export class FileStorage implements Storage {
   }
 
   async getSiteEntries(siteKey: string, page = 0) {
-    const response = await fetch(`${this.basePath}/sites/${siteKey}.json`)
+    const response = await fetch(
+      `${this.basePath}/sites/${encodeURIComponent(siteKey)}.json`
+    )
     if (response.status !== 200) throw new Error('Fail to load site entries')
 
     const json = await response.json()
@@ -72,7 +76,9 @@ export class FileStorage implements Storage {
   }
 
   async countSiteEntries(siteKey: string) {
-    const response = await fetch(`${this.basePath}/sites/${siteKey}.json`)
+    const response = await fetch(
+      `${this.basePath}/sites/${encodeURIComponent(siteKey)}.json`
+    )
     if (response.status !== 200) throw new Error('Fail to load site entries')
     const json = await response.json()
     const entries = json.entries
@@ -80,7 +86,9 @@ export class FileStorage implements Storage {
   }
 
   async countCategoryEntries(category: string) {
-    const response = await fetch(`${this.basePath}/categories/${category}.json`)
+    const response = await fetch(
+      `${this.basePath}/categories/${encodeURIComponent(category)}.json`
+    )
     if (response.status !== 200)
       throw new Error('Fail to load category entries')
 
@@ -105,7 +113,9 @@ export class FileStorage implements Storage {
   }
 
   async getContent(key: string) {
-    const response = await fetch(`${this.basePath}/entries/${key}.json`)
+    const response = await fetch(
+      `${this.basePath}/entries/${encodeURIComponent(key)}.json`
+    )
     if (response.status !== 200) throw new Error('Fail to load content')
 
     const json = await response.json()
@@ -129,4 +139,3 @@ export class FileStorage implements Storage {
     }
   }
 }
-

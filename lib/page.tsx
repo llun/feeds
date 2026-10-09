@@ -30,7 +30,8 @@ import {
   LocationState,
   shouldMountOpml,
   locationController,
-  parseLocation
+  parseLocation,
+  parentPath
 } from '../lib/utils'
 import { PathReducer, updatePath } from './reducers/path'
 
@@ -316,13 +317,8 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
                 selectBack={() => {
                   const location = state.location
                   if (location.type !== 'entry') return
-                  const { parent } = location
-                  const { type, key } = parent
-                  dispatch(
-                    updatePath(
-                      `/${type === 'category' ? 'categories' : 'sites'}/${key}`
-                    )
-                  )
+                  setPageState('entries')
+                  dispatch(updatePath(parentPath(location.parent)))
                 }}
               />
             </div>

@@ -6,6 +6,7 @@ import {
   formatRelativeTime,
   getHydrationView,
   getListKey,
+  parentPath,
   getInitialPageState,
   getNavSelection,
   getSelectedEntryKey,
@@ -462,4 +463,11 @@ test('#locationController keeps the nav pane when only loading finished', async 
     true
   )
   t.is<PageState, PageState>(pageState, 'entries')
+})
+
+test('parentPath encodes the parent key and round-trips', (t) => {
+  const path = parentPath({ type: 'category', key: 'C#?' })
+  t.is(path, '/categories/C%23%3F')
+  t.deepEqual(parseLocation(path), { type: 'category', category: 'C#?' })
+  t.is(parentPath({ type: 'site', key: 'abc' }), '/sites/abc')
 })

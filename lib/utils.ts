@@ -68,6 +68,14 @@ const decodeSegment = (segment: string): string => {
   }
 }
 
+export const parentPath = (parent: {
+  type: 'category' | 'site'
+  key: string
+}): string =>
+  `/${parent.type === 'category' ? 'categories' : 'sites'}/${encodeURIComponent(
+    parent.key
+  )}`
+
 export const parseLocation = (url: string): LocationState => {
   const parts = url.split('/').map(decodeSegment)
   parts.shift()
