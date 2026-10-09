@@ -116,7 +116,7 @@ export class SqliteStorage implements Storage {
     const worker = await this.getWorker(this.config, this.basePath)
     const offset = page * CONTENT_PER_PAGE
     const list = (await worker.db.query(
-      `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc limit ? offset ?`,
+      `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc, entryKey limit ? offset ?`,
       [category, CONTENT_PER_PAGE, offset]
     )) as {
       category: string
@@ -141,7 +141,7 @@ export class SqliteStorage implements Storage {
     const worker = await this.getWorker(this.config, this.basePath)
     const offset = page * CONTENT_PER_PAGE
     const list = (await worker.db.query(
-      `select entryKey, siteKey, siteTitle, entryTitle, max(entryContentTime) as entryContentTime from EntryCategories where siteKey = ? group by entryKey order by entryContentTime desc limit ? offset ?`,
+      `select entryKey, siteKey, siteTitle, entryTitle, max(entryContentTime) as entryContentTime from EntryCategories where siteKey = ? group by entryKey order by entryContentTime desc, entryKey limit ? offset ?`,
       [siteKey, CONTENT_PER_PAGE, offset]
     )) as {
       entryKey: string
@@ -191,7 +191,7 @@ export class SqliteStorage implements Storage {
     const worker = await this.getWorker(this.config, this.basePath)
     const offset = page * CONTENT_PER_PAGE
     const list = (await worker.db.query(
-      `select entryKey, siteKey, siteTitle, entryTitle, max(entryContentTime) as entryContentTime from EntryCategories where entryContentTime is not null group by entryKey order by entryContentTime desc limit ? offset ?`,
+      `select entryKey, siteKey, siteTitle, entryTitle, max(entryContentTime) as entryContentTime from EntryCategories where entryContentTime is not null group by entryKey order by entryContentTime desc, entryKey limit ? offset ?`,
       [CONTENT_PER_PAGE, offset]
     )) as {
       entryKey: string

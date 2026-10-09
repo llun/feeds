@@ -125,6 +125,9 @@ test('#getFeedAlternates fallback ids match the action category ids for titles w
   <outline title="It&#39;s &#x26; &#x0E01;" text="It&#39;s &#x26; &#x0E01;">
     <outline type="rss" title="D" xmlUrl="https://d.example.com/rss" />
   </outline>
+  <outline title="Esc &amp;#39;x&amp;#39;" text="Esc &amp;#39;x&amp;#39;">
+    <outline type="rss" title="E" xmlUrl="https://e.example.com/rss" />
+  </outline>
 </body></opml>`
   const rootDir = await createRoot(t, { 'feeds.opml': opml })
 
@@ -139,6 +142,7 @@ test('#getFeedAlternates fallback ids match the action category ids for titles w
   )
   t.deepEqual(extractCategoryTitlesFromOpml(opml), [
     'Bob\'s "Picks"',
+    'Esc &#39;x&#39;',
     "It's & \u0E01",
     'Q&A',
     'Say "hi" & <bye>'

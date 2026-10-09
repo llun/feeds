@@ -586,3 +586,61 @@ test('#writeFeedsAtomically keeps the previous feeds and cleans up when writing 
   )
   t.true(allXml.includes('Previous run'))
 })
+
+test('keeps an entry in each category feed when two sites in different categories publish the same title and link', async (t) => {
+  const tempRoot = await makeTempDir(t)
+  const opmlPath = path.join(tempRoot, 'feeds.opml')
+  await fs.writeFile(
+    opmlPath,
+    `<opml version="2.0"><body>
+  <outline title="Tech" text="Tech"><outline type="rss" title="Blog" text="Blog" xmlUrl="https://blog.example/feed.xml" /></outline>
+  <outline title="News" text="News"><outline type="rss" title="HN" text="HN" xmlUrl="https://hn.example/feed.xml" /></outline>
+</body></opml>`
+  )
+  const publicPath = path.join(tempRoot, 'public')
+  await fs.mkdir(publicPath)
+  const db = knex({
+    client: 'sqlite3',
+    connection: { filename: ':memory:' },
+    useNullAsDefault: true
+  })
+  try {
+    await createTables(db)
+    await insertCategory(db, 'Tech')
+    await insertCategory(db, 'News')
+    const siteOf = (title: string, host: string) => ({
+      title,
+      link: `https://${host}`,
+      xmlUrl: `https://${host}/feed.xml`,
+      description: title,
+      updatedAt: 1700000000000,
+      generator: 'test',
+      entries: []
+    })
+    const blogKey = await insertSite(db, 'Tech', siteOf('Blog', 'blog.example'))
+    const hnKey = await insertSite(db, 'News', siteOf('HN', 'hn.example'))
+    const entry = { ...ITEM_SHARED, link: 'https://blog.example/p' }
+    await insertEntry(db, blogKey!, 'Blog', 'Tech', entry)
+    await insertEntry(db, hnKey!, 'HN', 'News', entry)
+    await generateFeedsFromDatabase({
+      publicPath,
+      database: db,
+      opmlFilePath: opmlPath,
+      siteConfig: SITE_CONFIG
+    })
+  } finally {
+    await db.destroy()
+  }
+  for (const category of ['Tech', 'News']) {
+    const xml = await fs.readFile(
+      path.join(
+        publicPath,
+        'feeds',
+        'categories',
+        `${getCategoryId(category)}.xml`
+      ),
+      'utf8'
+    )
+    t.true(xml.includes('Shared Breakthrough'), category)
+  }
+})

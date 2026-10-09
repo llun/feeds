@@ -406,14 +406,17 @@ export async function generateFeedsFromDatabase(options: {
     siteUrl: string | null
   }[]
 
-  // Query EntryCategories
+  // Query EntryCategories. Entries.siteKey is shared by every site publishing
+  // the same title+link, so each row is checked against its own siteKey.
   const entryCategoryRows = (await database('EntryCategories').select(
     'entryKey',
-    'category'
-  )) as { entryKey: string; category: string }[]
+    'category',
+    'siteKey'
+  )) as { entryKey: string; category: string; siteKey: string }[]
 
   const entryCategoryMap = new Map<string, string[]>()
   for (const row of entryCategoryRows) {
+    if (!activeSites.get(row.category)?.has(row.siteKey)) continue
     const list = entryCategoryMap.get(row.entryKey) ?? []
     list.push(row.category)
     entryCategoryMap.set(row.entryKey, list)
@@ -421,9 +424,7 @@ export async function generateFeedsFromDatabase(options: {
 
   const entries: NormalizedEntry[] = []
   for (const row of entryRows) {
-    const categories = (entryCategoryMap.get(row.key) ?? []).filter(
-      (category) => activeSites.get(category)?.has(row.siteKey)
-    )
+    const categories = entryCategoryMap.get(row.key) ?? []
     if (categories.length === 0) continue
     const entryId = getEntryId(row.url || '', {
       sourceFeedUrl: row.sourceFeedUrl || undefined,

@@ -14,12 +14,17 @@ export interface FeedAlternatesOptions {
   opmlFile?: string
 }
 
-// xml2js decodes numeric references (&#39;, &#x26;) as well as the named ones.
-function unescapeNumericEntities(value: string) {
-  return value.replace(/&#(?:x([0-9a-f]+)|(\d+));/gi, (match, hex, dec) => {
-    const code = hex ? parseInt(hex, 16) : parseInt(dec, 10)
-    return code <= 0x10ffff ? String.fromCodePoint(code) : match
-  })
+// xml2js decodes named and numeric references in one pass, so `&amp;#39;`
+// becomes `&#39;`, not `'`.
+function unescapeEntities(value: string) {
+  return value.replace(
+    /&(?:#x([0-9a-f]+)|#(\d+)|(?:amp|lt|gt|quot|apos));/gi,
+    (match, hex, dec) => {
+      if (hex === undefined && dec === undefined) return unescapeXml(match)
+      const code = hex ? parseInt(hex, 16) : parseInt(dec, 10)
+      return code <= 0x10ffff ? String.fromCodePoint(code) : match
+    }
+  )
 }
 
 /**
@@ -45,9 +50,7 @@ export function extractCategoryTitlesFromOpml(opmlContent: string): string[] {
       /\btext\s*=\s*(?:"([^"]+)"|'([^']+)')/i.exec(attrs)
 
     if (titleMatch) {
-      const title = unescapeNumericEntities(
-        unescapeXml(titleMatch[1] ?? titleMatch[2])
-      ).trim()
+      const title = unescapeEntities(titleMatch[1] ?? titleMatch[2]).trim()
       if (title && !titles.includes(title)) {
         titles.push(title)
       }

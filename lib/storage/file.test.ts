@@ -69,6 +69,24 @@ test.serial(
   }
 )
 
+test.serial(
+  '#FileStorage loads all.json once for counts and pages, and retries after a failed load',
+  async (t) => {
+    const stub = stubFetch(t, { status: 500 })
+    const storage = new FileStorage('')
+    await t.throwsAsync(storage.countAllEntries())
+    await t.throwsAsync(storage.getAllEntries())
+    t.is(stub.callCount, 2)
+
+    const entry = { entryHash: 'e1', title: 'T', siteHash: 's', siteTitle: 'S' }
+    stub.resolves({ status: 200, json: async () => [entry] } as Response)
+    t.is(await storage.countAllEntries(), 1)
+    t.is((await storage.getAllEntries())[0].key, 'e1')
+    t.is(await storage.countAllEntries(), 1)
+    t.is(stub.callCount, 3)
+  }
+)
+
 function stubFetch(
   t: { teardown: (fn: () => void) => void },
   response: Partial<Response>

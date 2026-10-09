@@ -2,6 +2,7 @@ import { Storage } from './types'
 
 export class FileStorage implements Storage {
   private basePath: string
+  private allEntries: Promise<any[]> | null = null
 
   constructor(basePath: string) {
     this.basePath = `${basePath}/data`
@@ -63,14 +64,26 @@ export class FileStorage implements Storage {
     }))
   }
 
+  // The default page and /opml both read all.json; load it once per storage.
+  private loadAllEntries() {
+    if (!this.allEntries) {
+      const load = (async () => {
+        const response = await fetch(`${this.basePath}/all.json`)
+        if (response.status !== 200) throw new Error('Fail to load all entries')
+        return (await response.json()) as any[]
+      })()
+      load.catch(() => {
+        if (this.allEntries === load) this.allEntries = null
+      })
+      this.allEntries = load
+    }
+    return this.allEntries
+  }
+
   async countAllEntries() {
     // all.json lists each entry once; the category totals would count an
     // entry in two categories twice.
-    const response = await fetch(`${this.basePath}/all.json`)
-    if (response.status !== 200)
-      throw new Error('Fail to load count all entries')
-
-    const entries = await response.json()
+    const entries = await this.loadAllEntries()
     return entries.length
   }
 
@@ -96,10 +109,7 @@ export class FileStorage implements Storage {
   }
 
   async getAllEntries(page = 0) {
-    const response = await fetch(`${this.basePath}/all.json`)
-    if (response.status !== 200) throw new Error('Fail to load all entries')
-
-    const json = await response.json()
+    const json = await this.loadAllEntries()
     return json.map((entry) => ({
       key: entry.entryHash,
       title: entry.title,
