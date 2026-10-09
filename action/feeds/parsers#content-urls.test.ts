@@ -234,7 +234,7 @@ test('#parseRss trims a scheme-less URL before giving it a scheme', (t) => {
   }
   t.is(
     contentOf(
-      '<a href=" //h.example/x ">l</a><img src=" //h.example/x.png " />',
+      '<a href="\u00a0//h.example/x\u00a0">l</a><img src="\u00a0//h.example/x.png\u00a0" />',
       httpFeed
     ),
     '<a href="https://h.example/x">l</a><img src="http://h.example/x.png" />'
@@ -245,7 +245,7 @@ test('#parseRss trims a scheme-less URL before giving it a scheme', (t) => {
   // two apart.
   t.is(
     contentOf(
-      '<img src=" //h.example " /><img src=" //exämple.com/x.png " />',
+      '<img src="\u00a0//h.example\u00a0" /><img src="\u00a0//exämple.com/x.png\u00a0" />',
       httpFeed
     ),
     '<img src="http://h.example" /><img src="http://exämple.com/x.png" />'
@@ -253,7 +253,7 @@ test('#parseRss trims a scheme-less URL before giving it a scheme', (t) => {
   // And a feed with no usable base at all, where falling through resolves
   // nothing.
   t.is(
-    contentOf('<img src=" //h.example/x.png " />', {
+    contentOf('<img src="\u00a0//h.example/x.png\u00a0" />', {
       site: '',
       entry: ''
     }),

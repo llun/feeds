@@ -408,25 +408,35 @@ test('#enrichSiteWithHackerNewsComments strips images from comment html', async 
   t.deepEqual([...collectDownloadableMediaUrls(content)], [])
 })
 
-for (const timestamp of ['1e999', '-5', '0']) {
-  test(`#enrichSiteWithHackerNewsComments renders a comment without a date link for created_at_i ${timestamp}`, async (t) => {
-    // 1e999 is valid JSON number syntax that parses to Infinity; date-fns
-    // format throws on it, and the throw must not cost the whole thread.
+test('#enrichSiteWithHackerNewsComments renders a comment without a date link for an unusable created_at_i', async (t) => {
+  // 1e999 is valid JSON number syntax that parses to Infinity; date-fns
+  // format throws on it, and the throw must not cost the whole thread.
+  for (const timestamp of ['1e999', '-5', '0']) {
     const { content } = await renderThread(
       '{"id":40001,"children":[' +
         `{"id":40002,"author":"user40002","text":"<p>odd date</p>","created_at_i":${timestamp},"children":[]},` +
         '{"id":40003,"author":"user40003","text":"<p>healthy</p>","created_at_i":1700000003,"children":[]}' +
         ']}'
     )
-    t.true(content.includes('<p>odd date</p>'))
-    t.true(content.includes('user40002</a>'))
-    t.false(content.includes('item?id=40002'))
+    t.true(
+      content.includes('<p>odd date</p>'),
+      `created_at_i ${timestamp}: comment kept`
+    )
+    t.true(
+      content.includes('user40002</a>'),
+      `created_at_i ${timestamp}: author rendered`
+    )
+    t.false(
+      content.includes('item?id=40002'),
+      `created_at_i ${timestamp}: no date link`
+    )
     // The healthy sibling keeps its own date link.
     t.true(
-      content.includes('<a href="https://news.ycombinator.com/item?id=40003">')
+      content.includes('<a href="https://news.ycombinator.com/item?id=40003">'),
+      `created_at_i ${timestamp}: sibling keeps date link`
     )
-  })
-}
+  }
+})
 
 test('#enrichSiteWithHackerNewsComments keys the more link on the request id', async (t) => {
   // A response that drifts from the documented shape must not render
@@ -615,7 +625,7 @@ test('#enrichSiteWithHackerNewsComments normalizes lone surrogates in author nam
     ]
   })
   t.true(content.includes('<p>hi</p>'))
-  t.true(content.includes('bad�name'))
+  t.true(content.includes('bad\ufffdname'))
 })
 
 test('#enrichSiteWithHackerNewsComments strips name and target from comment anchors', async (t) => {

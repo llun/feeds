@@ -59,8 +59,8 @@ test('#parseRss resolves a relative comments url against the site link', async (
   t.is(site?.entries[0].comments, 'https://news.ycombinator.com/item?id=42')
 })
 
-// parseDate falls back to the time of the run for a date a feed leaves out or
-// cannot be read, so an entry still sorts as new instead of becoming NaN.
+// An unreadable date must not become NaN: parseDate falls back to the time of
+// the run for a date a feed leaves out or cannot be read.
 function rssWithDates(dates: { channel?: string[]; item?: string[] }) {
   return {
     rss: {

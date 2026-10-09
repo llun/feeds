@@ -347,6 +347,10 @@ test('#resolveAgainstEntry upgrades scheme-less urls and trims them', (t) => {
     'https://x.example/y'
   )
   t.is(resolveAgainstEntry('//x.example/y'), 'https://x.example/y')
+  t.is(
+    resolveAgainstEntry('chapter-two.html', ENTRY_URL),
+    'https://feed.example/posts/chapter-two.html'
+  )
   // Trimmed before the scheme is prepended, and asserted on an http entry so a
   // copy that dropped the trim, or that tested the untrimmed URL and fell
   // through to the base, is caught rather than agreeing by accident. This is

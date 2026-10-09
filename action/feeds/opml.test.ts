@@ -132,5 +132,7 @@ test('#readOpml throws when the document lacks the OPML structure', async (t) =>
 })
 
 test('#readOpml rejects input that is not XML', async (t) => {
-  await t.throwsAsync(() => readOpml('this is not xml'))
+  await t.throwsAsync(() => readOpml('this is not xml'), {
+    message: /Non-whitespace before first tag/
+  })
 })

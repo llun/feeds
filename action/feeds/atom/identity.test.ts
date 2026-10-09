@@ -51,15 +51,11 @@ test('ids stay stable across releases because they appear in published URLs and 
   )
 })
 
-test('#getEntryId is stable for the same article URL', (t) => {
-  const url = 'https://example.com/articles/2026/01?foo=bar&baz=qux'
-  t.is(getEntryId(url), getEntryId(url))
-  t.not(getEntryId(url), getEntryId('https://example.com/articles/2026/02'))
-  t.true(getEntryId(url).startsWith('urn:uuid:'))
-})
-
 test('#getEntryId ignores surrounding whitespace and fallback for a usable URL but keeps query parameters', (t) => {
   const url = 'https://example.com/post'
+  t.is(getEntryId(url), getEntryId(url))
+  t.true(getEntryId(url).startsWith('urn:uuid:'))
+  t.not(getEntryId(url), getEntryId('https://example.com/other'))
   t.is(getEntryId(`  ${url}  `), getEntryId(url))
   t.is(
     getEntryId(url, {

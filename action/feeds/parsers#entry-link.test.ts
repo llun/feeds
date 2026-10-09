@@ -74,7 +74,7 @@ test('#parseAtom resolves a link padded with non-ASCII whitespace against the si
   // link padded with one is not an absolute URL as far as the guard is
   // concerned: it resolves against the site link and the padding is gone.
   t.is(
-    atomEntry({ href: ' https://feed.example/x ' }).link,
+    atomEntry({ href: '\u00a0https://feed.example/x\u00a0' }).link,
     'https://feed.example/x'
   )
 })

@@ -116,14 +116,23 @@ const entryListCases = [
 test.serial(
   '#FileStorage entry lists map entryHash to key and milliseconds to seconds',
   async (t) => {
-    for (const { name, url, body, call } of entryListCases) {
-      const fetchStub = stubFetch(t, { status: 200, json: async () => body })
+    const requested: string[] = []
+    const fetchStub = stubFetch(t, { status: 404 })
+    fetchStub.callsFake(async (input) => {
+      const url = String(input)
+      requested.push(url)
+      const match = entryListCases.find((c) => c.url === url)
+      return {
+        status: match ? 200 : 404,
+        json: async () => match?.body
+      } as Response
+    })
 
+    for (const { name, url, call } of entryListCases) {
       const entries = await call(new FileStorage('/base'))
 
-      t.is(fetchStub.firstCall.args[0], url, `${name} url`)
+      t.is(requested.at(-1), url, `${name} url`)
       t.deepEqual(entries, [mappedEntry], `${name} entries`)
-      fetchStub.restore()
     }
   }
 )

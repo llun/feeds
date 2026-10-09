@@ -150,7 +150,7 @@ test('#SqliteStorage.getSiteEntries and getAllEntries page newest first', async 
   )
 })
 
-test('#SqliteStorage count methods count entry-category rows', async (t) => {
+test('#SqliteStorage count methods count entries per site, category and in total', async (t) => {
   const { db, storage } = t.context
   const siteKey = await seedEntries(t, 3)
   await insertCategory(db, 'News')

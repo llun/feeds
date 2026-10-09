@@ -91,20 +91,24 @@ test('#getFeedAlternates ignores manifest categories without a title and path', 
   ])
 })
 
-for (const [name, manifest] of [
-  ['is missing', undefined],
-  ['is malformed JSON', '{ not json'],
-  ['has no categories array', JSON.stringify({ categories: {} })]
-] as const) {
-  test(`#getFeedAlternates falls back to feeds.opml when the manifest ${name}`, async (t) => {
+test('#getFeedAlternates falls back to feeds.opml when the manifest is unusable', async (t) => {
+  for (const [name, manifest] of [
+    ['is missing', undefined],
+    ['is malformed JSON', '{ not json'],
+    ['has no categories array', JSON.stringify({ categories: {} })]
+  ] as const) {
     const rootDir = await createRoot(t, {
       ...(manifest === undefined ? {} : { [MANIFEST]: manifest }),
       'feeds.opml': OPML
     })
 
-    t.deepEqual(getFeedAlternates('', { rootDir }), [ALL, ENGINEERING])
-  })
-}
+    t.deepEqual(
+      getFeedAlternates('', { rootDir }),
+      [ALL, ENGINEERING],
+      `manifest ${name}`
+    )
+  }
+})
 
 test('#getFeedAlternates reads the OPML file named by the opmlFile option', async (t) => {
   const rootDir = await createRoot(t, {
