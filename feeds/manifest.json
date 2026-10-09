@@ -1,0 +1,13 @@
+{
+  "all": "feeds/all.xml",
+  "categories": [
+    {
+      "title": "Category1",
+      "path": "feeds/categories/cdaa0a852f9919f9d3b9d35fe587abe466acab57ec21bcaef97495c0c1fb70a1.xml"
+    },
+    {
+      "title": "Category2",
+      "path": "feeds/categories/49df4fca0aad7853bd857cd04ed512d645bf6b0c3b920cec20cf395910fb5d16.xml"
+    }
+  ]
+}
