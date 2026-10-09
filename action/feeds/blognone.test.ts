@@ -70,6 +70,16 @@ test('#stripBlognoneChrome keeps a date and a user link that belong to the artic
   t.false(content.includes('Sat, 15/08/2026'))
 })
 
+test('#stripBlognoneChrome still strips the footer after an unclosed div in the body', (t) => {
+  const content = stripBlognoneChrome(
+    createDescription('<p>text</p><div>never closed'),
+    TITLE
+  )
+  t.true(content.includes('never closed'))
+  t.false(content.includes('arjin'))
+  t.false(content.includes('Sat, 15/08/2026'))
+})
+
 test('#stripBlognoneChrome keeps a span that holds an image but no text', (t) => {
   const body =
     '<p><span><img src="https://www.blognone.com/a.jpg" /></span></p>'

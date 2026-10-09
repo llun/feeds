@@ -10,6 +10,7 @@ import {
   resolveAbsoluteMediaUrl,
   SiteConfig
 } from '../../../lib/feed-urls'
+import { hash } from '../database'
 import { mapContentUrls } from '../parsers'
 import { readOpml } from '../opml'
 import { getCategoryId, getEntryId, getFeedId } from './identity'
@@ -368,12 +369,13 @@ export async function generateFeedsFromDatabase(options: {
   const activeCategoryList: { title: string }[] = opmlCategories.map((c) => ({
     title: c.category
   }))
-  // Category -> feed URLs still subscribed to in the OPML, as in the files
-  // adapter: stored rows of a removed category or subscription are ignored.
-  const activeUrls = new Map<string, Set<string>>(
+  // Category -> site keys still subscribed to in the OPML (the identity
+  // removeOldSites uses): stored rows of a removed category or subscription
+  // are ignored. Not the stored feed URL, which is shared between categories.
+  const activeSites = new Map<string, Set<string>>(
     opmlCategories.map((c) => [
       c.category,
-      new Set((c.items ?? []).flatMap((item) => item.xmlUrl ?? []))
+      new Set((c.items ?? []).map((item) => hash(`${item.title}`)))
     ])
   )
 
@@ -420,9 +422,7 @@ export async function generateFeedsFromDatabase(options: {
   const entries: NormalizedEntry[] = []
   for (const row of entryRows) {
     const categories = (entryCategoryMap.get(row.key) ?? []).filter(
-      (category) =>
-        activeUrls.has(category) &&
-        (!row.sourceFeedUrl || activeUrls.get(category)!.has(row.sourceFeedUrl))
+      (category) => activeSites.get(category)?.has(row.siteKey)
     )
     if (categories.length === 0) continue
     const entryId = getEntryId(row.url || '', {

@@ -14,6 +14,14 @@ export interface FeedAlternatesOptions {
   opmlFile?: string
 }
 
+// xml2js decodes numeric references (&#39;, &#x26;) as well as the named ones.
+function unescapeNumericEntities(value: string) {
+  return value.replace(/&#(?:x([0-9a-f]+)|(\d+));/gi, (match, hex, dec) => {
+    const code = hex ? parseInt(hex, 16) : parseInt(dec, 10)
+    return code <= 0x10ffff ? String.fromCodePoint(code) : match
+  })
+}
+
 /**
  * Extracts category titles from OPML XML content without requiring async parsing.
  * Matches top-level or category outlines (excluding individual RSS feeds).
@@ -37,7 +45,9 @@ export function extractCategoryTitlesFromOpml(opmlContent: string): string[] {
       /\btext\s*=\s*(?:"([^"]+)"|'([^']+)')/i.exec(attrs)
 
     if (titleMatch) {
-      const title = unescapeXml(titleMatch[1] ?? titleMatch[2]).trim()
+      const title = unescapeNumericEntities(
+        unescapeXml(titleMatch[1] ?? titleMatch[2])
+      ).trim()
       if (title && !titles.includes(title)) {
         titles.push(title)
       }

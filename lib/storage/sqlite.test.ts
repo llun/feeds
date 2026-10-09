@@ -189,6 +189,38 @@ test('#SqliteStorage counts a site shared by two categories once', async (t) => 
   t.is(await storage.countCategoryEntries('News'), 1)
 })
 
+test('#SqliteStorage lists an entry shared by two categories once', async (t) => {
+  const { db, storage } = t.context
+  await insertCategory(db, 'Tech')
+  await insertCategory(db, 'News')
+  const site = makeSite('A')
+  const siteKey = await insertSite(db, 'Tech', site)
+  await insertSite(db, 'News', site)
+  for (let i = 1; i <= 40; i++) {
+    const entry = makeEntry(`e${i}`, i)
+    await insertEntry(db, siteKey, 'A', 'Tech', entry)
+    await insertEntry(db, siteKey, 'A', 'News', entry)
+  }
+
+  const lists = {
+    site: [
+      ...(await storage.getSiteEntries(siteKey)),
+      ...(await storage.getSiteEntries(siteKey, 1))
+    ],
+    all: [
+      ...(await storage.getAllEntries()),
+      ...(await storage.getAllEntries(1))
+    ]
+  }
+
+  for (const [view, entries] of Object.entries(lists)) {
+    t.is(new Set(entries.map((e) => e.key)).size, 40, view)
+    t.is(entries.length, 40, view)
+  }
+  t.is(await storage.countSiteEntries(siteKey), 40)
+  t.is(await storage.countAllEntries(), 40)
+})
+
 test('#SqliteStorage reports zero totals for sites and categories without entries', async (t) => {
   const { db, storage } = t.context
   await insertCategory(db, 'Empty')

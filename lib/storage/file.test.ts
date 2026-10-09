@@ -189,18 +189,17 @@ test.serial(
 )
 
 test.serial(
-  '#FileStorage.countAllEntries sums entries across categories',
+  '#FileStorage.countAllEntries counts the entries of all.json once, not per category',
   async (t) => {
-    stubFetch(t, {
+    // Two categories of 5 and 7 entries that share 2 of them: all.json lists
+    // each entry once.
+    const stub = stubFetch(t, {
       status: 200,
-      json: async () => [
-        { totalEntries: 5 },
-        { totalEntries: 7 },
-        { totalEntries: 0 }
-      ]
+      json: async () => Array.from({ length: 10 }, () => rawEntry)
     })
 
-    t.is(await new FileStorage('').countAllEntries(), 12)
+    t.is(await new FileStorage('/base').countAllEntries(), 10)
+    t.is(stub.firstCall.args[0], '/base/data/all.json')
   }
 )
 

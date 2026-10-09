@@ -111,7 +111,7 @@ test('#getFeedAlternates falls back to feeds.opml when the manifest is unusable'
   }
 })
 
-test('#getFeedAlternates fallback ids match the action category ids for titles with entities and apostrophes', async (t) => {
+test('#getFeedAlternates fallback ids match the action category ids for titles with named and numeric entities and apostrophes', async (t) => {
   const opml = `<opml version="2.0"><body>
   <outline type="folder" title="Q&amp;A" text="Q&amp;A">
     <outline type="rss" title="A" xmlUrl="https://a.example.com/rss" />
@@ -121,6 +121,9 @@ test('#getFeedAlternates fallback ids match the action category ids for titles w
   </outline>
   <outline title='Say "hi" &amp; &lt;bye&gt;' text='Say "hi" &amp; &lt;bye&gt;'>
     <outline type="rss" title="C" xmlUrl="https://c.example.com/rss" />
+  </outline>
+  <outline title="It&#39;s &#x26; &#x0E01;" text="It&#39;s &#x26; &#x0E01;">
+    <outline type="rss" title="D" xmlUrl="https://d.example.com/rss" />
   </outline>
 </body></opml>`
   const rootDir = await createRoot(t, { 'feeds.opml': opml })
@@ -136,6 +139,7 @@ test('#getFeedAlternates fallback ids match the action category ids for titles w
   )
   t.deepEqual(extractCategoryTitlesFromOpml(opml), [
     'Bob\'s "Picks"',
+    "It's & \u0E01",
     'Q&A',
     'Say "hi" & <bye>'
   ])

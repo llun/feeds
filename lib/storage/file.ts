@@ -64,15 +64,14 @@ export class FileStorage implements Storage {
   }
 
   async countAllEntries() {
-    const response = await fetch(`${this.basePath}/categories.json`)
+    // all.json lists each entry once; the category totals would count an
+    // entry in two categories twice.
+    const response = await fetch(`${this.basePath}/all.json`)
     if (response.status !== 200)
       throw new Error('Fail to load count all entries')
 
-    const categories = await response.json()
-    return categories.reduce(
-      (sum: number, category) => sum + category.totalEntries,
-      0
-    )
+    const entries = await response.json()
+    return entries.length
   }
 
   async countSiteEntries(siteKey: string) {

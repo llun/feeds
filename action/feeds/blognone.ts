@@ -28,7 +28,8 @@ const SITE_HOSTNAME = 'blognone.com'
 
 /** The label Drupal renders above the body field, and its two wrapper divs. */
 const LABEL_CLASS = 'field__label'
-const WRAPPER_CLASSES = ['field--name-body', 'field-item']
+const ITEM_CLASS = 'field-item'
+const WRAPPER_CLASSES = ['field--name-body', ITEM_CLASS]
 
 /**
  * A tag no feed publishes, standing in for a wrapper div that is on its way
@@ -96,6 +97,11 @@ export function stripBlognoneChrome(content: string, title: string) {
       div: (tagName, attribs) => {
         if (!WRAPPER_CLASSES.some((name) => hasClass(attribs.class, name))) {
           return { tagName, attribs }
+        }
+        // Only the innermost wrapper is counted: an unclosed div in the body
+        // leaves the outer one open, which would keep the footer at depth 1.
+        if (!hasClass(attribs.class, ITEM_CLASS)) {
+          return { tagName: WRAPPER_TAG, attribs: {} }
         }
         bodyDepth++
         return { tagName: WRAPPER_TAG, attribs: { class: WRAPPER_MARK } }

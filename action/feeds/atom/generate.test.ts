@@ -172,11 +172,12 @@ async function generateFromDatabase(tempRoot: string, opmlPath: string) {
     const shared = siteOf('Shared Tech', 'shared.example')
     const sharedKey = await insertSite(db, 'Technology', shared)
     await insertSite(db, 'Science', shared)
-    const techKey = await insertSite(
-      db,
-      'Technology',
-      siteOf('Tech Only', 'tech.example')
-    )
+    // Stored feed URL differs from the OPML's (trailing slash): the site is
+    // still subscribed to, so its entries must stay in the feeds.
+    const techKey = await insertSite(db, 'Technology', {
+      ...siteOf('Tech Only', 'tech.example'),
+      xmlUrl: 'https://tech.example/feed.xml/'
+    })
 
     await insertEntry(db, sharedKey!, 'Shared Tech', 'Technology', ITEM_SHARED)
     await insertEntry(db, sharedKey!, 'Shared Tech', 'Science', ITEM_SHARED)
