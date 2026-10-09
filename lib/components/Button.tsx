@@ -61,10 +61,15 @@ export const Button: FC<ButtonProps> = ({
   ...rest
 }) => {
   const iconOnly = !children && (iconLeft || iconRight)
-  const iconSize = size === 'lg' ? 18 : 16
+  const iconSize = iconOnly
+    ? { sm: 16, md: 18, lg: 20 }[size]
+    : size === 'lg'
+      ? 18
+      : 16
 
   const cls = [
     'feeds-btn',
+    'hit-target',
     `feeds-btn--${variant}`,
     `feeds-btn--${size}`,
     iconOnly ? 'feeds-btn--icononly' : '',

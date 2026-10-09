@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { ItemList } from './components/ItemList'
 import { ItemContent } from './components/ItemContent'
 import { CategoryList } from '../lib/components/CategoryList'
+import { BackButton } from '../lib/components/BackButton'
 import { OpmlView } from '../lib/components/OpmlView'
 import { getStorage } from '../lib/storage'
 import { Category, Content } from '../lib/storage/types'
@@ -39,6 +40,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const [initialOpml, setInitialOpml] = useState<string | undefined>()
   const [listTitle, setListTitle] = useState<string>('')
   const [content, setContent] = useState<Content | null>(null)
+  const [entryMissing, setEntryMissing] = useState(false)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
   const [feedManifest, setFeedManifest] = useState<FeedManifestMap | null>(null)
   const navSourceRef = useRef<'user' | 'popstate' | 'replace'>('user')
@@ -109,7 +111,8 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         state.location,
         state.pathname,
         setContent,
-        setPageState
+        setPageState,
+        setEntryMissing
       )
     })()
   }, [status, state])
@@ -128,10 +131,14 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
           setListTitle('All Items')
           break
         }
-        storage.getSiteEntries(state.location.siteKey).then((entries) => {
-          if (entries.length === 0) return
-          setListTitle(entries[0].site.title)
-        })
+        storage
+          .getSiteEntries(state.location.siteKey)
+          .then((entries) => {
+            setListTitle(
+              entries.length === 0 ? 'Not found' : entries[0].site.title
+            )
+          })
+          .catch(() => setListTitle('Not found'))
         break
       }
       case 'entry': {
@@ -146,10 +153,14 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
           break
         }
 
-        storage.getSiteEntries(state.location.parent.key).then((entries) => {
-          if (entries.length === 0) return
-          setListTitle(entries[0].site.title)
-        })
+        storage
+          .getSiteEntries(state.location.parent.key)
+          .then((entries) => {
+            setListTitle(
+              entries.length === 0 ? 'Not found' : entries[0].site.title
+            )
+          })
+          .catch(() => setListTitle('Not found'))
         break
       }
       default:
@@ -158,29 +169,8 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
     }
   }, [state])
 
-  if (status === 'loading') {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div
-            className="feeds-spinner size-12 border-4"
-            role="status"
-            aria-label="Loading"
-          ></div>
-          <div>
-            <p className="text-lg font-semibold" aria-live="polite">
-              Loading content...
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              This will take a few seconds
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   const isOpml = state.location?.type === 'opml'
+  const isLoading = status === 'loading'
 
   return (
     <>
@@ -200,7 +190,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         tabIndex={-1}
       >
         <div
-          className={`h-full min-h-0 w-full flex-shrink-0 md:w-[26%] md:max-w-80 xl:w-1/5 ${categoriesClassName(
+          className={`h-full min-h-0 w-full flex-shrink-0 md:w-[26%] xl:w-1/5 ${categoriesClassName(
             pageState
           )}`}
         >
@@ -209,7 +199,8 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
             totalEntries={totalEntries}
             version={version}
             buildTime={buildTime}
-            currentLocationType={state.location?.type}
+            locationState={state.location}
+            loading={isLoading}
             feedManifest={feedManifest}
             selectCategory={(category: string) => {
               setListTitle(category)
@@ -254,7 +245,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
                 pageState
               )}`}
             >
-              {listTitle ? (
+              {state.location && !isLoading ? (
                 <ItemList
                   basePath={state.pathname}
                   locationState={state.location}
@@ -275,25 +266,18 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
                   }}
                 />
               ) : (
-                <div
-                  className="flex h-full items-center justify-center border-border p-8 text-center text-sm text-muted-foreground md:border-r"
-                  role="status"
-                >
-                  <p>
-                    Select a category or site from the left panel to see feed
-                    items.
-                  </p>
-                </div>
+                <ListShell title={listTitle || 'All Items'} />
               )}
             </div>
 
             <div
               className={`h-full min-h-0 w-full flex-1 overflow-hidden ${
-                !content ? 'hidden md:block' : ''
+                !content && !entryMissing ? 'hidden md:block' : ''
               } ${articleClassName(pageState)}`}
             >
               <ItemContent
                 content={content}
+                missing={entryMissing}
                 selectBack={() => {
                   const location = state.location
                   if (location.type !== 'entry') return
@@ -313,3 +297,25 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
     </>
   )
 }
+
+// The list pane while the feed set loads: same head as ItemList, so nothing
+// jumps when the real list takes its place.
+const ListShell: FC<{ title: string }> = ({ title }) => (
+  <section
+    className="flex h-full flex-col overflow-hidden border-border bg-background md:border-r"
+    aria-label="Feed items"
+  >
+    <div className="fk-list-head">
+      <div className="fk-backbar md:hidden">
+        <BackButton onClickBack={() => {}} />
+      </div>
+      <div className="fk-list-titlebar">
+        <h2 className="fk-list-title">{title}</h2>
+      </div>
+    </div>
+    <div className="flex flex-1 flex-col items-center justify-center gap-3.5 p-8">
+      <div className="feeds-spinner size-7" role="status" aria-label="Loading"></div>
+      <p className="text-sm leading-[1.5] text-muted-foreground">Loading items…</p>
+    </div>
+  </section>
+)

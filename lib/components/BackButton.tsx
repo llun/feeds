@@ -10,7 +10,7 @@ export const BackButton = ({ onClickBack }: Props) => {
     <button
       type="button"
       onClick={onClickBack}
-      className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-ring md:hidden"
+      className="inline-flex size-7 items-center justify-center rounded-md hit-target text-subtle transition-colors hover:bg-accent hover:text-foreground focus-ring md:hidden"
       aria-label="Go back"
     >
       <ChevronLeft size={16} />

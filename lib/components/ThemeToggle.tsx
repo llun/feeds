@@ -60,7 +60,7 @@ export const ThemeToggle = () => {
         type="button"
         id="theme-toggle-button"
         onClick={() => setShowModal(!showModal)}
-        className="inline-flex size-8.5 items-center justify-center rounded-md border border-border-strong text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-ring"
+        className="inline-flex size-8.5 items-center justify-center rounded-md border border-border-strong text-subtle hit-target transition-colors hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground focus-ring"
         aria-label="Toggle theme"
         aria-expanded={showModal}
         aria-haspopup="true"
@@ -71,7 +71,7 @@ export const ThemeToggle = () => {
       {showModal && (
         <div
           ref={modalRef}
-          className="absolute right-0 z-20 mt-2 flex min-w-36 flex-col gap-0.5 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg animate-pop-in"
+          className="absolute right-0 z-20 mt-2 flex min-w-36 flex-col gap-0.5 rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg animate-pop-in"
           role="menu"
           aria-orientation="vertical"
           aria-labelledby="theme-toggle-button"
@@ -87,9 +87,9 @@ export const ThemeToggle = () => {
                   setShowModal(false)
                   buttonRef.current?.focus()
                 }}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors focus-ring ${
+                className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition-colors focus-ring ${
                   selected
-                    ? 'bg-brand-subtle font-medium text-brand-emphasis'
+                    ? 'bg-accent font-medium text-brand-emphasis'
                     : 'hover:bg-surface-3'
                 }`}
                 role="menuitemradio"

@@ -122,35 +122,109 @@ export const getInitialPageState = (location: LocationState): PageState => {
   }
 }
 
+const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ['year', 365 * 24 * 3600],
+  ['month', 30 * 24 * 3600],
+  ['week', 7 * 24 * 3600],
+  ['day', 24 * 3600],
+  ['hour', 3600],
+  ['minute', 60]
+]
+
+// "2 hours ago", "yesterday", "5 days ago": the largest whole unit, with
+// numeric: 'auto' so a single day or week reads as a word.
+export const formatRelativeTime = (
+  timestampMs: number,
+  nowMs: number = Date.now()
+): string => {
+  const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+  const seconds = Math.round((nowMs - timestampMs) / 1000)
+  if (seconds < 0) return formatter.format(0, 'second')
+  for (const [unit, size] of RELATIVE_UNITS) {
+    if (seconds >= size) return formatter.format(-Math.floor(seconds / size), unit)
+  }
+  return seconds < 10 ? formatter.format(0, 'second') : formatter.format(-seconds, 'second')
+}
+
+export interface NavSelection {
+  kind: 'all' | 'category' | 'site' | 'opml' | null
+  // The category whose sites are shown (selected itself, or holding the site)
+  expandedCategory?: string
+  siteKey?: string
+}
+
+// The sidebar follows the URL so deep links and back/forward keep it in sync.
+export const getNavSelection = (
+  location: LocationState,
+  categories: { title: string; sites: { key: string }[] }[]
+): NavSelection => {
+  if (!location) return { kind: null }
+  if (location.type === 'opml') return { kind: 'opml' }
+
+  const parent =
+    location.type === 'entry'
+      ? location.parent
+      : location.type === 'category'
+        ? { type: 'category' as const, key: location.category }
+        : { type: 'site' as const, key: location.siteKey }
+
+  if (parent.type === 'category') {
+    return { kind: 'category', expandedCategory: parent.key }
+  }
+  if (parent.key === 'all') return { kind: 'all' }
+  const owner = categories.find((category) =>
+    category.sites.some((site) => site.key === parent.key)
+  )
+  return { kind: 'site', siteKey: parent.key, expandedCategory: owner?.title }
+}
+
+export const getSelectedEntryKey = (location: LocationState): string =>
+  location?.type === 'entry' ? location.entryKey : ''
+
 export const locationController = async (
   locationState: LocationState,
   basePath: string,
   setContent: React.Dispatch<React.SetStateAction<Content | null>>,
-  setPageState: React.Dispatch<React.SetStateAction<PageState>>
+  setPageState: React.Dispatch<React.SetStateAction<PageState>>,
+  setEntryMissing?: (missing: boolean) => void
 ) => {
   if (!locationState) return null
 
   const storage = getStorage(basePath)
   switch (locationState.type) {
     case 'opml': {
+      setEntryMissing?.(false)
       setContent(null)
       setPageState('opml')
       return
     }
     case 'category': {
+      setEntryMissing?.(false)
       setContent(null)
       setPageState('entries')
       return
     }
     case 'site': {
+      setEntryMissing?.(false)
       setContent(null)
       setPageState('entries')
       return
     }
     case 'entry': {
       const { entryKey } = locationState
-      const content = await storage.getContent(entryKey)
-      if (!content) return
+      let content: Content | null | undefined
+      try {
+        content = await storage.getContent(entryKey)
+      } catch {
+        content = null
+      }
+      if (!content) {
+        setContent(null)
+        setEntryMissing?.(true)
+        setPageState('article')
+        return
+      }
+      setEntryMissing?.(false)
       setContent(content)
       setPageState('article')
       return

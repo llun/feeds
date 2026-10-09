@@ -2,7 +2,10 @@ import test from 'ava'
 import sinon from 'sinon'
 import {
   PageState,
+  formatRelativeTime,
   getInitialPageState,
+  getNavSelection,
+  getSelectedEntryKey,
   locationController,
   parseLocation
 } from './utils'
@@ -154,7 +157,7 @@ test('#locationController sets opml state for opml', async (t) => {
   t.is<PageState, PageState>(pageState, 'opml')
 })
 
-test('#locationController loads entry and sets article state', async (t) => {
+test.serial('#locationController loads entry and sets article state', async (t) => {
   const fakeApiResponse = {
     title: 'Article Title',
     siteTitle: 'Site',
@@ -198,4 +201,86 @@ test('#locationController loads entry and sets article state', async (t) => {
     timestamp: 123456
   })
   t.is<PageState, PageState>(pageState, 'article')
+})
+
+test('#formatRelativeTime reads like the design', (t) => {
+  const now = Date.UTC(2026, 0, 15, 12, 0, 0)
+  const ago = (seconds: number) => formatRelativeTime(now - seconds * 1000, now)
+  t.is(ago(0), 'now')
+  t.is(ago(30), '30 seconds ago')
+  t.is(ago(5 * 60), '5 minutes ago')
+  t.is(ago(2 * 3600), '2 hours ago')
+  t.is(ago(36 * 3600), 'yesterday')
+  t.is(ago(5 * 86400), '5 days ago')
+  t.is(ago(7 * 86400), 'last week')
+  t.is(ago(60 * 86400), '2 months ago')
+  t.is(ago(400 * 86400), 'last year')
+  t.is(formatRelativeTime(now + 5000, now), 'now')
+})
+
+test('#getNavSelection follows the URL', (t) => {
+  const categories = [
+    { title: 'Tech', sites: [{ key: 'a' }, { key: 'b' }] },
+    { title: 'News', sites: [{ key: 'c' }] }
+  ]
+  t.deepEqual(getNavSelection(parseLocation('/sites/all'), categories), {
+    kind: 'all'
+  })
+  t.deepEqual(
+    getNavSelection(parseLocation('/sites/all/entries/e1'), categories),
+    { kind: 'all' }
+  )
+  t.deepEqual(getNavSelection(parseLocation('/categories/News'), categories), {
+    kind: 'category',
+    expandedCategory: 'News'
+  })
+  t.deepEqual(
+    getNavSelection(parseLocation('/categories/News/entries/e'), categories),
+    { kind: 'category', expandedCategory: 'News' }
+  )
+  t.deepEqual(getNavSelection(parseLocation('/sites/b'), categories), {
+    kind: 'site',
+    siteKey: 'b',
+    expandedCategory: 'Tech'
+  })
+  t.deepEqual(getNavSelection(parseLocation('/sites/b/entries/x'), categories), {
+    kind: 'site',
+    siteKey: 'b',
+    expandedCategory: 'Tech'
+  })
+  t.deepEqual(getNavSelection(parseLocation('/sites/zzz'), categories), {
+    kind: 'site',
+    siteKey: 'zzz',
+    expandedCategory: undefined
+  })
+  t.deepEqual(getNavSelection(parseLocation('/opml'), categories), {
+    kind: 'opml'
+  })
+  t.deepEqual(getNavSelection(null, categories), { kind: null })
+})
+
+test('#getSelectedEntryKey returns the open entry', (t) => {
+  t.is(getSelectedEntryKey(parseLocation('/sites/all/entries/e1')), 'e1')
+  t.is(getSelectedEntryKey(parseLocation('/sites/all')), '')
+  t.is(getSelectedEntryKey(null), '')
+})
+
+test.serial('#locationController flags a missing entry instead of throwing', async (t) => {
+  const setContent = sinon.stub()
+  const setPageState = sinon.stub()
+  const setEntryMissing = sinon.stub()
+  const fetchStub = sinon
+    .stub(globalThis, 'fetch')
+    .resolves({ status: 404 } as Response)
+  t.teardown(() => fetchStub.restore())
+  await locationController(
+    parseLocation('/sites/all/entries/nope'),
+    '',
+    setContent,
+    setPageState,
+    setEntryMissing
+  )
+  t.true(setContent.calledWith(null))
+  t.true(setEntryMissing.calledWith(true))
+  t.true(setPageState.calledWith('article'))
 })
