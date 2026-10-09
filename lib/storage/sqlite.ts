@@ -2,18 +2,22 @@ import sqlJsHttpvfs from 'sql.js-httpvfs'
 import type { WorkerHttpvfs } from 'sql.js-httpvfs'
 import type { SplitFileConfig } from 'sql.js-httpvfs/dist/sqlite.worker'
 import type { Category, Content, SiteEntry, Storage } from './types'
+import { withDataVersion } from './version'
 
 const { createDbWorker } = sqlJsHttpvfs as typeof import('sql.js-httpvfs')
 
 const CONTENT_PER_PAGE = 30
 
-function getDatabaseConfig(basePath: string): SplitFileConfig {
+function getDatabaseConfig(
+  basePath: string,
+  version?: string
+): SplitFileConfig {
   return {
     from: 'inline',
     config: {
       serverMode: 'full',
       requestChunkSize: 4096,
-      url: `${basePath}/data.sqlite3`
+      url: withDataVersion(`${basePath}/data.sqlite3`, version)
     }
   }
 }
@@ -22,10 +26,12 @@ export class SqliteStorage implements Storage {
   private worker: WorkerHttpvfs | null = null
   private config: SplitFileConfig
   private basePath: string
+  private version?: string
 
-  constructor(basePath: string) {
-    this.config = getDatabaseConfig(basePath)
+  constructor(basePath: string, version?: string) {
+    this.config = getDatabaseConfig(basePath, version)
     this.basePath = basePath
+    this.version = version
   }
 
   private async getWorker(
@@ -223,9 +229,13 @@ export class SqliteStorage implements Storage {
 
   async getOpml(): Promise<string | null> {
     try {
-      let response = await fetch(`${this.basePath}/data/feeds.opml`)
+      let response = await fetch(
+        withDataVersion(`${this.basePath}/data/feeds.opml`, this.version)
+      )
       if (response.status !== 200) {
-        response = await fetch(`${this.basePath}/feeds.opml`)
+        response = await fetch(
+          withDataVersion(`${this.basePath}/feeds.opml`, this.version)
+        )
       }
       if (response.status !== 200) return null
       return await response.text()

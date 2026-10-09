@@ -4,6 +4,7 @@ import { Category } from '../storage/types'
 import type { FeedManifestMap } from '../feed-manifest'
 import { ThemeToggle } from './ThemeToggle'
 import { Logo } from './Logo'
+import { NavSkeleton } from './Skeleton'
 import { LocationState, formatRelativeTime, getNavSelection } from '../utils'
 
 interface CategoryListProps {
@@ -13,6 +14,8 @@ interface CategoryListProps {
   buildTime?: string | null
   locationState?: LocationState
   loading?: boolean
+  // The feed set could not be loaded; the list pane says so
+  failed?: boolean
   feedManifest?: FeedManifestMap | null
   selectCategory?: (category: string) => void
   selectSite?: (siteKey: string, siteTitle: string) => void
@@ -42,6 +45,7 @@ export const CategoryList = ({
   buildTime,
   locationState,
   loading,
+  failed,
   feedManifest,
   selectCategory,
   selectSite,
@@ -104,9 +108,11 @@ export const CategoryList = ({
           )}
         </div>
 
-        {categories.length > 0 && (
+        {(categories.length > 0 || (loading && !failed)) && (
           <p className="feeds-eyebrow mx-1.5 mt-4 mb-1.5">Categories</p>
         )}
+
+        {!categories.length && loading && !failed && <NavSkeleton />}
 
         {categories.map((category) => {
           const expanded = category.title === selection.expandedCategory

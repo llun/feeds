@@ -3,7 +3,8 @@ import { Content } from '../storage/types'
 import { ExternalLink } from 'lucide-react'
 import { BackButton } from './BackButton'
 import { Button } from './Button'
-import { formatRelativeTime } from '../utils'
+import { ArticleSkeleton } from './Skeleton'
+import { EntryProblem, formatRelativeTime } from '../utils'
 import parse from 'html-react-parser'
 import sanitizeHtml from 'sanitize-html'
 import {
@@ -23,16 +24,18 @@ interface ReactParserNode {
 
 interface ItemContentProps {
   content?: Content
-  missing?: boolean
+  problem?: EntryProblem
   loading?: boolean
   selectBack?: () => void
+  retry?: () => void
 }
 
 export const ItemContent = ({
   content,
-  missing,
+  problem,
   loading,
-  selectBack
+  selectBack,
+  retry
 }: ItemContentProps) => {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
   let element: HTMLElement | null = null
@@ -41,7 +44,7 @@ export const ItemContent = ({
     element.scrollTo(0, 0)
   }, [content])
 
-  if (!content && missing) {
+  if (!content && problem) {
     return (
       <div className="flex h-full flex-col bg-background">
         <div className="fk-backbar md:hidden">
@@ -51,12 +54,26 @@ export const ItemContent = ({
           className="flex flex-1 flex-col items-center justify-center gap-3.5 p-8 text-center text-sm text-muted-foreground"
           role="status"
         >
-          <p className="max-w-[260px] leading-[1.5]">
-            This item is no longer available.
-          </p>
-          <Button variant="ghost" size="sm" onClick={selectBack}>
-            Back to list
-          </Button>
+          {problem === 'unreachable' ? (
+            <>
+              <p className="max-w-[260px] leading-[1.5]">
+                Couldn&apos;t load this item. Check your connection and try
+                again.
+              </p>
+              <Button variant="ghost" size="sm" onClick={retry}>
+                Try again
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="max-w-[260px] leading-[1.5]">
+                This item is no longer available.
+              </p>
+              <Button variant="ghost" size="sm" onClick={selectBack}>
+                Back to list
+              </Button>
+            </>
+          )}
         </div>
       </div>
     )
@@ -64,20 +81,11 @@ export const ItemContent = ({
 
   if (!content && loading) {
     return (
-      <div className="flex h-full flex-col bg-background">
+      <div className="flex h-full flex-col overflow-hidden bg-background">
         <div className="fk-backbar md:hidden">
           <BackButton onClickBack={selectBack} />
         </div>
-        <div className="flex flex-1 flex-col items-center justify-center gap-3.5 p-8">
-          <div
-            className="feeds-spinner size-7"
-            role="status"
-            aria-label="Loading"
-          ></div>
-          <p className="text-sm leading-[1.5] text-muted-foreground">
-            Loading…
-          </p>
-        </div>
+        <ArticleSkeleton />
       </div>
     )
   }

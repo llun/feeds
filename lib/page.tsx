@@ -2,6 +2,7 @@
 
 import {
   FC,
+  useCallback,
   useState,
   useEffect,
   useLayoutEffect,
@@ -15,11 +16,17 @@ import { ItemContent } from './components/ItemContent'
 import { CategoryList } from '../lib/components/CategoryList'
 import { BackButton } from '../lib/components/BackButton'
 import { OpmlView } from '../lib/components/OpmlView'
-import { getStorage } from '../lib/storage'
-import { Category, Content } from '../lib/storage/types'
+import { Button } from '../lib/components/Button'
+import { ListSkeleton } from '../lib/components/Skeleton'
+import { RefreshNotice, RefreshState } from '../lib/components/RefreshNotice'
+import { openStorage } from '../lib/storage'
+import { Category, Content, Storage } from '../lib/storage/types'
 import { loadFeedManifest, FeedManifestMap } from './feed-manifest'
+import { BuildWatcher } from './freshness'
 import {
+  EntryProblem,
   PageState,
+  RecoveryResult,
   articleClassName,
   categoriesClassName,
   entriesClassName,
@@ -41,6 +48,29 @@ interface PageProps {
   initialPath?: string
 }
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+
+// A tab coming back to the front checks for a newer build at most this often
+const FOCUS_CHECK_INTERVAL_MS = 60 * 1000
+const REFRESHED_NOTICE_MS = 4000
+
+interface FeedSet {
+  categories: Category[]
+  totalEntries: number
+  opml: string | null
+  manifest: FeedManifestMap | null
+}
+
+const loadFeedSet = async (storage: Storage): Promise<FeedSet> => {
+  const [categories, totalEntries, opml, manifest] = await Promise.all([
+    storage.getCategories(),
+    storage.countAllEntries(),
+    storage.getOpml ? storage.getOpml() : Promise.resolve(null),
+    loadFeedManifest(BASE_PATH)
+  ])
+  return { categories, totalEntries, opml, manifest }
+}
+
 export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const [status, setStatus] = useState<'loading' | 'loaded'>('loading')
   const originalPath = usePathname() || initialPath || '/'
@@ -53,9 +83,27 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const [initialOpml, setInitialOpml] = useState<string | undefined>()
   const [listTitle, setListTitle] = useState<string>('')
   const [content, setContent] = useState<Content | null>(null)
-  const [entryMissing, setEntryMissing] = useState(false)
+  const [entryProblem, setEntryProblem] = useState<EntryProblem>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
   const [feedManifest, setFeedManifest] = useState<FeedManifestMap | null>(null)
+  // The build whose data is on screen. It starts as the build that rendered
+  // this page and moves when a republish is picked up without a page reload.
+  const [dataVersion, setDataVersion] = useState<string | null>(
+    buildTime ?? null
+  )
+  const [refreshState, setRefreshState] = useState<RefreshState>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
+  // Bumped by "Try again" to run the loads again
+  const [attempt, setAttempt] = useState(0)
+  const watcherRef = useRef<BuildWatcher | null>(null)
+  if (!watcherRef.current) {
+    watcherRef.current = new BuildWatcher(BASE_PATH, buildTime ?? null)
+  }
+  const reloadRef = useRef<Promise<boolean> | null>(null)
+  // The newer build a notice offers to load
+  const pendingBuildRef = useRef<string | null>(null)
+  // The entry the article pane is showing or loading
+  const shownEntryRef = useRef<string | null>(null)
   // The prerendered shell (and a 404.html deep link) knows no location, so the
   // first client render must not use it either; applied before paint.
   const [mounted, setMounted] = useState(false)
@@ -66,6 +114,85 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
     pathname: currentPath,
     location: initialLocation
   })
+
+  const applyFeedSet = (feedSet: FeedSet) => {
+    setTotalEntries(feedSet.totalEntries)
+    setCategories(feedSet.categories)
+    if (feedSet.opml) setInitialOpml(feedSet.opml)
+    if (feedSet.manifest) setFeedManifest(feedSet.manifest)
+  }
+
+  // Loads a newer build's data in place: the feed set here, then the list and
+  // the article follow dataVersion. One reload runs at a time.
+  const reloadData = useCallback((nextBuildTime: string): Promise<boolean> => {
+    if (reloadRef.current) return reloadRef.current
+    const run = (async () => {
+      pendingBuildRef.current = nextBuildTime
+      setRefreshState('refreshing')
+      try {
+        const feedSet = await loadFeedSet(openStorage(BASE_PATH, nextBuildTime))
+        watcherRef.current?.accept(nextBuildTime)
+        pendingBuildRef.current = null
+        applyFeedSet(feedSet)
+        setLoadFailed(false)
+        setStatus('loaded')
+        setDataVersion(nextBuildTime)
+        setRefreshState('refreshed')
+        return true
+      } catch {
+        setRefreshState('failed')
+        return false
+      } finally {
+        reloadRef.current = null
+      }
+    })()
+    reloadRef.current = run
+    return run
+  }, [])
+
+  // Asked when a load fails. A tab left open across a republish asks for data
+  // the new build moved or dropped, so the data is reloaded rather than the
+  // failure shown.
+  const recover = useCallback(async (): Promise<RecoveryResult> => {
+    const check = await watcherRef.current!.check()
+    if (check.status !== 'newer') return check.status
+    return (await reloadData(check.buildTime)) ? 'reloaded' : 'unreachable'
+  }, [reloadData])
+
+  // Coming back to a tab that sat open is when a republish is most likely;
+  // offer the new data rather than swapping the list under the reader.
+  useEffect(() => {
+    let lastCheck = Date.now()
+    const checkOnReturn = async () => {
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - lastCheck < FOCUS_CHECK_INTERVAL_MS) return
+      lastCheck = Date.now()
+      const check = await watcherRef.current!.check()
+      if (check.status !== 'newer' || reloadRef.current) return
+      pendingBuildRef.current = check.buildTime
+      setRefreshState((current) =>
+        current === null || current === 'refreshed' ? 'available' : current
+      )
+    }
+    document.addEventListener('visibilitychange', checkOnReturn)
+    window.addEventListener('focus', checkOnReturn)
+    return () => {
+      document.removeEventListener('visibilitychange', checkOnReturn)
+      window.removeEventListener('focus', checkOnReturn)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (refreshState !== 'refreshed') return
+    const timer = setTimeout(
+      () =>
+        setRefreshState((current) =>
+          current === 'refreshed' ? null : current
+        ),
+      REFRESHED_NOTICE_MS
+    )
+    return () => clearTimeout(timer)
+  }, [refreshState])
 
   // Handle browser history updates when pathname changes
   useEffect(() => {
@@ -112,19 +239,28 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 
       const wasLoading = status === 'loading'
       if (wasLoading) {
-        const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
-        const storage = getStorage(basePath)
-        const [categories, totalEntries, opml, manifest] = await Promise.all([
-          storage.getCategories(),
-          storage.countAllEntries(),
-          storage.getOpml ? storage.getOpml() : Promise.resolve(null),
-          loadFeedManifest(basePath)
-        ])
-        setTotalEntries(totalEntries)
-        setCategories(categories)
-        if (opml) setInitialOpml(opml)
-        if (manifest) setFeedManifest(manifest)
+        let feedSet: FeedSet
+        try {
+          feedSet = await loadFeedSet(openStorage(BASE_PATH, dataVersion))
+        } catch {
+          // Never leave the first load spinning: reload a newer build's data,
+          // or say it failed and offer to try again.
+          const recovery = await recover()
+          if (recovery !== 'reloaded' && !cancelled) setLoadFailed(true)
+          return
+        }
+        applyFeedSet(feedSet)
         setStatus('loaded')
+      }
+
+      // A different entry clears the pane so it shows the loading state
+      // instead of the previous article.
+      const location = state.location
+      const entryKey = location.type === 'entry' ? location.entryKey : null
+      if (entryKey !== shownEntryRef.current) {
+        shownEntryRef.current = entryKey
+        setContent(null)
+        setEntryProblem(null)
       }
 
       const keepNavLocation = lastLocationRef.current === state.location
@@ -134,15 +270,16 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         state.pathname,
         setContent,
         setPageState,
-        setEntryMissing,
+        setEntryProblem,
         () => !cancelled,
-        wasLoading || keepNavLocation
+        wasLoading || keepNavLocation,
+        recover
       )
     })()
     return () => {
       cancelled = true
     }
-  }, [status, state])
+  }, [status, state, dataVersion, attempt])
 
   useEffect(() => {
     const siteTitle = (siteKey: string) => {
@@ -180,6 +317,11 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
     }
   }, [state, categories, status])
 
+  const retryLoad = () => {
+    setLoadFailed(false)
+    setAttempt((count) => count + 1)
+  }
+
   const view = getHydrationView(mounted, initialPath, state.location, pageState)
   const viewLocation = view.location
   const viewPageState = view.pageState
@@ -213,9 +355,10 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
             categories={categories}
             totalEntries={totalEntries}
             version={version}
-            buildTime={buildTime}
+            buildTime={dataVersion}
             locationState={viewLocation}
             loading={isLoading}
+            failed={loadFailed}
             feedManifest={feedManifest}
             selectCategory={(category: string) => {
               setListTitle(category)
@@ -259,6 +402,8 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
               <ListShell
                 title="feeds.opml"
                 message="Loading…"
+                failed={loadFailed}
+                onRetry={retryLoad}
                 onBack={() => {
                   setPageState('categories')
                   dispatch(updatePath('/sites/all'))
@@ -277,6 +422,8 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
                 <ItemList
                   basePath={state.pathname}
                   locationState={state.location}
+                  dataVersion={dataVersion}
+                  recover={recover}
                   title={listTitle}
                   selectBack={() => setPageState('categories')}
                   selectSite={(site: string) => {
@@ -292,12 +439,17 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
                     }/${encodeURIComponent(parentKey)}/entries/${encodeURIComponent(
                       entryKey
                     )}`
+                    // On a phone the article pane opens at once, showing the
+                    // loading state until the entry arrives
+                    setPageState('article')
                     dispatch(updatePath(targetPath))
                   }}
                 />
               ) : (
                 <ListShell
                   title={listTitle}
+                  failed={loadFailed}
+                  onRetry={retryLoad}
                   onBack={() => setPageState('categories')}
                 />
               )}
@@ -305,15 +457,28 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 
             <div
               className={`h-full min-h-0 w-full flex-1 overflow-hidden ${
-                isArticlePaneHidden(viewPageState, !!content, entryMissing)
+                isArticlePaneHidden(
+                  viewPageState,
+                  !!content,
+                  !!entryProblem || loadFailed
+                )
                   ? 'hidden md:block'
                   : ''
               } ${articleClassName(viewPageState)}`}
             >
               <ItemContent
                 content={content}
-                missing={entryMissing}
-                loading={viewPageState === 'article'}
+                // A deep link whose first load failed shares the list's error
+                problem={loadFailed ? 'unreachable' : entryProblem}
+                loading={viewLocation?.type === 'entry'}
+                retry={
+                  loadFailed
+                    ? retryLoad
+                    : () => {
+                        setEntryProblem(null)
+                        setAttempt((count) => count + 1)
+                      }
+                }
                 selectBack={() => {
                   const location = state.location
                   if (location.type !== 'entry') return
@@ -325,6 +490,13 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
           </>
         )}
       </main>
+      <RefreshNotice
+        state={refreshState}
+        onLoadLatest={() => {
+          if (pendingBuildRef.current) reloadData(pendingBuildRef.current)
+        }}
+        onDismiss={() => setRefreshState(null)}
+      />
     </>
   )
 }
@@ -334,8 +506,10 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 const ListShell: FC<{
   title: string
   message?: string
+  failed?: boolean
+  onRetry?: () => void
   onBack: () => void
-}> = ({ title, message = 'Loading items…', onBack }) => (
+}> = ({ title, message = 'Loading items…', failed, onRetry, onBack }) => (
   <section
     className="flex h-full flex-col overflow-hidden border-border bg-background md:border-r"
     aria-label="Feed items"
@@ -348,13 +522,22 @@ const ListShell: FC<{
         <h2 className="fk-list-title">{title || '\u00a0'}</h2>
       </div>
     </div>
-    <div className="flex flex-1 flex-col items-center justify-center gap-3.5 p-8">
+    {failed ? (
       <div
-        className="feeds-spinner size-7"
+        className="flex flex-1 flex-col items-center justify-center gap-3.5 p-8 text-center text-sm text-muted-foreground"
         role="status"
-        aria-label="Loading"
-      ></div>
-      <p className="text-sm leading-[1.5] text-muted-foreground">{message}</p>
-    </div>
+      >
+        <p className="max-w-[260px] leading-[1.5]">
+          Couldn&apos;t load feeds. Check your connection and try again.
+        </p>
+        <Button variant="ghost" size="sm" onClick={onRetry}>
+          Try again
+        </Button>
+      </div>
+    ) : (
+      <div className="flex-1 overflow-hidden">
+        <ListSkeleton label={message} />
+      </div>
+    )}
   </section>
 )

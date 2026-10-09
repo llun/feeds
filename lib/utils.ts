@@ -256,16 +256,27 @@ export const getHydrationView = (
   return { location: seed, pageState: getInitialPageState(seed) }
 }
 
+// Why an article could not be shown
+export type EntryProblem = 'missing' | 'unreachable' | null
+
+// What happened when a failed load asked whether the site was republished:
+// the data was reloaded for the new build, the build is the same (so the
+// failure stands), or the site could not be reached to tell.
+export type RecoveryResult = 'reloaded' | 'current' | 'unreachable'
+
 export const locationController = async (
   locationState: LocationState,
   basePath: string,
   setContent: React.Dispatch<React.SetStateAction<Content | null>>,
   setPageState: React.Dispatch<React.SetStateAction<PageState>>,
-  setEntryMissing?: (missing: boolean) => void,
+  setEntryProblem?: (problem: EntryProblem) => void,
   isCurrent: () => boolean = () => true,
   // Re-run only because loading finished: do not pull a phone back from the
   // navigation pane the user already returned to.
-  keepNav = false
+  keepNav = false,
+  // Asked before an entry is reported missing, since a tab left open across a
+  // republish asks for entries the new build no longer has.
+  recover?: () => Promise<RecoveryResult>
 ) => {
   if (!locationState) return null
   const showEntries = () =>
@@ -276,19 +287,19 @@ export const locationController = async (
   const storage = getStorage(basePath)
   switch (locationState.type) {
     case 'opml': {
-      setEntryMissing?.(false)
+      setEntryProblem?.(null)
       setContent(null)
       setPageState('opml')
       return
     }
     case 'category': {
-      setEntryMissing?.(false)
+      setEntryProblem?.(null)
       setContent(null)
       showEntries()
       return
     }
     case 'site': {
-      setEntryMissing?.(false)
+      setEntryProblem?.(null)
       setContent(null)
       showEntries()
       return
@@ -304,12 +315,17 @@ export const locationController = async (
       // The user may have left this entry while it loaded
       if (!isCurrent()) return
       if (!content) {
+        const recovery = recover ? await recover() : 'current'
+        // A reload for a new build loads this entry again
+        if (!isCurrent() || recovery === 'reloaded') return
         setContent(null)
-        setEntryMissing?.(true)
+        setEntryProblem?.(
+          recovery === 'unreachable' ? 'unreachable' : 'missing'
+        )
         setPageState('article')
         return
       }
-      setEntryMissing?.(false)
+      setEntryProblem?.(null)
       setContent(content)
       setPageState('article')
       return
