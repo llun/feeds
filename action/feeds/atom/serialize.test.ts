@@ -210,37 +210,54 @@ async function serializeEntry(overrides: Partial<NormalizedEntry>) {
   return parsed.feed.entry[0]
 }
 
-test('#serializeAtomFeed omits the entry link when the entry has no link', async (t) => {
-  const entry = await serializeEntry({ link: '' })
-  t.is(entry.link, undefined)
-})
+const entryFallbackCases: [
+  string,
+  Partial<NormalizedEntry>,
+  (entry: any) => unknown,
+  unknown
+][] = [
+  [
+    'omits the link when the entry has no link',
+    { link: '' },
+    (e) => e.link,
+    undefined
+  ],
+  [
+    'uses Untitled for an empty title',
+    { title: '' },
+    (e) => e.title[0],
+    'Untitled'
+  ],
+  [
+    'uses Untitled when the title is only invalid control characters',
+    { title: '\x00\x07' },
+    (e) => e.title[0],
+    'Untitled'
+  ],
+  [
+    'uses Unknown when there is neither author nor site title',
+    { author: undefined, siteTitle: undefined },
+    (e) => e.author[0].name[0],
+    'Unknown'
+  ],
+  [
+    'prefers the entry author over the site title',
+    { author: 'Jane', siteTitle: 'Blog' },
+    (e) => e.author[0].name[0],
+    'Jane'
+  ],
+  [
+    'falls back to the site title for a blank author',
+    { author: '   ', siteTitle: 'Blog' },
+    (e) => e.author[0].name[0],
+    'Blog'
+  ]
+]
 
-test('#serializeAtomFeed uses Untitled for an empty entry title', async (t) => {
-  const entry = await serializeEntry({ title: '' })
-  t.is(entry.title[0], 'Untitled')
-})
-
-test('#serializeAtomFeed uses Untitled when the title is only invalid control characters', async (t) => {
-  const entry = await serializeEntry({ title: '\x00\x07' })
-  t.is(entry.title[0], 'Untitled')
-})
-
-test('#serializeAtomFeed uses Unknown when the entry has neither author nor site title', async (t) => {
-  const entry = await serializeEntry({
-    author: undefined,
-    siteTitle: undefined
-  })
-  t.is(entry.author[0].name[0], 'Unknown')
-})
-
-test('#serializeAtomFeed prefers the entry author over the site title', async (t) => {
-  const entry = await serializeEntry({ author: 'Jane', siteTitle: 'Blog' })
-  t.is(entry.author[0].name[0], 'Jane')
-})
-
-test('#serializeAtomFeed falls back to the site title for a blank author', async (t) => {
-  const entry = await serializeEntry({ author: '   ', siteTitle: 'Blog' })
-  t.is(entry.author[0].name[0], 'Blog')
+test('#serializeAtomFeed applies entry fallbacks for link, title and author', async (t) => {
+  for (const [description, overrides, pick, expected] of entryFallbackCases) {
+    t.is(pick(await serializeEntry(overrides)), expected, description)
+  }
 })
 
 test('#serializeAtomFeed emits the site URL as the source alternate link', async (t) => {

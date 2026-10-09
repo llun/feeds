@@ -197,6 +197,7 @@ async function generateFromDatabase(tempRoot: string, opmlPath: string) {
 
 test.before(async (t) => {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'atom-gen-test-'))
+  t.context = { tempRoot }
   const opmlPath = path.join(tempRoot, 'feeds.opml')
   await fs.writeFile(opmlPath, FIXTURE_OPML, 'utf8')
   t.context = {
@@ -230,13 +231,22 @@ async function readAllEntry(t: ExecutionContext, mode: Mode, title: string) {
   return parsed.feed.entry.find((e: any) => e.title[0] === title)
 }
 
+const MODES = ['files', 'sqlite'] as const
+
 function eachMode(
   title: string,
   check: (t: ExecutionContext, mode: Mode) => Promise<void>
 ) {
-  for (const mode of ['files', 'sqlite'] as const) {
-    test(`${mode}: ${title}`, async (t) => check(t, mode))
-  }
+  test(title, async (t) => {
+    for (const mode of MODES) {
+      try {
+        await check(t, mode)
+      } catch (error) {
+        t.log(`failed in ${mode} mode`)
+        throw error
+      }
+    }
+  })
 }
 
 test('files: ignores a stale subscription JSON that is no longer in the OPML', async (t) => {
@@ -244,24 +254,21 @@ test('files: ignores a stale subscription JSON that is no longer in the OPML', a
   t.false(xml.includes('Zombie Entry'))
 })
 
-eachMode(
-  'ignores a category folder that is no longer in the OPML',
-  async (t, mode) => {
-    const { publicPaths } = t.context as { publicPaths: Record<Mode, string> }
-    const { xml } = await readFeed(t, mode, 'all.xml')
-    t.false(xml.includes('Old Entry'))
-    t.false(
-      await exists(
-        path.join(
-          publicPaths[mode],
-          'feeds',
-          'categories',
-          `${getCategoryId('RemovedCategory')}.xml`
-        )
+test('files: ignores a category folder that is no longer in the OPML', async (t) => {
+  const { publicPaths } = t.context as { publicPaths: Record<Mode, string> }
+  const { xml } = await readFeed(t, 'files', 'all.xml')
+  t.false(xml.includes('Old Entry'))
+  t.false(
+    await exists(
+      path.join(
+        publicPaths.files,
+        'feeds',
+        'categories',
+        `${getCategoryId('RemovedCategory')}.xml`
       )
     )
-  }
-)
+  )
+})
 
 eachMode(
   'lists an entry shared by two categories once, with both categories',
@@ -340,7 +347,7 @@ eachMode(
 )
 
 eachMode(
-  'lists every OPML category in the manifest sorted by title',
+  'lists every OPML category in the manifest sorted by title and declares the site favicon on feeds',
   async (t, mode) => {
     const manifest = JSON.parse((await readFeed(t, mode, 'manifest.json')).xml)
     t.is(manifest.all, 'feeds/all.xml')
@@ -352,12 +359,6 @@ eachMode(
       manifest.categories[0].path,
       `feeds/categories/${getCategoryId('EmptyCategory')}.xml`
     )
-  }
-)
-
-eachMode(
-  'declares the site favicon as icon on the all and category feeds',
-  async (t, mode) => {
     const all = await readFeed(t, mode, 'all.xml')
     const tech = await readFeed(
       t,
@@ -365,11 +366,9 @@ eachMode(
       'categories',
       `${getCategoryId('Technology')}.xml`
     )
-    t.is(all.parsed.feed.icon[0], 'https://owner.github.io/project/favicon.ico')
-    t.is(
-      tech.parsed.feed.icon[0],
-      'https://owner.github.io/project/favicon.ico'
-    )
+    const icon = 'https://owner.github.io/project/favicon.ico'
+    t.is(all.parsed.feed.icon[0], icon)
+    t.is(tech.parsed.feed.icon[0], icon)
   }
 )
 

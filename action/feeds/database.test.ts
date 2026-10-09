@@ -735,18 +735,26 @@ test('#createOrUpdateDatabase skips a site whose feed fails to load and keeps it
   ])
 })
 
+/** Points GITHUB_WORKSPACE at a directory and restores it after the test. */
+function setGithubWorkspace(
+  t: { teardown: (fn: () => void) => void },
+  workspace: string
+) {
+  const previous = process.env.GITHUB_WORKSPACE
+  process.env.GITHUB_WORKSPACE = workspace
+  t.teardown(() => {
+    if (previous === undefined) delete process.env.GITHUB_WORKSPACE
+    else process.env.GITHUB_WORKSPACE = previous
+  })
+}
+
 test.serial(
   '#copyExistingDatabase copies the workspace database when the target has none',
   async (t) => {
     const workspace = await makeTempDirectory(t)
     const publicPath = await makeTempDirectory(t)
     fs.writeFileSync(path.join(workspace, DATABASE_FILE), 'workspace-db')
-    const previous = process.env.GITHUB_WORKSPACE
-    process.env.GITHUB_WORKSPACE = workspace
-    t.teardown(() => {
-      if (previous === undefined) delete process.env.GITHUB_WORKSPACE
-      else process.env.GITHUB_WORKSPACE = previous
-    })
+    setGithubWorkspace(t, workspace)
 
     await copyExistingDatabase(publicPath)
 
@@ -764,12 +772,7 @@ test.serial(
     const publicPath = await makeTempDirectory(t)
     fs.writeFileSync(path.join(workspace, DATABASE_FILE), 'workspace-db')
     fs.writeFileSync(path.join(publicPath, DATABASE_FILE), 'fresh-db')
-    const previous = process.env.GITHUB_WORKSPACE
-    process.env.GITHUB_WORKSPACE = workspace
-    t.teardown(() => {
-      if (previous === undefined) delete process.env.GITHUB_WORKSPACE
-      else process.env.GITHUB_WORKSPACE = previous
-    })
+    setGithubWorkspace(t, workspace)
 
     await t.notThrowsAsync(copyExistingDatabase(publicPath))
 
@@ -785,12 +788,7 @@ test.serial(
   async (t) => {
     const workspace = await makeTempDirectory(t)
     const publicPath = await makeTempDirectory(t)
-    const previous = process.env.GITHUB_WORKSPACE
-    process.env.GITHUB_WORKSPACE = workspace
-    t.teardown(() => {
-      if (previous === undefined) delete process.env.GITHUB_WORKSPACE
-      else process.env.GITHUB_WORKSPACE = previous
-    })
+    setGithubWorkspace(t, workspace)
 
     await t.notThrowsAsync(copyExistingDatabase(publicPath))
 

@@ -1,4 +1,4 @@
-import test from 'ava'
+import test, { ExecutionContext } from 'ava'
 import fs from 'fs/promises'
 import os from 'os'
 import path from 'path'
@@ -12,8 +12,9 @@ import {
 } from './media'
 import { type Site } from './parsers'
 
-async function createMediaDirectory(prefix: string) {
+async function createMediaDirectory(t: ExecutionContext, prefix: string) {
   const rootPath = await fs.mkdtemp(path.join(os.tmpdir(), prefix))
+  t.teardown(() => fs.rm(rootPath, { recursive: true, force: true }))
   return path.join(rootPath, 'media')
 }
 
@@ -50,7 +51,7 @@ async function listMediaFiles(mediaDirectory: string) {
 }
 
 test('#cleanupUnusedMediaFiles keeps every file the media store wrote', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-roundtrip-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-roundtrip-')
   const fetchStub = sinon.stub().callsFake(async (url: string) =>
     // The second url names no extension, so its file is named by the content
     // type instead.
@@ -81,7 +82,7 @@ test('#cleanupUnusedMediaFiles keeps every file the media store wrote', async (t
 })
 
 test('#cleanupUnusedMediaFiles keeps a file only a link still points at', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-linkonly-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-linkonly-')
   const fetchStub = sinon.stub().resolves(imageResponse())
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
@@ -126,6 +127,7 @@ test('#collectReferencedMediaFromEntryDirectory reads entry files', async (t) =>
   const rootPath = await fs.mkdtemp(
     path.join(os.tmpdir(), 'feeds-media-entry-')
   )
+  t.teardown(() => fs.rm(rootPath, { recursive: true, force: true }))
   const a = `${'a'.repeat(64)}.jpg`
   await fs.writeFile(
     path.join(rootPath, 'one.json'),
@@ -143,7 +145,7 @@ test('#collectReferencedMediaFromEntryDirectory reads entry files', async (t) =>
 })
 
 test('#cleanupUnusedMediaFiles removes stale media files', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-clean-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-clean-')
   await fs.mkdir(mediaDirectory, { recursive: true })
   await fs.writeFile(path.join(mediaDirectory, 'used.jpg'), 'used')
   await fs.writeFile(path.join(mediaDirectory, 'stale.jpg'), 'stale')

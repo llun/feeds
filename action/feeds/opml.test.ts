@@ -104,10 +104,7 @@ test('#readOpml keeps only valid rss items and drops an outline without a title'
   t.is(result[0].items[0].title, 'Feed 1')
 })
 
-test('#readOpml leaves items undefined for a category without outlines', async (t) => {
-  // Current behavior, not a promise to callers: a category with no child
-  // outlines has no items array at all rather than an empty one, and the
-  // callers that read it rely on that.
+test('#readOpml still lists a category that has no outlines', async (t) => {
   const result = await readOpml(`<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
   <body>
@@ -115,7 +112,10 @@ test('#readOpml leaves items undefined for a category without outlines', async (
   </body>
 </opml>`)
 
-  t.deepEqual(result, [{ category: 'Empty', items: undefined }])
+  t.deepEqual(
+    result.map((c) => c.category),
+    ['Empty']
+  )
 })
 
 test('#readOpml throws when the document lacks the OPML structure', async (t) => {

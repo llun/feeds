@@ -1,12 +1,10 @@
 import test from 'ava'
-import sinon from 'sinon'
 import {
   describeOpmlDiff,
   formatOpmlIssueBody,
   buildIssueUrl,
   OPML_ISSUE_TITLE
 } from './opml-diff'
-import { extractOpmlFromIssueBody, handleOpmlIssue } from '../action/issue'
 
 const opmlBase = `<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
@@ -168,52 +166,4 @@ test('#buildIssueUrl constructs valid GitHub issue creation URL', (t) => {
     url,
     'https://github.com/llun/feeds/issues/new?title=Update+OPML+file&body=Test+Body'
   )
-})
-
-test('#formatOpmlIssueBody produces an issue the action accepts once the placeholder is replaced', async (t) => {
-  const newOpml =
-    '<opml version="2.0"><body><outline text="Tech"><outline type="rss" xmlUrl="https://example.com/rss"/></outline></body></opml>'
-  const summary = describeOpmlDiff(opmlBase, newOpml).summary
-  const octokit = {
-    rest: {
-      issues: {
-        createComment: sinon.stub().resolves(),
-        update: sinon.stub().resolves()
-      }
-    }
-  }
-  const handle = (body: string) =>
-    handleOpmlIssue({
-      githubContext: {
-        eventName: 'issues',
-        payload: {
-          issue: {
-            number: 1,
-            title: OPML_ISSUE_TITLE,
-            author_association: 'OWNER',
-            body
-          }
-        },
-        repo: { owner: 'llun', repo: 'feeds' }
-      },
-      token: 'token',
-      octokit
-    })
-
-  // The prefilled issue is picked up by the action's title check, but its
-  // placeholder is not OPML, so the author is asked to paste one.
-  const placeholderBody = formatOpmlIssueBody(summary)
-  t.is(extractOpmlFromIssueBody(placeholderBody), null)
-  const result = await handle(placeholderBody)
-  t.true(result.handled)
-  t.false(result.updated)
-  t.true(
-    octokit.rest.issues.createComment.firstCall.args[0].body.includes(
-      'Could not extract valid OPML'
-    )
-  )
-
-  const filledBody = placeholderBody.replace('PASTE_OPML_HERE', newOpml)
-  t.is(extractOpmlFromIssueBody(filledBody), newOpml)
-  t.is(extractOpmlFromIssueBody(formatOpmlIssueBody(summary, newOpml)), newOpml)
 })

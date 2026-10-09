@@ -119,8 +119,8 @@ const stubFetch = (t: ExecutionContext) => {
   return stub
 }
 
-for (const path of ['/sites/all', '/sites/my-site', '/categories/Tech']) {
-  test(`#locationController clears content and lists entries for ${path}`, async (t) => {
+test('#locationController clears content and lists entries for site and category paths', async (t) => {
+  for (const path of ['/sites/all', '/sites/my-site', '/categories/Tech']) {
     const { state, setContent, setPageState } = createState(
       SAMPLE_CONTENT,
       'categories'
@@ -128,10 +128,10 @@ for (const path of ['/sites/all', '/sites/my-site', '/categories/Tech']) {
 
     await locationController(parseLocation(path), '', setContent, setPageState)
 
-    t.is(state.content, null)
-    t.is<PageState, PageState>(state.page, 'entries')
-  })
-}
+    t.is(state.content, null, path)
+    t.is<PageState, PageState>(state.page, 'entries', path)
+  }
+})
 
 test('#locationController sets opml state for opml', async (t) => {
   const { state, setContent, setPageState } = createState(

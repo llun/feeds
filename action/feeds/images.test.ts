@@ -22,6 +22,8 @@ test('every content type the store writes names a downloadable extension', (t) =
 test('svg is downloadable by neither, which keeps it off our origin', (t) => {
   t.is(normalizeImageExtension('.svg'), null)
   t.is(extensionFromContentType('image/svg+xml'), null)
+  // A repeated header resolves to the last type, so svg cannot hide behind png.
+  t.is(extensionFromContentType('image/png, image/svg+xml'), null)
 })
 
 test('#normalizeImageExtension accepts any casing and padding', (t) => {

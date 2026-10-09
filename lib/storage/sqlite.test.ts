@@ -66,11 +66,11 @@ test('#SqliteStorage.getCategories groups sites by category with entry totals', 
   const b = makeSite('B')
   const keyA = await insertSite(db, 'Tech', a)
   const keyB = await insertSite(db, 'Tech', b)
-  await insertSite(db, 'News', a)
+  const keyC = await insertSite(db, 'News', makeSite('C'))
   await insertEntry(db, keyA, 'A', 'Tech', makeEntry('a1', 100))
   await insertEntry(db, keyA, 'A', 'Tech', makeEntry('a2', 200))
   await insertEntry(db, keyB, 'B', 'Tech', makeEntry('b1', 300))
-  await insertEntry(db, keyA, 'A', 'News', makeEntry('a1', 100))
+  await insertEntry(db, keyC, 'C', 'News', makeEntry('c1', 400))
 
   const categories = await storage.getCategories()
 
@@ -79,9 +79,13 @@ test('#SqliteStorage.getCategories groups sites by category with entry totals', 
   t.is(byTitle.Tech.totalEntries, 3)
   t.is(byTitle.News.totalEntries, 1)
   t.deepEqual(
+    byTitle.News.sites.map((s) => [s.key, s.title, s.totalEntries]),
+    [[keyC, 'C', 1]]
+  )
+  t.deepEqual(
     byTitle.Tech.sites.map((s) => [s.key, s.title, s.totalEntries]),
     [
-      [keyA, 'A', 3],
+      [keyA, 'A', 2],
       [keyB, 'B', 1]
     ]
   )
@@ -150,11 +154,12 @@ test('#SqliteStorage count methods count entry-category rows', async (t) => {
   const { db, storage } = t.context
   const siteKey = await seedEntries(t, 3)
   await insertCategory(db, 'News')
-  await insertSite(db, 'News', makeSite('A'))
-  await insertEntry(db, siteKey, 'A', 'News', makeEntry('e1', 100))
+  const otherKey = await insertSite(db, 'News', makeSite('B'))
+  await insertEntry(db, otherKey, 'B', 'News', makeEntry('b1', 100))
 
   t.is(await storage.countAllEntries(), 4)
-  t.is(await storage.countSiteEntries(siteKey), 4)
+  t.is(await storage.countSiteEntries(siteKey), 3)
+  t.is(await storage.countSiteEntries(otherKey), 1)
   t.is(await storage.countCategoryEntries('Tech'), 3)
   t.is(await storage.countCategoryEntries('News'), 1)
 })

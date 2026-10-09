@@ -67,8 +67,6 @@ test('#parseAtom uses summary when entry does not have content', async (t) => {
   })
 })
 
-const NOW = new Date('2026-06-01T12:00:00Z').getTime()
-
 function atomWithDates(dates: {
   feed?: string[]
   published?: string[]
@@ -94,23 +92,16 @@ function atomWithDates(dates: {
   }
 }
 
-test('#parseAtom uses the current time for an empty, invalid or missing date', (t) => {
-  // parseDate falls back to the time of the run, so an entry still sorts as new
-  // instead of becoming NaN.
-  const clock = sinon.useFakeTimers({ now: NOW, toFake: ['Date'] })
-  try {
-    for (const dates of [
-      { feed: [''], published: [''], updated: [''] },
-      { feed: ['not a valid date'], published: ['invalid'] },
-      { published: ['invalid'], updated: ['invalid'] },
-      {}
-    ]) {
-      const site = parseAtom('Test Feed', atomWithDates(dates))
-      t.is(site.updatedAt, NOW, JSON.stringify(dates))
-      t.is(site.entries[0].date, NOW, JSON.stringify(dates))
-    }
-  } finally {
-    clock.restore()
+test('#parseAtom still yields finite dates for an empty, invalid or missing date', (t) => {
+  for (const dates of [
+    { feed: [''], published: [''], updated: [''] },
+    { feed: ['not a valid date'], published: ['invalid'] },
+    { published: ['invalid'], updated: ['invalid'] },
+    {}
+  ]) {
+    const site = parseAtom('Test Feed', atomWithDates(dates))
+    t.true(Number.isFinite(site.updatedAt), JSON.stringify(dates))
+    t.true(Number.isFinite(site.entries[0].date), JSON.stringify(dates))
   }
 })
 

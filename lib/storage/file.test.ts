@@ -27,14 +27,7 @@ test.serial(
       }
     ]
 
-    const fetchStub = sinon.stub(globalThis, 'fetch').resolves({
-      status: 200,
-      json: async () => fakeCategories
-    } as Response)
-
-    t.teardown(() => {
-      fetchStub.restore()
-    })
+    stubFetch(t, { status: 200, json: async () => fakeCategories })
 
     const storage = new FileStorage('')
     const categories = await storage.getCategories()
@@ -57,14 +50,7 @@ test.serial(
   async (t) => {
     const fakeOpml =
       '<opml version="2.0"><head><title>Feeds</title></head><body></body></opml>'
-    const fetchStub = sinon.stub(globalThis, 'fetch').resolves({
-      status: 200,
-      text: async () => fakeOpml
-    } as Response)
-
-    t.teardown(() => {
-      fetchStub.restore()
-    })
+    stubFetch(t, { status: 200, text: async () => fakeOpml })
 
     const storage = new FileStorage('')
     const opml = await storage.getOpml()
@@ -75,14 +61,7 @@ test.serial(
 test.serial(
   '#FileStorage.getOpml returns null when feeds.opml is not found',
   async (t) => {
-    const fetchStub = sinon.stub(globalThis, 'fetch').resolves({
-      status: 404,
-      text: async () => 'Not Found'
-    } as Response)
-
-    t.teardown(() => {
-      fetchStub.restore()
-    })
+    stubFetch(t, { status: 404, text: async () => 'Not Found' })
 
     const storage = new FileStorage('')
     const opml = await storage.getOpml()
@@ -134,19 +113,20 @@ const entryListCases = [
   }
 ]
 
-for (const { name, url, body, call } of entryListCases) {
-  test.serial(
-    `#FileStorage.${name} maps entryHash to key and milliseconds to seconds`,
-    async (t) => {
+test.serial(
+  '#FileStorage entry lists map entryHash to key and milliseconds to seconds',
+  async (t) => {
+    for (const { name, url, body, call } of entryListCases) {
       const fetchStub = stubFetch(t, { status: 200, json: async () => body })
 
       const entries = await call(new FileStorage('/base'))
 
-      t.is(fetchStub.firstCall.args[0], url)
-      t.deepEqual(entries, [mappedEntry])
+      t.is(fetchStub.firstCall.args[0], url, `${name} url`)
+      t.deepEqual(entries, [mappedEntry], `${name} entries`)
+      fetchStub.restore()
     }
-  )
-}
+  }
+)
 
 test.serial(
   '#FileStorage.getContent maps the stored link to url and date to seconds',
@@ -204,18 +184,20 @@ const failingCalls: [string, (storage: FileStorage) => Promise<unknown>][] = [
   ['countCategoryEntries', (s) => s.countCategoryEntries('Tech')]
 ]
 
-for (const [name, call] of failingCalls) {
-  test.serial(
-    `#FileStorage.${name} throws when the data file is not served`,
-    async (t) => {
-      stubFetch(t, { status: 404 })
+test.serial(
+  '#FileStorage methods throw when the data file is not served',
+  async (t) => {
+    stubFetch(t, { status: 404 })
 
-      await t.throwsAsync(call(new FileStorage('')), {
-        message: /Fail to load/
-      })
+    for (const [name, call] of failingCalls) {
+      await t.throwsAsync(
+        call(new FileStorage('')),
+        { message: /Fail to load/ },
+        name
+      )
     }
-  )
-}
+  }
+)
 
 test.serial(
   '#FileStorage.getOpml returns null when the request fails',

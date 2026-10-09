@@ -9,7 +9,8 @@ import {
   getPreviousPublishedCommits,
   publishLimitedHistory,
   resolveSourceBranch,
-  restorePublishedMedia
+  restorePublishedMedia,
+  validatePublishBranch
 } from './repository'
 
 const BOT_IDENTITY = {
@@ -197,6 +198,13 @@ test.serial(
     t.is(getActionInput('opmlFile', { required: true }), 'feeds.opml')
   }
 )
+
+test('#validatePublishBranch rejects publishing onto the source branch', (t) => {
+  t.notThrows(() => validatePublishBranch('main', 'contents'))
+  t.throws(() => validatePublishBranch('main', 'main'), {
+    message: 'Branch main cannot be both the source and the publish branch'
+  })
+})
 
 test('#publishLimitedHistory rejects unsafe branch names before running git', (t) => {
   for (const branch of ['a..b', 'a~1', 'a:b', 'a b?', '/a', 'a/', 'a.lock']) {

@@ -7,7 +7,7 @@ import {
   UUID_NAMESPACE_URL
 } from './identity'
 
-test('#uuidv5 is deterministic per name and produces a v5 RFC 4122 UUID', (t) => {
+test('#uuidv5 is deterministic per name and produces a UUID-shaped v5 id', (t) => {
   const uuid = uuidv5(UUID_NAMESPACE_URL, 'https://example.com/post-1')
 
   t.is(uuid, uuidv5(UUID_NAMESPACE_URL, 'https://example.com/post-1'))
@@ -36,6 +36,21 @@ test('#getCategoryId distinguishes case and surrounding whitespace', (t) => {
   t.not(getCategoryId('科技 & Café'), getCategoryId('科技 & Cafe'))
 })
 
+test('ids stay stable across releases because they appear in published URLs and Atom ids', (t) => {
+  t.is(
+    getEntryId('https://example.com/post-1'),
+    'urn:uuid:6b83fc9d-e8f2-55b6-b14a-1c9d08478a72'
+  )
+  t.is(
+    getCategoryId('Technology'),
+    '3169ce6442acdc8192ea935cfc09f6110dc31899379717f3b43c3b9045a27dd2'
+  )
+  t.is(
+    getFeedId('https://owner.github.io/repo/', 'all'),
+    'urn:uuid:eb90ab2c-8cfa-5493-a9e4-a4344dd7fe0a'
+  )
+})
+
 test('#getEntryId is stable for the same article URL', (t) => {
   const url = 'https://example.com/articles/2026/01?foo=bar&baz=qux'
   t.is(getEntryId(url), getEntryId(url))
@@ -43,22 +58,9 @@ test('#getEntryId is stable for the same article URL', (t) => {
   t.true(getEntryId(url).startsWith('urn:uuid:'))
 })
 
-test('#getEntryId ignores whitespace around the article URL', (t) => {
-  t.is(
-    getEntryId('  https://example.com/post  '),
-    getEntryId('https://example.com/post')
-  )
-})
-
-test('#getEntryId keeps query parameters as part of identity', (t) => {
-  t.not(
-    getEntryId('https://example.com/post?id=1'),
-    getEntryId('https://example.com/post?id=2')
-  )
-})
-
-test('#getEntryId ignores the fallback when the article URL is usable', (t) => {
+test('#getEntryId ignores surrounding whitespace and fallback for a usable URL but keeps query parameters', (t) => {
   const url = 'https://example.com/post'
+  t.is(getEntryId(`  ${url}  `), getEntryId(url))
   t.is(
     getEntryId(url, {
       sourceFeedUrl: 'https://a.example/feed',
@@ -69,6 +71,7 @@ test('#getEntryId ignores the fallback when the article URL is usable', (t) => {
       entryTitle: 'B'
     })
   )
+  t.not(getEntryId(`${url}?id=1`), getEntryId(`${url}?id=2`))
 })
 
 const FALLBACK = {
@@ -76,36 +79,32 @@ const FALLBACK = {
   entryTitle: 'My Story'
 }
 
-for (const unusable of [
-  '',
-  '   ',
-  'not a url',
-  'javascript:alert(1)',
-  'ftp://example.com/file'
-]) {
-  test(`#getEntryId falls back to source and title for unusable URL "${unusable}"`, (t) => {
-    t.is(getEntryId(unusable, FALLBACK), getEntryId('', FALLBACK))
+test('#getEntryId falls back to source and title for an unusable URL', (t) => {
+  for (const unusable of [
+    '',
+    '   ',
+    'not a url',
+    'javascript:alert(1)',
+    'ftp://example.com/file'
+  ]) {
+    t.is(
+      getEntryId(unusable, FALLBACK),
+      getEntryId('', FALLBACK),
+      `fallback for "${unusable}"`
+    )
     t.not(
       getEntryId(unusable, FALLBACK),
-      getEntryId(unusable, { ...FALLBACK, entryTitle: 'Other Story' })
+      getEntryId(unusable, { ...FALLBACK, entryTitle: 'Other Story' }),
+      `title matters for "${unusable}"`
     )
-  })
-}
-
-test('#getEntryId fallback uses siteTitle when there is no sourceFeedUrl', (t) => {
-  const a = getEntryId('', { siteTitle: 'Blog A', entryTitle: 'Story' })
-  t.is(a, getEntryId('', { siteTitle: 'Blog A', entryTitle: 'Story' }))
-  t.not(a, getEntryId('', { siteTitle: 'Blog B', entryTitle: 'Story' }))
+  }
 })
 
-test('#getEntryId fallback prefers sourceFeedUrl over siteTitle', (t) => {
+test('#getEntryId fallback key prefers sourceFeedUrl over siteTitle and trims both parts', (t) => {
   t.is(
     getEntryId('', { ...FALLBACK, siteTitle: 'One' }),
     getEntryId('', { ...FALLBACK, siteTitle: 'Two' })
   )
-})
-
-test('#getEntryId fallback trims whitespace around source and title', (t) => {
   t.is(
     getEntryId('', {
       sourceFeedUrl: ` ${FALLBACK.sourceFeedUrl} `,
@@ -113,13 +112,9 @@ test('#getEntryId fallback trims whitespace around source and title', (t) => {
     }),
     getEntryId('', FALLBACK)
   )
-})
-
-test('#getEntryId fallback gives different IDs to different titles', (t) => {
-  t.not(
-    getEntryId('', { ...FALLBACK, entryTitle: 'Story One' }),
-    getEntryId('', { ...FALLBACK, entryTitle: 'Story Two' })
-  )
+  const a = getEntryId('', { siteTitle: 'Blog A', entryTitle: 'Story' })
+  t.is(a, getEntryId('', { siteTitle: 'Blog A', entryTitle: 'Story' }))
+  t.not(a, getEntryId('', { siteTitle: 'Blog B', entryTitle: 'Story' }))
 })
 
 test('#getFeedId differs between the all feed and category feeds', (t) => {
@@ -133,7 +128,7 @@ test('#getFeedId differs between the all feed and category feeds', (t) => {
   t.not(all, base + 'feeds/all.xml')
 })
 
-test('#getFeedId is the same with or without a trailing slash on the base URL', (t) => {
+test('#getFeedId ignores a trailing slash on the base URL but differs between sites', (t) => {
   t.is(
     getFeedId('https://owner.github.io/repo', 'all'),
     getFeedId('https://owner.github.io/repo/', 'all')
@@ -142,9 +137,6 @@ test('#getFeedId is the same with or without a trailing slash on the base URL', 
     getFeedId('https://owner.github.io/repo', { categoryId: 'abc' }),
     getFeedId('https://owner.github.io/repo/', { categoryId: 'abc' })
   )
-})
-
-test('#getFeedId differs between sites', (t) => {
   t.not(
     getFeedId('https://one.github.io/repo/', 'all'),
     getFeedId('https://two.github.io/repo/', 'all')

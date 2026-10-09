@@ -5,6 +5,11 @@ import path from 'path'
 import sinon from 'sinon'
 import { parseOpml } from '../lib/opml'
 import {
+  OPML_ISSUE_TITLE,
+  describeOpmlDiff,
+  formatOpmlIssueBody
+} from '../lib/opml-diff'
+import {
   extractOpmlFromIssueBody,
   isAuthorizedAuthor,
   handleOpmlIssue
@@ -263,4 +268,42 @@ test('#handleOpmlIssue closes pull requests through pulls.update', async (t) => 
     state: 'closed'
   })
   t.is(octokit.rest.issues.createComment.callCount, 1)
+})
+
+test('#formatOpmlIssueBody produces an issue the action accepts once the placeholder is replaced', async (t) => {
+  const oldOpml =
+    '<opml version="2.0"><body><outline text="Design"><outline type="rss" xmlUrl="https://old.example.com/rss"/></outline></body></opml>'
+  const summary = describeOpmlDiff(oldOpml, validOpml).summary
+  const octokit = createOctokit()
+  const handle = (body: string) =>
+    handleOpmlIssue({
+      githubContext: issueContext({
+        number: 1,
+        title: OPML_ISSUE_TITLE,
+        author_association: 'OWNER',
+        body
+      }),
+      token: 'token',
+      octokit
+    })
+
+  // The prefilled issue is picked up by the action's title check, but its
+  // placeholder is not OPML, so the author is asked to paste one.
+  const placeholderBody = formatOpmlIssueBody(summary)
+  t.is(extractOpmlFromIssueBody(placeholderBody), null)
+  const result = await handle(placeholderBody)
+  t.true(result.handled)
+  t.false(result.updated)
+  t.true(
+    octokit.rest.issues.createComment.firstCall.args[0].body.includes(
+      'Could not extract valid OPML'
+    )
+  )
+
+  const filledBody = placeholderBody.replace('PASTE_OPML_HERE', validOpml)
+  t.is(extractOpmlFromIssueBody(filledBody), validOpml)
+  t.is(
+    extractOpmlFromIssueBody(formatOpmlIssueBody(summary, validOpml)),
+    validOpml
+  )
 })

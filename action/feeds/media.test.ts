@@ -1,4 +1,4 @@
-import test from 'ava'
+import test, { ExecutionContext } from 'ava'
 import crypto from 'crypto'
 import fs from 'fs/promises'
 import os from 'os'
@@ -12,8 +12,9 @@ import {
 } from './media'
 import { parseRss, type Site } from './parsers'
 
-async function createMediaDirectory(prefix: string) {
+async function createMediaDirectory(t: ExecutionContext, prefix: string) {
   const rootPath = await fs.mkdtemp(path.join(os.tmpdir(), prefix))
+  t.teardown(() => fs.rm(rootPath, { recursive: true, force: true }))
   return path.join(rootPath, 'media')
 }
 
@@ -54,7 +55,7 @@ async function listMediaFiles(mediaDirectory: string) {
 }
 
 test('#localizeSite downloads images and rewrites src and srcset', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-')
   const fetchStub = sinon.stub().callsFake(async (input: string) => {
     if (input === 'https://example.com/images/one.png') return imageResponse()
     if (input === 'https://cdn.example.com/two.webp')
@@ -92,7 +93,7 @@ test('#localizeSite downloads images and rewrites src and srcset', async (t) => 
 })
 
 test('#localizeSite downloads each url once across entries', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-dedupe-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-dedupe-')
   const fetchStub = sinon.stub().resolves(imageResponse())
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
@@ -110,7 +111,10 @@ test('#localizeSite downloads each url once across entries', async (t) => {
 })
 
 test('#localizeSite localizes a link to an image another entry displays', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-crossentry-')
+  const mediaDirectory = await createMediaDirectory(
+    t,
+    'feeds-media-crossentry-'
+  )
   const fetchStub = sinon.stub().resolves(imageResponse())
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
@@ -141,7 +145,7 @@ test('#localizeSite localizes a link to an image another entry displays', async 
 })
 
 test('#localizeSite localizes a relative lightbox href with its image', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-relative-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-relative-')
   const fetchStub = sinon.stub().resolves(imageResponse())
   // Real feeds publish relative URLs; the parser and the store only agree
   // because the link and the image resolve to the same absolute URL, which they
@@ -179,7 +183,7 @@ test('#localizeSite localizes a relative lightbox href with its image', async (t
 })
 
 test('#localizeSite keeps the remote url when the download fails', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-failure-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-failure-')
   const fetchStub = sinon.stub().resolves(new Response('nope', { status: 403 }))
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
@@ -195,7 +199,7 @@ test('#localizeSite keeps the remote url when the download fails', async (t) => 
 })
 
 test('#localizeSite keeps the remote url when fetch rejects', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-reject-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-reject-')
   const fetchStub = sinon.stub().rejects(new Error('socket hang up'))
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
@@ -209,7 +213,7 @@ test('#localizeSite keeps the remote url when fetch rejects', async (t) => {
 })
 
 test('#localizeSite reuses media restored from the published branch', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-seeded-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-seeded-')
   const url = 'https://example.com/a.png'
   await fs.mkdir(mediaDirectory, { recursive: true })
   await fs.writeFile(path.join(mediaDirectory, `${mediaHash(url)}.png`), 'seed')
@@ -225,7 +229,7 @@ test('#localizeSite reuses media restored from the published branch', async (t) 
 })
 
 test('#localizeSite leaves data uri images untouched', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-data-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-data-')
   const fetchStub = sinon.stub().resolves(imageResponse())
   const dataUri =
     'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
@@ -240,7 +244,7 @@ test('#localizeSite leaves data uri images untouched', async (t) => {
 })
 
 test('#localizeSite keeps the remote url for an html body served from an image url', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-html-png-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-html-png-')
   const url = 'https://example.com/photo.png'
   const fetchStub = sinon.stub().resolves(
     new Response('<html><script>alert(document.domain)</script></html>', {
@@ -257,7 +261,7 @@ test('#localizeSite keeps the remote url for an html body served from an image u
 })
 
 test('#localizeSite names files from the url when the server declares no type', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-no-type-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-no-type-')
   const url = 'https://example.com/a.png'
   // A Buffer body leaves Response without a content-type, which is what a host
   // that never sets the header looks like.
@@ -275,7 +279,10 @@ test('#localizeSite names files from the url when the server declares no type', 
 })
 
 test('#localizeSite keeps the remote url for an empty content type header', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-empty-type-')
+  const mediaDirectory = await createMediaDirectory(
+    t,
+    'feeds-media-empty-type-'
+  )
   const url = 'https://example.com/photo.png'
   // Sending the header and naming nothing is still a declaration, and an
   // unusable one -- unlike a host that omits the header altogether.
@@ -294,7 +301,7 @@ test('#localizeSite keeps the remote url for an empty content type header', asyn
 })
 
 test('#localizeSite keeps the remote url when neither the response nor the url names a type', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-nameless-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-nameless-')
   const url = 'https://example.com/photo'
   const fetchStub = sinon
     .stub()
@@ -308,7 +315,7 @@ test('#localizeSite keeps the remote url when neither the response nor the url n
 })
 
 test('#localizeSite names files from the content type when the url names a different image type', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-mismatch-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-mismatch-')
   const url = 'https://example.com/a.png'
   // The one case that tells the two orderings apart: both name an image, and
   // they disagree. The server wins, or "the URL does not overrule it" is empty.
@@ -326,7 +333,7 @@ test('#localizeSite names files from the content type when the url names a diffe
 })
 
 test('#localizeSite aborts the request only when it refuses the response', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-abort-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-abort-')
   const signals: AbortSignal[] = []
   const responses: Response[] = []
   // An unread body holds its socket until the remote end drops it, so a
@@ -360,7 +367,10 @@ test('#localizeSite aborts the request only when it refuses the response', async
 })
 
 test('#localizeSite names files from the content type when the url has no extension', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-content-type-')
+  const mediaDirectory = await createMediaDirectory(
+    t,
+    'feeds-media-content-type-'
+  )
   const url = 'https://example.com/photo?id=1'
   const fetchStub = sinon
     .stub()
@@ -376,7 +386,7 @@ test('#localizeSite names files from the content type when the url has no extens
 })
 
 test('#localizeSite skips svg images', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-svg-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-svg-')
   const fetchStub = sinon
     .stub()
     .resolves(imageResponse('<svg />', 'image/svg+xml'))
@@ -399,7 +409,7 @@ test('#localizeSite skips svg images', async (t) => {
 })
 
 test('#localizeSite rejects media larger than the size limit', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-size-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-size-')
   const fetchStub = sinon.stub().resolves(
     new Response(Buffer.from('small'), {
       status: 200,
@@ -422,7 +432,7 @@ test('#localizeSite rejects media larger than the size limit', async (t) => {
 })
 
 test('#localizeSite rejects oversized media without a content length', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-stream-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-stream-')
   const chunk = Buffer.alloc(1024 * 1024)
   let sentChunks = 0
   const fetchStub = sinon.stub().resolves(
@@ -452,7 +462,7 @@ test('#localizeSite rejects oversized media without a content length', async (t)
 })
 
 test('#localizeSite rejects empty media', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-empty-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-empty-')
   const fetchStub = sinon.stub().resolves(imageResponse(''))
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
@@ -467,7 +477,10 @@ test('#localizeSite rejects empty media', async (t) => {
 })
 
 test('#localizeSite limits how many downloads run at the same time', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-concurrency-')
+  const mediaDirectory = await createMediaDirectory(
+    t,
+    'feeds-media-concurrency-'
+  )
   let inFlight = 0
   let maxInFlight = 0
   const fetchStub = sinon.stub().callsFake(async () => {
@@ -493,7 +506,7 @@ test('#localizeSite limits how many downloads run at the same time', async (t) =
 })
 
 test('#localizeSite stops downloading after the deadline', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-deadline-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-deadline-')
   const fetchStub = sinon.stub().resolves(imageResponse())
   let currentTime = 0
 
@@ -516,7 +529,10 @@ test('#localizeSite stops downloading after the deadline', async (t) => {
 test.serial(
   '#localizeSite fetches a url that failed only once per run',
   async (t) => {
-    const mediaDirectory = await createMediaDirectory('feeds-media-failcache-')
+    const mediaDirectory = await createMediaDirectory(
+      t,
+      'feeds-media-failcache-'
+    )
     const url = 'https://example.com/a.png'
     const fetchStub = sinon
       .stub()
@@ -536,7 +552,10 @@ test.serial(
 )
 
 test('#localizeSite reuses media restored for a url without an extension', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-seeded-bare-')
+  const mediaDirectory = await createMediaDirectory(
+    t,
+    'feeds-media-seeded-bare-'
+  )
   const url = 'https://example.com/photo?id=1'
   await fs.mkdir(mediaDirectory, { recursive: true })
   await fs.writeFile(
@@ -557,7 +576,7 @@ test('#localizeSite reuses media restored for a url without an extension', async
 test.serial(
   '#localizeSite logs a hostile content type without echoing all of it',
   async (t) => {
-    const mediaDirectory = await createMediaDirectory('feeds-media-logsize-')
+    const mediaDirectory = await createMediaDirectory(t, 'feeds-media-logsize-')
     const url = 'https://example.com/log-hostile.png'
     // The remote picks this header and the action log is public, so a refusal
     // must not echo 16 KiB of it.
@@ -581,7 +600,7 @@ test.serial(
 )
 
 test('#localizeSite limits how many downloads run at once on one host', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-perhost-')
+  const mediaDirectory = await createMediaDirectory(t, 'feeds-media-perhost-')
   let inFlight = 0
   let maxInFlight = 0
   const fetchStub = sinon.stub().callsFake(async () => {
@@ -609,7 +628,7 @@ test('#localizeSite limits how many downloads run at once on one host', async (t
 test.serial(
   '#localizeSite gives up on a download that takes too long',
   async (t) => {
-    const mediaDirectory = await createMediaDirectory('feeds-media-timeout-')
+    const mediaDirectory = await createMediaDirectory(t, 'feeds-media-timeout-')
     const url = 'https://example.com/slow.png'
     const errorStub = sinon.stub(console, 'error')
     const clock = sinon.useFakeTimers({

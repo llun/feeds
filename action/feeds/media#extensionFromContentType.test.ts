@@ -132,6 +132,26 @@ test('#extensionFromContentType refuses a long whitespace run in linear time', (
   t.true(elapsedMs < 1000, `40 refusals took ${elapsedMs.toFixed(0)}ms`)
 })
 
+test('#extensionFromContentType refuses a long token run in linear time', (t) => {
+  // A separate axis from the whitespace run above, which MEDIA_TYPE rejects at
+  // its second character and so never exercises. A slash-free token run is the
+  // input that makes the regex do work, and it is the shape the parse test is
+  // built to reject -- so it is exactly what a hostile host would send if the
+  // class ever grew a nested quantifier.
+  //
+  // Short on purpose: the cost of a backtracking form doubles per character,
+  // so at 16 KiB it would never return and at 30 it outruns ava's timeout.
+  // 26 keeps the failure a reported one rather than a hang -- 40 refusals in
+  // about 6s against this bound, where HEAD needs under a millisecond.
+  const hostile = 'a'.repeat(26)
+  const started = process.hrtime.bigint()
+  for (let attempt = 0; attempt < 40; attempt++) {
+    t.is(extensionFromContentType(hostile), null)
+  }
+  const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6
+  t.true(elapsedMs < 1000, `40 refusals took ${elapsedMs.toFixed(0)}ms`)
+})
+
 test('#extensionFromContentType refuses a type naming an object property', (t) => {
   // The type comes from the response, and `constructor` survives lowercasing
   // where toString and valueOf do not.
