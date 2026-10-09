@@ -224,12 +224,27 @@ export const isArticlePaneHidden = (
 export const getSelectedEntryKey = (location: LocationState): string =>
   location?.type === 'entry' ? location.entryKey : ''
 
+// What the first (hydration) render may show. A statically served 404.html
+// deep link is prerendered without a location, so anything derived from the
+// URL must wait until mount, unless the server render knew the path too.
+export const getHydrationView = (
+  mounted: boolean,
+  initialPath: string | undefined,
+  location: LocationState,
+  pageState: PageState
+): { location: LocationState; pageState: PageState } => {
+  if (mounted) return { location, pageState }
+  const seed = initialPath ? parseLocation(initialPath) : null
+  return { location: seed, pageState: getInitialPageState(seed) }
+}
+
 export const locationController = async (
   locationState: LocationState,
   basePath: string,
   setContent: React.Dispatch<React.SetStateAction<Content | null>>,
   setPageState: React.Dispatch<React.SetStateAction<PageState>>,
-  setEntryMissing?: (missing: boolean) => void
+  setEntryMissing?: (missing: boolean) => void,
+  isCurrent: () => boolean = () => true
 ) => {
   if (!locationState) return null
 
@@ -261,6 +276,8 @@ export const locationController = async (
       } catch {
         content = null
       }
+      // The user may have left this entry while it loaded
+      if (!isCurrent()) return
       if (!content) {
         setContent(null)
         setEntryMissing?.(true)

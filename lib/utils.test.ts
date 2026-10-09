@@ -4,6 +4,7 @@ import {
   PageState,
   findSiteTitle,
   formatRelativeTime,
+  getHydrationView,
   getListKey,
   getInitialPageState,
   getNavSelection,
@@ -340,4 +341,62 @@ test('#isArticlePaneHidden keeps the article pane up while a deep link loads', (
   t.false(isArticlePaneHidden('article', true, false))
   t.false(isArticlePaneHidden('entries', false, true))
   t.true(isArticlePaneHidden('entries', false, false))
+})
+
+test.serial(
+  '#locationController ignores an entry the user already left',
+  async (t) => {
+    const response = {
+      title: 'Slow',
+      siteTitle: 'Site',
+      siteHash: 'siteKey',
+      link: 'https://example.com/slow',
+      content: '<p>Slow</p>',
+      date: 1000
+    }
+    let release: () => void = () => {}
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const fetchStub = sinon.stub(globalThis, 'fetch').callsFake(async () => {
+      await gate
+      return { status: 200, json: async () => response } as Response
+    })
+    t.teardown(() => fetchStub.restore())
+
+    const setContent = sinon.spy()
+    const setPageState = sinon.spy()
+    const setMissing = sinon.spy()
+    let current = true
+    const pending = locationController(
+      parseLocation('/sites/all/entries/slow'),
+      '',
+      setContent,
+      setPageState,
+      setMissing,
+      () => current
+    )
+    current = false
+    release()
+    await pending
+    t.true(setContent.notCalled)
+    t.true(setPageState.notCalled)
+    t.true(setMissing.notCalled)
+  }
+)
+
+test('#getHydrationView shows no URL-dependent state before mount', (t) => {
+  const entry = parseLocation('/sites/all/entries/entry0')
+  const before = getHydrationView(false, undefined, entry, 'article')
+  t.is(before.location, null)
+  t.is<PageState, PageState>(before.pageState, 'entries')
+  const after = getHydrationView(true, undefined, entry, 'article')
+  t.is(after.location, entry)
+  t.is<PageState, PageState>(after.pageState, 'article')
+})
+
+test('#getHydrationView keeps a path the server render knew', (t) => {
+  const before = getHydrationView(false, '/opml', null, 'entries')
+  t.deepEqual(before.location, { type: 'opml' })
+  t.is<PageState, PageState>(before.pageState, 'opml')
 })

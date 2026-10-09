@@ -1,6 +1,13 @@
 'use client'
 
-import { FC, useState, useEffect, useReducer, useRef } from 'react'
+import {
+  FC,
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useReducer,
+  useRef
+} from 'react'
 import { usePathname } from 'next/navigation'
 
 import { ItemList } from './components/ItemList'
@@ -17,6 +24,7 @@ import {
   categoriesClassName,
   entriesClassName,
   findSiteTitle,
+  getHydrationView,
   getInitialPageState,
   isArticlePaneHidden,
   shouldMountOpml,
@@ -46,6 +54,10 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const [entryMissing, setEntryMissing] = useState(false)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
   const [feedManifest, setFeedManifest] = useState<FeedManifestMap | null>(null)
+  // The prerendered shell (and a 404.html deep link) knows no location, so the
+  // first client render must not use it either; applied before paint.
+  const [mounted, setMounted] = useState(false)
+  useLayoutEffect(() => setMounted(true), [])
   const navSourceRef = useRef<'user' | 'popstate' | 'replace'>('user')
   const [state, dispatch] = useReducer(PathReducer, {
     pathname: currentPath,
@@ -86,6 +98,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   }, [])
 
   useEffect(() => {
+    let cancelled = false
     ;(async () => {
       if (!state.location) {
         const targetPath = '/sites/all'
@@ -115,9 +128,13 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         state.pathname,
         setContent,
         setPageState,
-        setEntryMissing
+        setEntryMissing,
+        () => !cancelled
       )
     })()
+    return () => {
+      cancelled = true
+    }
   }, [status, state])
 
   useEffect(() => {
@@ -156,7 +173,10 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
     }
   }, [state, categories, status])
 
-  const isOpml = state.location?.type === 'opml'
+  const view = getHydrationView(mounted, initialPath, state.location, pageState)
+  const viewLocation = view.location
+  const viewPageState = view.pageState
+  const isOpml = viewLocation?.type === 'opml'
   const isLoading = status === 'loading'
   const showOpml = shouldMountOpml(isOpml, isLoading)
 
@@ -179,7 +199,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
       >
         <div
           className={`h-full min-h-0 w-full flex-shrink-0 md:w-[26%] xl:w-1/5 ${categoriesClassName(
-            pageState
+            viewPageState
           )}`}
         >
           <CategoryList
@@ -187,7 +207,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
             totalEntries={totalEntries}
             version={version}
             buildTime={buildTime}
-            locationState={state.location}
+            locationState={viewLocation}
             loading={isLoading}
             feedManifest={feedManifest}
             selectCategory={(category: string) => {
@@ -213,7 +233,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         {isOpml ? (
           <div
             className={`h-full min-h-0 w-full flex-1 overflow-hidden ${
-              pageState === 'opml' ? 'block' : 'hidden md:block'
+              viewPageState === 'opml' ? 'block' : 'hidden md:block'
             }`}
           >
             {showOpml ? (
@@ -229,6 +249,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
             ) : (
               <ListShell
                 title="feeds.opml"
+                message="Loading…"
                 onBack={() => {
                   setPageState('categories')
                   dispatch(updatePath('/sites/all'))
@@ -240,10 +261,10 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
           <>
             <div
               className={`h-full min-h-0 w-full flex-shrink-0 md:w-[36%] xl:w-2/5 ${entriesClassName(
-                pageState
+                viewPageState
               )}`}
             >
-              {state.location && !isLoading ? (
+              {viewLocation && !isLoading ? (
                 <ItemList
                   basePath={state.pathname}
                   locationState={state.location}
@@ -273,15 +294,15 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 
             <div
               className={`h-full min-h-0 w-full flex-1 overflow-hidden ${
-                isArticlePaneHidden(pageState, !!content, entryMissing)
+                isArticlePaneHidden(viewPageState, !!content, entryMissing)
                   ? 'hidden md:block'
                   : ''
-              } ${articleClassName(pageState)}`}
+              } ${articleClassName(viewPageState)}`}
             >
               <ItemContent
                 content={content}
                 missing={entryMissing}
-                loading={pageState === 'article'}
+                loading={viewPageState === 'article'}
                 selectBack={() => {
                   const location = state.location
                   if (location.type !== 'entry') return
@@ -304,10 +325,11 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 
 // The list pane while the feed set loads: same head as ItemList, so nothing
 // jumps when the real list takes its place.
-const ListShell: FC<{ title: string; onBack: () => void }> = ({
-  title,
-  onBack
-}) => (
+const ListShell: FC<{
+  title: string
+  message?: string
+  onBack: () => void
+}> = ({ title, message = 'Loading items…', onBack }) => (
   <section
     className="flex h-full flex-col overflow-hidden border-border bg-background md:border-r"
     aria-label="Feed items"
@@ -326,9 +348,7 @@ const ListShell: FC<{ title: string; onBack: () => void }> = ({
         role="status"
         aria-label="Loading"
       ></div>
-      <p className="text-sm leading-[1.5] text-muted-foreground">
-        Loading items…
-      </p>
+      <p className="text-sm leading-[1.5] text-muted-foreground">{message}</p>
     </div>
   </section>
 )
