@@ -23,12 +23,21 @@ async function parseFeedXML(
   }
 }
 
+export interface LoadFeedDependencies {
+  fetch?: typeof fetch
+  fetchWithBrowser?: (url: string) => Promise<string | null>
+}
+
 export async function loadFeed(
   title: string,
-  url: string
+  url: string,
+  {
+    fetch: fetchFeed = globalThis.fetch,
+    fetchWithBrowser = fetchFeedWithBrowser
+  }: LoadFeedDependencies = {}
 ): Promise<Site | null> {
   try {
-    const response = await fetch(url, {
+    const response = await fetchFeed(url, {
       headers: DEFAULT_FEED_HEADERS
     })
 
@@ -45,7 +54,7 @@ export async function loadFeed(
     }
 
     // Direct fetch failed, returned 403/503 or HTML challenge: fall back to browser fetch
-    const browserText = await fetchFeedWithBrowser(url)
+    const browserText = await fetchWithBrowser(url)
     if (browserText) {
       const site = await parseFeedXML(title, url, browserText)
       if (site) {
@@ -56,7 +65,7 @@ export async function loadFeed(
     return null
   } catch (error: any) {
     try {
-      const browserText = await fetchFeedWithBrowser(url)
+      const browserText = await fetchWithBrowser(url)
       if (browserText) {
         return await parseFeedXML(title, url, browserText)
       }

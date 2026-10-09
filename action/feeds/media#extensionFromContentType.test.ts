@@ -30,23 +30,15 @@ test('#extensionFromContentType reads the last type a repeated header declares',
   t.is(extensionFromContentType('image/png, image/x-icon'), null)
   t.is(extensionFromContentType('image/png, application/vnd.ms-excel'), null)
   t.is(extensionFromContentType('image/png, image/h265'), null)
-  // Carrying the whole class covers the 44 characters image/png does not use:
-  // drop any of them and this last value stops parsing, so image/png wins and
-  // the answer flips. The seven that image/png does use cannot be covered this
-  // way -- dropping one of those stops the leading value parsing too, and the
-  // answer stays null. They need no assertion here regardless: image/png
-  // itself becomes unparseable, which fails four tests in this file alone.
+  // The whole token class: drop any character from it and this last value
+  // stops parsing, so the earlier image/png would win.
   t.is(
     extensionFromContentType(
       "image/png, image/!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyz"
     ),
     null
   )
-  // And again on the other side of the slash. The class is applied twice, and
-  // a subtype-only value pins only one of them: every other type half in the
-  // suite is image, text, application, a or *, so narrowing the left class
-  // alone passed everything while turning `image/png, x-image/x-png` into a
-  // download.
+  // And again on the other side of the slash, where the class applies twice.
   t.is(
     extensionFromContentType(
       "image/png, !#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyz/png"
@@ -56,12 +48,7 @@ test('#extensionFromContentType reads the last type a repeated header declares',
 })
 
 test('#extensionFromContentType passes over a value it cannot use', (t) => {
-  // Skipping is not stopping, and every case below puts the unusable value
-  // last, where passing over it and abandoning the scan at it agree. These
-  // four put a usable value after it, which is what tells the two apart. The
-  // three that lead with image/png show stopping in its fail-open direction --
-  // it leaves that earlier image/png standing as the answer -- and the first
-  // shows the same mutant from the other side, refusing a real image.
+  // Skipping is not stopping: these put a usable value after the unusable one.
   t.is(extensionFromContentType('nonsense, image/png'), '.png')
   t.is(extensionFromContentType('image/png, nonsense, text/html'), null)
   t.is(extensionFromContentType('image/png, */*, text/html'), null)
@@ -77,12 +64,7 @@ test('#extensionFromContentType passes over a value it cannot use', (t) => {
   t.is(extensionFromContentType('image/png, /png'), '.png')
   t.is(extensionFromContentType('image/png, a/b/c'), '.png')
   t.is(extensionFromContentType('image/png, image /png'), '.png')
-  // splitHeaderValue keeps the quote characters, so a quoted value fails
-  // MEDIA_TYPE and is skipped. A closed quote cannot show that on its own: its
-  // closing quote survives any mutation of the opening one, so the candidate
-  // stays unparseable and the answer is the same either way. Only a quote that
-  // opens a value separates them, and it is the pair below that does the work
-  // -- skipping preserves the type before it, accepting erases it.
+  // A value opened by a quote is not a media type and is skipped.
   t.is(extensionFromContentType('image/png, "text/html'), '.png')
   t.is(extensionFromContentType('text/html, "image/png'), null)
   t.is(extensionFromContentType('image/png, "text/html"'), '.png')
@@ -106,6 +88,11 @@ test('#extensionFromContentType ignores a comma inside a quoted parameter', (t) 
   // still live in the wild.
   t.is(extensionFromContentType('image/png; name="a,b"'), '.png')
   t.is(extensionFromContentType('image/jpeg; name="photo,1.jpg"'), '.jpg')
+})
+
+test('#extensionFromContentType ignores the case of the type', (t) => {
+  t.is(extensionFromContentType('IMAGE/PNG'), '.png')
+  t.is(extensionFromContentType('Image/Jpeg; charset=BINARY'), '.jpg')
 })
 
 test('#extensionFromContentType strips only the whitespace the spec strips', (t) => {

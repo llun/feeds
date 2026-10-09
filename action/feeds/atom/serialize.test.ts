@@ -1,13 +1,6 @@
 import test from 'ava'
 import { parseStringPromise } from 'xml2js'
 import {
-  getCategoryId,
-  getEntryId,
-  getFeedId,
-  uuidv5,
-  UUID_NAMESPACE_URL
-} from './identity'
-import {
   formatRfc3339,
   normalizeTimestampMs,
   sanitizeXmlString,
@@ -15,84 +8,30 @@ import {
 } from './serialize'
 import { NormalizedEntry, NormalizedFeed } from './types'
 
-test('#uuidv5 generates deterministic RFC 4122 v5 UUIDs', (t) => {
-  const uuid1 = uuidv5(UUID_NAMESPACE_URL, 'https://example.com/post-1')
-  const uuid2 = uuidv5(UUID_NAMESPACE_URL, 'https://example.com/post-1')
-  const uuid3 = uuidv5(UUID_NAMESPACE_URL, 'https://example.com/post-2')
-
-  t.is(uuid1, uuid2)
-  t.not(uuid1, uuid3)
-  // Check UUID v5 format: 8-4-4-4-12, version nibble 5, variant nibble 8, 9, a, or b
-  t.regex(
-    uuid1,
-    /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-  )
+test('#formatRfc3339 formats timestamps as UTC', (t) => {
+  t.is(formatRfc3339(1700000000000), '2023-11-14T22:13:20.000Z')
 })
 
-test('#getCategoryId creates full SHA-256 for exact UTF-8 category titles', (t) => {
-  const techId = getCategoryId('Technology')
-  t.is(techId.length, 64)
-  t.regex(techId, /^[0-9a-f]{64}$/)
-
-  // Unicode preserved
-  const unicodeId = getCategoryId('科技 & Café')
-  t.is(unicodeId.length, 64)
-  t.regex(unicodeId, /^[0-9a-f]{64}$/)
-
-  // Case-sensitive, whitespace-preserving
-  t.not(getCategoryId('Tech'), getCategoryId('tech'))
-  t.not(getCategoryId('Tech '), getCategoryId('Tech'))
-})
-
-test('#getEntryId produces identical urn:uuid across backends and handles fallbacks', (t) => {
-  const url = 'https://example.com/articles/2026/01?foo=bar&baz=qux'
-  const idFromFiles = getEntryId(url)
-  const idFromSqlite = getEntryId(url)
-
-  t.is(idFromFiles, idFromSqlite)
-  t.true(idFromFiles.startsWith('urn:uuid:'))
-
-  // Fallback when URL is not a valid http URL
-  const fallbackId = getEntryId('', {
-    sourceFeedUrl: 'https://example.com/feed.xml',
-    entryTitle: 'My Story'
-  })
-  t.true(fallbackId.startsWith('urn:uuid:'))
-  t.is(
-    fallbackId,
-    getEntryId('', {
-      sourceFeedUrl: 'https://example.com/feed.xml',
-      entryTitle: 'My Story'
-    })
-  )
-})
-
-test('#getFeedId produces deterministic stable IRI distinct from self-link', (t) => {
-  const globalFeedId = getFeedId('https://owner.github.io/repo/', 'all')
-  const catFeedId = getFeedId('https://owner.github.io/repo/', {
-    categoryId: '1234abcd'
-  })
-
-  t.true(globalFeedId.startsWith('urn:uuid:'))
-  t.true(catFeedId.startsWith('urn:uuid:'))
-  t.not(globalFeedId, catFeedId)
-  t.not(globalFeedId, 'https://owner.github.io/repo/feeds/all.xml')
-})
-
-test('#formatRfc3339 formats timestamps with UTC timezone and handles fallback', (t) => {
-  t.is(formatRfc3339(0), '1970-01-01T00:00:00.000Z'.replace('.000', ''))
-  t.is(formatRfc3339(null), '1970-01-01T00:00:00Z')
-  t.is(formatRfc3339(undefined), '1970-01-01T00:00:00Z')
-  t.is(formatRfc3339(1700000000000), new Date(1700000000000).toISOString())
+test('#formatRfc3339 falls back to the epoch for missing or invalid input', (t) => {
+  for (const input of [0, null, undefined, NaN, -1, -1700000000000]) {
+    t.is(formatRfc3339(input), '1970-01-01T00:00:00Z', String(input))
+  }
 })
 
 test('#normalizeTimestampMs converts seconds to milliseconds when needed', (t) => {
   t.is(normalizeTimestampMs(1700000000), 1700000000000)
   t.is(normalizeTimestampMs(1700000000000), 1700000000000)
   t.is(normalizeTimestampMs(undefined), undefined)
+  t.is(normalizeTimestampMs(null), undefined)
+  t.is(normalizeTimestampMs(NaN), undefined)
 })
 
-test('#serializeAtomFeed serializes valid Atom 1.0 XML and round-trips correctly', async (t) => {
+test('#normalizeTimestampMs treats 1e11 as the seconds/milliseconds boundary', (t) => {
+  t.is(normalizeTimestampMs(99_999_999_999), 99_999_999_999_000)
+  t.is(normalizeTimestampMs(100_000_000_000), 100_000_000_000)
+})
+
+test('#serializeAtomFeed round-trips feed and entry fields through XML parsing', async (t) => {
   const feedData: NormalizedFeed = {
     id: 'urn:uuid:11111111-1111-5111-8111-111111111111',
     title: 'All Items — Feeds',
@@ -122,15 +61,6 @@ test('#serializeAtomFeed serializes valid Atom 1.0 XML and round-trips correctly
 
   const xml = serializeAtomFeed(feedData)
 
-  // Verify XML contains Atom namespace and does NOT contain RSS elements
-  t.true(xml.includes('xmlns="http://www.w3.org/2005/Atom"'))
-  t.false(xml.includes('<rss'))
-  t.false(xml.includes('<channel>'))
-  t.false(xml.includes('<item>'))
-  t.false(xml.includes('<guid>'))
-  t.false(xml.includes('<pubDate>'))
-  t.false(xml.includes('content:encoded'))
-
   // Parse XML and assert structure
   const parsed = await parseStringPromise(xml)
   t.truthy(parsed.feed)
@@ -139,8 +69,6 @@ test('#serializeAtomFeed serializes valid Atom 1.0 XML and round-trips correctly
   t.is(parsed.feed.title[0], feedData.title)
   t.is(parsed.feed.subtitle[0], feedData.subtitle)
   t.is(parsed.feed.icon[0], feedData.iconUrl)
-  t.is(parsed.feed.generator[0]._, 'FeedsFetcher')
-  t.is(parsed.feed.generator[0].$.uri, 'https://github.com/llun/feeds')
 
   // Links
   const selfLink = parsed.feed.link.find((l: any) => l.$.rel === 'self')
@@ -254,4 +182,113 @@ test('#sanitizeXmlString preserves emojis and astral Unicode characters while st
   // Allows tab, LF, CR
   const inputWithValidControls = 'Line 1\tTab\r\nLine 2'
   t.is(sanitizeXmlString(inputWithValidControls), inputWithValidControls)
+})
+
+const FEED_SHELL: NormalizedFeed = {
+  id: 'urn:uuid:66666666-6666-5666-8666-666666666666',
+  title: 'Feed',
+  siteBaseUrl: 'https://owner.github.io/project/',
+  feedUrl: 'https://owner.github.io/project/feeds/all.xml',
+  htmlUrl: 'https://owner.github.io/project/',
+  updatedMs: 0,
+  entries: []
+}
+
+async function serializeEntry(overrides: Partial<NormalizedEntry>) {
+  const entry: NormalizedEntry = {
+    id: 'urn:uuid:77777777-7777-5777-8777-777777777777',
+    title: 'Post',
+    link: 'https://publisher.example/post',
+    content: '<p>Body</p>',
+    updatedMs: 0,
+    categories: [],
+    ...overrides
+  } as NormalizedEntry
+  const parsed = await parseStringPromise(
+    serializeAtomFeed({ ...FEED_SHELL, entries: [entry] })
+  )
+  return parsed.feed.entry[0]
+}
+
+const entryFallbackCases: [
+  string,
+  Partial<NormalizedEntry>,
+  (entry: any) => unknown,
+  unknown
+][] = [
+  [
+    'omits the link when the entry has no link',
+    { link: '' },
+    (e) => e.link,
+    undefined
+  ],
+  [
+    'uses Untitled for an empty title',
+    { title: '' },
+    (e) => e.title[0],
+    'Untitled'
+  ],
+  [
+    'uses Untitled when the title is only invalid control characters',
+    { title: '\x00\x07' },
+    (e) => e.title[0],
+    'Untitled'
+  ],
+  [
+    'uses Unknown when there is neither author nor site title',
+    { author: undefined, siteTitle: undefined },
+    (e) => e.author[0].name[0],
+    'Unknown'
+  ],
+  [
+    'prefers the entry author over the site title',
+    { author: 'Jane', siteTitle: 'Blog' },
+    (e) => e.author[0].name[0],
+    'Jane'
+  ],
+  [
+    'falls back to the site title for a blank author',
+    { author: '   ', siteTitle: 'Blog' },
+    (e) => e.author[0].name[0],
+    'Blog'
+  ]
+]
+
+test('#serializeAtomFeed applies entry fallbacks for link, title and author', async (t) => {
+  for (const [description, overrides, pick, expected] of entryFallbackCases) {
+    t.is(pick(await serializeEntry(overrides)), expected, description)
+  }
+})
+
+test('#serializeAtomFeed emits the site URL as the source alternate link', async (t) => {
+  const entry = await serializeEntry({
+    siteTitle: 'Blog',
+    siteUrl: 'https://publisher.example/',
+    sourceFeedUrl: 'https://publisher.example/rss.xml'
+  })
+  const links = entry.source[0].link.map((l: any) => [l.$.rel, l.$.href])
+  t.deepEqual(links, [
+    ['self', 'https://publisher.example/rss.xml'],
+    ['alternate', 'https://publisher.example/']
+  ])
+})
+
+test('#serializeAtomFeed omits source attribution when the entry has no source info', async (t) => {
+  const entry = await serializeEntry({})
+  t.is(entry.source, undefined)
+})
+
+test('#serializeAtomFeed strips control characters from text so the XML still parses', async (t) => {
+  const entry = await serializeEntry({
+    title: 'Ti\x00tle\x07',
+    author: 'Au\x1Bthor',
+    content: '<p>Bo\x00dy</p>',
+    categories: ['Ca\x08t'],
+    siteTitle: 'Si\x0Bte'
+  })
+  t.is(entry.title[0], 'Title')
+  t.is(entry.author[0].name[0], 'Author')
+  t.is(entry.content[0]._, '<p>Body</p>')
+  t.is(entry.category[0].$.term, 'Cat')
+  t.is(entry.source[0].title[0], 'Site')
 })

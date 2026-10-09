@@ -1,4 +1,4 @@
-import test from 'ava'
+import test, { ExecutionContext } from 'ava'
 import sinon from 'sinon'
 import {
   PageState,
@@ -45,7 +45,7 @@ test('#parseLocation returns site type', (t) => {
   })
 })
 
-test('#parseLocation returns enry type', (t) => {
+test('#parseLocation returns entry type', (t) => {
   t.deepEqual(parseLocation('/sites/all/entries/entryKey'), {
     type: 'entry',
     entryKey: 'entryKey',
@@ -99,100 +99,76 @@ test('#getInitialPageState returns correct page state for locations', (t) => {
   t.is(getInitialPageState(null), 'entries')
 })
 
-test('#locationController sets entries state for category and site', async (t) => {
-  let contentState: Content | null = {
-    title: 'test',
-    siteTitle: 'site',
-    siteKey: 'siteKey',
-    url: 'https://example.com',
-    content: 'test',
-    timestamp: 0
+const SAMPLE_CONTENT: Content = {
+  title: 'test',
+  siteTitle: 'site',
+  siteKey: 'siteKey',
+  url: 'https://example.com',
+  content: 'test',
+  timestamp: 0
+}
+
+/** Stand-ins for the React state setters, which accept a value or an updater. */
+function createState(content: Content | null, page: PageState) {
+  const state = { content, page }
+  return {
+    state,
+    setContent: (c: any) => {
+      state.content = typeof c === 'function' ? c(state.content) : c
+    },
+    setPageState: (s: any) => {
+      state.page = typeof s === 'function' ? s(state.page) : s
+    }
   }
-  let pageState: PageState = 'categories'
+}
 
-  const setContent = (c: any) => {
-    contentState = typeof c === 'function' ? c(contentState) : c
+const stubFetch = (t: ExecutionContext) => {
+  const stub = sinon.stub(globalThis, 'fetch')
+  t.teardown(() => stub.restore())
+  return stub
+}
+
+test('#locationController clears content and lists entries for site and category paths', async (t) => {
+  for (const path of ['/sites/all', '/sites/my-site', '/categories/Tech']) {
+    const { state, setContent, setPageState } = createState(
+      SAMPLE_CONTENT,
+      'categories'
+    )
+
+    await locationController(parseLocation(path), '', setContent, setPageState)
+
+    t.is(state.content, null, path)
+    t.is<PageState, PageState>(state.page, 'entries', path)
   }
-  const setPageState = (s: any) => {
-    pageState = typeof s === 'function' ? s(pageState) : s
-  }
-
-  await locationController(
-    parseLocation('/sites/all'),
-    '',
-    setContent,
-    setPageState
-  )
-  t.is(contentState, null)
-  t.is<PageState, PageState>(pageState, 'entries')
-
-  pageState = 'categories'
-  await locationController(
-    parseLocation('/sites/my-site'),
-    '',
-    setContent,
-    setPageState
-  )
-  t.is(contentState, null)
-  t.is<PageState, PageState>(pageState, 'entries')
-
-  pageState = 'categories'
-  await locationController(
-    parseLocation('/categories/Tech'),
-    '',
-    setContent,
-    setPageState
-  )
-  t.is(contentState, null)
-  t.is<PageState, PageState>(pageState, 'entries')
 })
 
 test('#locationController sets opml state for opml', async (t) => {
-  let contentState: Content | null = null
-  let pageState: PageState = 'categories'
-
-  const setContent = (c: any) => {
-    contentState = typeof c === 'function' ? c(contentState) : c
-  }
-  const setPageState = (s: any) => {
-    pageState = typeof s === 'function' ? s(pageState) : s
-  }
+  const { state, setContent, setPageState } = createState(
+    SAMPLE_CONTENT,
+    'categories'
+  )
 
   await locationController(parseLocation('/opml'), '', setContent, setPageState)
-  t.is(contentState, null)
-  t.is<PageState, PageState>(pageState, 'opml')
+
+  t.is(state.content, null)
+  t.is<PageState, PageState>(state.page, 'opml')
 })
 
 test.serial(
   '#locationController loads entry and sets article state',
   async (t) => {
-    const fakeApiResponse = {
-      title: 'Article Title',
-      siteTitle: 'Site',
-      siteHash: 'siteKey',
-      link: 'https://example.com/article',
-      content: '<p>Content</p>',
-      date: 123456000
-    }
-
-    const fetchStub = sinon.stub(globalThis, 'fetch').resolves({
+    stubFetch(t).resolves({
       status: 200,
-      json: async () => fakeApiResponse
+      json: async () => ({
+        title: 'Article Title',
+        siteTitle: 'Site',
+        siteHash: 'siteKey',
+        link: 'https://example.com/article',
+        content: '<p>Content</p>',
+        date: 123456000
+      })
     } as Response)
-
-    t.teardown(() => {
-      fetchStub.restore()
-    })
-
-    let contentState: Content | null = null
-    let pageState: PageState = 'categories'
-
-    const setContent = (c: any) => {
-      contentState = typeof c === 'function' ? c(contentState) : c
-    }
-    const setPageState = (s: any) => {
-      pageState = typeof s === 'function' ? s(pageState) : s
-    }
+    const { state, setContent, setPageState } = createState(null, 'categories')
 
     await locationController(
       parseLocation('/sites/all/entries/articleKey'),
@@ -200,7 +176,8 @@ test.serial(
       setContent,
       setPageState
     )
-    t.deepEqual(contentState, {
+
+    t.deepEqual(state.content, {
       title: 'Article Title',
       siteTitle: 'Site',
       siteKey: 'siteKey',
@@ -208,7 +185,7 @@ test.serial(
       content: '<p>Content</p>',
       timestamp: 123456
     })
-    t.is<PageState, PageState>(pageState, 'article')
+    t.is<PageState, PageState>(state.page, 'article')
   }
 )
 
@@ -280,25 +257,59 @@ test('#getSelectedEntryKey returns the open entry', (t) => {
 test.serial(
   '#locationController flags a missing entry instead of throwing',
   async (t) => {
-    const setContent = sinon.stub()
-    const setPageState = sinon.stub()
-    const setEntryMissing = sinon.stub()
-    const fetchStub = sinon
-      .stub(globalThis, 'fetch')
-      .resolves({ status: 404 } as Response)
-    t.teardown(() => fetchStub.restore())
+    stubFetch(t).resolves({ status: 404 } as Response)
+    const { state, setContent, setPageState } = createState(
+      SAMPLE_CONTENT,
+      'entries'
+    )
+    const setEntryMissing = sinon.spy()
+
     await locationController(
-      parseLocation('/sites/all/entries/nope'),
+      parseLocation('/sites/all/entries/missing'),
       '',
       setContent,
       setPageState,
       setEntryMissing
     )
-    t.true(setContent.calledWith(null))
-    t.true(setEntryMissing.calledWith(true))
-    t.true(setPageState.calledWith('article'))
+
+    t.is(state.content, null)
+    t.true(setEntryMissing.calledOnceWith(true))
+    t.is<PageState, PageState>(state.page, 'article')
   }
 )
+
+test.serial(
+  '#locationController shows the article pane without content when no missing-entry callback is given',
+  async (t) => {
+    stubFetch(t).resolves({ status: 404 } as Response)
+    const { state, setContent, setPageState } = createState(
+      SAMPLE_CONTENT,
+      'entries'
+    )
+
+    await locationController(
+      parseLocation('/sites/all/entries/missing'),
+      '',
+      setContent,
+      setPageState
+    )
+
+    t.is(state.content, null)
+    t.is<PageState, PageState>(state.page, 'article')
+  }
+)
+
+test('#locationController leaves state untouched for an unknown location', async (t) => {
+  const { state, setContent, setPageState } = createState(
+    SAMPLE_CONTENT,
+    'entries'
+  )
+
+  await locationController(parseLocation('/nope'), '', setContent, setPageState)
+
+  t.is(state.content, SAMPLE_CONTENT)
+  t.is<PageState, PageState>(state.page, 'entries')
+})
 
 test('#getListKey is the same for a list and an entry opened from it', (t) => {
   t.is(
@@ -347,28 +358,31 @@ test('#isArticlePaneHidden keeps the article pane up while a deep link loads', (
 test.serial(
   '#locationController ignores an entry the user already left',
   async (t) => {
-    const response = {
-      title: 'Slow',
-      siteTitle: 'Site',
-      siteHash: 'siteKey',
-      link: 'https://example.com/slow',
-      content: '<p>Slow</p>',
-      date: 1000
-    }
     let release: () => void = () => {}
     const gate = new Promise<void>((resolve) => {
       release = resolve
     })
-    const fetchStub = sinon.stub(globalThis, 'fetch').callsFake(async () => {
+    stubFetch(t).callsFake(async () => {
       await gate
-      return { status: 200, json: async () => response } as Response
+      return {
+        status: 200,
+        json: async () => ({
+          title: 'Slow',
+          siteTitle: 'Site',
+          siteHash: 'siteKey',
+          link: 'https://example.com/slow',
+          content: '<p>Slow</p>',
+          date: 1000
+        })
+      } as Response
     })
-    t.teardown(() => fetchStub.restore())
-
-    const setContent = sinon.spy()
-    const setPageState = sinon.spy()
+    const { state, setContent, setPageState } = createState(
+      SAMPLE_CONTENT,
+      'entries'
+    )
     const setMissing = sinon.spy()
     let current = true
+
     const pending = locationController(
       parseLocation('/sites/all/entries/slow'),
       '',
@@ -380,8 +394,9 @@ test.serial(
     current = false
     release()
     await pending
-    t.true(setContent.notCalled)
-    t.true(setPageState.notCalled)
+
+    t.is(state.content, SAMPLE_CONTENT)
+    t.is<PageState, PageState>(state.page, 'entries')
     t.true(setMissing.notCalled)
   }
 )
@@ -427,45 +442,28 @@ test('#parseLocation decodes path segments once', (t) => {
 })
 
 test('#locationController keeps the nav pane when only loading finished', async (t) => {
-  let pageState: PageState = 'categories'
-  const setPageState = (v: any) => {
-    pageState = typeof v === 'function' ? v(pageState) : v
-  }
-  const noop = () => {}
-  await locationController(
-    parseLocation('/categories/Design'),
-    '',
-    noop as any,
-    setPageState,
-    undefined,
-    () => true,
-    true
-  )
-  t.is<PageState, PageState>(pageState, 'categories')
-  await locationController(
-    parseLocation('/sites/all'),
-    '',
-    noop as any,
-    setPageState,
-    undefined,
-    () => true,
-    true
-  )
-  t.is<PageState, PageState>(pageState, 'categories')
-  pageState = 'article'
-  await locationController(
-    parseLocation('/sites/all'),
-    '',
-    noop as any,
-    setPageState,
-    undefined,
-    () => true,
-    true
-  )
-  t.is<PageState, PageState>(pageState, 'entries')
+  const { state, setContent, setPageState } = createState(null, 'categories')
+  const run = (path: string) =>
+    locationController(
+      parseLocation(path),
+      '',
+      setContent,
+      setPageState,
+      undefined,
+      () => true,
+      true
+    )
+
+  await run('/categories/Design')
+  t.is<PageState, PageState>(state.page, 'categories')
+  await run('/sites/all')
+  t.is<PageState, PageState>(state.page, 'categories')
+  state.page = 'article'
+  await run('/sites/all')
+  t.is<PageState, PageState>(state.page, 'entries')
 })
 
-test('parentPath encodes the parent key and round-trips', (t) => {
+test('#parentPath encodes the parent key and round-trips', (t) => {
   const path = parentPath({ type: 'category', key: 'C#?' })
   t.is(path, '/categories/C%23%3F')
   t.deepEqual(parseLocation(path), { type: 'category', category: 'C#?' })
