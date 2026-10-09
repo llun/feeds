@@ -17,72 +17,79 @@ export const RefreshNotice = ({
   onLoadLatest,
   onDismiss
 }: RefreshNoticeProps) => {
-  if (!state) return null
+  // The live region stays mounted so screen readers announce each message;
+  // one added together with its text is often not read.
   return (
-    <div className="pointer-events-none fixed inset-x-4 bottom-4 z-40 flex justify-center">
-      <div
-        role="status"
-        className="pointer-events-auto flex max-w-full items-center gap-2.5 rounded-lg border border-border bg-popover px-3.5 py-2.5 text-sm leading-[1.4] text-popover-foreground shadow-md animate-pop-in"
-      >
-        {state === 'refreshing' && (
-          <>
-            <RefreshCw
-              size={16}
-              aria-hidden="true"
-              className="shrink-0 animate-spin text-brand"
-            />
-            <span>Loading the latest feeds…</span>
-          </>
-        )}
-        {state === 'refreshed' && (
-          <>
-            <Check
-              size={16}
-              aria-hidden="true"
-              className="shrink-0 text-success"
-            />
-            <span>Feeds updated.</span>
-          </>
-        )}
-        {state === 'available' && (
-          <>
-            <Info size={16} aria-hidden="true" className="shrink-0 text-link" />
-            <span>New feeds are available.</span>
-            <Button variant="link" size="sm" onClick={onLoadLatest}>
-              Load latest
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              iconLeft="x"
-              aria-label="Dismiss"
-              title="Dismiss"
-              onClick={onDismiss}
-            />
-          </>
-        )}
-        {state === 'failed' && (
-          <>
-            <AlertCircle
-              size={16}
-              aria-hidden="true"
-              className="shrink-0 text-destructive"
-            />
-            <span>Couldn&apos;t load the latest feeds.</span>
-            <Button variant="link" size="sm" onClick={onLoadLatest}>
-              Try again
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              iconLeft="x"
-              aria-label="Dismiss"
-              title="Dismiss"
-              onClick={onDismiss}
-            />
-          </>
-        )}
-      </div>
+    <div
+      role="status"
+      className="pointer-events-none fixed inset-x-4 bottom-4 z-40 flex justify-center"
+    >
+      {state && (
+        <div className="pointer-events-auto flex max-w-full items-center gap-2.5 rounded-lg border border-border bg-popover px-3.5 py-2.5 text-sm leading-[1.4] text-popover-foreground shadow-md animate-pop-in">
+          {state === 'refreshing' && (
+            <>
+              <RefreshCw
+                size={16}
+                aria-hidden="true"
+                className="shrink-0 animate-spin text-brand"
+              />
+              <span>Loading the latest feeds…</span>
+            </>
+          )}
+          {state === 'refreshed' && (
+            <>
+              <Check
+                size={16}
+                aria-hidden="true"
+                className="shrink-0 text-success"
+              />
+              <span>Feeds updated.</span>
+            </>
+          )}
+          {state === 'available' && (
+            <>
+              <Info
+                size={16}
+                aria-hidden="true"
+                className="shrink-0 text-link"
+              />
+              <span>New feeds are available.</span>
+              <Button variant="link" size="sm" onClick={onLoadLatest}>
+                Load latest
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                iconLeft="x"
+                aria-label="Dismiss"
+                title="Dismiss"
+                onClick={onDismiss}
+              />
+            </>
+          )}
+          {state === 'failed' && (
+            <>
+              <AlertCircle
+                size={16}
+                aria-hidden="true"
+                className="shrink-0 text-destructive"
+              />
+              <span>Couldn&apos;t load the latest feeds.</span>
+              <Button variant="link" size="sm" onClick={onLoadLatest}>
+                Try again
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                iconLeft="x"
+                aria-label="Dismiss"
+                title="Dismiss"
+                onClick={onDismiss}
+              />
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }

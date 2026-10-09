@@ -18,15 +18,14 @@ import { BackButton } from '../lib/components/BackButton'
 import { OpmlView } from '../lib/components/OpmlView'
 import { Button } from '../lib/components/Button'
 import { ListSkeleton } from '../lib/components/Skeleton'
-import { RefreshNotice, RefreshState } from '../lib/components/RefreshNotice'
-import { openStorage } from '../lib/storage'
+import { RefreshNotice } from '../lib/components/RefreshNotice'
+import { createStorage, openStorage, setStorage } from '../lib/storage'
 import { Category, Content, Storage } from '../lib/storage/types'
 import { loadFeedManifest, FeedManifestMap } from './feed-manifest'
-import { BuildWatcher } from './freshness'
+import { BuildWatcher, DataRefresher, RefreshState } from './freshness'
 import {
   EntryProblem,
   PageState,
-  RecoveryResult,
   articleClassName,
   categoriesClassName,
   entriesClassName,
@@ -61,6 +60,11 @@ interface FeedSet {
   manifest: FeedManifestMap | null
 }
 
+interface LoadedBuild {
+  storage: Storage
+  feedSet: FeedSet
+}
+
 const loadFeedSet = async (storage: Storage): Promise<FeedSet> => {
   const [categories, totalEntries, opml, manifest] = await Promise.all([
     storage.getCategories(),
@@ -84,6 +88,9 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const [listTitle, setListTitle] = useState<string>('')
   const [content, setContent] = useState<Content | null>(null)
   const [entryProblem, setEntryProblem] = useState<EntryProblem>(null)
+  // The entry content and entryProblem belong to, so a newly selected entry
+  // never shows the previous article, even for a frame
+  const [articleKey, setArticleKey] = useState<string | null>(null)
   const [totalEntries, setTotalEntries] = useState<number | null>(null)
   const [feedManifest, setFeedManifest] = useState<FeedManifestMap | null>(null)
   // The build whose data is on screen. It starts as the build that rendered
@@ -95,15 +102,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const [loadFailed, setLoadFailed] = useState(false)
   // Bumped by "Try again" to run the loads again
   const [attempt, setAttempt] = useState(0)
-  const watcherRef = useRef<BuildWatcher | null>(null)
-  if (!watcherRef.current) {
-    watcherRef.current = new BuildWatcher(BASE_PATH, buildTime ?? null)
-  }
-  const reloadRef = useRef<Promise<boolean> | null>(null)
-  // The newer build a notice offers to load
-  const pendingBuildRef = useRef<string | null>(null)
-  // The entry the article pane is showing or loading
-  const shownEntryRef = useRef<string | null>(null)
+  const lastDataVersionRef = useRef(dataVersion)
   // The prerendered shell (and a 404.html deep link) knows no location, so the
   // first client render must not use it either; applied before paint.
   const [mounted, setMounted] = useState(false)
@@ -123,56 +122,35 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   }
 
   // Loads a newer build's data in place: the feed set here, then the list and
-  // the article follow dataVersion. One reload runs at a time.
-  const reloadData = useCallback((nextBuildTime: string): Promise<boolean> => {
-    if (reloadRef.current) return reloadRef.current
-    const run = (async () => {
-      pendingBuildRef.current = nextBuildTime
-      setRefreshState('refreshing')
-      try {
-        const feedSet = await loadFeedSet(openStorage(BASE_PATH, nextBuildTime))
-        watcherRef.current?.accept(nextBuildTime)
-        pendingBuildRef.current = null
+  // the article follow dataVersion.
+  const refresherRef = useRef<DataRefresher<LoadedBuild> | null>(null)
+  if (!refresherRef.current) {
+    refresherRef.current = new DataRefresher<LoadedBuild>({
+      watcher: new BuildWatcher(BASE_PATH, buildTime ?? null),
+      load: async (nextBuildTime) => {
+        const storage = createStorage(BASE_PATH, nextBuildTime)
+        return { storage, feedSet: await loadFeedSet(storage) }
+      },
+      apply: (nextBuildTime, { storage, feedSet }) => {
+        setStorage(nextBuildTime, storage)
         applyFeedSet(feedSet)
         setLoadFailed(false)
         setStatus('loaded')
         setDataVersion(nextBuildTime)
-        setRefreshState('refreshed')
-        return true
-      } catch {
-        setRefreshState('failed')
-        return false
-      } finally {
-        reloadRef.current = null
-      }
-    })()
-    reloadRef.current = run
-    return run
-  }, [])
+      },
+      onStateChange: setRefreshState
+    })
+  }
+  const refresher = refresherRef.current
+  const recover = useCallback(() => refresher.recover(), [refresher])
 
-  // Asked when a load fails. A tab left open across a republish asks for data
-  // the new build moved or dropped, so the data is reloaded rather than the
-  // failure shown.
-  const recover = useCallback(async (): Promise<RecoveryResult> => {
-    const check = await watcherRef.current!.check()
-    if (check.status !== 'newer') return check.status
-    return (await reloadData(check.buildTime)) ? 'reloaded' : 'unreachable'
-  }, [reloadData])
-
-  // Coming back to a tab that sat open is when a republish is most likely;
-  // offer the new data rather than swapping the list under the reader.
   useEffect(() => {
     let lastCheck = Date.now()
-    const checkOnReturn = async () => {
+    const checkOnReturn = () => {
       if (document.visibilityState !== 'visible') return
       if (Date.now() - lastCheck < FOCUS_CHECK_INTERVAL_MS) return
       lastCheck = Date.now()
-      const check = await watcherRef.current!.check()
-      if (check.status !== 'newer' || reloadRef.current) return
-      pendingBuildRef.current = check.buildTime
-      setRefreshState((current) =>
-        current === null || current === 'refreshed' ? 'available' : current
-      )
+      refresher.offerNewer()
     }
     document.addEventListener('visibilitychange', checkOnReturn)
     window.addEventListener('focus', checkOnReturn)
@@ -180,19 +158,16 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
       document.removeEventListener('visibilitychange', checkOnReturn)
       window.removeEventListener('focus', checkOnReturn)
     }
-  }, [])
+  }, [refresher])
 
   useEffect(() => {
     if (refreshState !== 'refreshed') return
     const timer = setTimeout(
-      () =>
-        setRefreshState((current) =>
-          current === 'refreshed' ? null : current
-        ),
+      () => refresher.dismiss('refreshed'),
       REFRESHED_NOTICE_MS
     )
     return () => clearTimeout(timer)
-  }, [refreshState])
+  }, [refresher, refreshState])
 
   // Handle browser history updates when pathname changes
   useEffect(() => {
@@ -253,24 +228,37 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         setStatus('loaded')
       }
 
-      // A different entry clears the pane so it shows the loading state
-      // instead of the previous article.
       const location = state.location
       const entryKey = location.type === 'entry' ? location.entryKey : null
-      if (entryKey !== shownEntryRef.current) {
-        shownEntryRef.current = entryKey
-        setContent(null)
-        setEntryProblem(null)
-      }
-
       const keepNavLocation = lastLocationRef.current === state.location
       lastLocationRef.current = state.location
+
+      // Moving to a new build keeps an article that is already open as it is,
+      // so the reader keeps their place in it
+      const versionChanged = lastDataVersionRef.current !== dataVersion
+      lastDataVersionRef.current = dataVersion
+      if (
+        versionChanged &&
+        !wasLoading &&
+        entryKey &&
+        articleKey === entryKey &&
+        content
+      ) {
+        return
+      }
+
       await locationController(
         state.location,
         state.pathname,
-        setContent,
+        (value) => {
+          setContent(value)
+          setArticleKey(entryKey)
+        },
         setPageState,
-        setEntryProblem,
+        (problem) => {
+          setEntryProblem(problem)
+          setArticleKey(entryKey)
+        },
         () => !cancelled,
         wasLoading || keepNavLocation,
         recover
@@ -324,6 +312,17 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 
   const view = getHydrationView(mounted, initialPath, state.location, pageState)
   const viewLocation = view.location
+  const viewEntryKey =
+    viewLocation?.type === 'entry' ? viewLocation.entryKey : null
+  const articleCurrent = viewEntryKey !== null && articleKey === viewEntryKey
+  const articleContent = articleCurrent ? content : null
+  // A deep link whose first load failed shares the list's error
+  const articleProblem: EntryProblem =
+    viewEntryKey !== null && loadFailed
+      ? 'unreachable'
+      : articleCurrent
+        ? entryProblem
+        : null
   const viewPageState = view.pageState
   const isOpml = viewLocation?.type === 'opml'
   const isLoading = status === 'loading'
@@ -359,6 +358,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
             locationState={viewLocation}
             loading={isLoading}
             failed={loadFailed}
+            retry={retryLoad}
             feedManifest={feedManifest}
             selectCategory={(category: string) => {
               setListTitle(category)
@@ -459,18 +459,17 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
               className={`h-full min-h-0 w-full flex-1 overflow-hidden ${
                 isArticlePaneHidden(
                   viewPageState,
-                  !!content,
-                  !!entryProblem || loadFailed
+                  !!articleContent,
+                  !!articleProblem
                 )
                   ? 'hidden md:block'
                   : ''
               } ${articleClassName(viewPageState)}`}
             >
               <ItemContent
-                content={content}
-                // A deep link whose first load failed shares the list's error
-                problem={loadFailed ? 'unreachable' : entryProblem}
-                loading={viewLocation?.type === 'entry'}
+                content={articleContent}
+                problem={articleProblem}
+                loading={viewEntryKey !== null}
                 retry={
                   loadFailed
                     ? retryLoad
@@ -493,9 +492,9 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
       <RefreshNotice
         state={refreshState}
         onLoadLatest={() => {
-          if (pendingBuildRef.current) reloadData(pendingBuildRef.current)
+          refresher.loadPending()
         }}
-        onDismiss={() => setRefreshState(null)}
+        onDismiss={() => refresher.dismiss()}
       />
     </>
   )

@@ -34,7 +34,7 @@ const LIST_ROWS: [string, string, string][] = [
 ]
 
 export const ListSkeleton = ({ label = 'Loading items…' }) => (
-  <div role="status" aria-busy="true" className="p-1.5">
+  <div role="status" className="p-1.5">
     <LoadingStatus label={label} />
     <ul className="divide-y divide-border" aria-hidden="true">
       {LIST_ROWS.map(([first, second, meta], index) => (
@@ -51,7 +51,7 @@ export const ListSkeleton = ({ label = 'Loading items…' }) => (
 const ARTICLE_PARAGRAPH = ['100%', '96%', '98%', '70%']
 
 export const ArticleSkeleton = () => (
-  <div role="status" aria-busy="true" className="flex min-h-0 flex-1 flex-col">
+  <div role="status" className="flex min-h-0 flex-1 flex-col">
     <LoadingStatus label="Loading article…" />
     <div className="border-b border-border px-6.5 pt-5.5 pb-[15px] md:pt-9.5">
       <Skeleton className="h-6" style={{ width: '85%' }} />
@@ -73,7 +73,7 @@ export const ArticleSkeleton = () => (
 const NAV_ROWS = ['62%', '50%', '70%', '56%']
 
 export const NavSkeleton = () => (
-  <div role="status" aria-busy="true">
+  <div role="status">
     <LoadingStatus label="Loading categories…" />
     {NAV_ROWS.map((width, index) => (
       <div

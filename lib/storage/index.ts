@@ -5,13 +5,16 @@ import { Storage } from './types'
 let storage: Storage | null = null
 let storageVersion: string | undefined
 
-const createStorage = (basePath: string, version?: string): Storage => {
+// A storage for one published build. Each build gets its own, so nothing
+// cached from an earlier build (the sqlite worker's pages, the all-entries
+// list) is read again.
+export const createStorage = (basePath: string, version?: string | null) => {
   switch (process.env.NEXT_PUBLIC_STORAGE) {
     case 'sqlite':
-      return new SqliteStorage(basePath, version)
+      return new SqliteStorage(basePath, version ?? undefined)
     case 'files':
     default:
-      return new FileStorage(basePath, version)
+      return new FileStorage(basePath, version ?? undefined)
   }
 }
 
@@ -20,14 +23,15 @@ export const getStorage = (basePath: string) => {
   return storage
 }
 
-// Points the storage at one published build. A new build gets a new storage,
-// so nothing cached from the previous build (the sqlite worker's pages, the
-// all-entries list) is read again.
+// Makes a storage the one lists and articles read from
+export const setStorage = (version: string | null, next: Storage) => {
+  storageVersion = version ?? undefined
+  storage = next
+}
+
 export const openStorage = (basePath: string, version?: string | null) => {
-  const next = version ?? undefined
-  if (!storage || storageVersion !== next) {
-    storageVersion = next
-    storage = createStorage(basePath, next)
+  if (!storage || storageVersion !== (version ?? undefined)) {
+    setStorage(version ?? null, createStorage(basePath, version))
   }
-  return storage
+  return storage as Storage
 }

@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from 'react'
 import { SiteEntry } from '../storage/types'
 import {
   LocationState,
-  RecoveryResult,
   formatRelativeTime,
   getListKey,
   getSelectedEntryKey
 } from '../utils'
 import { getStorage } from '../storage'
+import type { RecoveryResult } from '../freshness'
 import { BackButton } from './BackButton'
 import { Button } from './Button'
 import { ListSkeleton } from './Skeleton'

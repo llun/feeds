@@ -17,7 +17,9 @@ function getDatabaseConfig(
     config: {
       serverMode: 'full',
       requestChunkSize: 4096,
-      url: withDataVersion(`${basePath}/data.sqlite3`, version)
+      url: `${basePath}/data.sqlite3`,
+      // The library appends it as a query, leaving the virtual filename alone
+      ...(version ? { cacheBust: version } : {})
     }
   }
 }

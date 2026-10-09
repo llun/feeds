@@ -2,6 +2,7 @@ import React from 'react'
 
 import { getStorage } from './storage'
 import { Content } from './storage/types'
+import type { RecoveryResult } from './freshness'
 
 export type PageState = 'categories' | 'entries' | 'article' | 'opml'
 
@@ -258,11 +259,6 @@ export const getHydrationView = (
 
 // Why an article could not be shown
 export type EntryProblem = 'missing' | 'unreachable' | null
-
-// What happened when a failed load asked whether the site was republished:
-// the data was reloaded for the new build, the build is the same (so the
-// failure stands), or the site could not be reached to tell.
-export type RecoveryResult = 'reloaded' | 'current' | 'unreachable'
 
 export const locationController = async (
   locationState: LocationState,
