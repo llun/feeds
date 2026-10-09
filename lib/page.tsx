@@ -213,6 +213,10 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         return
       }
 
+      // Recorded before the first load, so a run that only follows a
+      // recovered first load keeps the phone on the pane the user chose
+      const keepNavLocation = lastLocationRef.current === state.location
+      lastLocationRef.current = state.location
       const wasLoading = status === 'loading'
       if (wasLoading) {
         let feedSet: FeedSet
@@ -233,8 +237,6 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 
       const location = state.location
       const entryKey = location.type === 'entry' ? location.entryKey : null
-      const keepNavLocation = lastLocationRef.current === state.location
-      lastLocationRef.current = state.location
 
       // Moving to a new build keeps an article that is already open as it is,
       // so the reader keeps their place in it
