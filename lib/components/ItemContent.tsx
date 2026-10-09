@@ -82,40 +82,43 @@ export const ItemContent = ({ content, selectBack }: ItemContentProps) => {
         }}
       >
         <div className="feeds-prose">
-          {parse(content.content, {
-            replace: (domNode) => {
-              const node = domNode as ReactParserNode
-              if (!node.attribs) return domNode
+          {parse(
+            sanitizeHtml(content.content, ENTRY_CONTENT_SANITIZE_OPTIONS),
+            {
+              replace: (domNode) => {
+                const node = domNode as ReactParserNode
+                if (!node.attribs) return domNode
 
-              // Downloaded media is served from this site, so it only needs the
-              // base path. Everything else resolves against the entry, which is
-              // what stops a URL stored before the action resolved them from
-              // pointing at the reader's own domain. Links and media both take
-              // the entry as their base here, and so does the action, so a
-              // given relative URL lands on the same absolute one whichever
-              // half of the pipeline handles it.
-              node.attribs = mapUrlAttributes(node.attribs, (url) =>
-                isLocalMediaPath(url)
-                  ? withBasePath(url, basePath)
-                  : resolveAgainstEntry(url, content.url)
-              )
+                // Downloaded media is served from this site, so it only needs the
+                // base path. Everything else resolves against the entry, which is
+                // what stops a URL stored before the action resolved them from
+                // pointing at the reader's own domain. Links and media both take
+                // the entry as their base here, and so does the action, so a
+                // given relative URL lands on the same absolute one whichever
+                // half of the pipeline handles it.
+                node.attribs = mapUrlAttributes(node.attribs, (url) =>
+                  isLocalMediaPath(url)
+                    ? withBasePath(url, basePath)
+                    : resolveAgainstEntry(url, content.url)
+                )
 
-              if (node.name === 'a') {
-                node.attribs.target = '_blank'
-                node.attribs.rel = 'noopener noreferrer'
+                if (node.name === 'a') {
+                  node.attribs.target = '_blank'
+                  node.attribs.rel = 'noopener noreferrer'
+                }
+                if (
+                  node.name === 'img' &&
+                  !node.attribs.src?.startsWith('data:')
+                ) {
+                  // Images that could not be downloaded still point at their
+                  // origin, where a referrer often triggers hotlink protection.
+                  node.attribs.referrerpolicy = 'no-referrer'
+                  node.attribs.loading = node.attribs.loading || 'lazy'
+                }
+                return node
               }
-              if (
-                node.name === 'img' &&
-                !node.attribs.src?.startsWith('data:')
-              ) {
-                // Images that could not be downloaded still point at their
-                // origin, where a referrer often triggers hotlink protection.
-                node.attribs.referrerpolicy = 'no-referrer'
-                node.attribs.loading = node.attribs.loading || 'lazy'
-              }
-              return node
             }
-          })}
+          )}
         </div>
       </div>
     </article>
