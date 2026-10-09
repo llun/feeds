@@ -1,4 +1,4 @@
-import test from 'ava'
+import test, { ExecutionContext } from 'ava'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -8,7 +8,7 @@ import {
 } from './feed-alternates'
 import { getCategoryId } from '../action/feeds/atom/identity'
 
-test('#extractCategoryTitlesFromOpml correctly parses category titles', (t) => {
+test('#extractCategoryTitlesFromOpml lists category titles sorted, skipping feeds and duplicates', (t) => {
   const sampleOpml = `<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
   <head><title>Test Feeds</title></head>
@@ -19,6 +19,7 @@ test('#extractCategoryTitlesFromOpml correctly parses category titles', (t) => {
     <outline title="Design" text="Design">
       <outline type="atom" title="Design Blog" xmlUrl="https://example.com/atom.xml" />
     </outline>
+    <outline title="Tech" text="Tech" />
   </body>
 </opml>`
 
@@ -26,72 +27,120 @@ test('#extractCategoryTitlesFromOpml correctly parses category titles', (t) => {
   t.deepEqual(categories, ['Design', 'Tech'])
 })
 
-test('#getFeedAlternates loads from manifest.json when available', (t) => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'feed-alt-test-'))
-  try {
-    const feedsDir = path.join(tmpDir, 'public', 'feeds')
-    fs.mkdirSync(feedsDir, { recursive: true })
+const ALL = { url: '/feeds/all.xml', title: 'All Items — Atom' }
 
-    const manifest = {
+const OPML = `<opml version="2.0"><body>
+  <outline title="Engineering" text="Engineering">
+    <outline type="rss" title="Eng Blog" xmlUrl="https://eng.example.com/rss" />
+  </outline>
+</body></opml>`
+
+const ENGINEERING = {
+  url: `/feeds/categories/${getCategoryId('Engineering')}.xml`,
+  title: 'Engineering — Atom'
+}
+
+async function createRoot(t: ExecutionContext, files: Record<string, string>) {
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'feed-alt-test-'))
+  t.teardown(() => fs.rmSync(rootDir, { recursive: true, force: true }))
+  for (const [name, content] of Object.entries(files)) {
+    const file = path.join(rootDir, name)
+    fs.mkdirSync(path.dirname(file), { recursive: true })
+    fs.writeFileSync(file, content, 'utf8')
+  }
+  return rootDir
+}
+
+const MANIFEST = 'public/feeds/manifest.json'
+
+test('#getFeedAlternates loads from manifest.json when available', async (t) => {
+  const rootDir = await createRoot(t, {
+    [MANIFEST]: JSON.stringify({
       all: 'feeds/all.xml',
       categories: [
         { title: 'Tech', path: 'feeds/categories/tech123.xml' },
         { title: 'News', path: 'feeds/categories/news456.xml' }
       ]
-    }
-    fs.writeFileSync(
-      path.join(feedsDir, 'manifest.json'),
-      JSON.stringify(manifest),
-      'utf8'
+    }),
+    // Never read while a usable manifest exists.
+    'feeds.opml': OPML
+  })
+
+  t.deepEqual(getFeedAlternates('/base', { rootDir }), [
+    { url: '/base/feeds/all.xml', title: 'All Items — Atom' },
+    { url: '/base/feeds/categories/tech123.xml', title: 'Tech — Atom' },
+    { url: '/base/feeds/categories/news456.xml', title: 'News — Atom' }
+  ])
+})
+
+test('#getFeedAlternates ignores manifest categories without a title and path', async (t) => {
+  const rootDir = await createRoot(t, {
+    [MANIFEST]: JSON.stringify({
+      categories: [
+        null,
+        { title: 'No path' },
+        { path: 'feeds/categories/no-title.xml' },
+        { title: 'Tech', path: 'feeds/categories/tech.xml' }
+      ]
+    })
+  })
+
+  t.deepEqual(getFeedAlternates('', { rootDir }), [
+    ALL,
+    { url: '/feeds/categories/tech.xml', title: 'Tech — Atom' }
+  ])
+})
+
+test('#getFeedAlternates falls back to feeds.opml when the manifest is unusable', async (t) => {
+  for (const [name, manifest] of [
+    ['is missing', undefined],
+    ['is malformed JSON', '{ not json'],
+    ['has no categories array', JSON.stringify({ categories: {} })]
+  ] as const) {
+    const rootDir = await createRoot(t, {
+      ...(manifest === undefined ? {} : { [MANIFEST]: manifest }),
+      'feeds.opml': OPML
+    })
+
+    t.deepEqual(
+      getFeedAlternates('', { rootDir }),
+      [ALL, ENGINEERING],
+      `manifest ${name}`
     )
-
-    const alternates = getFeedAlternates('/base', { rootDir: tmpDir })
-    t.deepEqual(alternates, [
-      { url: '/base/feeds/all.xml', title: 'All Items — Atom' },
-      { url: '/base/feeds/categories/tech123.xml', title: 'Tech — Atom' },
-      { url: '/base/feeds/categories/news456.xml', title: 'News — Atom' }
-    ])
-  } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true })
   }
 })
 
-test('#getFeedAlternates falls back to feeds.opml when manifest is missing', (t) => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'feed-alt-opml-'))
-  try {
-    const sampleOpml = `<?xml version="1.0" encoding="UTF-8"?>
-<opml version="2.0">
-  <body>
-    <outline title="Engineering" text="Engineering">
-      <outline type="rss" title="Eng Blog" xmlUrl="https://eng.example.com/rss" />
-    </outline>
-  </body>
-</opml>`
-    fs.writeFileSync(path.join(tmpDir, 'feeds.opml'), sampleOpml, 'utf8')
+test('#getFeedAlternates reads the OPML file named by the opmlFile option', async (t) => {
+  const rootDir = await createRoot(t, {
+    'feeds.opml': OPML.replace(/Engineering/g, 'Default'),
+    'custom.opml': OPML
+  })
 
-    const alternates = getFeedAlternates('', { rootDir: tmpDir })
-    const engCatId = getCategoryId('Engineering')
-
-    t.deepEqual(alternates, [
-      { url: '/feeds/all.xml', title: 'All Items — Atom' },
-      {
-        url: `/feeds/categories/${engCatId}.xml`,
-        title: 'Engineering — Atom'
-      }
-    ])
-  } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true })
-  }
+  t.deepEqual(getFeedAlternates('', { rootDir, opmlFile: 'custom.opml' }), [
+    ALL,
+    ENGINEERING
+  ])
 })
 
-test('#getFeedAlternates returns All Items when neither manifest nor opml exist', (t) => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'feed-alt-empty-'))
-  try {
-    const alternates = getFeedAlternates('', { rootDir: tmpDir })
-    t.deepEqual(alternates, [
-      { url: '/feeds/all.xml', title: 'All Items — Atom' }
-    ])
-  } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true })
+test.serial(
+  '#getFeedAlternates reads the OPML file named by INPUT_OPMLFILE',
+  async (t) => {
+    const original = process.env['INPUT_OPMLFILE']
+    t.teardown(() => {
+      if (original === undefined) delete process.env['INPUT_OPMLFILE']
+      else process.env['INPUT_OPMLFILE'] = original
+    })
+    const rootDir = await createRoot(t, {
+      'feeds.opml': OPML.replace(/Engineering/g, 'Default'),
+      'from-env.opml': OPML
+    })
+
+    process.env['INPUT_OPMLFILE'] = 'from-env.opml'
+    t.deepEqual(getFeedAlternates('', { rootDir }), [ALL, ENGINEERING])
   }
+)
+
+test('#getFeedAlternates returns All Items when neither manifest nor opml exist', async (t) => {
+  const rootDir = await createRoot(t, {})
+  t.deepEqual(getFeedAlternates('', { rootDir }), [ALL])
 })
