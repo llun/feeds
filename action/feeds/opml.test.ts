@@ -112,10 +112,7 @@ test('#readOpml still lists a category that has no outlines', async (t) => {
   </body>
 </opml>`)
 
-  t.deepEqual(
-    result.map((c) => c.category),
-    ['Empty']
-  )
+  t.deepEqual(result, [{ category: 'Empty', items: [] }])
 })
 
 test('#readOpml throws when the document lacks the OPML structure', async (t) => {

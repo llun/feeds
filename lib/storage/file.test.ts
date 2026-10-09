@@ -138,6 +138,28 @@ test.serial(
 )
 
 test.serial(
+  '#FileStorage encodes the category in the category entries url',
+  async (t) => {
+    const fetchStub = stubFetch(t, { status: 200, json: async () => [] })
+    const storage = new FileStorage('/base')
+
+    for (const category of ['C#', 'Q&A?', 'a b%']) {
+      fetchStub.resetHistory()
+      await storage.getCategoryEntries(category)
+      await storage.countCategoryEntries(category)
+
+      t.deepEqual(
+        fetchStub.getCalls().map((call) => call.args[0]),
+        Array(2).fill(
+          `/base/data/categories/${encodeURIComponent(category)}.json`
+        ),
+        category
+      )
+    }
+  }
+)
+
+test.serial(
   '#FileStorage.getContent maps the stored link to url and date to seconds',
   async (t) => {
     const fetchStub = stubFetch(t, {

@@ -66,7 +66,7 @@ export class SqliteStorage implements Storage {
     )
     const siteEntryCounts = (
       (await worker.db.query(
-        `select siteKey, count(*) as totalEntries from EntryCategories group by siteKey;`
+        `select siteKey, count(distinct entryKey) as totalEntries from EntryCategories group by siteKey;`
       )) as { siteKey: string; totalEntries: number }[]
     ).reduce(
       (out, row) => {
@@ -80,13 +80,13 @@ export class SqliteStorage implements Storage {
       (map, item) => {
         if (!map[item.category])
           map[item.category] = {
-            totalEntries: categoryEntryCounts[item.category],
+            totalEntries: categoryEntryCounts[item.category] ?? 0,
             sites: []
           }
         map[item.category].sites.push({
           key: item.siteKey,
           title: item.siteTitle,
-          totalEntries: siteEntryCounts[item.siteKey],
+          totalEntries: siteEntryCounts[item.siteKey] ?? 0,
           xmlUrl: item.xmlUrl ?? '',
           htmlUrl: item.htmlUrl ?? ''
         })
@@ -164,7 +164,7 @@ export class SqliteStorage implements Storage {
   async countAllEntries() {
     const worker = await this.getWorker(this.config, this.basePath)
     const count = (await worker.db.query(
-      `select count(*) as total from EntryCategories`
+      `select count(distinct entryKey) as total from EntryCategories`
     )) as { total: number }[]
     return count[0].total
   }
@@ -172,7 +172,7 @@ export class SqliteStorage implements Storage {
   async countSiteEntries(siteKey: string) {
     const worker = await this.getWorker(this.config, this.basePath)
     const count = (await worker.db.query(
-      `select count(*) as total from EntryCategories where siteKey = ?`,
+      `select count(distinct entryKey) as total from EntryCategories where siteKey = ?`,
       [siteKey]
     )) as { total: number }[]
     return count[0].total
@@ -234,4 +234,3 @@ export class SqliteStorage implements Storage {
     }
   }
 }
-

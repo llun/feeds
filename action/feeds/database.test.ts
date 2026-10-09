@@ -714,6 +714,35 @@ test('#createOrUpdateDatabase removes categories, sites and entries missing from
   t.is((await tableCounts(db)).Sites, 1)
 })
 
+test('#createOrUpdateDatabase removes the sites of a category that is emptied in the OPML', async (t) => {
+  const { db } = t.context
+  const site = makeSite('@llun story', [makeEntry('2021')])
+  const shared = makeSite('Shared')
+  await insertCategory(db, 'Emptied')
+  await insertCategory(db, 'Other')
+  const siteKey = await insertSite(db, 'Emptied', site)
+  const sharedKey = await insertSite(db, 'Emptied', shared)
+  await insertSite(db, 'Other', shared)
+  await insertEntry(db, siteKey, site.title, 'Emptied', makeEntry('2021'))
+  const opml = await readOpml(`<opml version="2.0"><body>
+    <outline title="Emptied"/>
+    <outline title="Other">
+      <outline type="rss" title="Shared" text="Shared" xmlUrl="https://shared.example.com/feed" />
+    </outline>
+  </body></opml>`)
+
+  await createOrUpdateDatabase(db, opml, async () => shared)
+
+  t.deepEqual(await getAllCategories(db), ['Emptied', 'Other'])
+  t.deepEqual(await getCategorySites(db, 'Emptied'), [])
+  t.deepEqual(
+    (await getCategorySites(db, 'Other')).map((item) => item.siteKey),
+    [sharedKey]
+  )
+  t.deepEqual(await getAllSiteEntries(db, siteKey), [])
+  t.is((await tableCounts(db)).Sites, 1)
+})
+
 test('#createOrUpdateDatabase skips a site whose feed fails to load and keeps its stored entries', async (t) => {
   const { db } = t.context
   const entry = makeEntry('2021', 'https://www.llun.me/posts/2021-12-30-2021/')

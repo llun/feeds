@@ -292,3 +292,37 @@ test('#serializeAtomFeed strips control characters from text so the XML still pa
   t.is(entry.category[0].$.term, 'Cat')
   t.is(entry.source[0].title[0], 'Site')
 })
+
+test('#serializeAtomFeed strips control characters from ids and links so one bad entry cannot fail the feed', async (t) => {
+  const entry = await serializeEntry({
+    id: 'urn:uuid:7777\x00-7777',
+    link: 'https://publisher.example/po\x07st',
+    siteUrl: 'https://publisher.example/\x00',
+    sourceFeedUrl: 'https://publisher.example/rs\x1Bs.xml'
+  })
+  t.is(entry.id[0], 'urn:uuid:7777-7777')
+  t.is(entry.link[0].$.href, 'https://publisher.example/post')
+  t.deepEqual(
+    entry.source[0].link.map((l: any) => l.$.href),
+    ['https://publisher.example/rss.xml', 'https://publisher.example/']
+  )
+
+  const feed = await parseStringPromise(
+    serializeAtomFeed({
+      ...FEED_SHELL,
+      id: 'urn:uuid:66\x00666666',
+      feedUrl: 'https://owner.github.io/project/fee\x00ds/all.xml',
+      htmlUrl: 'https://owner.github.io/pro\x00ject/',
+      iconUrl: 'https://owner.github.io/ic\x00on.png'
+    })
+  )
+  t.is(feed.feed.id[0], 'urn:uuid:66666666')
+  t.deepEqual(
+    feed.feed.link.map((l: any) => l.$.href),
+    [
+      'https://owner.github.io/project/feeds/all.xml',
+      'https://owner.github.io/project/'
+    ]
+  )
+  t.is(feed.feed.icon[0], 'https://owner.github.io/icon.png')
+})

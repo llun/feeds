@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { getBrowserFeedHref } from './feed-urls'
+import { unescapeXml } from './opml'
 import { getCategoryId } from '../action/feeds/atom/identity'
 
 export interface FeedAlternate {
@@ -29,12 +30,14 @@ export function extractCategoryTitlesFromOpml(opmlContent: string): string[] {
       continue
     }
 
+    // Quoted values may contain the other quote character (title="Bob's"),
+    // and are XML-decoded like the action does before hashing the category id.
     const titleMatch =
-      /title\s*=\s*["']([^"']+)["']/i.exec(attrs) ||
-      /text\s*=\s*["']([^"']+)["']/i.exec(attrs)
+      /\btitle\s*=\s*(?:"([^"]+)"|'([^']+)')/i.exec(attrs) ||
+      /\btext\s*=\s*(?:"([^"]+)"|'([^']+)')/i.exec(attrs)
 
-    if (titleMatch && titleMatch[1]) {
-      const title = titleMatch[1].trim()
+    if (titleMatch) {
+      const title = unescapeXml(titleMatch[1] ?? titleMatch[2]).trim()
       if (title && !titles.includes(title)) {
         titles.push(title)
       }

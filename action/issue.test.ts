@@ -72,6 +72,13 @@ const createOctokit = () => ({
   }
 })
 
+// Fake git: `diff --cached --quiet` exits 1 (staged changes) unless overridden;
+// every other command succeeds unless its subcommand is overridden.
+const createGit = (statuses: Record<string, number> = {}) =>
+  sinon.stub().callsFake((commands: string[]) => ({
+    status: statuses[commands[1]] ?? (commands[1] === 'diff' ? 1 : 0)
+  }))
+
 const issueContext = (issue: Record<string, unknown>) => ({
   eventName: 'issues',
   payload: { issue: { title: 'Update OPML file', ...issue } },
@@ -160,7 +167,7 @@ test('#handleOpmlIssue comments and leaves the issue open when OPML cannot be ex
 test('#handleOpmlIssue writes OPML, commits, pushes to the source branch and closes the issue', async (t) => {
   const workspacePath = await createWorkspace(t)
   const octokit = createOctokit()
-  const runCommand = sinon.stub().returns({ status: 0 })
+  const runCommand = createGit()
 
   const result = await handleOpmlIssue({
     githubContext: issueContext({
@@ -189,6 +196,7 @@ test('#handleOpmlIssue writes OPML, commits, pushes to the source branch and clo
       [['git', 'config', 'user.name', 'Feed bots'], workspacePath],
       [['git', 'config', 'user.email', 'bot@llun.dev'], workspacePath],
       [['git', 'add', 'feeds.opml'], workspacePath],
+      [['git', 'diff', '--cached', '--quiet'], workspacePath],
       [['git', 'commit', '-m', 'Update OPML file (#99)'], workspacePath],
       [['git', 'push', 'origin', 'HEAD:main'], workspacePath]
     ]
@@ -210,9 +218,7 @@ test('#handleOpmlIssue writes OPML, commits, pushes to the source branch and clo
 
 test('#handleOpmlIssue throws and keeps the issue open when the push fails', async (t) => {
   const octokit = createOctokit()
-  const runCommand = sinon.stub().callsFake((commands: string[]) => ({
-    status: commands[1] === 'push' ? 1 : 0
-  }))
+  const runCommand = createGit({ push: 1 })
 
   await t.throwsAsync(
     handleOpmlIssue({
@@ -236,6 +242,75 @@ test('#handleOpmlIssue throws and keeps the issue open when the push fails', asy
   t.true(octokit.rest.issues.createComment.notCalled)
 })
 
+test('#handleOpmlIssue closes the issue without pushing when the OPML is already up to date', async (t) => {
+  const octokit = createOctokit()
+  const runCommand = createGit({ diff: 0 })
+
+  const result = await handleOpmlIssue({
+    githubContext: issueContext({
+      number: 7,
+      author_association: 'OWNER',
+      body: validBody
+    }),
+    token: 'fake-token',
+    octokit,
+    runCommand,
+    workspacePath: await createWorkspace(t),
+    opmlFile: 'feeds.opml',
+    sourceBranch: 'main'
+  })
+
+  t.deepEqual(result, { handled: true, updated: false })
+  t.deepEqual(
+    runCommand.getCalls().map((call) => call.args[0][1]),
+    ['config', 'config', 'add', 'diff']
+  )
+  t.like(octokit.rest.issues.update.firstCall.args[0], {
+    issue_number: 7,
+    state: 'closed'
+  })
+  t.is(octokit.rest.issues.createComment.callCount, 1)
+  t.regex(
+    octokit.rest.issues.createComment.firstCall.args[0].body,
+    /already up to date/
+  )
+})
+
+test('#handleOpmlIssue throws without closing or commenting when git cannot check or commit', async (t) => {
+  for (const [name, statuses, message] of [
+    ['the commit fails', { commit: 1 }, /Failed to commit/],
+    ['the staged check errors', { diff: 128 }, /Failed to check/]
+  ] as const) {
+    const octokit = createOctokit()
+    const runCommand = createGit(statuses)
+
+    await t.throwsAsync(
+      handleOpmlIssue({
+        githubContext: issueContext({
+          number: 8,
+          author_association: 'OWNER',
+          body: validBody
+        }),
+        token: 'fake-token',
+        octokit,
+        runCommand,
+        workspacePath: await createWorkspace(t),
+        opmlFile: 'feeds.opml',
+        sourceBranch: 'main'
+      }),
+      { message },
+      name
+    )
+
+    t.false(
+      runCommand.getCalls().some((call) => call.args[0][1] === 'push'),
+      `${name}: no push`
+    )
+    t.true(octokit.rest.issues.update.notCalled, name)
+    t.true(octokit.rest.issues.createComment.notCalled, name)
+  }
+})
+
 test('#handleOpmlIssue closes pull requests through pulls.update', async (t) => {
   const octokit = createOctokit()
 
@@ -254,7 +329,7 @@ test('#handleOpmlIssue closes pull requests through pulls.update', async (t) => 
     },
     token: 'fake-token',
     octokit,
-    runCommand: sinon.stub().returns({ status: 0 }),
+    runCommand: createGit(),
     workspacePath: await createWorkspace(t),
     opmlFile: 'feeds.opml',
     sourceBranch: 'main'
