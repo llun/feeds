@@ -46,26 +46,9 @@ test('#isBlognoneEntry falls back to the site link when the entry link is unusab
   t.false(isBlognoneEntry('', ''))
 })
 
-test('#stripBlognoneChrome removes the span that repeats the entry title', (t) => {
-  const content = stripBlognoneChrome(createDescription('<p>body</p>'), TITLE)
-  t.false(content.includes(TITLE))
-  t.true(content.includes('<p>body</p>'))
-})
-
-test('#stripBlognoneChrome removes the Body field label', (t) => {
-  const content = stripBlognoneChrome(createDescription('<p>body</p>'), TITLE)
-  t.false(content.includes('Body'))
-})
-
-test('#stripBlognoneChrome removes the author and published date footer', (t) => {
-  const content = stripBlognoneChrome(createDescription('<p>body</p>'), TITLE)
-  t.false(content.includes('arjin'))
-  t.false(content.includes('/user/'))
-  t.false(content.includes('<time'))
-  t.false(content.includes('15/08/2026'))
-})
-
-test('#stripBlognoneChrome unwraps the field divs and keeps the body markup', (t) => {
+test('#stripBlognoneChrome reduces the Drupal render to the article body', (t) => {
+  // Exact equality covers the repeated title, the Body label, the field
+  // wrappers and the author and date footer all being gone.
   const body =
     '<p>first <b>paragraph</b></p><div class="quote">a nested div</div>' +
     '<p>an <span>inline span</span> stays</p>'
@@ -75,6 +58,26 @@ test('#stripBlognoneChrome unwraps the field divs and keeps the body markup', (t
     '<p>first <b>paragraph</b></p><div>a nested div</div>' +
       '<p>an <span>inline span</span> stays</p>'
   )
+})
+
+test('#stripBlognoneChrome keeps a date and a user link that belong to the article', (t) => {
+  const body =
+    '<p>posted <time datetime="2026-01-01">1 Jan</time> by ' +
+    '<a href="https://www.blognone.com/user/someone">someone</a></p>'
+  const content = stripBlognoneChrome(createDescription(body), TITLE)
+  t.is(content.trim(), body.replace(' datetime="2026-01-01"', ''))
+  t.false(content.includes('arjin'))
+  t.false(content.includes('Sat, 15/08/2026'))
+})
+
+test('#stripBlognoneChrome still strips the footer after an unclosed div in the body', (t) => {
+  const content = stripBlognoneChrome(
+    createDescription('<p>text</p><div>never closed'),
+    TITLE
+  )
+  t.true(content.includes('never closed'))
+  t.false(content.includes('arjin'))
+  t.false(content.includes('Sat, 15/08/2026'))
 })
 
 test('#stripBlognoneChrome keeps a span that holds an image but no text', (t) => {
@@ -131,4 +134,32 @@ test('#parseRss strips the duplicated header from Blognone entries', async (t) =
     // The article itself is untouched: its links and paragraphs survive.
     t.true(entry.content.includes('<a href="https://'))
   }
+})
+
+test('#parseRss leaves the same markup alone in an entry that is not from Blognone', (t) => {
+  const site = parseRss('Other', {
+    rss: {
+      channel: [
+        {
+          link: ['https://example.com/'],
+          description: ['d'],
+          lastBuildDate: ['2026-01-01T00:00:00Z'],
+          generator: ['t'],
+          item: [
+            {
+              title: [TITLE],
+              link: ['https://example.com/posts/1'],
+              pubDate: ['2026-01-01T00:00:00Z'],
+              description: [createDescription('<p>body</p>')]
+            }
+          ]
+        }
+      ]
+    }
+  })
+
+  const content = site.entries[0].content
+  t.true(content.includes(`<span>${TITLE}</span>`))
+  t.true(content.includes('Body'))
+  t.true(content.includes('<time'))
 })

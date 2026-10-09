@@ -408,7 +408,6 @@ export async function createOrUpdateDatabase(
   await removeOldCategories(db, opmlCategories)
   for (const category of opmlCategories) {
     const { category: categoryName, items } = category
-    if (!items) continue
     await insertCategory(db, categoryName)
     await removeOldSites(db, category)
     for (const item of items) {

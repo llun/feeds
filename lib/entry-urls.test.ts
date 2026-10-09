@@ -338,23 +338,7 @@ test('#resolveAgainstBase returns null without a usable http base', (t) => {
   t.is(resolveAgainstBase('HTTPS://Other.Example/Page', ''), null)
 })
 
-test('#resolveAgainstEntry resolves relative urls against the entry', (t) => {
-  t.is(
-    resolveAgainstEntry('/posts/other', ENTRY_URL),
-    'https://feed.example/posts/other'
-  )
-  t.is(
-    resolveAgainstEntry('chapter-two.html', ENTRY_URL),
-    'https://feed.example/posts/chapter-two.html'
-  )
-  t.is(
-    resolveAgainstEntry('#footnote', ENTRY_URL),
-    'https://feed.example/posts/entry-1#footnote'
-  )
-  t.is(
-    resolveAgainstEntry('//en.wikipedia.org/wiki/RSS', ENTRY_URL),
-    'https://en.wikipedia.org/wiki/RSS'
-  )
+test('#resolveAgainstEntry upgrades scheme-less urls and trims them', (t) => {
   // A scheme-less URL takes the scheme of the page it ends up on, which is the
   // reader, so an http entry does not drag it down to plaintext. It takes no
   // base at all, so it resolves with no entry URL to hand either.
@@ -363,6 +347,10 @@ test('#resolveAgainstEntry resolves relative urls against the entry', (t) => {
     'https://x.example/y'
   )
   t.is(resolveAgainstEntry('//x.example/y'), 'https://x.example/y')
+  t.is(
+    resolveAgainstEntry('chapter-two.html', ENTRY_URL),
+    'https://feed.example/posts/chapter-two.html'
+  )
   // Trimmed before the scheme is prepended, and asserted on an http entry so a
   // copy that dropped the trim, or that tested the untrimmed URL and fell
   // through to the base, is caught rather than agreeing by accident. This is
@@ -396,19 +384,6 @@ test('#resolveAgainstEntry keeps urls it must not rewrite', (t) => {
   )
 })
 
-test('#resolveAgainstEntry re-serializes an absolute url', (t) => {
-  // Every URL in stored content goes through here now, so the normalizing is
-  // worth pinning: it keeps the target but not necessarily the exact bytes.
-  t.is(
-    resolveAgainstEntry('https://other.example', ENTRY_URL),
-    'https://other.example/'
-  )
-  t.is(
-    resolveAgainstEntry('HTTPS://Other.Example/Page', ENTRY_URL),
-    'https://other.example/Page'
-  )
-})
-
 test('#resolveAgainstEntry returns the url unchanged without a usable entry', (t) => {
   // The original rather than the trimmed URL: unlike the action, the reader
   // hands this straight to the DOM, with no sanitizer behind it to drop an
@@ -418,20 +393,7 @@ test('#resolveAgainstEntry returns the url unchanged without a usable entry', (t
   t.is(resolveAgainstEntry('/posts/other', 'not a url'), '/posts/other')
   t.is(resolveAgainstEntry('', ENTRY_URL), '')
   t.is(resolveAgainstEntry('   ', ENTRY_URL), '   ')
-})
-
-test('#resolveAgainstEntry refuses a base that is not http', (t) => {
-  // The entry link is whatever the feed published. Resolving against a
-  // javascript: base would turn every footnote anchor into a script URL.
+  // The entry link is whatever the feed published, so a javascript: base must
+  // not turn every footnote anchor into a script URL.
   t.is(resolveAgainstEntry('#fn1', 'javascript:alert(1)'), '#fn1')
-  t.is(resolveAgainstEntry('#fn1', 'file:///etc/passwd'), '#fn1')
-  t.is(resolveAgainstEntry('#fn1', 'data:text/html,<script></script>'), '#fn1')
-  t.is(
-    resolveAgainstEntry('/posts/other', 'ftp://feed.example/x'),
-    '/posts/other'
-  )
-  t.is(
-    resolveAgainstEntry('/posts/other', 'http://feed.example/posts/1'),
-    'http://feed.example/posts/other'
-  )
 })

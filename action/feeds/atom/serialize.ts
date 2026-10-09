@@ -44,7 +44,7 @@ export function serializeAtomFeed(feed: NormalizedFeed): string {
       $: {
         rel: 'self',
         type: 'application/atom+xml',
-        href: feed.feedUrl
+        href: sanitizeXmlString(feed.feedUrl)
       }
     }
   ]
@@ -54,7 +54,7 @@ export function serializeAtomFeed(feed: NormalizedFeed): string {
       $: {
         rel: 'alternate',
         type: 'text/html',
-        href: feed.htmlUrl
+        href: sanitizeXmlString(feed.htmlUrl)
       }
     })
   }
@@ -64,7 +64,7 @@ export function serializeAtomFeed(feed: NormalizedFeed): string {
       $: {
         xmlns: 'http://www.w3.org/2005/Atom'
       },
-      id: feed.id,
+      id: sanitizeXmlString(feed.id),
       title: sanitizeXmlString(feed.title),
       updated: formatRfc3339(feed.updatedMs),
       author: {
@@ -95,7 +95,7 @@ export function serializeAtomFeed(feed: NormalizedFeed): string {
       'Unknown'
 
     const entryObj: any = {
-      id: entry.id,
+      id: sanitizeXmlString(entry.id),
       title: sanitizeXmlString(entry.title) || 'Untitled',
       updated: formatRfc3339(entry.updatedMs),
       author: {
@@ -112,7 +112,7 @@ export function serializeAtomFeed(feed: NormalizedFeed): string {
       entryLinks.push({
         $: {
           rel: 'alternate',
-          href: entry.link
+          href: sanitizeXmlString(entry.link)
         }
       })
     }
@@ -146,7 +146,7 @@ export function serializeAtomFeed(feed: NormalizedFeed): string {
         sourceLinks.push({
           $: {
             rel: 'self',
-            href: entry.sourceFeedUrl
+            href: sanitizeXmlString(entry.sourceFeedUrl)
           }
         })
       }
@@ -154,7 +154,7 @@ export function serializeAtomFeed(feed: NormalizedFeed): string {
         sourceLinks.push({
           $: {
             rel: 'alternate',
-            href: entry.siteUrl
+            href: sanitizeXmlString(entry.siteUrl)
           }
         })
       }

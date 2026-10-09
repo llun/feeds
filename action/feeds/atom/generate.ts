@@ -10,6 +10,7 @@ import {
   resolveAbsoluteMediaUrl,
   SiteConfig
 } from '../../../lib/feed-urls'
+import { hash } from '../database'
 import { mapContentUrls } from '../parsers'
 import { readOpml } from '../opml'
 import { getCategoryId, getEntryId, getFeedId } from './identity'
@@ -95,9 +96,7 @@ export function buildNormalizedFeeds(
       ? Math.max(...allDistinctEntries.map((e) => e.updatedMs))
       : 0
 
-  const iconUrl = siteBaseUrl
-    ? getAbsoluteFeedUrl(siteBaseUrl, 'favicon.ico')
-    : undefined
+  const iconUrl = getAbsoluteFeedUrl(siteBaseUrl, 'favicon.ico')
 
   const allFeed: NormalizedFeed = {
     id: getFeedId(siteBaseUrl, 'all'),
@@ -370,6 +369,15 @@ export async function generateFeedsFromDatabase(options: {
   const activeCategoryList: { title: string }[] = opmlCategories.map((c) => ({
     title: c.category
   }))
+  // Category -> site keys still subscribed to in the OPML (the identity
+  // removeOldSites uses): stored rows of a removed category or subscription
+  // are ignored. Not the stored feed URL, which is shared between categories.
+  const activeSites = new Map<string, Set<string>>(
+    opmlCategories.map((c) => [
+      c.category,
+      new Set((c.items ?? []).map((item) => hash(`${item.title}`)))
+    ])
+  )
 
   // Query Entries joined with Sites
   const entryRows = (await database('Entries')
@@ -398,14 +406,17 @@ export async function generateFeedsFromDatabase(options: {
     siteUrl: string | null
   }[]
 
-  // Query EntryCategories
+  // Query EntryCategories. Entries.siteKey is shared by every site publishing
+  // the same title+link, so each row is checked against its own siteKey.
   const entryCategoryRows = (await database('EntryCategories').select(
     'entryKey',
-    'category'
-  )) as { entryKey: string; category: string }[]
+    'category',
+    'siteKey'
+  )) as { entryKey: string; category: string; siteKey: string }[]
 
   const entryCategoryMap = new Map<string, string[]>()
   for (const row of entryCategoryRows) {
+    if (!activeSites.get(row.category)?.has(row.siteKey)) continue
     const list = entryCategoryMap.get(row.entryKey) ?? []
     list.push(row.category)
     entryCategoryMap.set(row.entryKey, list)
@@ -414,6 +425,7 @@ export async function generateFeedsFromDatabase(options: {
   const entries: NormalizedEntry[] = []
   for (const row of entryRows) {
     const categories = entryCategoryMap.get(row.key) ?? []
+    if (categories.length === 0) continue
     const entryId = getEntryId(row.url || '', {
       sourceFeedUrl: row.sourceFeedUrl || undefined,
       siteTitle: row.siteTitle,

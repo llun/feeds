@@ -119,7 +119,7 @@ test('#describeOpmlDiff detects simultaneous additions and removals', (t) => {
   )
 })
 
-test('#describeOpmlDiff detects empty categories added or removed', (t) => {
+test('#describeOpmlDiff reports empty categories as added or removed', (t) => {
   const opmlEmptyCat = `<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
   <head><title>Feeds</title></head>
@@ -128,9 +128,17 @@ test('#describeOpmlDiff detects empty categories added or removed', (t) => {
   </body>
 </opml>`
 
-  const result = describeOpmlDiff(opmlBase, opmlEmptyCat)
-  t.true(result.hasChanges)
-  t.true(result.summary.includes('Category *EmptyCategory*'))
+  const added = describeOpmlDiff(opmlBase, opmlEmptyCat)
+  t.true(added.hasChanges)
+  // The new category, and the three feeds that were in the other two.
+  t.is(added.addedCount, 1)
+  t.is(added.removedCount, 3)
+  t.true(added.summary.includes('### Added\n- Category *EmptyCategory*'))
+
+  const removed = describeOpmlDiff(opmlEmptyCat, opmlBase)
+  t.is(removed.addedCount, 3)
+  t.is(removed.removedCount, 1)
+  t.true(removed.summary.includes('### Removed\n- Category *EmptyCategory*'))
 })
 
 test('#formatOpmlIssueBody wraps summary and XML in code fence', (t) => {

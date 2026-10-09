@@ -32,6 +32,19 @@ async function getBrowserContext(): Promise<BrowserContext> {
 }
 
 /**
+ * Whether a page looks like a Cloudflare or WAF challenge rather than the
+ * content asked for: a known challenge page title, or a 403.
+ */
+export function isChallengePage(title: string, status: number | null) {
+  return (
+    title.includes('Just a moment') ||
+    title.includes('Security Verification') ||
+    title.includes('Attention Required') ||
+    status === 403
+  )
+}
+
+/**
  * Loads a feed URL using Playwright Chromium to bypass Cloudflare and WAF protections.
  * Returns the raw XML content, or null if the page returned 404 or failed.
  */
@@ -52,12 +65,7 @@ export async function fetchFeedWithBrowser(url: string): Promise<string | null> 
     }
 
     const title = await page.title()
-    if (
-      title.includes('Just a moment') ||
-      title.includes('Security Verification') ||
-      title.includes('Attention Required') ||
-      status === 403
-    ) {
+    if (isChallengePage(title, status)) {
       try {
         await page.waitForFunction(
           () => {

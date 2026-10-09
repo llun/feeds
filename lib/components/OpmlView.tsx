@@ -50,7 +50,11 @@ function categoriesToOpmlModel(categories?: Category[]): OpmlCategory[] {
   }))
 }
 
-function parseOpmlSafe(src: string): { cats?: OpmlCategory[]; error?: string } {
+export function parseOpmlSafe(src: string): {
+  cats?: OpmlCategory[]
+  error?: string
+  empty?: boolean
+} {
   try {
     if (!src || !src.trim()) {
       return { error: 'Empty OPML source.' }
@@ -60,7 +64,11 @@ function parseOpmlSafe(src: string): { cats?: OpmlCategory[]; error?: string } {
     }
     const cats = parseOpml(src)
     if (!cats.length) {
-      return { error: 'No <outline> elements found inside <body>.' }
+      return {
+        error: 'No <outline> elements found inside <body>.',
+        empty: true,
+        cats: []
+      }
     }
     return { cats }
   } catch {
@@ -228,51 +236,51 @@ export const OpmlView: FC<OpmlViewProps> = ({
               Reset
             </Button>
             <Button
-              variant="secondary"
+              variant="outline"
               size="sm"
+              className="fk-opml-save"
+              iconLeft={<GitPullRequest size={16} />}
+              disabled={!dirty || Boolean(parsed.error)}
+              title="Save OPML — opens a GitHub issue"
+              onClick={saveOpml}
+            >
+              Save OPML
+            </Button>
+            <Button
+              variant="brand"
+              size="sm"
+              className={copied ? 'is-copied' : ''}
               iconLeft={copied ? 'check' : undefined}
               onClick={copy}
             >
               {copied ? 'Copied' : 'Copy OPML'}
             </Button>
-            <Button
-              variant="brand"
-              size="sm"
-              iconLeft={<GitPullRequest size={14} />}
-              disabled={!dirty || Boolean(parsed.error)}
-              onClick={saveOpml}
-            >
-              Save OPML
-            </Button>
           </div>
         </div>
-        {showClipboardNotice && (
-          <div className="fk-opml-bar" role="status">
-            <div className="fk-opml-bar-content">
-              <Info size={15} />
-              <span>
-                OPML content copied to clipboard! Please paste it into the issue
-                body manually.
-              </span>
-            </div>
+        {showClipboardNotice ? (
+          <p className="fk-opml-hint fk-opml-notice" role="status">
+            <Info size={14} />
+            <span>OPML copied — paste it into the GitHub issue body.</span>
             <Button
-              variant="ghost"
+              variant="link"
               size="sm"
-              iconLeft="x"
-              aria-label="Dismiss message"
               onClick={() => setShowClipboardNotice(false)}
-            />
-          </div>
+            >
+              Dismiss
+            </Button>
+          </p>
+        ) : (
+          <p className="fk-opml-hint">
+            Edits are not saved here. Copy the output and commit{' '}
+            <code>feeds.opml</code> to your repository yourself, or use Save
+            OPML to open a GitHub issue.
+          </p>
         )}
-        <p className="fk-opml-hint">
-          Save OPML opens a GitHub issue and copies the OPML content to your
-          clipboard to paste into the issue body.
-        </p>
       </div>
 
       {mode === 'form' ? (
         <div className="fk-opml-form">
-          {parsed.error ? (
+          {parsed.error && !parsed.empty ? (
             <div className="fk-opml-err">
               {parsed.error} Fix it in the{' '}
               <Button variant="link" size="sm" onClick={() => setMode('xml')}>
@@ -282,6 +290,19 @@ export const OpmlView: FC<OpmlViewProps> = ({
             </div>
           ) : (
             <>
+              {parsed.empty ? (
+                <div className="fk-opml-err" style={{ marginBottom: 14 }}>
+                  {parsed.error} Fix it in the{' '}
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => setMode('xml')}
+                  >
+                    XML tab
+                  </Button>{' '}
+                  or add a category.
+                </div>
+              ) : null}
               {parsed.cats?.map((c, ci) => {
                 const isUncategorized = c.category === 'default'
                 return (

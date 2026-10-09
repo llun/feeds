@@ -66,7 +66,7 @@ export class SqliteStorage implements Storage {
     )
     const siteEntryCounts = (
       (await worker.db.query(
-        `select siteKey, count(*) as totalEntries from EntryCategories group by siteKey;`
+        `select siteKey, count(distinct entryKey) as totalEntries from EntryCategories group by siteKey;`
       )) as { siteKey: string; totalEntries: number }[]
     ).reduce(
       (out, row) => {
@@ -80,13 +80,13 @@ export class SqliteStorage implements Storage {
       (map, item) => {
         if (!map[item.category])
           map[item.category] = {
-            totalEntries: categoryEntryCounts[item.category],
+            totalEntries: categoryEntryCounts[item.category] ?? 0,
             sites: []
           }
         map[item.category].sites.push({
           key: item.siteKey,
           title: item.siteTitle,
-          totalEntries: siteEntryCounts[item.siteKey],
+          totalEntries: siteEntryCounts[item.siteKey] ?? 0,
           xmlUrl: item.xmlUrl ?? '',
           htmlUrl: item.htmlUrl ?? ''
         })
@@ -116,7 +116,7 @@ export class SqliteStorage implements Storage {
     const worker = await this.getWorker(this.config, this.basePath)
     const offset = page * CONTENT_PER_PAGE
     const list = (await worker.db.query(
-      `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc limit ? offset ?`,
+      `select * from EntryCategories where category = ? and entryContentTime is not null order by entryContentTime desc, entryKey limit ? offset ?`,
       [category, CONTENT_PER_PAGE, offset]
     )) as {
       category: string
@@ -141,7 +141,7 @@ export class SqliteStorage implements Storage {
     const worker = await this.getWorker(this.config, this.basePath)
     const offset = page * CONTENT_PER_PAGE
     const list = (await worker.db.query(
-      `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where siteKey = ? order by entryContentTime desc limit ? offset ?`,
+      `select entryKey, siteKey, siteTitle, entryTitle, max(entryContentTime) as entryContentTime from EntryCategories where siteKey = ? group by entryKey order by entryContentTime desc, entryKey limit ? offset ?`,
       [siteKey, CONTENT_PER_PAGE, offset]
     )) as {
       entryKey: string
@@ -164,7 +164,7 @@ export class SqliteStorage implements Storage {
   async countAllEntries() {
     const worker = await this.getWorker(this.config, this.basePath)
     const count = (await worker.db.query(
-      `select count(*) as total from EntryCategories`
+      `select count(distinct entryKey) as total from EntryCategories`
     )) as { total: number }[]
     return count[0].total
   }
@@ -172,7 +172,7 @@ export class SqliteStorage implements Storage {
   async countSiteEntries(siteKey: string) {
     const worker = await this.getWorker(this.config, this.basePath)
     const count = (await worker.db.query(
-      `select count(*) as total from EntryCategories where siteKey = ?`,
+      `select count(distinct entryKey) as total from EntryCategories where siteKey = ?`,
       [siteKey]
     )) as { total: number }[]
     return count[0].total
@@ -191,7 +191,7 @@ export class SqliteStorage implements Storage {
     const worker = await this.getWorker(this.config, this.basePath)
     const offset = page * CONTENT_PER_PAGE
     const list = (await worker.db.query(
-      `select entryKey, siteKey, siteTitle, entryTitle, entryContentTime from EntryCategories where entryContentTime is not null order by entryContentTime desc limit ? offset ?`,
+      `select entryKey, siteKey, siteTitle, entryTitle, max(entryContentTime) as entryContentTime from EntryCategories where entryContentTime is not null group by entryKey order by entryContentTime desc, entryKey limit ? offset ?`,
       [CONTENT_PER_PAGE, offset]
     )) as {
       entryKey: string
@@ -234,4 +234,3 @@ export class SqliteStorage implements Storage {
     }
   }
 }
-

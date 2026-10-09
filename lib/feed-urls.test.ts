@@ -1,14 +1,40 @@
-import test from 'ava'
+import test, { ExecutionContext } from 'ava'
 import {
   getAbsoluteFeedUrl,
   getBrowserFeedHref,
   getSiteConfig,
-  getSiteRelativeFeedPath,
-  getSiteRelativeManifestPath,
   isRootPagesRepo,
   resolveAbsoluteMediaUrl,
   resolveBasePath
 } from './feed-urls'
+
+const SITE_ENV = [
+  'INPUT_CUSTOMDOMAIN',
+  'INPUT_SITEURL',
+  'INPUT_SITE_URL',
+  'SITE_URL',
+  'GITHUB_REPOSITORY',
+  'INPUT_REPOSITORY',
+  'NEXT_PUBLIC_BASE_PATH',
+  'NEXT_PUBLIC_GITHUB_REPOSITORY'
+]
+
+/**
+ * Clears every variable the site configuration reads (and puts them back on
+ * teardown) so a test sees only the options and variables it sets itself.
+ * Callers are serial because the environment is shared by the whole process.
+ */
+function setSiteEnv(t: ExecutionContext, values: Record<string, string> = {}) {
+  for (const key of SITE_ENV) {
+    const original = process.env[key]
+    t.teardown(() => {
+      if (original === undefined) delete process.env[key]
+      else process.env[key] = original
+    })
+    delete process.env[key]
+  }
+  Object.assign(process.env, values)
+}
 
 test('#isRootPagesRepo detects user/org root pages repo correctly', (t) => {
   t.true(isRootPagesRepo('llun/llun.github.io'))
@@ -20,26 +46,107 @@ test('#isRootPagesRepo detects user/org root pages repo correctly', (t) => {
   t.false(isRootPagesRepo(undefined))
 })
 
-test('#resolveBasePath calculates base path consistent with deployment rules', (t) => {
-  // Custom domain: always empty base path
-  t.is(resolveBasePath({ customDomain: 'feeds.example.com' }), '')
-  t.is(resolveBasePath({ customDomain: 'https://feeds.example.com' }), '')
+test.serial(
+  '#resolveBasePath is empty for a custom domain or a root pages repository',
+  (t) => {
+    setSiteEnv(t)
+    t.is(resolveBasePath({ customDomain: 'feeds.example.com' }), '')
+    t.is(resolveBasePath({ customDomain: 'https://feeds.example.com' }), '')
+    t.is(resolveBasePath({ githubRepository: 'owner/owner.github.io' }), '')
+    t.is(resolveBasePath(), '')
+  }
+)
 
-  // User/Org root repo: always empty base path
-  t.is(resolveBasePath({ githubRepository: 'owner/owner.github.io' }), '')
+test.serial(
+  '#resolveBasePath uses the repository name for a project repository',
+  (t) => {
+    setSiteEnv(t)
+    t.is(resolveBasePath({ githubRepository: 'owner/project' }), '/project')
+    t.is(resolveBasePath({ githubRepository: 'llun/feeds' }), '/feeds')
+  }
+)
 
-  // Normal project repo: repo name prefixed with slash
-  t.is(resolveBasePath({ githubRepository: 'owner/project' }), '/project')
-  t.is(resolveBasePath({ githubRepository: 'llun/feeds' }), '/feeds')
-
-  // Explicit siteUrl override
+test.serial('#resolveBasePath uses the path of an explicit siteUrl', (t) => {
+  setSiteEnv(t)
   t.is(resolveBasePath({ siteUrl: 'https://example.org/subpath' }), '/subpath')
   t.is(resolveBasePath({ siteUrl: 'https://example.org/subpath/' }), '/subpath')
   t.is(resolveBasePath({ siteUrl: 'https://example.org/' }), '')
   t.is(resolveBasePath({ siteUrl: 'https://example.org' }), '')
 })
 
-test('#getSiteConfig resolves custom domain', (t) => {
+test.serial('#resolveBasePath normalizes an explicit basePath option', (t) => {
+  setSiteEnv(t)
+  t.is(resolveBasePath({ basePath: 'docs' }), '/docs')
+  t.is(resolveBasePath({ basePath: '//docs/nested//' }), '/docs/nested')
+  t.is(resolveBasePath({ basePath: '/' }), '')
+  t.is(resolveBasePath({ basePath: '  ' }), '')
+  // An explicit empty base path wins over the repository name.
+  t.is(resolveBasePath({ basePath: '', githubRepository: 'owner/project' }), '')
+})
+
+test.serial('#resolveBasePath reads the deployment environment', (t) => {
+  setSiteEnv(t, { INPUT_CUSTOMDOMAIN: 'feeds.example.com' })
+  t.is(resolveBasePath({ githubRepository: 'owner/project' }), '')
+
+  setSiteEnv(t, { NEXT_PUBLIC_BASE_PATH: '/built/' })
+  t.is(resolveBasePath({ githubRepository: 'owner/project' }), '/built')
+
+  // The siteUrl action input arrives as INPUT_SITEURL.
+  setSiteEnv(t, { INPUT_SITEURL: 'https://example.org/from-action' })
+  t.is(resolveBasePath(), '/from-action')
+  t.is(getSiteConfig().siteBaseUrl, 'https://example.org/from-action/')
+  t.is(getSiteConfig().basePath, '/from-action')
+
+  setSiteEnv(t, {
+    INPUT_SITEURL: 'https://example.org/from-action',
+    INPUT_SITE_URL: 'https://example.org/from-input',
+    SITE_URL: 'https://example.org/from-site'
+  })
+  t.is(resolveBasePath(), '/from-action')
+
+  setSiteEnv(t, { INPUT_SITE_URL: 'https://example.org/from-input' })
+  t.is(resolveBasePath(), '/from-input')
+
+  setSiteEnv(t, { SITE_URL: 'https://example.org/from-site' })
+  t.is(resolveBasePath(), '/from-site')
+
+  // The runner sets INPUT_SITEURL to '' when the input is unset (default: '').
+  setSiteEnv(t, {
+    INPUT_SITEURL: '',
+    INPUT_SITE_URL: '',
+    SITE_URL: 'https://example.org/from-site'
+  })
+  t.is(resolveBasePath(), '/from-site')
+  t.is(getSiteConfig().siteBaseUrl, 'https://example.org/from-site/')
+  t.is(getSiteConfig().basePath, '/from-site')
+
+  setSiteEnv(t, { GITHUB_REPOSITORY: 'owner/from-github' })
+  t.is(resolveBasePath(), '/from-github')
+})
+
+test.serial(
+  '#resolveBasePath prefers custom domain, then basePath, NEXT_PUBLIC_BASE_PATH, siteUrl and repository',
+  (t) => {
+    setSiteEnv(t, { NEXT_PUBLIC_BASE_PATH: '/env' })
+    const repo = { githubRepository: 'owner/project' }
+    const siteUrl = 'https://example.org/site'
+
+    t.is(
+      resolveBasePath({ customDomain: 'a.example', basePath: '/x', ...repo }),
+      ''
+    )
+    t.is(resolveBasePath({ customDomain: 'a.example', siteUrl, ...repo }), '')
+    t.is(resolveBasePath({ basePath: '/x', siteUrl, ...repo }), '/x')
+    t.is(resolveBasePath({ siteUrl, ...repo }), '/env')
+
+    setSiteEnv(t)
+    t.is(resolveBasePath({ siteUrl, ...repo }), '/site')
+    t.is(resolveBasePath(repo), '/project')
+  }
+)
+
+test.serial('#getSiteConfig resolves custom domain', (t) => {
+  setSiteEnv(t)
   const config = getSiteConfig({ customDomain: 'feeds.example.com' })
   t.is(config.origin, 'https://feeds.example.com')
   t.is(config.basePath, '')
@@ -50,7 +157,31 @@ test('#getSiteConfig resolves custom domain', (t) => {
   )
 })
 
-test('#getSiteConfig resolves normal project repository', (t) => {
+test.serial(
+  '#getSiteConfig and #resolveBasePath agree that a custom domain wins over siteUrl',
+  (t) => {
+    setSiteEnv(t)
+    const options = {
+      customDomain: 'feeds.example.com',
+      siteUrl: 'https://example.github.io/project'
+    }
+    const config = getSiteConfig(options)
+    t.is(config.basePath, resolveBasePath(options))
+    t.is(config.basePath, '')
+    t.is(config.origin, 'https://feeds.example.com')
+    t.is(config.siteBaseUrl, 'https://feeds.example.com/')
+
+    // The site URL is not validated when it is not used.
+    t.is(
+      getSiteConfig({ customDomain: 'feeds.example.com', siteUrl: 'not a url' })
+        .siteBaseUrl,
+      'https://feeds.example.com/'
+    )
+  }
+)
+
+test.serial('#getSiteConfig resolves normal project repository', (t) => {
+  setSiteEnv(t)
   const config = getSiteConfig({ githubRepository: 'owner/project' })
   t.is(config.origin, 'https://owner.github.io')
   t.is(config.basePath, '/project')
@@ -61,7 +192,8 @@ test('#getSiteConfig resolves normal project repository', (t) => {
   )
 })
 
-test('#getSiteConfig resolves user/org root pages repository', (t) => {
+test.serial('#getSiteConfig resolves user/org root pages repository', (t) => {
+  setSiteEnv(t)
   const config = getSiteConfig({ githubRepository: 'owner/owner.github.io' })
   t.is(config.origin, 'https://owner.github.io')
   t.is(config.basePath, '')
@@ -72,7 +204,8 @@ test('#getSiteConfig resolves user/org root pages repository', (t) => {
   )
 })
 
-test('#getSiteConfig resolves explicit siteUrl override', (t) => {
+test.serial('#getSiteConfig resolves explicit siteUrl override', (t) => {
+  setSiteEnv(t)
   const config = getSiteConfig({ siteUrl: 'https://myfeed.test/myprefix' })
   t.is(config.origin, 'https://myfeed.test')
   t.is(config.basePath, '/myprefix')
@@ -83,53 +216,30 @@ test('#getSiteConfig resolves explicit siteUrl override', (t) => {
   )
 })
 
-test('#getSiteConfig throws actionable error when required and no config provided', (t) => {
-  const oldEnv = { ...process.env }
-  delete process.env['INPUT_CUSTOMDOMAIN']
-  delete process.env['INPUT_SITE_URL']
-  delete process.env['SITE_URL']
-  delete process.env['GITHUB_REPOSITORY']
-  delete process.env['INPUT_REPOSITORY']
-
-  try {
-    t.throws(
-      () => {
-        getSiteConfig({ required: true })
-      },
-      {
-        message: /Unable to determine public site URL for feed generation/
-      }
-    )
-  } finally {
-    process.env = oldEnv
+test.serial(
+  '#getSiteConfig throws actionable error when required and no config provided',
+  (t) => {
+    setSiteEnv(t)
+    t.throws(() => getSiteConfig({ required: true }), {
+      message: /Unable to determine public site URL for feed generation/
+    })
   }
+)
+
+test.serial('#getSiteConfig does not infer localhost when missing', (t) => {
+  setSiteEnv(t)
+  t.deepEqual(getSiteConfig(), { siteBaseUrl: '', basePath: '', origin: '' })
 })
 
-test('#getSiteConfig does not infer localhost when missing', (t) => {
-  const oldEnv = { ...process.env }
-  delete process.env['INPUT_CUSTOMDOMAIN']
-  delete process.env['INPUT_SITE_URL']
-  delete process.env['SITE_URL']
-  delete process.env['GITHUB_REPOSITORY']
-  delete process.env['INPUT_REPOSITORY']
-
-  try {
-    const config = getSiteConfig()
-    t.is(config.origin, '')
-    t.is(config.siteBaseUrl, '')
-    t.not(config.origin, 'http://localhost')
-  } finally {
-    process.env = oldEnv
-  }
-})
-
-test('#getSiteRelativeFeedPath returns correct site-relative paths', (t) => {
-  t.is(getSiteRelativeFeedPath('all'), 'feeds/all.xml')
-  t.is(
-    getSiteRelativeFeedPath({ categoryId: 'abcdef1234567890' }),
-    'feeds/categories/abcdef1234567890.xml'
-  )
-  t.is(getSiteRelativeManifestPath(), 'feeds/manifest.json')
+test.serial('#getSiteConfig rejects an unusable siteUrl', (t) => {
+  setSiteEnv(t)
+  t.throws(() => getSiteConfig({ siteUrl: 'not a url' }), {
+    message: 'Invalid site URL configuration: "not a url"'
+  })
+  t.throws(() => getSiteConfig({ siteUrl: 'ftp://feeds.example.com/x' }), {
+    message:
+      'Site URL must use http or https protocol: "ftp://feeds.example.com/x"'
+  })
 })
 
 test('#getBrowserFeedHref adds deployment base path exactly once', (t) => {

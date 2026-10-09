@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { getBrowserFeedHref } from './feed-urls'
+import { unescapeXml } from './opml'
 import { getCategoryId } from '../action/feeds/atom/identity'
 
 export interface FeedAlternate {
@@ -11,6 +12,19 @@ export interface FeedAlternate {
 export interface FeedAlternatesOptions {
   rootDir?: string
   opmlFile?: string
+}
+
+// xml2js decodes named and numeric references in one pass, so `&amp;#39;`
+// becomes `&#39;`, not `'`.
+function unescapeEntities(value: string) {
+  return value.replace(
+    /&(?:#x([0-9a-f]+)|#(\d+)|(?:amp|lt|gt|quot|apos));/gi,
+    (match, hex, dec) => {
+      if (hex === undefined && dec === undefined) return unescapeXml(match)
+      const code = hex ? parseInt(hex, 16) : parseInt(dec, 10)
+      return code <= 0x10ffff ? String.fromCodePoint(code) : match
+    }
+  )
 }
 
 /**
@@ -29,12 +43,14 @@ export function extractCategoryTitlesFromOpml(opmlContent: string): string[] {
       continue
     }
 
+    // Quoted values may contain the other quote character (title="Bob's"),
+    // and are XML-decoded like the action does before hashing the category id.
     const titleMatch =
-      /title\s*=\s*["']([^"']+)["']/i.exec(attrs) ||
-      /text\s*=\s*["']([^"']+)["']/i.exec(attrs)
+      /\btitle\s*=\s*(?:"([^"]+)"|'([^']+)')/i.exec(attrs) ||
+      /\btext\s*=\s*(?:"([^"]+)"|'([^']+)')/i.exec(attrs)
 
-    if (titleMatch && titleMatch[1]) {
-      const title = titleMatch[1].trim()
+    if (titleMatch) {
+      const title = unescapeEntities(titleMatch[1] ?? titleMatch[2]).trim()
       if (title && !titles.includes(title)) {
         titles.push(title)
       }

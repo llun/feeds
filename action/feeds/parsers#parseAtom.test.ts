@@ -7,7 +7,7 @@ import { parseAtom, parseXML } from './parsers'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-test('#parseAtom returns site information with empty string for fields that does not have information', async (t) => {
+test('#parseAtom reads site, entries, content and the feed author, falling back to the first link when no alternate link exists', async (t) => {
   const data = fs
     .readFileSync(path.join(__dirname, 'stubs', 'atom1.xml'))
     .toString('utf8')
@@ -28,14 +28,14 @@ test('#parseAtom returns site information with empty string for fields that does
       title: '2020',
       link: 'https://www.llun.me/posts/2020-12-31-2020/',
       date: new Date('2020-12-31T00:00:00Z').getTime(),
-      content: sinon.match.string,
+      content: sinon.match(/^\s*<p>Content<\/p>\s*$/),
       author: 'Maythee Anegboonlap'
     },
     {
       title: 'Festive500',
       link: 'https://www.llun.me/posts/ride/2021-01-01-festive-500/',
       date: new Date('2021-01-01T00:00:00Z').getTime(),
-      content: sinon.match.string,
+      content: sinon.match(/<p>Content 2<\/p>.*Send a comment/s),
       author: 'Maythee Anegboonlap'
     }
   ])
@@ -65,4 +65,115 @@ test('#parseAtom uses summary when entry does not have content', async (t) => {
       'Alright, let’s do this. On January, I received my State of JS t-shirt. 👕 On February, I physically attended JavaScript Bangkok. 🎟 On March,…',
     author: 'Lim Chee Aun'
   })
+})
+
+test('#parseAtom reads content and summary whether or not they carry attributes', async (t) => {
+  const cases: [string, string, string][] = [
+    ['plain content', '<content>plain text</content>', 'plain text'],
+    [
+      'typed content',
+      '<content type="html">&lt;p&gt;typed&lt;/p&gt;</content>',
+      '<p>typed</p>'
+    ],
+    ['plain summary', '<summary>short text</summary>', 'short text'],
+    [
+      'typed summary',
+      '<summary type="text">typed summary</summary>',
+      'typed summary'
+    ]
+  ]
+  for (const [description, element, expected] of cases) {
+    const xml = await parseXML(`<feed xmlns="http://www.w3.org/2005/Atom">
+      <title>Feed</title>
+      <link rel="alternate" href="https://example.com/" />
+      <entry>
+        <title>Entry</title>
+        <link rel="alternate" href="https://example.com/entry" />
+        ${element}
+      </entry>
+    </feed>`)
+    t.is(parseAtom('Feed', xml)?.entries[0].content, expected, description)
+  }
+})
+
+function atomWithDates(dates: {
+  feed?: string[]
+  published?: string[]
+  updated?: string[]
+}) {
+  return {
+    feed: {
+      title: ['Test Feed'],
+      link: [{ $: { rel: 'alternate', href: 'https://example.com' } }],
+      ...(dates.feed ? { updated: dates.feed } : {}),
+      entry: [
+        {
+          title: ['Test Entry'],
+          link: [
+            { $: { rel: 'alternate', href: 'https://example.com/entry' } }
+          ],
+          ...(dates.published ? { published: dates.published } : {}),
+          ...(dates.updated ? { updated: dates.updated } : {}),
+          content: [{ _: 'Test content' }]
+        }
+      ]
+    }
+  }
+}
+
+test('#parseAtom leaves an entry undated for an empty, invalid or missing date but still dates the site', (t) => {
+  for (const dates of [
+    { feed: [''], published: [''], updated: [''] },
+    { feed: ['not a valid date'], published: ['invalid'] },
+    { published: ['invalid'], updated: ['invalid'] },
+    {}
+  ]) {
+    const site = parseAtom('Test Feed', atomWithDates(dates))
+    t.true(Number.isFinite(site.updatedAt), JSON.stringify(dates))
+    t.is(site.entries[0].date, undefined, JSON.stringify(dates))
+  }
+})
+
+test('#parseAtom dates an entry by updated when it has no published', (t) => {
+  const site = parseAtom(
+    'Test Feed',
+    atomWithDates({ updated: ['2021-05-06T07:08:09Z'] })
+  )
+  t.is(site.entries[0].date, new Date('2021-05-06T07:08:09Z').getTime())
+})
+
+test('#parseAtom returns no entries when entry is missing or empty', (t) => {
+  for (const entry of [undefined, []]) {
+    const site = parseAtom('Test Feed', {
+      feed: {
+        title: ['Test Feed'],
+        link: [{ $: { rel: 'alternate', href: 'https://example.com' } }],
+        updated: ['2024-01-01T00:00:00Z'],
+        entry
+      }
+    })
+    t.deepEqual(site.entries, [])
+  }
+})
+
+test('#parseAtom gives an entry without links an empty link', (t) => {
+  for (const link of [undefined, []]) {
+    const site = parseAtom('Test Feed', {
+      feed: {
+        title: ['Test Feed'],
+        link: [{ $: { rel: 'alternate', href: 'https://example.com' } }],
+        updated: ['2024-01-01T00:00:00Z'],
+        entry: [
+          {
+            title: ['Test Entry'],
+            link,
+            published: ['2024-01-01T00:00:00Z'],
+            content: [{ _: 'Test content' }]
+          }
+        ]
+      }
+    })
+    t.is(site.entries.length, 1)
+    t.is(site.entries[0].link, '')
+  }
 })

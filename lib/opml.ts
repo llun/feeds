@@ -108,7 +108,8 @@ export const parseOpml = (xmlString: string): OpmlCategory[] => {
       }
 
       if (innerContent) {
-        const nestedTagRegex = /<outline\b([^>]*?)(?:\/>|>([\s\S]*?)<\/outline>)/gi
+        const nestedTagRegex =
+          /<outline\b([^>]*?)(?:\/>|>([\s\S]*?)<\/outline>)/gi
         let nestedMatch: RegExpExecArray | null
         while ((nestedMatch = nestedTagRegex.exec(innerContent)) !== null) {
           const nestedAttrs = parseAttributes(nestedMatch[1])
@@ -150,8 +151,12 @@ export const generateOpml = (
     const text = escapeXml(item.text || item.title || '')
     const itemTitle = escapeXml(item.title || item.text || '')
     const xmlUrl = escapeXml(item.xmlUrl || '')
-    const htmlUrlAttr = item.htmlUrl ? ` htmlUrl="${escapeXml(item.htmlUrl)}"` : ''
-    const typeAttr = item.type ? ` type="${escapeXml(item.type)}"` : ' type="rss"'
+    const htmlUrlAttr = item.htmlUrl
+      ? ` htmlUrl="${escapeXml(item.htmlUrl)}"`
+      : ''
+    const typeAttr = item.type
+      ? ` type="${escapeXml(item.type)}"`
+      : ' type="rss"'
     return `${pad}<outline${typeAttr} text="${text}" title="${itemTitle}" xmlUrl="${xmlUrl}"${htmlUrlAttr}/>`
   }
 

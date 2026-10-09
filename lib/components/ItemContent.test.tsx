@@ -182,3 +182,10 @@ test('#ItemContent keeps safe formatting', (t) => {
     )
   )
 })
+
+test('#ItemContent shows a loading state with a back bar while an article loads', (t) => {
+  const html = renderToStaticMarkup(<ItemContent loading />)
+  t.regex(html, /Loading/)
+  t.regex(html, /aria-label="Go back"/)
+  t.notRegex(html, /Select an item/)
+})

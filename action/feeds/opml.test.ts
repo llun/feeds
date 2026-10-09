@@ -1,15 +1,8 @@
 import test from 'ava'
 import fs from 'fs/promises'
-import knex from 'knex'
 import path from 'path'
 import sinon from 'sinon'
 import { fileURLToPath } from 'url'
-import {
-  createTables,
-  getAllCategories,
-  insertCategory,
-  removeOldCategories
-} from './database'
 import { readOpml } from './opml'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -90,44 +83,53 @@ test('#readOpml ignore sub-category', async (t) => {
   t.is(feeds[1].items.length, 1)
 })
 
-test('#removeOldCategories do nothing for category exists in opml', async (t) => {
-  const db = knex({
-    client: 'sqlite3',
-    connection: ':memory:',
-    useNullAsDefault: true
-  })
-  await createTables(db)
-  await insertCategory(db, 'Category1')
-  await insertCategory(db, 'Category2')
+test('#readOpml keeps only valid rss items and drops an outline without a title', async (t) => {
+  const result = await readOpml(`<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <body>
+    <outline title="Category 1">
+      <outline type="rss" title="Feed 1" xmlUrl="https://example.com/feed1.xml"/>
+      <outline title="No type attribute" xmlUrl="https://example.com/feed2.xml"/>
+    </outline>
+    <outline>
+      <outline type="rss" title="Feed 3" xmlUrl="https://example.com/feed3.xml"/>
+    </outline>
+  </body>
+</opml>`)
 
-  const data = (
-    await fs.readFile(path.join(__dirname, 'stubs', 'opml.xml'))
-  ).toString('utf8')
-  const opml = await readOpml(data)
-  await removeOldCategories(db, opml)
-
-  const categories = await getAllCategories(db)
-  t.deepEqual(categories, ['Category1', 'Category2'])
-  await db.destroy()
+  // The untitled outline, and the feed inside it, are gone.
+  t.is(result.length, 1)
+  t.is(result[0].category, 'Category 1')
+  t.is(result[0].items.length, 1)
+  t.is(result[0].items[0].title, 'Feed 1')
 })
 
-test('#removeOldCategories delete category not exists in opml', async (t) => {
-  const db = knex({
-    client: 'sqlite3',
-    connection: ':memory:',
-    useNullAsDefault: true
-  })
-  await createTables(db)
-  await insertCategory(db, 'Category1')
-  await insertCategory(db, 'Category2')
-  await insertCategory(db, 'Category3')
+test('#readOpml still lists a category that has no outlines', async (t) => {
+  const result = await readOpml(`<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <body>
+    <outline title="Empty"/>
+  </body>
+</opml>`)
 
-  const data = (
-    await fs.readFile(path.join(__dirname, 'stubs', 'opml.xml'))
-  ).toString('utf8')
-  const opml = await readOpml(data)
-  await removeOldCategories(db, opml)
-  const categories = await getAllCategories(db)
-  t.deepEqual(categories, ['Category1', 'Category2'])
-  await db.destroy()
+  t.deepEqual(result, [{ category: 'Empty', items: [] }])
+})
+
+test('#readOpml throws when the document lacks the OPML structure', async (t) => {
+  for (const opml of [
+    '<opml version="2.0"><head><title>Test</title></head></opml>',
+    '<opml version="2.0"></opml>',
+    '<opml version="2.0"><body></body></opml>',
+    '<feed><title>Not opml</title></feed>'
+  ]) {
+    await t.throwsAsync(() => readOpml(opml), {
+      message: /Invalid OPML format/
+    })
+  }
+})
+
+test('#readOpml rejects input that is not XML', async (t) => {
+  await t.throwsAsync(() => readOpml('this is not xml'), {
+    message: /Non-whitespace before first tag/
+  })
 })

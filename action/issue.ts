@@ -128,15 +128,33 @@ export async function handleOpmlIssue(
   run(['git', 'config', 'user.name', 'Feed bots'], workSpace)
   run(['git', 'config', 'user.email', 'bot@llun.dev'], workSpace)
   run(['git', 'add', opmlFile], workSpace)
-  run(['git', 'commit', '-m', `Update OPML file (#${issueNumber})`], workSpace)
 
-  const pushResult = run(
-    ['git', 'push', 'origin', `HEAD:${sourceBranch}`],
-    workSpace
-  )
-  if (pushResult && pushResult.status !== 0) {
-    console.error('Failed to push OPML commit to remote.')
-    throw new Error('Failed to push OPML commit to remote.')
+  // `git diff --cached --quiet` exits 0 when nothing is staged, 1 when there are changes
+  const staged = run(['git', 'diff', '--cached', '--quiet'], workSpace)
+  const upToDate = staged?.status === 0
+  if (staged && staged.status !== 0 && staged.status !== 1) {
+    console.error('Failed to check staged OPML changes.')
+    throw new Error('Failed to check staged OPML changes.')
+  }
+
+  if (!upToDate) {
+    const commitResult = run(
+      ['git', 'commit', '-m', `Update OPML file (#${issueNumber})`],
+      workSpace
+    )
+    if (commitResult && commitResult.status !== 0) {
+      console.error('Failed to commit OPML changes.')
+      throw new Error('Failed to commit OPML changes.')
+    }
+
+    const pushResult = run(
+      ['git', 'push', 'origin', `HEAD:${sourceBranch}`],
+      workSpace
+    )
+    if (pushResult && pushResult.status !== 0) {
+      console.error('Failed to push OPML commit to remote.')
+      throw new Error('Failed to push OPML commit to remote.')
+    }
   }
 
   if (isIssue) {
@@ -159,8 +177,15 @@ export async function handleOpmlIssue(
     owner,
     repo,
     issue_number: issueNumber,
-    body: `Successfully updated \`${opmlFile}\` and committed to \`${sourceBranch}\`.`
+    body: upToDate
+      ? `\`${opmlFile}\` is already up to date; nothing to commit.`
+      : `Successfully updated \`${opmlFile}\` and committed to \`${sourceBranch}\`.`
   })
+
+  if (upToDate) {
+    console.log(`${opmlFile} already up to date for issue #${issueNumber}`)
+    return { handled: true, updated: false }
+  }
 
   console.log(`Successfully updated ${opmlFile} from issue #${issueNumber}`)
   return { handled: true, updated: true }
