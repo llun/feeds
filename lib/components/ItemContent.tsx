@@ -22,12 +22,14 @@ interface ReactParserNode {
 interface ItemContentProps {
   content?: Content
   missing?: boolean
+  loading?: boolean
   selectBack?: () => void
 }
 
 export const ItemContent = ({
   content,
   missing,
+  loading,
   selectBack
 }: ItemContentProps) => {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
@@ -58,6 +60,26 @@ export const ItemContent = ({
     )
   }
 
+  if (!content && loading) {
+    return (
+      <div className="flex h-full flex-col bg-background">
+        <div className="fk-backbar md:hidden">
+          <BackButton onClickBack={selectBack} />
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3.5 p-8">
+          <div
+            className="feeds-spinner size-7"
+            role="status"
+            aria-label="Loading"
+          ></div>
+          <p className="text-sm leading-[1.5] text-muted-foreground">
+            Loading…
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   if (!content) {
     return (
       <div
@@ -78,7 +100,7 @@ export const ItemContent = ({
           <div className="fk-backbar mb-4 md:hidden">
             <BackButton onClickBack={selectBack} />
           </div>
-          <h1 className="break-words text-2xl leading-[1.2] font-bold tracking-[-0.015em]">
+          <h1 className="break-words text-2xl leading-[1.2] font-bold tracking-tight">
             {content.title}
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm leading-[1.2] text-muted-foreground">

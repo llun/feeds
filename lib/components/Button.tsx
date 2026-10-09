@@ -69,7 +69,7 @@ export const Button: FC<ButtonProps> = ({
 
   const cls = [
     'feeds-btn',
-    'hit-target',
+    variant === 'link' ? '' : 'hit-target-y',
     `feeds-btn--${variant}`,
     `feeds-btn--${size}`,
     iconOnly ? 'feeds-btn--icononly' : '',

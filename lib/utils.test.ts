@@ -2,12 +2,16 @@ import test from 'ava'
 import sinon from 'sinon'
 import {
   PageState,
+  findSiteTitle,
   formatRelativeTime,
+  getListKey,
   getInitialPageState,
   getNavSelection,
   getSelectedEntryKey,
+  isArticlePaneHidden,
   locationController,
-  parseLocation
+  parseLocation,
+  shouldMountOpml
 } from './utils'
 import { Content } from './storage/types'
 
@@ -157,51 +161,54 @@ test('#locationController sets opml state for opml', async (t) => {
   t.is<PageState, PageState>(pageState, 'opml')
 })
 
-test.serial('#locationController loads entry and sets article state', async (t) => {
-  const fakeApiResponse = {
-    title: 'Article Title',
-    siteTitle: 'Site',
-    siteHash: 'siteKey',
-    link: 'https://example.com/article',
-    content: '<p>Content</p>',
-    date: 123456000
+test.serial(
+  '#locationController loads entry and sets article state',
+  async (t) => {
+    const fakeApiResponse = {
+      title: 'Article Title',
+      siteTitle: 'Site',
+      siteHash: 'siteKey',
+      link: 'https://example.com/article',
+      content: '<p>Content</p>',
+      date: 123456000
+    }
+
+    const fetchStub = sinon.stub(globalThis, 'fetch').resolves({
+      status: 200,
+      json: async () => fakeApiResponse
+    } as Response)
+
+    t.teardown(() => {
+      fetchStub.restore()
+    })
+
+    let contentState: Content | null = null
+    let pageState: PageState = 'categories'
+
+    const setContent = (c: any) => {
+      contentState = typeof c === 'function' ? c(contentState) : c
+    }
+    const setPageState = (s: any) => {
+      pageState = typeof s === 'function' ? s(pageState) : s
+    }
+
+    await locationController(
+      parseLocation('/sites/all/entries/articleKey'),
+      '',
+      setContent,
+      setPageState
+    )
+    t.deepEqual(contentState, {
+      title: 'Article Title',
+      siteTitle: 'Site',
+      siteKey: 'siteKey',
+      url: 'https://example.com/article',
+      content: '<p>Content</p>',
+      timestamp: 123456
+    })
+    t.is<PageState, PageState>(pageState, 'article')
   }
-
-  const fetchStub = sinon.stub(globalThis, 'fetch').resolves({
-    status: 200,
-    json: async () => fakeApiResponse
-  } as Response)
-
-  t.teardown(() => {
-    fetchStub.restore()
-  })
-
-  let contentState: Content | null = null
-  let pageState: PageState = 'categories'
-
-  const setContent = (c: any) => {
-    contentState = typeof c === 'function' ? c(contentState) : c
-  }
-  const setPageState = (s: any) => {
-    pageState = typeof s === 'function' ? s(pageState) : s
-  }
-
-  await locationController(
-    parseLocation('/sites/all/entries/articleKey'),
-    '',
-    setContent,
-    setPageState
-  )
-  t.deepEqual(contentState, {
-    title: 'Article Title',
-    siteTitle: 'Site',
-    siteKey: 'siteKey',
-    url: 'https://example.com/article',
-    content: '<p>Content</p>',
-    timestamp: 123456
-  })
-  t.is<PageState, PageState>(pageState, 'article')
-})
+)
 
 test('#formatRelativeTime reads like the design', (t) => {
   const now = Date.UTC(2026, 0, 15, 12, 0, 0)
@@ -243,11 +250,14 @@ test('#getNavSelection follows the URL', (t) => {
     siteKey: 'b',
     expandedCategory: 'Tech'
   })
-  t.deepEqual(getNavSelection(parseLocation('/sites/b/entries/x'), categories), {
-    kind: 'site',
-    siteKey: 'b',
-    expandedCategory: 'Tech'
-  })
+  t.deepEqual(
+    getNavSelection(parseLocation('/sites/b/entries/x'), categories),
+    {
+      kind: 'site',
+      siteKey: 'b',
+      expandedCategory: 'Tech'
+    }
+  )
   t.deepEqual(getNavSelection(parseLocation('/sites/zzz'), categories), {
     kind: 'site',
     siteKey: 'zzz',
@@ -265,22 +275,69 @@ test('#getSelectedEntryKey returns the open entry', (t) => {
   t.is(getSelectedEntryKey(null), '')
 })
 
-test.serial('#locationController flags a missing entry instead of throwing', async (t) => {
-  const setContent = sinon.stub()
-  const setPageState = sinon.stub()
-  const setEntryMissing = sinon.stub()
-  const fetchStub = sinon
-    .stub(globalThis, 'fetch')
-    .resolves({ status: 404 } as Response)
-  t.teardown(() => fetchStub.restore())
-  await locationController(
-    parseLocation('/sites/all/entries/nope'),
-    '',
-    setContent,
-    setPageState,
-    setEntryMissing
+test.serial(
+  '#locationController flags a missing entry instead of throwing',
+  async (t) => {
+    const setContent = sinon.stub()
+    const setPageState = sinon.stub()
+    const setEntryMissing = sinon.stub()
+    const fetchStub = sinon
+      .stub(globalThis, 'fetch')
+      .resolves({ status: 404 } as Response)
+    t.teardown(() => fetchStub.restore())
+    await locationController(
+      parseLocation('/sites/all/entries/nope'),
+      '',
+      setContent,
+      setPageState,
+      setEntryMissing
+    )
+    t.true(setContent.calledWith(null))
+    t.true(setEntryMissing.calledWith(true))
+    t.true(setPageState.calledWith('article'))
+  }
+)
+
+test('#getListKey is the same for a list and an entry opened from it', (t) => {
+  t.is(
+    getListKey(parseLocation('/categories/Design')),
+    getListKey(parseLocation('/categories/Design/entries/e1'))
   )
-  t.true(setContent.calledWith(null))
-  t.true(setEntryMissing.calledWith(true))
-  t.true(setPageState.calledWith('article'))
+  t.is(
+    getListKey(parseLocation('/sites/all')),
+    getListKey(parseLocation('/sites/all/entries/entry0'))
+  )
+})
+
+test('#getListKey differs when back/forward moves between lists', (t) => {
+  t.not(
+    getListKey(parseLocation('/sites/all/entries/entry0')),
+    getListKey(parseLocation('/categories/Design/entries/e1'))
+  )
+  t.not(
+    getListKey(parseLocation('/categories/x')),
+    getListKey(parseLocation('/sites/x'))
+  )
+})
+
+test('#findSiteTitle finds a site that has no entries, and reports unknown ones', (t) => {
+  const categories = [
+    { sites: [{ key: 'a', title: 'Site A' }] },
+    { sites: [{ key: 'empty', title: 'Real Empty Site' }] }
+  ]
+  t.is(findSiteTitle(categories, 'empty'), 'Real Empty Site')
+  t.is(findSiteTitle(categories, 'missing'), undefined)
+})
+
+test('#shouldMountOpml waits for the feed set to load', (t) => {
+  t.false(shouldMountOpml(true, true))
+  t.true(shouldMountOpml(true, false))
+  t.false(shouldMountOpml(false, false))
+})
+
+test('#isArticlePaneHidden keeps the article pane up while a deep link loads', (t) => {
+  t.false(isArticlePaneHidden('article', false, false))
+  t.false(isArticlePaneHidden('article', true, false))
+  t.false(isArticlePaneHidden('entries', false, true))
+  t.true(isArticlePaneHidden('entries', false, false))
 })

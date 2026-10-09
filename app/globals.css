@@ -154,10 +154,14 @@
   --success: oklch(0.696 0.17 162.48);
   --warning: oklch(0.769 0.188 70.08);
   --elevation-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --elevation-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
-  --elevation-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
-  --elevation-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.08);
-  --elevation-xl: 0 20px 25px -5px rgb(0 0 0 / 0.12), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --elevation-sm:
+    0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --elevation-md:
+    0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  --elevation-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --elevation-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.12), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --link: oklch(0.546 0.245 262.881);
   --link-hover: oklch(0.488 0.243 264.376);
 
@@ -220,9 +224,12 @@
   --destructive-foreground: oklch(0.145 0 0);
   --elevation-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --elevation-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  --elevation-md: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --elevation-lg: 0 10px 15px -3px rgb(0 0 0 / 0.55), 0 4px 6px -4px rgb(0 0 0 / 0.45);
-  --elevation-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+  --elevation-md:
+    0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --elevation-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.55), 0 4px 6px -4px rgb(0 0 0 / 0.45);
+  --elevation-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
   --link: oklch(0.707 0.165 254.624);
   --link-hover: oklch(0.809 0.105 251.813);
 
@@ -255,6 +262,24 @@
       width: max(100%, 44px);
       height: max(100%, 44px);
       transform: translate(-50%, -50%);
+    }
+  }
+}
+
+/* Same, vertical only: for buttons that sit in a row, so the target never
+   reaches into the neighbours on either side. */
+@utility hit-target-y {
+  position: relative;
+
+  @media (pointer: coarse) {
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: max(100%, 44px);
+      transform: translateY(-50%);
     }
   }
 }
@@ -300,12 +325,6 @@
     border-top-color: var(--brand);
     border-radius: calc(infinity * 1px);
     animation: feeds-spin 0.7s linear infinite;
-  }
-  .feeds-spinner--sm {
-    border-width: 2px;
-  }
-  .feeds-spinner--lg {
-    border-width: 4px;
   }
 
   /* Article reading surface. Feed HTML is arbitrary, so every element that can
@@ -630,9 +649,6 @@
     --_bgh: var(--accent);
     --_fgh: var(--foreground);
   }
-  .feeds-btn--outline.feeds-btn--icononly {
-    --_fg: var(--text-secondary);
-  }
   .feeds-btn--ghost {
     --_bg: transparent;
     --_fg: var(--text-secondary);
@@ -890,6 +906,7 @@
       display: none;
     }
     .fk-opml-save {
+      --_fg: var(--text-secondary);
       width: 2rem;
       padding: 0;
     }

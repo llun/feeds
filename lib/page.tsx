@@ -16,7 +16,10 @@ import {
   articleClassName,
   categoriesClassName,
   entriesClassName,
+  findSiteTitle,
   getInitialPageState,
+  isArticlePaneHidden,
+  shouldMountOpml,
   locationController,
   parseLocation
 } from '../lib/utils'
@@ -118,7 +121,13 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   }, [status, state])
 
   useEffect(() => {
-    const storage = getStorage(process.env.NEXT_PUBLIC_BASE_PATH ?? '')
+    const siteTitle = (siteKey: string) => {
+      if (siteKey === 'all') return 'All Items'
+      // Until the feed set loads the title is unknown; selectSite already set
+      // it for clicks, and a deep link shows an empty title meanwhile.
+      if (status === 'loading') return undefined
+      return findSiteTitle(categories, siteKey) ?? 'Not found'
+    }
     switch (state.location?.type) {
       case 'opml':
         setListTitle('feeds.opml')
@@ -127,50 +136,29 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         setListTitle(state.location.category)
         break
       case 'site': {
-        if (state.location.siteKey === 'all') {
-          setListTitle('All Items')
-          break
-        }
-        storage
-          .getSiteEntries(state.location.siteKey)
-          .then((entries) => {
-            setListTitle(
-              entries.length === 0 ? 'Not found' : entries[0].site.title
-            )
-          })
-          .catch(() => setListTitle('Not found'))
+        const title = siteTitle(state.location.siteKey)
+        if (title !== undefined) setListTitle(title)
         break
       }
       case 'entry': {
-        const parentType = state.location.parent.type
-        if (parentType === 'category') {
-          setListTitle(state.location.parent.key)
+        const { parent } = state.location
+        if (parent.type === 'category') {
+          setListTitle(parent.key)
           break
         }
-
-        if (state.location.parent.key === 'all') {
-          setListTitle('All Items')
-          break
-        }
-
-        storage
-          .getSiteEntries(state.location.parent.key)
-          .then((entries) => {
-            setListTitle(
-              entries.length === 0 ? 'Not found' : entries[0].site.title
-            )
-          })
-          .catch(() => setListTitle('Not found'))
+        const title = siteTitle(parent.key)
+        if (title !== undefined) setListTitle(title)
         break
       }
       default:
         setListTitle('All Items')
         break
     }
-  }, [state])
+  }, [state, categories, status])
 
   const isOpml = state.location?.type === 'opml'
   const isLoading = status === 'loading'
+  const showOpml = shouldMountOpml(isOpml, isLoading)
 
   return (
     <>
@@ -228,15 +216,25 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
               pageState === 'opml' ? 'block' : 'hidden md:block'
             }`}
           >
-            <OpmlView
-              initialOpml={initialOpml}
-              categories={categories}
-              active={true}
-              onBack={() => {
-                setPageState('categories')
-                dispatch(updatePath('/sites/all'))
-              }}
-            />
+            {showOpml ? (
+              <OpmlView
+                initialOpml={initialOpml}
+                categories={categories}
+                active={true}
+                onBack={() => {
+                  setPageState('categories')
+                  dispatch(updatePath('/sites/all'))
+                }}
+              />
+            ) : (
+              <ListShell
+                title="feeds.opml"
+                onBack={() => {
+                  setPageState('categories')
+                  dispatch(updatePath('/sites/all'))
+                }}
+              />
+            )}
           </div>
         ) : (
           <>
@@ -266,18 +264,24 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
                   }}
                 />
               ) : (
-                <ListShell title={listTitle || 'All Items'} />
+                <ListShell
+                  title={listTitle}
+                  onBack={() => setPageState('categories')}
+                />
               )}
             </div>
 
             <div
               className={`h-full min-h-0 w-full flex-1 overflow-hidden ${
-                !content && !entryMissing ? 'hidden md:block' : ''
+                isArticlePaneHidden(pageState, !!content, entryMissing)
+                  ? 'hidden md:block'
+                  : ''
               } ${articleClassName(pageState)}`}
             >
               <ItemContent
                 content={content}
                 missing={entryMissing}
+                loading={pageState === 'article'}
                 selectBack={() => {
                   const location = state.location
                   if (location.type !== 'entry') return
@@ -300,22 +304,31 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 
 // The list pane while the feed set loads: same head as ItemList, so nothing
 // jumps when the real list takes its place.
-const ListShell: FC<{ title: string }> = ({ title }) => (
+const ListShell: FC<{ title: string; onBack: () => void }> = ({
+  title,
+  onBack
+}) => (
   <section
     className="flex h-full flex-col overflow-hidden border-border bg-background md:border-r"
     aria-label="Feed items"
   >
     <div className="fk-list-head">
       <div className="fk-backbar md:hidden">
-        <BackButton onClickBack={() => {}} />
+        <BackButton onClickBack={onBack} />
       </div>
       <div className="fk-list-titlebar">
-        <h2 className="fk-list-title">{title}</h2>
+        <h2 className="fk-list-title">{title || '\u00a0'}</h2>
       </div>
     </div>
     <div className="flex flex-1 flex-col items-center justify-center gap-3.5 p-8">
-      <div className="feeds-spinner size-7" role="status" aria-label="Loading"></div>
-      <p className="text-sm leading-[1.5] text-muted-foreground">Loading items…</p>
+      <div
+        className="feeds-spinner size-7"
+        role="status"
+        aria-label="Loading"
+      ></div>
+      <p className="text-sm leading-[1.5] text-muted-foreground">
+        Loading items…
+      </p>
     </div>
   </section>
 )

@@ -3,6 +3,7 @@ import { SiteEntry } from '../storage/types'
 import {
   LocationState,
   formatRelativeTime,
+  getListKey,
   getSelectedEntryKey
 } from '../utils'
 import { getStorage } from '../storage'
@@ -32,7 +33,9 @@ export const ItemList = ({
   const [pageState, setPageState] = useState<'loaded' | 'loading' | 'error'>(
     'loading'
   )
-  const [currentCategoryOrSite, setCurrentCategoryOrSite] = useState<string>('')
+  const [currentCategoryOrSite, setCurrentCategoryOrSite] = useState<string>(
+    () => getListKey(locationState)
+  )
   const [entries, setEntries] = useState<SiteEntry[]>([])
   const [totalEntry, setTotalEntry] = useState<number>(0)
   const [selectedEntryHash, setSelectedEntryHash] = useState<string>(
@@ -42,6 +45,10 @@ export const ItemList = ({
 
   const itemsRef = useRef<HTMLUListElement>(null)
   const nextBatchEntry = useRef<HTMLLIElement>(null)
+  // Bumped whenever the list changes, so a page request that started for an
+  // earlier list can tell its answer is stale and drop it.
+  const generation = useRef(0)
+  const loadingMore = useRef(false)
 
   let element: HTMLElement | null = null
 
@@ -99,16 +106,25 @@ export const ItemList = ({
     }
   }
 
-  const loadNextPage = async (page: number): Promise<void> => {
-    if (pageState === 'loading') return
-    if (entries.length === totalEntry) return
+  const loadNextPage = async (nextPage: number): Promise<void> => {
+    if (loadingMore.current) return
+    if (pageState !== 'loaded') return
+    if (entries.length >= totalEntry) return
 
-    const { entries: newEntries } = await loadEntries(
-      basePath,
-      locationState,
-      page
-    )
-    setEntries(entries.concat(newEntries))
+    const requestGeneration = generation.current
+    loadingMore.current = true
+    try {
+      const result = await loadEntries(basePath, locationState, nextPage)
+      if (requestGeneration !== generation.current || !result) return
+      setEntries((current) => current.concat(result.entries))
+      setPage(nextPage)
+    } catch {
+      // Keep the entries already shown; scrolling again retries
+    } finally {
+      if (requestGeneration === generation.current) {
+        loadingMore.current = false
+      }
+    }
   }
 
   const selectEntryHash = (entryKey: string, scrollIntoView?: boolean) => {
@@ -124,20 +140,12 @@ export const ItemList = ({
     selectEntry(parentType, parentKey, entryKey)
   }
 
+  // The list follows the URL's parent (category or site), including when an
+  // entry URL from another list is reached through back/forward.
+  const listKey = getListKey(locationState)
   useEffect(() => {
-    if (locationState.type === 'entry') return
-
-    switch (locationState.type) {
-      case 'category': {
-        if (currentCategoryOrSite === locationState.category) return
-        return setCurrentCategoryOrSite(locationState.category)
-      }
-      case 'site': {
-        if (currentCategoryOrSite === locationState.siteKey) return
-        return setCurrentCategoryOrSite(locationState.siteKey)
-      }
-    }
-  }, [locationState])
+    setCurrentCategoryOrSite(listKey)
+  }, [listKey])
 
   // The selected row follows the URL, so deep links and back/forward show
   // the open article's row as selected.
@@ -148,6 +156,8 @@ export const ItemList = ({
   useEffect(() => {
     if (!element) return
     let cancelled = false
+    generation.current += 1
+    loadingMore.current = false
     // Never leave the previous list under the new title
     setPageState('loading')
     setEntries([])
@@ -169,6 +179,7 @@ export const ItemList = ({
     })(element)
     return () => {
       cancelled = true
+      generation.current += 1
     }
   }, [currentCategoryOrSite, element])
 
@@ -177,20 +188,15 @@ export const ItemList = ({
 
     const observer = new IntersectionObserver((entries) => {
       const [entry] = entries
-      if (pageState === 'loading') return
       if (entry.isIntersecting) {
-        setPageState('loading')
-        loadNextPage(page + 1).then(() => {
-          setPage((current) => current + 1)
-          setPageState('loaded')
-        })
+        loadNextPage(page + 1)
       }
     })
     observer.observe(nextBatchEntry.current)
     return () => {
       observer.disconnect()
     }
-  }, [nextBatchEntry, totalEntry, entries])
+  }, [nextBatchEntry, totalEntry, entries, page, pageState])
 
   useEffect(() => {
     const handler: EventListener = (event: KeyboardEvent) => {
@@ -285,7 +291,11 @@ export const ItemList = ({
             </p>
           </div>
         ) : pageState === 'loaded' && entries.length > 0 ? (
-          <ul ref={itemsRef} className="divide-y divide-border p-1.5" role="list">
+          <ul
+            ref={itemsRef}
+            className="divide-y divide-border p-1.5"
+            role="list"
+          >
             {entries.map((entry, index) => (
               <li
                 key={entry.key}

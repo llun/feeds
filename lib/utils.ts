@@ -141,9 +141,12 @@ export const formatRelativeTime = (
   const seconds = Math.round((nowMs - timestampMs) / 1000)
   if (seconds < 0) return formatter.format(0, 'second')
   for (const [unit, size] of RELATIVE_UNITS) {
-    if (seconds >= size) return formatter.format(-Math.floor(seconds / size), unit)
+    if (seconds >= size)
+      return formatter.format(-Math.floor(seconds / size), unit)
   }
-  return seconds < 10 ? formatter.format(0, 'second') : formatter.format(-seconds, 'second')
+  return seconds < 10
+    ? formatter.format(0, 'second')
+    : formatter.format(-seconds, 'second')
 }
 
 export interface NavSelection {
@@ -177,6 +180,46 @@ export const getNavSelection = (
   )
   return { kind: 'site', siteKey: parent.key, expandedCategory: owner?.title }
 }
+
+// Identifies the list a location shows. Entry URLs belong to the list they
+// were opened from, so back/forward between lists changes the key. The prefix
+// keeps a category and a site with the same key apart.
+export const getListKey = (location: LocationState): string => {
+  if (!location) return ''
+  switch (location.type) {
+    case 'category':
+      return `category:${location.category}`
+    case 'site':
+      return `site:${location.siteKey}`
+    case 'entry':
+      return `${location.parent.type}:${location.parent.key}`
+    default:
+      return ''
+  }
+}
+
+// A site's title comes from the category data, which lists every subscribed
+// site even when it has no entries yet. Undefined means the site is unknown.
+export const findSiteTitle = (
+  categories: { sites: { key: string; title: string }[] }[],
+  siteKey: string
+): string | undefined =>
+  categories
+    .flatMap((category) => category.sites)
+    .find((site) => site.key === siteKey)?.title
+
+// The OPML editor seeds its state from the data it mounts with, so it must
+// wait until the feed set is loaded.
+export const shouldMountOpml = (isOpml: boolean, isLoading: boolean): boolean =>
+  isOpml && !isLoading
+
+// The article pane is the only visible pane on a phone while an article
+// deep link loads, so it stays up (showing a loading state) in that case.
+export const isArticlePaneHidden = (
+  pageState: PageState,
+  hasContent: boolean,
+  entryMissing: boolean
+): boolean => !hasContent && !entryMissing && pageState !== 'article'
 
 export const getSelectedEntryKey = (location: LocationState): string =>
   location?.type === 'entry' ? location.entryKey : ''

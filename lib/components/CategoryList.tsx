@@ -25,7 +25,7 @@ interface CategoryListProps {
 // The sidebar sits one step above the page, so rows hover to surface-3 rather
 // than the page-level surface-2, which is the sidebar's own color.
 const navItemClassName =
-  'flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors'
+  'relative flex min-h-8 w-full items-center pointer-coarse:min-h-11 gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors'
 
 const idleNavItemClassName =
   'font-medium text-subtle hover:bg-surface-3 hover:text-foreground'
@@ -59,7 +59,9 @@ export const CategoryList = ({
       <div className="flex items-center justify-between p-4 pb-2.5">
         <span className="inline-flex items-center gap-2">
           <Logo size={30} />
-          <h1 className="text-xl leading-5 font-bold tracking-[0.02em]">FEEDS</h1>
+          <h1 className="text-xl leading-5 font-bold tracking-[0.02em]">
+            FEEDS
+          </h1>
         </span>
         <ThemeToggle />
       </div>
@@ -68,16 +70,16 @@ export const CategoryList = ({
       <div className="flex-1 overflow-y-auto px-3 pt-1 pb-4">
         <div
           className={`${navItemClassName} ${
-            isAll ? selectedNavItemClassName
-              : idleNavItemClassName
+            isAll ? selectedNavItemClassName : idleNavItemClassName
           }`}
         >
           <button
             type="button"
+            aria-current={isAll ? true : undefined}
             onClick={() => {
               selectSite?.('all', 'All Items')
             }}
-            className="hit-target flex min-w-0 flex-1 items-center gap-2 text-left focus-ring rounded"
+            className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-ring after:absolute after:inset-0 after:rounded-md after:content-['']"
           >
             <Inbox
               size={16}
@@ -94,7 +96,7 @@ export const CategoryList = ({
               type="application/atom+xml"
               aria-label="Open Atom feed for All Items"
               title="Open Atom feed for All Items"
-              className="flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-3 focus-ring"
+              className="relative z-10 flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-3 focus-ring"
               onClick={(e) => e.stopPropagation()}
             >
               <Rss size={13} aria-hidden="true" />
@@ -122,7 +124,7 @@ export const CategoryList = ({
                   onClick={() => {
                     selectCategory?.(category.title)
                   }}
-                  className="hit-target flex min-w-0 flex-1 items-center gap-2 text-left focus-ring rounded"
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-ring after:absolute after:inset-0 after:rounded-md after:content-['']"
                   aria-expanded={expanded}
                   aria-current={selected ? true : undefined}
                 >
@@ -143,7 +145,7 @@ export const CategoryList = ({
                     type="application/atom+xml"
                     aria-label={`Open Atom feed for ${category.title}`}
                     title={`Open Atom feed for ${category.title}`}
-                    className="flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-3 focus-ring"
+                    className="relative z-10 flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-3 focus-ring"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Rss size={13} aria-hidden="true" />
@@ -155,25 +157,25 @@ export const CategoryList = ({
                   {category.sites.map((site) => {
                     const siteSelected = site.key === selection.siteKey
                     return (
-                    <li key={site.key}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          selectSite?.(site.key, site.title)
-                        }}
-                        aria-current={siteSelected ? true : undefined}
-                        className={`hit-target flex min-h-7.5 w-full items-center gap-2 rounded-md py-1 pr-2 pl-7 text-left text-sm transition-colors focus-ring ${
-                          siteSelected
-                            ? 'bg-surface-3 font-semibold text-brand-emphasis'
-                            : 'text-muted-foreground hover:bg-surface-3 hover:text-foreground'
-                        }`}
-                      >
-                        <span className="flex-1 truncate">{site.title}</span>
-                        <span className={countClassName}>
-                          {site.totalEntries}
-                        </span>
-                      </button>
-                    </li>
+                      <li key={site.key}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            selectSite?.(site.key, site.title)
+                          }}
+                          aria-current={siteSelected ? true : undefined}
+                          className={`flex min-h-7.5 w-full pointer-coarse:min-h-11 items-center gap-2 rounded-md py-1 pr-2 pl-7 text-left text-sm transition-colors focus-ring ${
+                            siteSelected
+                              ? 'bg-surface-3 font-semibold text-brand-emphasis'
+                              : 'text-muted-foreground hover:bg-surface-3 hover:text-foreground'
+                          }`}
+                        >
+                          <span className="flex-1 truncate">{site.title}</span>
+                          <span className={countClassName}>
+                            {site.totalEntries}
+                          </span>
+                        </button>
+                      </li>
                     )
                   })}
                 </ul>
@@ -194,26 +196,23 @@ export const CategoryList = ({
           onClick={() => {
             selectOpml?.()
           }}
-          className={`hit-target ${navItemClassName} ${
+          className={`${navItemClassName} ${
             isOpml ? selectedNavItemClassName : idleNavItemClassName
           }`}
           aria-current={isOpml ? true : undefined}
         >
           <Settings
             size={16}
-            className={`shrink-0 ${
-              isOpml ? 'text-brand' : 'text-faint'
-            }`}
+            className={`shrink-0 ${isOpml ? 'text-brand' : 'text-faint'}`}
           />
           <span className="flex-1 truncate">Edit OPML</span>
         </button>
       </div>
 
       <div className="flex items-center justify-between gap-2 border-t border-border px-3.5 py-2.5 text-xs text-faint">
-        {buildTime && (
+        {buildTime && !loading && (
           <span className="min-w-0 truncate">
-            Updated{' '}
-            {formatRelativeTime(new Date(buildTime).getTime())}
+            Updated {formatRelativeTime(new Date(buildTime).getTime())}
           </span>
         )}
         {version && <span className="ml-auto shrink-0">v{version}</span>}
