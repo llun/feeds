@@ -175,6 +175,7 @@
   --link-hover: oklch(0.488 0.243 264.376);
 
   --border-strong: oklch(0.87 0 0);
+  --skeleton: oklch(0.922 0 0);
   --shimmer-highlight: oklch(1 0 0 / 70%);
 
   --measure: 68ch;
@@ -244,6 +245,7 @@
   --link-hover: oklch(0.809 0.105 251.813);
 
   --border-strong: oklch(1 0 0 / 18%);
+  --skeleton: oklch(0.269 0 0);
   --shimmer-highlight: oklch(1 0 0 / 6%);
 }
 
@@ -344,7 +346,7 @@
   .feeds-skeleton {
     display: block;
     border-radius: 4px;
-    background-color: var(--surface-3);
+    background-color: var(--skeleton);
     background-image: linear-gradient(
       100deg,
       transparent 40%,
