@@ -86,7 +86,6 @@ export async function loadOPMLAndWriteFiles(
   for (const category of opml) {
     const { category: title, items } = category
     await createCategoryDirectory(contentDirectory, title)
-    if (!items) continue
     console.log(`Load category ${title}`)
     for (const item of items) {
       const feedData = await feedLoader(item.title, item.xmlUrl)

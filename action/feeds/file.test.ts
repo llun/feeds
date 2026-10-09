@@ -163,6 +163,31 @@ test('#loadOPMLAndWriteFiles writes one json per loaded feed with the OPML xmlUr
   t.is(written.xmlUrl, 'https://good.example.com/feed')
 })
 
+test('#loadOPMLAndWriteFiles and #createCategoryData keep a category emptied in the OPML as an empty category', async (t) => {
+  const { rootPath, paths } = t.context
+  const opmlPath = path.join(rootPath, 'feeds.opml')
+  await fs.writeFile(
+    opmlPath,
+    '<opml version="2.0"><body><outline title="Empty"/></body></opml>'
+  )
+  const loader = sinon.stub().resolves(null)
+  await fs.mkdir(paths.feedsContentPath, { recursive: true })
+
+  await loadOPMLAndWriteFiles(paths.feedsContentPath, opmlPath, loader)
+  await prepareDirectories(paths)
+  await createCategoryData(paths)
+
+  t.true(loader.notCalled)
+  t.deepEqual(await fs.readdir(path.join(paths.feedsContentPath, 'Empty')), [])
+  t.deepEqual(await readJson(path.join(paths.dataPath, 'categories.json')), [
+    { name: 'Empty', sites: [], totalEntries: 0 }
+  ])
+  t.deepEqual(
+    await readJson(path.join(paths.categoryDataPath, 'Empty.json')),
+    []
+  )
+})
+
 test('#createCategoryData writes category, site and entry data newest first with totals', async (t) => {
   const { paths } = t.context
   const older = {

@@ -273,6 +273,12 @@ export function parseRss(feedTitle: string, xml: any): Site {
   return feed
 }
 
+// xml2js gives an element with attributes as `{ _, $ }` and one without as a
+// plain string.
+function atomText(node: string | { _?: string }): string {
+  return (typeof node === 'string' ? node : node?._) ?? ''
+}
+
 export function parseAtom(feedTitle: string, xml: any): Site {
   if (!xml.feed) return null
   const { title, subtitle, link, updated, generator, entry, author } = xml.feed
@@ -292,9 +298,9 @@ export function parseAtom(feedTitle: string, xml: any): Site {
           const itemLink =
             link && (link.find((item) => item.$.rel === 'alternate') || link[0])
           const feedContent = content
-            ? content[0]._
+            ? atomText(content[0])
             : summary
-              ? summary[0]._
+              ? atomText(summary[0])
               : ''
           const entryLink = absolutizeEntryLink(
             (itemLink && itemLink.$.href) || '',

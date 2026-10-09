@@ -7,6 +7,7 @@ import {
   getFeedAlternates
 } from './feed-alternates'
 import { getCategoryId } from '../action/feeds/atom/identity'
+import { readOpml } from '../action/feeds/opml'
 
 test('#extractCategoryTitlesFromOpml lists category titles sorted, skipping feeds and duplicates', (t) => {
   const sampleOpml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -108,6 +109,44 @@ test('#getFeedAlternates falls back to feeds.opml when the manifest is unusable'
       `manifest ${name}`
     )
   }
+})
+
+test('#getFeedAlternates fallback ids match the action category ids for titles with named and numeric entities and apostrophes', async (t) => {
+  const opml = `<opml version="2.0"><body>
+  <outline type="folder" title="Q&amp;A" text="Q&amp;A">
+    <outline type="rss" title="A" xmlUrl="https://a.example.com/rss" />
+  </outline>
+  <outline title="Bob's &quot;Picks&quot;" text="Bob's &quot;Picks&quot;">
+    <outline type="rss" title="B" xmlUrl="https://b.example.com/rss" />
+  </outline>
+  <outline title='Say "hi" &amp; &lt;bye&gt;' text='Say "hi" &amp; &lt;bye&gt;'>
+    <outline type="rss" title="C" xmlUrl="https://c.example.com/rss" />
+  </outline>
+  <outline title="It&#39;s &#x26; &#x0E01;" text="It&#39;s &#x26; &#x0E01;">
+    <outline type="rss" title="D" xmlUrl="https://d.example.com/rss" />
+  </outline>
+  <outline title="Esc &amp;#39;x&amp;#39;" text="Esc &amp;#39;x&amp;#39;">
+    <outline type="rss" title="E" xmlUrl="https://e.example.com/rss" />
+  </outline>
+</body></opml>`
+  const rootDir = await createRoot(t, { 'feeds.opml': opml })
+
+  const actionTitles = (await readOpml(opml)).map((c) => c.category)
+  t.deepEqual(
+    getFeedAlternates('', { rootDir })
+      .slice(1)
+      .map((alt) => alt.url),
+    actionTitles
+      .sort((a, b) => a.localeCompare(b))
+      .map((title) => `/feeds/categories/${getCategoryId(title)}.xml`)
+  )
+  t.deepEqual(extractCategoryTitlesFromOpml(opml), [
+    'Bob\'s "Picks"',
+    'Esc &#39;x&#39;',
+    "It's & \u0E01",
+    'Q&A',
+    'Say "hi" & <bye>'
+  ])
 })
 
 test('#getFeedAlternates reads the OPML file named by the opmlFile option', async (t) => {

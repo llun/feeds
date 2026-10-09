@@ -119,11 +119,9 @@ export async function readOpml(opmlContent: string): Promise<OpmlCategory[]> {
       const items = outline.outline
       out.push({
         category,
-        items:
-          items &&
-          items
-            .map((item: any) => item.$)
-            .filter((item: any) => item && item.type === 'rss')
+        items: (items ?? [])
+          .map((item: any) => item.$)
+          .filter((item: any) => item && item.type === 'rss')
       })
       return out
     }, [])

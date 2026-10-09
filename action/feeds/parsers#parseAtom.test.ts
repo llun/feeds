@@ -67,6 +67,35 @@ test('#parseAtom uses summary when entry does not have content', async (t) => {
   })
 })
 
+test('#parseAtom reads content and summary whether or not they carry attributes', async (t) => {
+  const cases: [string, string, string][] = [
+    ['plain content', '<content>plain text</content>', 'plain text'],
+    [
+      'typed content',
+      '<content type="html">&lt;p&gt;typed&lt;/p&gt;</content>',
+      '<p>typed</p>'
+    ],
+    ['plain summary', '<summary>short text</summary>', 'short text'],
+    [
+      'typed summary',
+      '<summary type="text">typed summary</summary>',
+      'typed summary'
+    ]
+  ]
+  for (const [description, element, expected] of cases) {
+    const xml = await parseXML(`<feed xmlns="http://www.w3.org/2005/Atom">
+      <title>Feed</title>
+      <link rel="alternate" href="https://example.com/" />
+      <entry>
+        <title>Entry</title>
+        <link rel="alternate" href="https://example.com/entry" />
+        ${element}
+      </entry>
+    </feed>`)
+    t.is(parseAtom('Feed', xml)?.entries[0].content, expected, description)
+  }
+})
+
 function atomWithDates(dates: {
   feed?: string[]
   published?: string[]

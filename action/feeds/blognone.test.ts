@@ -60,6 +60,26 @@ test('#stripBlognoneChrome reduces the Drupal render to the article body', (t) =
   )
 })
 
+test('#stripBlognoneChrome keeps a date and a user link that belong to the article', (t) => {
+  const body =
+    '<p>posted <time datetime="2026-01-01">1 Jan</time> by ' +
+    '<a href="https://www.blognone.com/user/someone">someone</a></p>'
+  const content = stripBlognoneChrome(createDescription(body), TITLE)
+  t.is(content.trim(), body.replace(' datetime="2026-01-01"', ''))
+  t.false(content.includes('arjin'))
+  t.false(content.includes('Sat, 15/08/2026'))
+})
+
+test('#stripBlognoneChrome still strips the footer after an unclosed div in the body', (t) => {
+  const content = stripBlognoneChrome(
+    createDescription('<p>text</p><div>never closed'),
+    TITLE
+  )
+  t.true(content.includes('never closed'))
+  t.false(content.includes('arjin'))
+  t.false(content.includes('Sat, 15/08/2026'))
+})
+
 test('#stripBlognoneChrome keeps a span that holds an image but no text', (t) => {
   const body =
     '<p><span><img src="https://www.blognone.com/a.jpg" /></span></p>'

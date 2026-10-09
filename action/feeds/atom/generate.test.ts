@@ -152,7 +152,12 @@ async function generateFromDatabase(tempRoot: string, opmlPath: string) {
   })
   try {
     await createTables(db)
-    for (const category of ['Technology', 'Science', 'EmptyCategory']) {
+    for (const category of [
+      'Technology',
+      'Science',
+      'EmptyCategory',
+      'RemovedCategory'
+    ]) {
       await insertCategory(db, category)
     }
     const siteOf = (title: string, host: string) => ({
@@ -167,11 +172,12 @@ async function generateFromDatabase(tempRoot: string, opmlPath: string) {
     const shared = siteOf('Shared Tech', 'shared.example')
     const sharedKey = await insertSite(db, 'Technology', shared)
     await insertSite(db, 'Science', shared)
-    const techKey = await insertSite(
-      db,
-      'Technology',
-      siteOf('Tech Only', 'tech.example')
-    )
+    // Stored feed URL differs from the OPML's (trailing slash): the site is
+    // still subscribed to, so its entries must stay in the feeds.
+    const techKey = await insertSite(db, 'Technology', {
+      ...siteOf('Tech Only', 'tech.example'),
+      xmlUrl: 'https://tech.example/feed.xml/'
+    })
 
     await insertEntry(db, sharedKey!, 'Shared Tech', 'Technology', ITEM_SHARED)
     await insertEntry(db, sharedKey!, 'Shared Tech', 'Science', ITEM_SHARED)
@@ -182,6 +188,24 @@ async function generateFromDatabase(tempRoot: string, opmlPath: string) {
       'Technology',
       ITEM_TECH_UNDATED
     )
+
+    // Subscription removed from the OPML but its rows are still stored
+    const staleKey = await insertSite(
+      db,
+      'Technology',
+      siteOf('Removed Site', 'stale.example')
+    )
+    await insertEntry(db, staleKey!, 'Removed Site', 'Technology', STALE_ENTRY)
+    // Category removed from the OPML but its rows are still stored
+    const oldCatKey = await insertSite(
+      db,
+      'RemovedCategory',
+      siteOf('Old Cat Site', 'oldcat.example')
+    )
+    await insertEntry(db, oldCatKey!, 'Old Cat Site', 'RemovedCategory', {
+      ...STALE_ENTRY,
+      title: 'Old Entry'
+    })
 
     await generateFeedsFromDatabase({
       publicPath,
@@ -249,26 +273,39 @@ function eachMode(
   })
 }
 
-test('files: ignores a stale subscription JSON that is no longer in the OPML', async (t) => {
-  const { xml } = await readFeed(t, 'files', 'all.xml')
-  t.false(xml.includes('Zombie Entry'))
-})
+eachMode(
+  'ignores a stored subscription that is no longer in the OPML',
+  async (t, mode) => {
+    const { xml } = await readFeed(t, mode, 'all.xml')
+    t.false(xml.includes('Zombie Entry'))
+    const tech = await readFeed(
+      t,
+      mode,
+      'categories',
+      `${getCategoryId('Technology')}.xml`
+    )
+    t.false(tech.xml.includes('Zombie Entry'))
+  }
+)
 
-test('files: ignores a category folder that is no longer in the OPML', async (t) => {
-  const { publicPaths } = t.context as { publicPaths: Record<Mode, string> }
-  const { xml } = await readFeed(t, 'files', 'all.xml')
-  t.false(xml.includes('Old Entry'))
-  t.false(
-    await exists(
-      path.join(
-        publicPaths.files,
-        'feeds',
-        'categories',
-        `${getCategoryId('RemovedCategory')}.xml`
+eachMode(
+  'ignores a stored category that is no longer in the OPML',
+  async (t, mode) => {
+    const { publicPaths } = t.context as { publicPaths: Record<Mode, string> }
+    const { xml } = await readFeed(t, mode, 'all.xml')
+    t.false(xml.includes('Old Entry'))
+    t.false(
+      await exists(
+        path.join(
+          publicPaths[mode],
+          'feeds',
+          'categories',
+          `${getCategoryId('RemovedCategory')}.xml`
+        )
       )
     )
-  )
-})
+  }
+)
 
 eachMode(
   'lists an entry shared by two categories once, with both categories',
@@ -548,4 +585,62 @@ test('#writeFeedsAtomically keeps the previous feeds and cleans up when writing 
     'utf8'
   )
   t.true(allXml.includes('Previous run'))
+})
+
+test('keeps an entry in each category feed when two sites in different categories publish the same title and link', async (t) => {
+  const tempRoot = await makeTempDir(t)
+  const opmlPath = path.join(tempRoot, 'feeds.opml')
+  await fs.writeFile(
+    opmlPath,
+    `<opml version="2.0"><body>
+  <outline title="Tech" text="Tech"><outline type="rss" title="Blog" text="Blog" xmlUrl="https://blog.example/feed.xml" /></outline>
+  <outline title="News" text="News"><outline type="rss" title="HN" text="HN" xmlUrl="https://hn.example/feed.xml" /></outline>
+</body></opml>`
+  )
+  const publicPath = path.join(tempRoot, 'public')
+  await fs.mkdir(publicPath)
+  const db = knex({
+    client: 'sqlite3',
+    connection: { filename: ':memory:' },
+    useNullAsDefault: true
+  })
+  try {
+    await createTables(db)
+    await insertCategory(db, 'Tech')
+    await insertCategory(db, 'News')
+    const siteOf = (title: string, host: string) => ({
+      title,
+      link: `https://${host}`,
+      xmlUrl: `https://${host}/feed.xml`,
+      description: title,
+      updatedAt: 1700000000000,
+      generator: 'test',
+      entries: []
+    })
+    const blogKey = await insertSite(db, 'Tech', siteOf('Blog', 'blog.example'))
+    const hnKey = await insertSite(db, 'News', siteOf('HN', 'hn.example'))
+    const entry = { ...ITEM_SHARED, link: 'https://blog.example/p' }
+    await insertEntry(db, blogKey!, 'Blog', 'Tech', entry)
+    await insertEntry(db, hnKey!, 'HN', 'News', entry)
+    await generateFeedsFromDatabase({
+      publicPath,
+      database: db,
+      opmlFilePath: opmlPath,
+      siteConfig: SITE_CONFIG
+    })
+  } finally {
+    await db.destroy()
+  }
+  for (const category of ['Tech', 'News']) {
+    const xml = await fs.readFile(
+      path.join(
+        publicPath,
+        'feeds',
+        'categories',
+        `${getCategoryId(category)}.xml`
+      ),
+      'utf8'
+    )
+    t.true(xml.includes('Shared Breakthrough'), category)
+  }
 })

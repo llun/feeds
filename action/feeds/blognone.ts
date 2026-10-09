@@ -28,7 +28,8 @@ const SITE_HOSTNAME = 'blognone.com'
 
 /** The label Drupal renders above the body field, and its two wrapper divs. */
 const LABEL_CLASS = 'field__label'
-const WRAPPER_CLASSES = ['field--name-body', 'field-item']
+const ITEM_CLASS = 'field-item'
+const WRAPPER_CLASSES = ['field--name-body', ITEM_CLASS]
 
 /**
  * A tag no feed publishes, standing in for a wrapper div that is on its way
@@ -40,6 +41,9 @@ const WRAPPER_CLASSES = ['field--name-body', 'field-item']
  * text.
  */
 const WRAPPER_TAG = 'blognone-wrapper'
+
+/** Class set on a renamed wrapper so its close tag can still be recognized. */
+const WRAPPER_MARK = 'blognone-wrapper-mark'
 
 function hasClass(value: string | undefined, name: string) {
   return Boolean(value) && value!.split(/\s+/).includes(name)
@@ -75,6 +79,9 @@ export function stripBlognoneChrome(content: string, title: string) {
   // can only ever drop more than they do, never allow more. It keeps the
   // feed's classes, which are what the rules below read; the second pass drops
   // them again.
+  // How many of the body wrappers the parser is inside. The footer sits outside
+  // them, so a date or a profile link inside is part of the article.
+  let bodyDepth = 0
   const marked = sanitizeHtml(content, {
     ...ENTRY_CONTENT_SANITIZE_OPTIONS,
     allowedTags: [
@@ -87,10 +94,18 @@ export function stripBlognoneChrome(content: string, title: string) {
     // which they do carry and sanitize-html throws on.
     allowedClasses: { '*': ['*'] },
     transformTags: {
-      div: (tagName, attribs) =>
-        WRAPPER_CLASSES.some((name) => hasClass(attribs.class, name))
-          ? { tagName: WRAPPER_TAG, attribs: {} }
-          : { tagName, attribs }
+      div: (tagName, attribs) => {
+        if (!WRAPPER_CLASSES.some((name) => hasClass(attribs.class, name))) {
+          return { tagName, attribs }
+        }
+        // Only the innermost wrapper is counted: an unclosed div in the body
+        // leaves the outer one open, which would keep the footer at depth 1.
+        if (!hasClass(attribs.class, ITEM_CLASS)) {
+          return { tagName: WRAPPER_TAG, attribs: {} }
+        }
+        bodyDepth++
+        return { tagName: WRAPPER_TAG, attribs: { class: WRAPPER_MARK } }
+      }
     },
     // Called on close tags, so a child is judged before its parent and the
     // parent's text no longer counts a child dropped here. That is what takes
@@ -99,10 +114,16 @@ export function stripBlognoneChrome(content: string, title: string) {
       if (frame.tag === 'div' && hasClass(frame.attribs.class, LABEL_CLASS)) {
         return true
       }
-      // The date, and the author's link to their profile page.
-      if (frame.tag === 'time') return true
-      if (frame.tag === 'a' && isUserProfileLink(frame.attribs.href)) {
-        return true
+      // The close tag still reads as the div it was, so the mark is what
+      // identifies a wrapper here.
+      if (hasClass(frame.attribs.class, WRAPPER_MARK)) bodyDepth--
+      // The date, and the author's link to their profile page -- in the
+      // footer only.
+      if (bodyDepth === 0) {
+        if (frame.tag === 'time') return true
+        if (frame.tag === 'a' && isUserProfileLink(frame.attribs.href)) {
+          return true
+        }
       }
       if (frame.tag !== 'span') return false
       // Matched on the text rather than on being the first element, so a span

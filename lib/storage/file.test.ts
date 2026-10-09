@@ -69,6 +69,24 @@ test.serial(
   }
 )
 
+test.serial(
+  '#FileStorage loads all.json once for counts and pages, and retries after a failed load',
+  async (t) => {
+    const stub = stubFetch(t, { status: 500 })
+    const storage = new FileStorage('')
+    await t.throwsAsync(storage.countAllEntries())
+    await t.throwsAsync(storage.getAllEntries())
+    t.is(stub.callCount, 2)
+
+    const entry = { entryHash: 'e1', title: 'T', siteHash: 's', siteTitle: 'S' }
+    stub.resolves({ status: 200, json: async () => [entry] } as Response)
+    t.is(await storage.countAllEntries(), 1)
+    t.is((await storage.getAllEntries())[0].key, 'e1')
+    t.is(await storage.countAllEntries(), 1)
+    t.is(stub.callCount, 3)
+  }
+)
+
 function stubFetch(
   t: { teardown: (fn: () => void) => void },
   response: Partial<Response>
@@ -138,6 +156,28 @@ test.serial(
 )
 
 test.serial(
+  '#FileStorage encodes the category in the category entries url',
+  async (t) => {
+    const fetchStub = stubFetch(t, { status: 200, json: async () => [] })
+    const storage = new FileStorage('/base')
+
+    for (const category of ['C#', 'Q&A?', 'a b%']) {
+      fetchStub.resetHistory()
+      await storage.getCategoryEntries(category)
+      await storage.countCategoryEntries(category)
+
+      t.deepEqual(
+        fetchStub.getCalls().map((call) => call.args[0]),
+        Array(2).fill(
+          `/base/data/categories/${encodeURIComponent(category)}.json`
+        ),
+        category
+      )
+    }
+  }
+)
+
+test.serial(
   '#FileStorage.getContent maps the stored link to url and date to seconds',
   async (t) => {
     const fetchStub = stubFetch(t, {
@@ -167,18 +207,17 @@ test.serial(
 )
 
 test.serial(
-  '#FileStorage.countAllEntries sums entries across categories',
+  '#FileStorage.countAllEntries counts the entries of all.json once, not per category',
   async (t) => {
-    stubFetch(t, {
+    // Two categories of 5 and 7 entries that share 2 of them: all.json lists
+    // each entry once.
+    const stub = stubFetch(t, {
       status: 200,
-      json: async () => [
-        { totalEntries: 5 },
-        { totalEntries: 7 },
-        { totalEntries: 0 }
-      ]
+      json: async () => Array.from({ length: 10 }, () => rawEntry)
     })
 
-    t.is(await new FileStorage('').countAllEntries(), 12)
+    t.is(await new FileStorage('/base').countAllEntries(), 10)
+    t.is(stub.firstCall.args[0], '/base/data/all.json')
   }
 )
 
