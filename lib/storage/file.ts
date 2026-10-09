@@ -1,15 +1,22 @@
 import { Storage } from './types'
+import { withDataVersion } from './version'
 
 export class FileStorage implements Storage {
   private basePath: string
+  private version?: string
   private allEntries: Promise<any[]> | null = null
 
-  constructor(basePath: string) {
+  constructor(basePath: string, version?: string) {
     this.basePath = `${basePath}/data`
+    this.version = version
+  }
+
+  private fetchData(path: string) {
+    return fetch(withDataVersion(`${this.basePath}/${path}`, this.version))
   }
 
   async getCategories() {
-    const response = await fetch(`${this.basePath}/categories.json`)
+    const response = await this.fetchData(`categories.json`)
     if (response.status !== 200) throw new Error('Fail to load categories')
 
     const categories = await response.json()
@@ -27,8 +34,8 @@ export class FileStorage implements Storage {
   }
 
   async getCategoryEntries(category: string, page = 0) {
-    const response = await fetch(
-      `${this.basePath}/categories/${encodeURIComponent(category)}.json`
+    const response = await this.fetchData(
+      `categories/${encodeURIComponent(category)}.json`
     )
     if (response.status !== 200)
       throw new Error('Fail to load category entries')
@@ -46,8 +53,8 @@ export class FileStorage implements Storage {
   }
 
   async getSiteEntries(siteKey: string, page = 0) {
-    const response = await fetch(
-      `${this.basePath}/sites/${encodeURIComponent(siteKey)}.json`
+    const response = await this.fetchData(
+      `sites/${encodeURIComponent(siteKey)}.json`
     )
     if (response.status !== 200) throw new Error('Fail to load site entries')
 
@@ -68,7 +75,7 @@ export class FileStorage implements Storage {
   private loadAllEntries() {
     if (!this.allEntries) {
       const load = (async () => {
-        const response = await fetch(`${this.basePath}/all.json`)
+        const response = await this.fetchData(`all.json`)
         if (response.status !== 200) throw new Error('Fail to load all entries')
         return (await response.json()) as any[]
       })()
@@ -88,8 +95,8 @@ export class FileStorage implements Storage {
   }
 
   async countSiteEntries(siteKey: string) {
-    const response = await fetch(
-      `${this.basePath}/sites/${encodeURIComponent(siteKey)}.json`
+    const response = await this.fetchData(
+      `sites/${encodeURIComponent(siteKey)}.json`
     )
     if (response.status !== 200) throw new Error('Fail to load site entries')
     const json = await response.json()
@@ -98,8 +105,8 @@ export class FileStorage implements Storage {
   }
 
   async countCategoryEntries(category: string) {
-    const response = await fetch(
-      `${this.basePath}/categories/${encodeURIComponent(category)}.json`
+    const response = await this.fetchData(
+      `categories/${encodeURIComponent(category)}.json`
     )
     if (response.status !== 200)
       throw new Error('Fail to load category entries')
@@ -122,8 +129,8 @@ export class FileStorage implements Storage {
   }
 
   async getContent(key: string) {
-    const response = await fetch(
-      `${this.basePath}/entries/${encodeURIComponent(key)}.json`
+    const response = await this.fetchData(
+      `entries/${encodeURIComponent(key)}.json`
     )
     if (response.status !== 200) throw new Error('Fail to load content')
 
@@ -140,7 +147,7 @@ export class FileStorage implements Storage {
 
   async getOpml(): Promise<string | null> {
     try {
-      const response = await fetch(`${this.basePath}/feeds.opml`)
+      const response = await this.fetchData(`feeds.opml`)
       if (response.status !== 200) return null
       return await response.text()
     } catch {

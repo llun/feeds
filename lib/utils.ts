@@ -2,6 +2,7 @@ import React from 'react'
 
 import { getStorage } from './storage'
 import { Content } from './storage/types'
+import type { RecoveryResult } from './freshness'
 
 export type PageState = 'categories' | 'entries' | 'article' | 'opml'
 
@@ -256,16 +257,41 @@ export const getHydrationView = (
   return { location: seed, pageState: getInitialPageState(seed) }
 }
 
+// Why an article could not be shown
+export type EntryProblem = 'missing' | 'unreachable' | null
+
+// What the article pane shows for the entry in the URL. Content and problems
+// belong to the entry they were loaded for, so a newly selected entry shows
+// the loading state rather than the previous article; a failed first load
+// shares the list's error on an article URL.
+export const getArticleView = (
+  entryKey: string | null,
+  loaded: {
+    key: string | null
+    content: Content | null
+    problem: EntryProblem
+  },
+  loadFailed: boolean
+): { content: Content | null; problem: EntryProblem } => {
+  if (entryKey === null) return { content: null, problem: null }
+  if (loadFailed) return { content: null, problem: 'unreachable' }
+  if (loaded.key !== entryKey) return { content: null, problem: null }
+  return { content: loaded.content, problem: loaded.problem }
+}
+
 export const locationController = async (
   locationState: LocationState,
   basePath: string,
   setContent: React.Dispatch<React.SetStateAction<Content | null>>,
   setPageState: React.Dispatch<React.SetStateAction<PageState>>,
-  setEntryMissing?: (missing: boolean) => void,
+  setEntryProblem?: (problem: EntryProblem) => void,
   isCurrent: () => boolean = () => true,
   // Re-run only because loading finished: do not pull a phone back from the
   // navigation pane the user already returned to.
-  keepNav = false
+  keepNav = false,
+  // Asked before an entry is reported missing, since a tab left open across a
+  // republish asks for entries the new build no longer has.
+  recover?: () => Promise<RecoveryResult>
 ) => {
   if (!locationState) return null
   const showEntries = () =>
@@ -276,19 +302,19 @@ export const locationController = async (
   const storage = getStorage(basePath)
   switch (locationState.type) {
     case 'opml': {
-      setEntryMissing?.(false)
+      setEntryProblem?.(null)
       setContent(null)
       setPageState('opml')
       return
     }
     case 'category': {
-      setEntryMissing?.(false)
+      setEntryProblem?.(null)
       setContent(null)
       showEntries()
       return
     }
     case 'site': {
-      setEntryMissing?.(false)
+      setEntryProblem?.(null)
       setContent(null)
       showEntries()
       return
@@ -304,12 +330,17 @@ export const locationController = async (
       // The user may have left this entry while it loaded
       if (!isCurrent()) return
       if (!content) {
+        const recovery = recover ? await recover() : 'current'
+        // A reload for a new build loads this entry again
+        if (!isCurrent() || recovery === 'reloaded') return
         setContent(null)
-        setEntryMissing?.(true)
+        setEntryProblem?.(
+          recovery === 'unreachable' ? 'unreachable' : 'missing'
+        )
         setPageState('article')
         return
       }
-      setEntryMissing?.(false)
+      setEntryProblem?.(null)
       setContent(content)
       setPageState('article')
       return

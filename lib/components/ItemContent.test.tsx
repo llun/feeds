@@ -189,3 +189,17 @@ test('#ItemContent shows a loading state with a back bar while an article loads'
   t.regex(html, /aria-label="Go back"/)
   t.notRegex(html, /Select an item/)
 })
+
+test('#ItemContent offers a retry when the item could not be reached, and a way back when it is gone', (t) => {
+  const unreachable = renderToStaticMarkup(
+    <ItemContent problem="unreachable" />
+  )
+  t.regex(unreachable, /Couldn&#x27;t load this item/)
+  t.regex(unreachable, /Try again/)
+  t.notRegex(unreachable, /no longer available/)
+
+  const missing = renderToStaticMarkup(<ItemContent problem="missing" />)
+  t.regex(missing, /no longer available/)
+  t.regex(missing, /Back to list/)
+  t.notRegex(missing, /Try again/)
+})

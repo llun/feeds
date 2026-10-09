@@ -4,6 +4,7 @@ import {
   PageState,
   findSiteTitle,
   formatRelativeTime,
+  getArticleView,
   getHydrationView,
   getListKey,
   parentPath,
@@ -273,7 +274,7 @@ test.serial(
     )
 
     t.is(state.content, null)
-    t.true(setEntryMissing.calledOnceWith(true))
+    t.true(setEntryMissing.calledOnceWith('missing'))
     t.is<PageState, PageState>(state.page, 'article')
   }
 )
@@ -468,4 +469,103 @@ test('#parentPath encodes the parent key and round-trips', (t) => {
   t.is(path, '/categories/C%23%3F')
   t.deepEqual(parseLocation(path), { type: 'category', category: 'C#?' })
   t.is(parentPath({ type: 'site', key: 'abc' }), '/sites/abc')
+})
+
+test.serial(
+  '#locationController reloads a republished site instead of reporting the entry missing',
+  async (t) => {
+    stubFetch(t).resolves({ status: 404 } as Response)
+    const { state, setContent, setPageState } = createState(
+      SAMPLE_CONTENT,
+      'entries'
+    )
+    const setEntryProblem = sinon.spy()
+    const recover = sinon.stub().resolves('reloaded')
+
+    await locationController(
+      parseLocation('/sites/all/entries/moved'),
+      '',
+      setContent,
+      setPageState,
+      setEntryProblem,
+      () => true,
+      false,
+      recover
+    )
+
+    // The reload loads the entry again; nothing is reported for this attempt
+    t.true(recover.calledOnce)
+    t.is(state.content, SAMPLE_CONTENT)
+    t.is<PageState, PageState>(state.page, 'entries')
+    t.true(setEntryProblem.notCalled)
+  }
+)
+
+test.serial(
+  '#locationController reports an unreachable site rather than a missing entry',
+  async (t) => {
+    stubFetch(t).rejects(new TypeError('Failed to fetch'))
+    const { state, setContent, setPageState } = createState(null, 'entries')
+    const setEntryProblem = sinon.spy()
+
+    await locationController(
+      parseLocation('/sites/all/entries/offline'),
+      '',
+      setContent,
+      setPageState,
+      setEntryProblem,
+      () => true,
+      false,
+      async () => 'unreachable'
+    )
+
+    t.true(setEntryProblem.calledOnceWith('unreachable'))
+    t.is<PageState, PageState>(state.page, 'article')
+  }
+)
+
+test('#getArticleView only shows content and problems for the entry in the URL', (t) => {
+  const loaded = { key: 'e1', content: SAMPLE_CONTENT, problem: null }
+
+  // The open entry keeps its content
+  t.deepEqual(getArticleView('e1', loaded, false), {
+    content: SAMPLE_CONTENT,
+    problem: null
+  })
+  // A newly selected entry shows the loading state, not the previous article
+  t.deepEqual(getArticleView('e2', loaded, false), {
+    content: null,
+    problem: null
+  })
+  // ...and not the previous entry's problem either
+  t.deepEqual(
+    getArticleView(
+      'e2',
+      { key: 'e1', content: null, problem: 'missing' },
+      false
+    ),
+    { content: null, problem: null }
+  )
+  t.deepEqual(
+    getArticleView(
+      'e1',
+      { key: 'e1', content: null, problem: 'missing' },
+      false
+    ),
+    { content: null, problem: 'missing' }
+  )
+  // Retrying an unreachable entry clears the problem and loads again
+  t.deepEqual(
+    getArticleView('e1', { key: 'e1', content: null, problem: null }, false),
+    { content: null, problem: null }
+  )
+  // A failed first load is the article's error only on an article URL
+  t.deepEqual(getArticleView('e1', loaded, true), {
+    content: null,
+    problem: 'unreachable'
+  })
+  t.deepEqual(getArticleView(null, loaded, true), {
+    content: null,
+    problem: null
+  })
 })

@@ -7,12 +7,19 @@ import {
   getSelectedEntryKey
 } from '../utils'
 import { getStorage } from '../storage'
+import type { RecoveryResult } from '../freshness'
 import { BackButton } from './BackButton'
+import { Button } from './Button'
+import { ListSkeleton } from './Skeleton'
 
 interface ItemListProps {
   basePath: string
   title: string
   locationState: LocationState
+  // The build the data comes from; a new one reloads the list
+  dataVersion?: string | null
+  // Asked before a failed load is shown, in case the site was republished
+  recover?: () => Promise<RecoveryResult>
   selectEntry?: (
     parentType: string,
     parentKey: string,
@@ -26,13 +33,16 @@ export const ItemList = ({
   basePath,
   title,
   locationState,
+  dataVersion,
+  recover,
   selectSite,
   selectEntry,
   selectBack
 }: ItemListProps) => {
-  const [pageState, setPageState] = useState<'loaded' | 'loading' | 'error'>(
-    'loading'
-  )
+  const [pageState, setPageState] = useState<
+    'loaded' | 'loading' | 'error' | 'unreachable'
+  >('loading')
+  const [attempt, setAttempt] = useState(0)
   const [currentCategoryOrSite, setCurrentCategoryOrSite] = useState<string>(
     () => getListKey(locationState)
   )
@@ -119,7 +129,9 @@ export const ItemList = ({
       setEntries((current) => current.concat(result.entries))
       setPage(nextPage)
     } catch {
-      // Keep the entries already shown; scrolling again retries
+      // Keep the entries already shown; scrolling again retries. A republish
+      // reloads the whole list instead.
+      if (requestGeneration === generation.current) recover?.()
     } finally {
       if (requestGeneration === generation.current) {
         loadingMore.current = false
@@ -172,16 +184,20 @@ export const ItemList = ({
         element.scrollTo(0, 0)
       } catch {
         if (cancelled) return
+        // Stays on the loading state while this asks; a reload for a new
+        // build runs this effect again.
+        const recovery = recover ? await recover() : 'current'
+        if (cancelled || recovery === 'reloaded') return
         setEntries([])
         setTotalEntry(0)
-        setPageState('error')
+        setPageState(recovery === 'unreachable' ? 'unreachable' : 'error')
       }
     })(element)
     return () => {
       cancelled = true
       generation.current += 1
     }
-  }, [currentCategoryOrSite, element])
+  }, [currentCategoryOrSite, element, dataVersion, attempt])
 
   useEffect(() => {
     if (!nextBatchEntry?.current) return
@@ -280,15 +296,22 @@ export const ItemList = ({
 
       <div className="overflow-y-auto flex-1">
         {pageState === 'loading' ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3.5 p-8">
-            <div
-              className="feeds-spinner size-7"
-              role="status"
-              aria-label="Loading"
-            ></div>
-            <p className="text-sm leading-[1.5] text-muted-foreground">
-              Loading items…
+          <ListSkeleton />
+        ) : pageState === 'unreachable' ? (
+          <div
+            className="flex h-full flex-col items-center justify-center gap-3.5 p-8 text-center text-sm text-muted-foreground"
+            role="status"
+          >
+            <p className="max-w-[260px] leading-[1.5]">
+              Couldn&apos;t load items. Check your connection and try again.
             </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setAttempt((count) => count + 1)}
+            >
+              Try again
+            </Button>
           </div>
         ) : pageState === 'loaded' && entries.length > 0 ? (
           <ul

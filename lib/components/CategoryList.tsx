@@ -4,6 +4,8 @@ import { Category } from '../storage/types'
 import type { FeedManifestMap } from '../feed-manifest'
 import { ThemeToggle } from './ThemeToggle'
 import { Logo } from './Logo'
+import { NavSkeleton } from './Skeleton'
+import { Button } from './Button'
 import { LocationState, formatRelativeTime, getNavSelection } from '../utils'
 
 interface CategoryListProps {
@@ -13,6 +15,9 @@ interface CategoryListProps {
   buildTime?: string | null
   locationState?: LocationState
   loading?: boolean
+  // The feed set could not be loaded; the list pane says so
+  failed?: boolean
+  retry?: () => void
   feedManifest?: FeedManifestMap | null
   selectCategory?: (category: string) => void
   selectSite?: (siteKey: string, siteTitle: string) => void
@@ -42,6 +47,8 @@ export const CategoryList = ({
   buildTime,
   locationState,
   loading,
+  failed,
+  retry,
   feedManifest,
   selectCategory,
   selectSite,
@@ -104,8 +111,23 @@ export const CategoryList = ({
           )}
         </div>
 
-        {categories.length > 0 && (
+        {(categories.length > 0 || (loading && !failed)) && (
           <p className="feeds-eyebrow mx-1.5 mt-4 mb-1.5">Categories</p>
+        )}
+
+        {!categories.length && loading && !failed && <NavSkeleton />}
+
+        {/* On a phone the sidebar is the only pane after Back */}
+        {!categories.length && failed && (
+          <div
+            className="flex flex-col items-start gap-1.5 px-2 pt-4 text-xs leading-4 text-faint"
+            role="status"
+          >
+            <p>Couldn&apos;t load feeds.</p>
+            <Button variant="link" size="sm" onClick={retry}>
+              Try again
+            </Button>
+          </div>
         )}
 
         {categories.map((category) => {
