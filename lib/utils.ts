@@ -58,8 +58,18 @@ export type LocationState =
     }
   | null
 
+// Paths are built with encodeURIComponent, so each segment is decoded exactly
+// once here (a name containing '%' is encoded as '%25' and survives).
+const decodeSegment = (segment: string): string => {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return segment
+  }
+}
+
 export const parseLocation = (url: string): LocationState => {
-  const parts = url.split('/')
+  const parts = url.split('/').map(decodeSegment)
   parts.shift()
 
   /**
@@ -244,9 +254,16 @@ export const locationController = async (
   setContent: React.Dispatch<React.SetStateAction<Content | null>>,
   setPageState: React.Dispatch<React.SetStateAction<PageState>>,
   setEntryMissing?: (missing: boolean) => void,
-  isCurrent: () => boolean = () => true
+  isCurrent: () => boolean = () => true,
+  // Re-run only because loading finished: do not pull a phone back from the
+  // navigation pane the user already returned to.
+  keepNav = false
 ) => {
   if (!locationState) return null
+  const showEntries = () =>
+    setPageState((prev) =>
+      keepNav && prev === 'categories' ? prev : 'entries'
+    )
 
   const storage = getStorage(basePath)
   switch (locationState.type) {
@@ -259,13 +276,13 @@ export const locationController = async (
     case 'category': {
       setEntryMissing?.(false)
       setContent(null)
-      setPageState('entries')
+      showEntries()
       return
     }
     case 'site': {
       setEntryMissing?.(false)
       setContent(null)
-      setPageState('entries')
+      showEntries()
       return
     }
     case 'entry': {

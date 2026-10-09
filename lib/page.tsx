@@ -27,6 +27,7 @@ import {
   getHydrationView,
   getInitialPageState,
   isArticlePaneHidden,
+  LocationState,
   shouldMountOpml,
   locationController,
   parseLocation
@@ -58,6 +59,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   // first client render must not use it either; applied before paint.
   const [mounted, setMounted] = useState(false)
   useLayoutEffect(() => setMounted(true), [])
+  const lastLocationRef = useRef<LocationState>(null)
   const navSourceRef = useRef<'user' | 'popstate' | 'replace'>('user')
   const [state, dispatch] = useReducer(PathReducer, {
     pathname: currentPath,
@@ -107,7 +109,8 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         return
       }
 
-      if (status === 'loading') {
+      const wasLoading = status === 'loading'
+      if (wasLoading) {
         const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
         const storage = getStorage(basePath)
         const [categories, totalEntries, opml, manifest] = await Promise.all([
@@ -123,13 +126,16 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         setStatus('loaded')
       }
 
+      const keepNavLocation = lastLocationRef.current === state.location
+      lastLocationRef.current = state.location
       await locationController(
         state.location,
         state.pathname,
         setContent,
         setPageState,
         setEntryMissing,
-        () => !cancelled
+        () => !cancelled,
+        wasLoading || keepNavLocation
       )
     })()
     return () => {
@@ -216,12 +222,14 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
               // locationController won't run; switch the mobile panel here so
               // re-selecting the current category still shows the list
               setPageState('entries')
-              dispatch(updatePath(`/categories/${category}`))
+              dispatch(
+                updatePath(`/categories/${encodeURIComponent(category)}`)
+              )
             }}
             selectSite={(siteKey: string, siteTitle: string) => {
               setListTitle(siteTitle)
               setPageState('entries')
-              dispatch(updatePath(`/sites/${siteKey}`))
+              dispatch(updatePath(`/sites/${encodeURIComponent(siteKey)}`))
             }}
             selectOpml={() => {
               setPageState('opml')
@@ -271,7 +279,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
                   title={listTitle}
                   selectBack={() => setPageState('categories')}
                   selectSite={(site: string) => {
-                    dispatch(updatePath(`/sites/${site}`))
+                    dispatch(updatePath(`/sites/${encodeURIComponent(site)}`))
                   }}
                   selectEntry={(
                     parentType: string,
@@ -280,7 +288,9 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
                   ) => {
                     const targetPath = `/${
                       parentType === 'category' ? 'categories' : 'sites'
-                    }/${parentKey}/entries/${entryKey}`
+                    }/${encodeURIComponent(parentKey)}/entries/${encodeURIComponent(
+                      entryKey
+                    )}`
                     dispatch(updatePath(targetPath))
                   }}
                 />

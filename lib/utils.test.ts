@@ -400,3 +400,66 @@ test('#getHydrationView keeps a path the server render knew', (t) => {
   t.deepEqual(before.location, { type: 'opml' })
   t.is<PageState, PageState>(before.pageState, 'opml')
 })
+
+test('#parseLocation decodes path segments once', (t) => {
+  t.deepEqual(parseLocation('/categories/Thailand%20Tech'), {
+    type: 'category',
+    category: 'Thailand Tech'
+  })
+  t.deepEqual(parseLocation('/categories/100%2525'), {
+    type: 'category',
+    category: '100%25'
+  })
+  t.deepEqual(parseLocation(`/categories/${encodeURIComponent('50%')}`), {
+    type: 'category',
+    category: '50%'
+  })
+  t.deepEqual(parseLocation('/categories/bad%E0%A4%A'), {
+    type: 'category',
+    category: 'bad%E0%A4%A'
+  })
+  t.deepEqual(parseLocation('/categories/Thailand%20Tech/entries/e1'), {
+    type: 'entry',
+    entryKey: 'e1',
+    parent: { type: 'category', key: 'Thailand Tech' }
+  })
+})
+
+test('#locationController keeps the nav pane when only loading finished', async (t) => {
+  let pageState: PageState = 'categories'
+  const setPageState = (v: any) => {
+    pageState = typeof v === 'function' ? v(pageState) : v
+  }
+  const noop = () => {}
+  await locationController(
+    parseLocation('/categories/Design'),
+    '',
+    noop as any,
+    setPageState,
+    undefined,
+    () => true,
+    true
+  )
+  t.is<PageState, PageState>(pageState, 'categories')
+  await locationController(
+    parseLocation('/sites/all'),
+    '',
+    noop as any,
+    setPageState,
+    undefined,
+    () => true,
+    true
+  )
+  t.is<PageState, PageState>(pageState, 'categories')
+  pageState = 'article'
+  await locationController(
+    parseLocation('/sites/all'),
+    '',
+    noop as any,
+    setPageState,
+    undefined,
+    () => true,
+    true
+  )
+  t.is<PageState, PageState>(pageState, 'entries')
+})

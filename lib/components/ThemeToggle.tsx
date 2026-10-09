@@ -1,6 +1,6 @@
 import { useTheme } from 'next-themes'
 import { Sun, Moon, Laptop, Check } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 
 const OPTIONS = [
   { value: 'light', label: 'Light', ariaLabel: 'Light mode', Icon: Sun },
@@ -13,14 +13,24 @@ const OPTIONS = [
   }
 ] as const
 
+const noopSubscribe = () => () => {}
+
 export const ThemeToggle = () => {
   const { theme, setTheme } = useTheme()
   const [showModal, setShowModal] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
+  // next-themes reads localStorage synchronously on the client but not in the
+  // prerender, so show the neutral state until mounted to match the HTML.
+  const mounted = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false
+  )
+  const activeTheme = mounted ? theme : undefined
   const CurrentIcon =
-    OPTIONS.find((option) => option.value === theme)?.Icon ?? Laptop
+    OPTIONS.find((option) => option.value === activeTheme)?.Icon ?? Laptop
 
   // Handle escape key and click outside
   useEffect(() => {
@@ -77,7 +87,7 @@ export const ThemeToggle = () => {
           aria-labelledby="theme-toggle-button"
         >
           {OPTIONS.map(({ value, label, ariaLabel, Icon }) => {
-            const selected = theme === value
+            const selected = activeTheme === value
             return (
               <button
                 key={value}
