@@ -4,6 +4,7 @@ import {
   PageState,
   findSiteTitle,
   formatRelativeTime,
+  getArticleView,
   getHydrationView,
   getListKey,
   parentPath,
@@ -522,3 +523,49 @@ test.serial(
     t.is<PageState, PageState>(state.page, 'article')
   }
 )
+
+test('#getArticleView only shows content and problems for the entry in the URL', (t) => {
+  const loaded = { key: 'e1', content: SAMPLE_CONTENT, problem: null }
+
+  // The open entry keeps its content
+  t.deepEqual(getArticleView('e1', loaded, false), {
+    content: SAMPLE_CONTENT,
+    problem: null
+  })
+  // A newly selected entry shows the loading state, not the previous article
+  t.deepEqual(getArticleView('e2', loaded, false), {
+    content: null,
+    problem: null
+  })
+  // ...and not the previous entry's problem either
+  t.deepEqual(
+    getArticleView(
+      'e2',
+      { key: 'e1', content: null, problem: 'missing' },
+      false
+    ),
+    { content: null, problem: null }
+  )
+  t.deepEqual(
+    getArticleView(
+      'e1',
+      { key: 'e1', content: null, problem: 'missing' },
+      false
+    ),
+    { content: null, problem: 'missing' }
+  )
+  // Retrying an unreachable entry clears the problem and loads again
+  t.deepEqual(
+    getArticleView('e1', { key: 'e1', content: null, problem: null }, false),
+    { content: null, problem: null }
+  )
+  // A failed first load is the article's error only on an article URL
+  t.deepEqual(getArticleView('e1', loaded, true), {
+    content: null,
+    problem: 'unreachable'
+  })
+  t.deepEqual(getArticleView(null, loaded, true), {
+    content: null,
+    problem: null
+  })
+})

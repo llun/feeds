@@ -260,6 +260,25 @@ export const getHydrationView = (
 // Why an article could not be shown
 export type EntryProblem = 'missing' | 'unreachable' | null
 
+// What the article pane shows for the entry in the URL. Content and problems
+// belong to the entry they were loaded for, so a newly selected entry shows
+// the loading state rather than the previous article; a failed first load
+// shares the list's error on an article URL.
+export const getArticleView = (
+  entryKey: string | null,
+  loaded: {
+    key: string | null
+    content: Content | null
+    problem: EntryProblem
+  },
+  loadFailed: boolean
+): { content: Content | null; problem: EntryProblem } => {
+  if (entryKey === null) return { content: null, problem: null }
+  if (loadFailed) return { content: null, problem: 'unreachable' }
+  if (loaded.key !== entryKey) return { content: null, problem: null }
+  return { content: loaded.content, problem: loaded.problem }
+}
+
 export const locationController = async (
   locationState: LocationState,
   basePath: string,

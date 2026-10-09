@@ -1,10 +1,7 @@
 import React from 'react'
 import { AlertCircle, Check, Info, RefreshCw } from 'lucide-react'
 import { Button } from './Button'
-
-// What the page is doing about data from an older build of the site
-export type RefreshState =
-  'refreshing' | 'refreshed' | 'available' | 'failed' | null
+import type { RefreshState } from '../freshness'
 
 interface RefreshNoticeProps {
   state: RefreshState

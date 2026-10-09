@@ -29,9 +29,10 @@ export const setStorage = (version: string | null, next: Storage) => {
   storage = next
 }
 
+// The first storage, for the build the page rendered with. Later builds are
+// installed with setStorage once their data loaded, and are never replaced by
+// an older build from here.
 export const openStorage = (basePath: string, version?: string | null) => {
-  if (!storage || storageVersion !== (version ?? undefined)) {
-    setStorage(version ?? null, createStorage(basePath, version))
-  }
+  if (!storage) setStorage(version ?? null, createStorage(basePath, version))
   return storage as Storage
 }

@@ -26,6 +26,7 @@ import { BuildWatcher, DataRefresher, RefreshState } from './freshness'
 import {
   EntryProblem,
   PageState,
+  getArticleView,
   articleClassName,
   categoriesClassName,
   entriesClassName,
@@ -225,6 +226,8 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
           return
         }
         applyFeedSet(feedSet)
+        // Navigating away from a failed first load can also retry it
+        setLoadFailed(false)
         setStatus('loaded')
       }
 
@@ -314,15 +317,11 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const viewLocation = view.location
   const viewEntryKey =
     viewLocation?.type === 'entry' ? viewLocation.entryKey : null
-  const articleCurrent = viewEntryKey !== null && articleKey === viewEntryKey
-  const articleContent = articleCurrent ? content : null
-  // A deep link whose first load failed shares the list's error
-  const articleProblem: EntryProblem =
-    viewEntryKey !== null && loadFailed
-      ? 'unreachable'
-      : articleCurrent
-        ? entryProblem
-        : null
+  const { content: articleContent, problem: articleProblem } = getArticleView(
+    viewEntryKey,
+    { key: articleKey, content, problem: entryProblem },
+    loadFailed
+  )
   const viewPageState = view.pageState
   const isOpml = viewLocation?.type === 'opml'
   const isLoading = status === 'loading'
