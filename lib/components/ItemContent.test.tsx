@@ -157,6 +157,32 @@ test('#ItemContent keeps relative URLs when the entry URL is unusable', (t) => {
   )
 })
 
+test('#ItemContent strips scripts and event handlers from entry content', (t) => {
+  const script = render('<p>Hi</p><script>alert(1)</script>')
+  t.false(script.includes('<script'))
+  t.false(script.includes('alert(1)'))
+
+  const handler = render(
+    '<img src="https://feed.example/x.png" onerror="alert(1)">'
+  )
+  t.false(handler.toLowerCase().includes('onerror'))
+  t.true(handler.includes('src="https://feed.example/x.png"'))
+})
+
+test('#ItemContent neutralizes javascript: URLs', (t) => {
+  const html = render('<a href="javascript:alert(1)">Click</a>')
+  t.false(html.toLowerCase().includes('javascript:'))
+  t.true(html.includes('Click'))
+})
+
+test('#ItemContent keeps safe formatting', (t) => {
+  t.true(
+    render('<p>Hello <strong>world</strong></p>').includes(
+      '<p>Hello <strong>world</strong></p>'
+    )
+  )
+})
+
 test('#ItemContent shows a loading state with a back bar while an article loads', (t) => {
   const html = renderToStaticMarkup(<ItemContent loading />)
   t.regex(html, /Loading/)
