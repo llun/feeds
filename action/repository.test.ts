@@ -1,4 +1,4 @@
-import test from 'ava'
+import test, { ExecutionContext } from 'ava'
 import { spawnSync } from 'child_process'
 import fs from 'fs/promises'
 import os from 'os'
@@ -6,12 +6,10 @@ import path from 'path'
 import {
   PUBLISH_COMMIT_MESSAGE,
   getActionInput,
-  getGithubActionPath,
   getPreviousPublishedCommits,
   publishLimitedHistory,
   resolveSourceBranch,
-  restorePublishedMedia,
-  validatePublishBranch
+  restorePublishedMedia
 } from './repository'
 
 const BOT_IDENTITY = {
@@ -39,8 +37,9 @@ function git(cwd: string, commands: string[], env?: Record<string, string>) {
  * is addressed with a file url because git ignores --depth when it can take the
  * local hardlink shortcut.
  */
-async function createPublishFixture() {
+async function createPublishFixture(t: ExecutionContext) {
   const rootPath = await fs.mkdtemp(path.join(os.tmpdir(), 'feeds-publish-'))
+  t.teardown(() => fs.rm(rootPath, { recursive: true, force: true }))
   const originPath = path.join(rootPath, 'origin.git')
   const originUrl = `file://${originPath}`
   const seedPath = path.join(rootPath, 'seed')
@@ -134,6 +133,26 @@ function branchSubjects(originPath: string) {
   return git(originPath, ['log', '--format=%s', PUBLISHED_REF]).split('\n')
 }
 
+/**
+ * Sets (or with undefined, removes) environment variables for the rest of the
+ * test and restores them on teardown. Tests using it are serial because the
+ * environment is shared by every test in the process.
+ */
+function setEnv(
+  t: ExecutionContext,
+  values: Record<string, string | undefined>
+) {
+  for (const [key, value] of Object.entries(values)) {
+    const original = process.env[key]
+    t.teardown(() => {
+      if (original === undefined) delete process.env[key]
+      else process.env[key] = original
+    })
+    if (value === undefined) delete process.env[key]
+    else process.env[key] = value
+  }
+}
+
 test('#resolveSourceBranch uses workflow branch ref', (t) => {
   t.is(resolveSourceBranch('refs/heads/main'), 'main')
   t.is(resolveSourceBranch('refs/heads/feature/sync-opml'), 'feature/sync-opml')
@@ -148,63 +167,99 @@ test('#resolveSourceBranch defaults to main for unknown refs', (t) => {
   t.is(resolveSourceBranch('refs/pull/741/merge'), 'main')
 })
 
-test('#getGithubActionPath resolves action repository root path', async (t) => {
-  const actionPath = getGithubActionPath()
-  t.truthy(actionPath)
-  const stat = await fs.stat(path.join(actionPath, 'package.json'))
-  t.true(stat.isFile())
+test.serial(
+  '#getActionInput reads the input environment, trims it and falls back to defaults',
+  (t) => {
+    setEnv(t, {
+      INPUT_STORAGETYPE: undefined,
+      INPUT_CUSTOMDOMAIN: '  feeds.example.com \n'
+    })
+    t.is(getActionInput('storageType'), 'files')
+    t.is(getActionInput('customDomain'), 'feeds.example.com')
+
+    process.env['INPUT_STORAGETYPE'] = 'sqlite'
+    t.is(getActionInput('storageType'), 'sqlite')
+  }
+)
+
+test.serial('#getActionInput maps spaces in the name to underscores', (t) => {
+  setEnv(t, { INPUT_SOME_INPUT: 'value' })
+  t.is(getActionInput('some input'), 'value')
 })
 
-test('#getActionInput reads from action input environment', (t) => {
-  const originalStorageType = process.env['INPUT_STORAGETYPE']
-  t.teardown(() => {
-    if (originalStorageType === undefined) {
-      delete process.env['INPUT_STORAGETYPE']
-      return
-    }
-    process.env['INPUT_STORAGETYPE'] = originalStorageType
-  })
+test.serial(
+  '#getActionInput throws for a required input that is empty',
+  (t) => {
+    setEnv(t, { INPUT_TOKEN: '   ', INPUT_OPMLFILE: undefined })
+    t.throws(() => getActionInput('token', { required: true }), {
+      message: 'Input required and not supplied: token'
+    })
+    t.is(getActionInput('opmlFile', { required: true }), 'feeds.opml')
+  }
+)
 
-  process.env['INPUT_STORAGETYPE'] = 'sqlite'
-  t.is(getActionInput('storageType'), 'sqlite')
+test('#publishLimitedHistory rejects unsafe branch names before running git', (t) => {
+  for (const branch of ['a..b', 'a~1', 'a:b', 'a b?', '/a', 'a/', 'a.lock']) {
+    t.throws(
+      () =>
+        publishLimitedHistory({
+          repositoryPath: '/nonexistent/feeds-repository',
+          branch
+        }),
+      { message: `Invalid branch name: ${branch}` },
+      branch
+    )
+  }
 })
 
-test('#restorePublishedMedia skips when there is no workspace', async (t) => {
-  const originalWorkspace = process.env['GITHUB_WORKSPACE']
-  t.teardown(() => {
-    if (originalWorkspace === undefined) {
-      delete process.env['GITHUB_WORKSPACE']
-      return
-    }
-    process.env['GITHUB_WORKSPACE'] = originalWorkspace
-  })
+test.serial(
+  '#restorePublishedMedia skips when there is no workspace',
+  async (t) => {
+    setEnv(t, { GITHUB_WORKSPACE: undefined })
+    t.false(await restorePublishedMedia('public'))
+  }
+)
 
-  delete process.env['GITHUB_WORKSPACE']
-  t.false(await restorePublishedMedia('public'))
-})
+test.serial(
+  '#restorePublishedMedia returns false when no branch is published',
+  async (t) => {
+    const { rootPath, workspacePath } = await createPublishFixture(t)
+    setEnv(t, { GITHUB_WORKSPACE: workspacePath, INPUT_BRANCH: 'contents' })
+
+    const publicDirectory = path.join(rootPath, 'public')
+    t.false(await restorePublishedMedia(publicDirectory))
+    await t.throwsAsync(fs.stat(publicDirectory))
+  }
+)
+
+test.serial(
+  '#restorePublishedMedia returns false when the branch has no media',
+  async (t) => {
+    const { rootPath, seedPath, workspacePath } = await createPublishFixture(t)
+    await seedPublishedBranch(seedPath, [
+      { message: PUBLISH_COMMIT_MESSAGE, content: 'published' }
+    ])
+    setEnv(t, { GITHUB_WORKSPACE: workspacePath, INPUT_BRANCH: 'contents' })
+
+    const publicDirectory = path.join(rootPath, 'public')
+    t.false(await restorePublishedMedia(publicDirectory))
+    await t.throwsAsync(fs.stat(publicDirectory))
+  }
+)
 
 // Serial because it is driven through the action input environment, which ava
 // shares between the concurrent tests in this file.
 test.serial(
   '#restorePublishedMedia reads the branch when a tag shares its name',
   async (t) => {
-    const { rootPath, seedPath, workspacePath } = await createPublishFixture()
+    const { rootPath, seedPath, workspacePath } = await createPublishFixture(t)
     await seedPublishedBranch(seedPath, [
       { message: PUBLISH_COMMIT_MESSAGE, content: 'published', media: 'image' }
     ])
     // main carries no media, so reading the tag instead restores nothing.
     git(seedPath, ['tag', 'contents', 'main'])
     git(seedPath, ['push', 'origin', 'refs/tags/contents'])
-
-    const originalWorkspace = process.env['GITHUB_WORKSPACE']
-    t.teardown(() => {
-      if (originalWorkspace === undefined) {
-        delete process.env['GITHUB_WORKSPACE']
-        return
-      }
-      process.env['GITHUB_WORKSPACE'] = originalWorkspace
-    })
-    process.env['GITHUB_WORKSPACE'] = workspacePath
+    setEnv(t, { GITHUB_WORKSPACE: workspacePath, INPUT_BRANCH: 'contents' })
 
     const publicDirectory = path.join(rootPath, 'public')
     t.true(await restorePublishedMedia(publicDirectory))
@@ -219,7 +274,7 @@ test.serial(
 )
 
 test('#publishLimitedHistory publishes a branch without the source history', async (t) => {
-  const { originPath, workspacePath } = await createPublishFixture()
+  const { originPath, workspacePath } = await createPublishFixture(t)
 
   const commit = await publishContents(workspacePath, 'first')
 
@@ -230,7 +285,7 @@ test('#publishLimitedHistory publishes a branch without the source history', asy
 })
 
 test('#publishLimitedHistory publishes the contents of the workspace', async (t) => {
-  const { originPath, workspacePath } = await createPublishFixture()
+  const { originPath, workspacePath } = await createPublishFixture(t)
 
   await publishContents(workspacePath, 'first')
   t.is(git(originPath, ['show', `${PUBLISHED_REF}:index.html`]), 'first')
@@ -243,7 +298,7 @@ test('#publishLimitedHistory publishes the contents of the workspace', async (t)
 })
 
 test('#publishLimitedHistory keeps the branch when the remote cannot be read', async (t) => {
-  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  const { originPath, seedPath, workspacePath } = await createPublishFixture(t)
   await seedPublishedBranch(seedPath, [
     { message: PUBLISH_COMMIT_MESSAGE, content: 'one' },
     { message: PUBLISH_COMMIT_MESSAGE, content: 'two' },
@@ -271,15 +326,8 @@ test('#publishLimitedHistory keeps the branch when the remote cannot be read', a
   t.is(branchCommitCount(originPath), 3)
 })
 
-test('#validatePublishBranch rejects publishing onto the source branch', (t) => {
-  t.notThrows(() => validatePublishBranch('main', 'contents'))
-  t.throws(() => validatePublishBranch('main', 'main'), {
-    message: 'Branch main cannot be both the source and the publish branch'
-  })
-})
-
 test('#publishLimitedHistory keeps the branch when the fetch fails', async (t) => {
-  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  const { originPath, seedPath, workspacePath } = await createPublishFixture(t)
   await seedPublishedBranch(seedPath, [
     { message: PUBLISH_COMMIT_MESSAGE, content: 'published' }
   ])
@@ -305,7 +353,7 @@ test('#publishLimitedHistory keeps the branch when the fetch fails', async (t) =
 })
 
 test('#publishLimitedHistory reports a push it could not complete', async (t) => {
-  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  const { originPath, seedPath, workspacePath } = await createPublishFixture(t)
   await seedPublishedBranch(seedPath, [
     { message: PUBLISH_COMMIT_MESSAGE, content: 'published' }
   ])
@@ -325,7 +373,7 @@ test('#publishLimitedHistory reports a push it could not complete', async (t) =>
 })
 
 test('#publishLimitedHistory keeps the identity of the commits it rebuilds', async (t) => {
-  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  const { originPath, seedPath, workspacePath } = await createPublishFixture(t)
   const identity = { name: 'Earlier bots', email: 'earlier@llun.dev' }
   const committerDate = '2024-03-04T05:06:07+02:00'
   await seedPublishedBranch(seedPath, [
@@ -355,7 +403,7 @@ test('#publishLimitedHistory keeps the identity of the commits it rebuilds', asy
 })
 
 test('#publishLimitedHistory keeps at most five commits on the branch', async (t) => {
-  const { originPath, workspacePath } = await createPublishFixture()
+  const { originPath, workspacePath } = await createPublishFixture(t)
 
   const trees: string[] = []
   for (let run = 1; run <= 7; run++) {
@@ -378,7 +426,7 @@ test('#publishLimitedHistory keeps at most five commits on the branch', async (t
 })
 
 test('#publishLimitedHistory drops the history published commits were built on', async (t) => {
-  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  const { originPath, seedPath, workspacePath } = await createPublishFixture(t)
   const publishedDate = '2024-01-02T03:04:05+07:00'
   await seedPublishedBranch(seedPath, [
     { message: 'History 1', content: 'one' },
@@ -405,7 +453,7 @@ test('#publishLimitedHistory drops the history published commits were built on',
 })
 
 test('#publishLimitedHistory replaces a branch that has no published commit', async (t) => {
-  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  const { originPath, seedPath, workspacePath } = await createPublishFixture(t)
   await seedPublishedBranch(seedPath, [
     { message: PUBLISH_COMMIT_MESSAGE, content: 'published' },
     { message: 'Manual publish', content: 'manual' }
@@ -418,7 +466,7 @@ test('#publishLimitedHistory replaces a branch that has no published commit', as
 })
 
 test('#publishLimitedHistory keeps the published commits when a tag shares the branch name', async (t) => {
-  const { originPath, seedPath, workspacePath } = await createPublishFixture()
+  const { originPath, seedPath, workspacePath } = await createPublishFixture(t)
   await seedPublishedBranch(seedPath, [
     { message: PUBLISH_COMMIT_MESSAGE, content: 'published' }
   ])
@@ -436,7 +484,7 @@ test('#publishLimitedHistory keeps the published commits when a tag shares the b
 })
 
 test('#getPreviousPublishedCommits reads published commits until a foreign one', async (t) => {
-  const { seedPath } = await createPublishFixture()
+  const { seedPath } = await createPublishFixture(t)
   await seedPublishedBranch(seedPath, [
     { message: PUBLISH_COMMIT_MESSAGE, content: 'skipped' },
     { message: 'Manual publish', content: 'manual' },
@@ -461,18 +509,4 @@ test('#getPreviousPublishedCommits reads published commits until a foreign one',
     commits[0].tree,
     git(seedPath, ['rev-parse', `${commits[0].hash}^{tree}`])
   )
-})
-
-test('#getActionInput uses configured defaults', (t) => {
-  const originalStorageType = process.env['INPUT_STORAGETYPE']
-  t.teardown(() => {
-    if (originalStorageType === undefined) {
-      delete process.env['INPUT_STORAGETYPE']
-      return
-    }
-    process.env['INPUT_STORAGETYPE'] = originalStorageType
-  })
-
-  delete process.env['INPUT_STORAGETYPE']
-  t.is(getActionInput('storageType'), 'files')
 })

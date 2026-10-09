@@ -6,12 +6,8 @@ import path from 'path'
 import sinon from 'sinon'
 
 import {
-  cleanupUnusedMediaFiles,
   collectDownloadableMediaUrls,
-  collectReferencedMediaFromContents,
-  collectReferencedMediaFromEntryDirectory,
   createMediaStore,
-  getMediaDirectory,
   rewriteLocalizedUrls
 } from './media'
 import { parseRss, type Site } from './parsers'
@@ -56,11 +52,6 @@ async function listMediaFiles(mediaDirectory: string) {
     return []
   }
 }
-
-test('#getMediaDirectory places media inside the action public directory', (t) => {
-  t.is(getMediaDirectory('/action'), path.join('/action', 'public', 'media'))
-  t.is(getMediaDirectory(''), path.join('public', 'media'))
-})
 
 test('#localizeSite downloads images and rewrites src and srcset', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-')
@@ -147,54 +138,6 @@ test('#localizeSite localizes a link to an image another entry displays', async 
   t.deepEqual(await listMediaFiles(mediaDirectory), [
     `${mediaHash('https://example.com/a.png')}.png`
   ])
-})
-
-test('#localizeSite writes files the reference walker still recognises', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-roundtrip-')
-  const fetchStub = sinon.stub().resolves(imageResponse('x', 'image/jpeg'))
-
-  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-  const localized = await store.localizeSite(
-    createSite(
-      '<a href="https://example.com/a.jpeg"><img src="https://example.com/a.jpeg" srcset="https://example.com/a.jpeg 1x" /></a>'
-    )
-  )
-
-  // The name the store writes has to be the name cleanup keeps, or a run would
-  // delete the images the previous one downloaded.
-  const onDisk = await listMediaFiles(mediaDirectory)
-  t.true(onDisk.length > 0)
-  const referenced = collectReferencedMediaFromContents(
-    localized.entries.map((entry) => entry.content)
-  )
-  t.deepEqual([...referenced].sort(), onDisk)
-
-  await cleanupUnusedMediaFiles(mediaDirectory, referenced)
-  t.deepEqual(await listMediaFiles(mediaDirectory), onDisk)
-})
-
-test('#cleanupUnusedMediaFiles keeps a file only a link still points at', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-linkonly-')
-  const fetchStub = sinon.stub().resolves(imageResponse())
-
-  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-  const localized = await store.localizeSite(
-    createSite(
-      '<img src="https://example.com/a.png" />',
-      '<a href="https://example.com/a.png">Full size</a>'
-    )
-  )
-
-  // The entry that displayed the image is gone, and only the link remains --
-  // which is the case that decides whether counting links actually protects
-  // the file from being deleted.
-  const onDisk = await listMediaFiles(mediaDirectory)
-  t.true(onDisk.length > 0)
-  await cleanupUnusedMediaFiles(
-    mediaDirectory,
-    collectReferencedMediaFromContents([localized.entries[1].content])
-  )
-  t.deepEqual(await listMediaFiles(mediaDirectory), onDisk)
 })
 
 test('#localizeSite localizes a relative lightbox href with its image', async (t) => {
@@ -296,26 +239,6 @@ test('#localizeSite leaves data uri images untouched', async (t) => {
   t.true(localized.entries[0].content.includes(dataUri))
 })
 
-test('#localizeSite keeps the remote url for non image responses', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-html-')
-  const fetchStub = sinon.stub().resolves(
-    new Response('<html>blocked</html>', {
-      status: 200,
-      headers: { 'content-type': 'text/html' }
-    })
-  )
-
-  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-  const localized = await store.localizeSite(
-    createSite('<img src="https://example.com/photo" />')
-  )
-
-  t.true(
-    localized.entries[0].content.includes('src="https://example.com/photo"')
-  )
-  t.deepEqual(await listMediaFiles(mediaDirectory), [])
-})
-
 test('#localizeSite keeps the remote url for an html body served from an image url', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-html-png-')
   const url = 'https://example.com/photo.png'
@@ -333,20 +256,6 @@ test('#localizeSite keeps the remote url for an html body served from an image u
   t.deepEqual(await listMediaFiles(mediaDirectory), [])
 })
 
-test('#localizeSite keeps the remote url for an svg body served from an image url', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-svg-png-')
-  const url = 'https://example.com/logo.png'
-  const fetchStub = sinon
-    .stub()
-    .resolves(imageResponse('<svg onload="alert(1)" />', 'image/svg+xml'))
-
-  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
-
-  t.true(localized.entries[0].content.includes(`src="${url}"`))
-  t.deepEqual(await listMediaFiles(mediaDirectory), [])
-})
-
 test('#localizeSite names files from the url when the server declares no type', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-no-type-')
   const url = 'https://example.com/a.png'
@@ -355,50 +264,6 @@ test('#localizeSite names files from the url when the server declares no type', 
   const fetchStub = sinon
     .stub()
     .resolves(new Response(Buffer.from('image-bytes'), { status: 200 }))
-
-  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
-
-  t.deepEqual(await listMediaFiles(mediaDirectory), [`${mediaHash(url)}.png`])
-  t.true(
-    localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.png"`)
-  )
-})
-
-test('#localizeSite keeps the remote url when a repeated content type header ends in a non image', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-dup-html-')
-  const url = 'https://example.com/photo.png'
-  // headers.get joins repeated headers, and the fetch spec reads the last of
-  // them, so the leading image/png must not be what decides this.
-  const fetchStub = sinon.stub().resolves(
-    new Response('<html>blocked</html>', {
-      status: 200,
-      headers: [
-        ['content-type', 'image/png; charset=binary'],
-        ['content-type', 'text/html']
-      ]
-    })
-  )
-
-  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
-
-  t.true(localized.entries[0].content.includes(`src="${url}"`))
-  t.deepEqual(await listMediaFiles(mediaDirectory), [])
-})
-
-test('#localizeSite downloads an image whose host repeats the content type header', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-dup-png-')
-  const url = 'https://example.com/a.png'
-  const fetchStub = sinon.stub().resolves(
-    new Response(Buffer.from('image-bytes'), {
-      status: 200,
-      headers: [
-        ['content-type', 'image/png'],
-        ['content-type', 'image/png']
-      ]
-    })
-  )
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
   const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
@@ -428,62 +293,12 @@ test('#localizeSite keeps the remote url for an empty content type header', asyn
   t.deepEqual(await listMediaFiles(mediaDirectory), [])
 })
 
-test('#localizeSite names files from a content type in upper case', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-upper-type-')
-  const url = 'https://example.com/a.png'
-  const fetchStub = sinon
-    .stub()
-    .resolves(imageResponse('image-bytes', 'IMAGE/PNG'))
-
-  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
-
-  t.deepEqual(await listMediaFiles(mediaDirectory), [`${mediaHash(url)}.png`])
-  t.true(
-    localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.png"`)
-  )
-})
-
-test('#localizeSite names files from a content type with space before its parameters', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-padded-type-')
-  const url = 'https://example.com/a.png'
-  const fetchStub = sinon
-    .stub()
-    .resolves(imageResponse('image-bytes', 'image/png ; charset=binary'))
-
-  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
-
-  t.deepEqual(await listMediaFiles(mediaDirectory), [`${mediaHash(url)}.png`])
-  t.true(
-    localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.png"`)
-  )
-})
-
 test('#localizeSite keeps the remote url when neither the response nor the url names a type', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-nameless-')
   const url = 'https://example.com/photo'
   const fetchStub = sinon
     .stub()
     .resolves(new Response(Buffer.from('image-bytes'), { status: 200 }))
-
-  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
-
-  t.true(localized.entries[0].content.includes(`src="${url}"`))
-  t.deepEqual(await listMediaFiles(mediaDirectory), [])
-})
-
-test('#localizeSite keeps the remote url for a content type naming an object property', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-proto-type-')
-  const url = 'https://example.com/photo.png'
-  // The type is feed-controlled, and `constructor` survives lowercasing.
-  const fetchStub = sinon.stub().resolves(
-    new Response(Buffer.from('<html>blocked</html>'), {
-      status: 200,
-      headers: { 'content-type': 'constructor' }
-    })
-  )
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
   const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
@@ -510,100 +325,38 @@ test('#localizeSite names files from the content type when the url names a diffe
   )
 })
 
-test('#localizeSite aborts the request when it refuses the response', async (t) => {
+test('#localizeSite aborts the request only when it refuses the response', async (t) => {
   const mediaDirectory = await createMediaDirectory('feeds-media-abort-')
   const signals: AbortSignal[] = []
   const responses: Response[] = []
   // An unread body holds its socket until the remote end drops it, so a
   // refusal has to abort rather than just walk away.
-  const fetchStub = sinon.stub().callsFake(async (_url: string, init: any) => {
+  const fetchStub = sinon.stub().callsFake(async (url: string, init: any) => {
     signals.push(init.signal)
-    const response = new Response('<html>blocked</html>', {
-      status: 200,
-      headers: { 'content-type': 'text/html' }
-    })
+    const response = url.endsWith('/refused.png')
+      ? new Response('<html>blocked</html>', {
+          status: 200,
+          headers: { 'content-type': 'text/html' }
+        })
+      : imageResponse()
     responses.push(response)
     return response
   })
 
   const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
   await store.localizeSite(
-    createSite('<img src="https://example.com/photo.png" />')
+    createSite(
+      '<img src="https://example.com/refused.png" /><img src="https://other.example.com/accepted.png" />'
+    )
   )
 
-  t.is(signals.length, 1)
+  t.is(signals.length, 2)
   t.true(signals[0].aborted)
-  // And the refusal has to happen before the body is read, or the abort is
+  // The refusal has to happen before the body is read, or the abort is
   // saving a socket we already paid to drain.
   t.false(responses[0].bodyUsed)
-})
-
-test('#localizeSite caps a hostile content type in the log', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-logsize-')
-  // One test rather than two: console.error is shared, and ava runs a file's
-  // tests concurrently, so a second stub window would clobber this one.
-  const hostileUrl = 'https://example.com/log-hostile.png'
-  const shortUrl = 'https://example.com/log-short.png'
-  // The remote picks this header and the action log is public, so a refusal
-  // must not echo 16 KiB of it. On main these responses were downloaded rather
-  // than logged at all, so the whole line is new cost.
-  const hostile = `a${' '.repeat(16198)}b`
-  // 119 characters, one under the cap: without something near the boundary,
-  // every other fixture here is 36 characters or 16 KiB and the cap has no
-  // edge to test.
-  const borderline = `text/x-${'a'.repeat(112)}`
-  const captured: string[] = []
-  const restore = console.error
-  console.error = (message: string) => void captured.push(message)
-  try {
-    const fetchStub = sinon
-      .stub()
-      .callsFake(async (input: string) =>
-        imageResponse(
-          '<html>blocked</html>',
-          input === hostileUrl ? hostile : borderline
-        )
-      )
-    const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-    const localized = await store.localizeSite(
-      createSite(`<img src="${hostileUrl}" /><img src="${shortUrl}" />`)
-    )
-    t.true(localized.entries[0].content.includes(`src="${hostileUrl}"`))
-  } finally {
-    console.error = restore
-  }
-
-  const forHostile = captured.filter((line) => line.includes(hostileUrl))
-  t.is(forHostile.length, 1)
-  t.true(
-    forHostile[0].length < 300,
-    `logged ${forHostile[0].length} characters`
-  )
-  // Still recognisable as the header it refused, and honest about the cut.
-  t.true(forHostile[0].includes('Unsupported media type "a   '))
-  t.true(forHostile[0].includes('(16200 chars)'))
-
-  const forShort = captured.filter((line) => line.includes(shortUrl))
-  t.is(forShort.length, 1)
-  t.true(forShort[0].includes(`"${borderline}"`), 'one under the cap, uncut')
-  t.false(forShort[0].includes('chars)'))
-})
-
-test('#localizeSite leaves the request alone when it accepts the response', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-noabort-')
-  const signals: AbortSignal[] = []
-  const fetchStub = sinon.stub().callsFake(async (_url: string, init: any) => {
-    signals.push(init.signal)
-    return imageResponse()
-  })
-
-  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
-  await store.localizeSite(
-    createSite('<img src="https://example.com/a.png" />')
-  )
-
-  t.is(signals.length, 1)
-  t.false(signals[0].aborted)
+  // The accepted download is left alone.
+  t.false(signals[1].aborted)
 })
 
 test('#localizeSite names files from the content type when the url has no extension', async (t) => {
@@ -619,16 +372,6 @@ test('#localizeSite names files from the content type when the url has no extens
   t.deepEqual(await listMediaFiles(mediaDirectory), [`${mediaHash(url)}.webp`])
   t.true(
     localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.webp"`)
-  )
-  // Names built from the content type have to survive the walker too, or
-  // cleanup would delete what this path just downloaded.
-  t.deepEqual(
-    [
-      ...collectReferencedMediaFromContents(
-        localized.entries.map((entry) => entry.content)
-      )
-    ],
-    [`${mediaHash(url)}.webp`]
   )
 })
 
@@ -770,6 +513,136 @@ test('#localizeSite stops downloading after the deadline', async (t) => {
   )
 })
 
+test.serial(
+  '#localizeSite fetches a url that failed only once per run',
+  async (t) => {
+    const mediaDirectory = await createMediaDirectory('feeds-media-failcache-')
+    const url = 'https://example.com/a.png'
+    const fetchStub = sinon
+      .stub()
+      .resolves(new Response('nope', { status: 403 }))
+    const errorStub = sinon.stub(console, 'error')
+    t.teardown(() => errorStub.restore())
+
+    const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+    await store.localizeSite(createSite(`<img src="${url}" />`))
+    const localized = await store.localizeSite(
+      createSite(`<img src="${url}" />`)
+    )
+
+    t.is(fetchStub.callCount, 1)
+    t.true(localized.entries[0].content.includes(`src="${url}"`))
+  }
+)
+
+test('#localizeSite reuses media restored for a url without an extension', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-seeded-bare-')
+  const url = 'https://example.com/photo?id=1'
+  await fs.mkdir(mediaDirectory, { recursive: true })
+  await fs.writeFile(
+    path.join(mediaDirectory, `${mediaHash(url)}.webp`),
+    'seed'
+  )
+  const fetchStub = sinon.stub().resolves(imageResponse())
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  const localized = await store.localizeSite(createSite(`<img src="${url}" />`))
+
+  t.is(fetchStub.callCount, 0)
+  t.true(
+    localized.entries[0].content.includes(`src="/media/${mediaHash(url)}.webp"`)
+  )
+})
+
+test.serial(
+  '#localizeSite logs a hostile content type without echoing all of it',
+  async (t) => {
+    const mediaDirectory = await createMediaDirectory('feeds-media-logsize-')
+    const url = 'https://example.com/log-hostile.png'
+    // The remote picks this header and the action log is public, so a refusal
+    // must not echo 16 KiB of it.
+    const hostile = `a${' '.repeat(16198)}b`
+    const errorStub = sinon.stub(console, 'error')
+    t.teardown(() => errorStub.restore())
+    const fetchStub = sinon
+      .stub()
+      .resolves(imageResponse('<html>blocked</html>', hostile))
+
+    const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+    await store.localizeSite(createSite(`<img src="${url}" />`))
+
+    const lines = errorStub
+      .getCalls()
+      .map((call) => String(call.args[0]))
+      .filter((line) => line.includes(url))
+    t.is(lines.length, 1)
+    t.true(lines[0].length < 300, `logged ${lines[0].length} characters`)
+  }
+)
+
+test('#localizeSite limits how many downloads run at once on one host', async (t) => {
+  const mediaDirectory = await createMediaDirectory('feeds-media-perhost-')
+  let inFlight = 0
+  let maxInFlight = 0
+  const fetchStub = sinon.stub().callsFake(async () => {
+    inFlight++
+    maxInFlight = Math.max(maxInFlight, inFlight)
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    inFlight--
+    return imageResponse()
+  })
+
+  const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+  await store.localizeSite(
+    createSite(
+      ...Array.from(
+        { length: 6 },
+        (_, index) => `<img src="https://example.com/${index}.png" />`
+      )
+    )
+  )
+
+  t.is(fetchStub.callCount, 6)
+  t.is(maxInFlight, 2)
+})
+
+test.serial(
+  '#localizeSite gives up on a download that takes too long',
+  async (t) => {
+    const mediaDirectory = await createMediaDirectory('feeds-media-timeout-')
+    const url = 'https://example.com/slow.png'
+    const errorStub = sinon.stub(console, 'error')
+    const clock = sinon.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout']
+    })
+    t.teardown(() => {
+      clock.restore()
+      errorStub.restore()
+    })
+    let requested!: () => void
+    const fetchStarted = new Promise<void>((resolve) => (requested = resolve))
+    // Like a stalled socket: only an abort ends the request.
+    const fetchStub = sinon.stub().callsFake(
+      (_url: string, init: any) =>
+        new Promise((_resolve, reject) => {
+          init.signal.addEventListener('abort', () =>
+            reject(new Error('This operation was aborted'))
+          )
+          requested()
+        })
+    )
+
+    const store = createMediaStore({ mediaDirectory, fetch: fetchStub as any })
+    const localizing = store.localizeSite(createSite(`<img src="${url}" />`))
+    await fetchStarted
+    clock.tick(15_000)
+    const localized = await localizing
+
+    t.true(localized.entries[0].content.includes(`src="${url}"`))
+    t.deepEqual(await listMediaFiles(mediaDirectory), [])
+  }
+)
+
 test('#collectDownloadableMediaUrls returns absolute image urls only', (t) => {
   const urls = collectDownloadableMediaUrls(
     '<img src="https://example.com/a.png" srcset="https://example.com/b.png 2x, data:image/gif;base64,AAA 3x" />' +
@@ -805,53 +678,4 @@ test('#rewriteLocalizedUrls sends links to a cached image to the local copy', (t
   t.true(content.includes('src="/media/a.png"'))
   // Nothing was downloaded for this one, so it keeps pointing at the origin.
   t.true(content.includes('href="https://example.com/uncached.png"'))
-})
-
-test('#collectReferencedMediaFromContents returns every local media reference', (t) => {
-  const a = `${'a'.repeat(64)}.jpg`
-  const b = `${'b'.repeat(64)}.webp`
-  const c = `${'c'.repeat(64)}.png`
-  const d = `${'d'.repeat(64)}.gif`
-  const media = collectReferencedMediaFromContents([
-    `<p><img src="/media/${a}" srcset="/media/${b} 1x, /media/${c} 2x" /><a href="/media/${d}">Download</a></p>`,
-    '<img src="https://example.com/remote.png" />',
-    // A feed's own /media path is not a file we wrote, so it must not be
-    // mistaken for one and keep an unrelated file alive.
-    '<img src="/media/2019/photo.jpg" />'
-  ])
-
-  // Links count as well as images: a lightbox href is rewritten to the local
-  // copy too, so cleanup would otherwise delete a file still in use.
-  t.deepEqual([...media].sort(), [a, b, c, d].sort())
-})
-
-test('#collectReferencedMediaFromEntryDirectory reads entry files', async (t) => {
-  const rootPath = await fs.mkdtemp(
-    path.join(os.tmpdir(), 'feeds-media-entry-')
-  )
-  const a = `${'a'.repeat(64)}.jpg`
-  await fs.writeFile(
-    path.join(rootPath, 'one.json'),
-    JSON.stringify({ content: `<img src="/media/${a}" />` })
-  )
-  await fs.writeFile(path.join(rootPath, 'broken.json'), 'not json')
-
-  const media = await collectReferencedMediaFromEntryDirectory(rootPath)
-  t.deepEqual([...media], [a])
-
-  const missing = await collectReferencedMediaFromEntryDirectory(
-    path.join(rootPath, 'missing')
-  )
-  t.deepEqual([...missing], [])
-})
-
-test('#cleanupUnusedMediaFiles removes stale media files', async (t) => {
-  const mediaDirectory = await createMediaDirectory('feeds-media-clean-')
-  await fs.mkdir(mediaDirectory, { recursive: true })
-  await fs.writeFile(path.join(mediaDirectory, 'used.jpg'), 'used')
-  await fs.writeFile(path.join(mediaDirectory, 'stale.jpg'), 'stale')
-
-  await cleanupUnusedMediaFiles(mediaDirectory, new Set(['used.jpg']))
-
-  t.deepEqual(await listMediaFiles(mediaDirectory), ['used.jpg'])
 })

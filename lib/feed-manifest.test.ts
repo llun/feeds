@@ -2,70 +2,82 @@ import test from 'ava'
 import sinon from 'sinon'
 import { loadFeedManifest } from './feed-manifest'
 
-test.serial(
-  '#loadFeedManifest loads manifest and maps categories safely',
-  async (t) => {
-    const fakeManifest = {
-      all: 'feeds/all.xml',
-      categories: [
-        { title: 'Technology', path: 'feeds/categories/tech-hash.xml' },
-        { title: '__proto__', path: 'feeds/categories/proto-hash.xml' }
-      ]
-    }
+function stubFetch(t: { teardown: (fn: () => void) => void }) {
+  const stub = sinon.stub(globalThis, 'fetch')
+  t.teardown(() => stub.restore())
+  return stub
+}
 
-    const stub = sinon.stub(globalThis, 'fetch').resolves({
+test.serial(
+  '#loadFeedManifest maps manifest paths onto the base path',
+  async (t) => {
+    const fetch = stubFetch(t).resolves({
       status: 200,
-      json: async () => fakeManifest
+      json: async () => ({
+        all: 'feeds/all.xml',
+        categories: [
+          { title: 'Technology', path: 'feeds/categories/tech-hash.xml' },
+          { title: '__proto__', path: 'feeds/categories/proto-hash.xml' }
+        ]
+      })
     } as any)
 
-    try {
-      const manifest = await loadFeedManifest('/project')
-      t.truthy(manifest)
-      t.is(manifest?.allHref, '/project/feeds/all.xml')
-      t.is(
-        manifest?.categories.get('Technology'),
-        '/project/feeds/categories/tech-hash.xml'
-      )
-      t.is(
-        manifest?.categories.get('__proto__'),
-        '/project/feeds/categories/proto-hash.xml'
-      )
-      // Ensure prototype was not polluted
-      t.is(Object.prototype.hasOwnProperty('path'), false)
-    } finally {
-      stub.restore()
-    }
+    const manifest = await loadFeedManifest('/project')
+
+    t.is(fetch.firstCall.args[0], '/project/feeds/manifest.json')
+    t.is(manifest?.allHref, '/project/feeds/all.xml')
+    t.is(
+      manifest?.categories.get('Technology'),
+      '/project/feeds/categories/tech-hash.xml'
+    )
+    // A category titled like a prototype key is just another map entry.
+    t.is(
+      manifest?.categories.get('__proto__'),
+      '/project/feeds/categories/proto-hash.xml'
+    )
   }
 )
 
-test.serial(
-  '#loadFeedManifest handles 404 or network failure gracefully',
-  async (t) => {
-    const stub = sinon.stub(globalThis, 'fetch').resolves({
-      status: 404
-    } as any)
+test.serial('#loadFeedManifest skips malformed entries', async (t) => {
+  stubFetch(t).resolves({
+    status: 200,
+    json: async () => ({
+      all: 42,
+      categories: [
+        null,
+        { title: 'No path' },
+        { path: 'feeds/categories/no-title.xml' },
+        { title: 'Tech', path: 'feeds/categories/tech.xml' }
+      ]
+    })
+  } as any)
 
-    try {
-      const manifest = await loadFeedManifest('')
-      t.is(manifest, null)
-    } finally {
-      stub.restore()
-    }
+  const manifest = await loadFeedManifest('')
+
+  t.is(manifest?.allHref, undefined)
+  t.deepEqual(
+    [...(manifest?.categories ?? [])],
+    [['Tech', '/feeds/categories/tech.xml']]
+  )
+})
+
+test.serial(
+  '#loadFeedManifest returns null for a non-object manifest',
+  async (t) => {
+    stubFetch(t).resolves({ status: 200, json: async () => null } as any)
+    t.is(await loadFeedManifest(''), null)
   }
 )
 
-test.serial(
-  '#loadFeedManifest handles network exception gracefully',
-  async (t) => {
-    const stub = sinon
-      .stub(globalThis, 'fetch')
-      .rejects(new Error('Network error'))
+test.serial('#loadFeedManifest returns null on a 404 response', async (t) => {
+  stubFetch(t).resolves({ status: 404 } as any)
+  t.is(await loadFeedManifest(''), null)
+})
 
-    try {
-      const manifest = await loadFeedManifest('')
-      t.is(manifest, null)
-    } finally {
-      stub.restore()
-    }
+test.serial(
+  '#loadFeedManifest returns null when the request fails',
+  async (t) => {
+    stubFetch(t).rejects(new Error('Network error'))
+    t.is(await loadFeedManifest(''), null)
   }
 )

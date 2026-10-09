@@ -1,17 +1,23 @@
-import test from 'ava'
+import test, { ExecutionContext } from 'ava'
 import fs from 'fs/promises'
 import os from 'os'
 import path from 'path'
 import { parseStringPromise } from 'xml2js'
-import knex, { Knex } from 'knex'
+import knex from 'knex'
 import {
   createTables,
   insertCategory,
   insertEntry,
   insertSite
 } from '../database'
-import { generateFeedsFromDatabase, generateFeedsFromFiles } from './generate'
+import {
+  buildNormalizedFeeds,
+  generateFeedsFromDatabase,
+  generateFeedsFromFiles,
+  writeFeedsAtomically
+} from './generate'
 import { getCategoryId, getEntryId } from './identity'
+import { NormalizedEntry } from './types'
 import { SiteConfig } from '../../../lib/feed-urls'
 
 const SITE_CONFIG: SiteConfig = {
@@ -54,180 +60,131 @@ const ITEM_TECH_UNDATED = {
   author: ''
 }
 
-test('Both storage adapters produce identical IDs, correct categories, and clean up stale data', async (t) => {
-  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'atom-gen-test-'))
-  const opmlPath = path.join(tempRoot, 'feeds.opml')
-  await fs.writeFile(opmlPath, FIXTURE_OPML, 'utf8')
+type Mode = 'files' | 'sqlite'
 
-  // -------------------------------------------------------------
-  // 1. Setup Files storage dataset
-  // -------------------------------------------------------------
-  const filesPublicPath = path.join(tempRoot, 'files-public')
-  const filesDataPath = path.join(filesPublicPath, 'data')
-  const filesContentsPath = path.join(tempRoot, 'files-contents')
+const STALE_ENTRY = {
+  title: 'Zombie Entry',
+  link: 'https://stale.example/1',
+  date: 1700000000000,
+  content: 'Zombie',
+  author: 'Ghost'
+}
 
-  await fs.mkdir(filesDataPath, { recursive: true })
-  await fs.mkdir(path.join(filesContentsPath, 'Technology'), {
-    recursive: true
+function siteJson(
+  title: string,
+  host: string,
+  entries: Record<string, unknown>[]
+) {
+  return JSON.stringify({
+    title,
+    link: `https://${host}`,
+    xmlUrl: `https://${host}/feed.xml`,
+    entries
   })
-  await fs.mkdir(path.join(filesContentsPath, 'Science'), { recursive: true })
-  // Stale removed category folder in contents
-  await fs.mkdir(path.join(filesContentsPath, 'RemovedCategory'), {
-    recursive: true
-  })
+}
 
-  // Write site JSON into Technology
-  await fs.writeFile(
-    path.join(filesContentsPath, 'Technology', 'shared.json'),
-    JSON.stringify({
-      title: 'Shared Tech',
-      link: 'https://shared.example',
-      xmlUrl: 'https://shared.example/feed.xml',
-      entries: [ITEM_SHARED]
-    })
-  )
-  await fs.writeFile(
-    path.join(filesContentsPath, 'Technology', 'tech.json'),
-    JSON.stringify({
-      title: 'Tech Only',
-      link: 'https://tech.example',
-      xmlUrl: 'https://tech.example/feed.xml',
-      entries: [ITEM_TECH_UNDATED]
-    })
-  )
-  // Stale removed subscription in Technology
-  await fs.writeFile(
-    path.join(filesContentsPath, 'Technology', 'stale.json'),
-    JSON.stringify({
-      title: 'Removed Site',
-      link: 'https://stale.example',
-      xmlUrl: 'https://stale.example/feed.xml',
-      entries: [
-        {
-          title: 'Zombie Entry',
-          link: 'https://stale.example/1',
-          date: 1700000000000,
-          content: 'Zombie',
-          author: 'Ghost'
-        }
-      ]
-    })
-  )
+async function makeTempDir(t: ExecutionContext) {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'atom-gen-test-'))
+  t.teardown(() => fs.rm(dir, { recursive: true, force: true }))
+  return dir
+}
 
-  // Write site JSON into Science
-  await fs.writeFile(
-    path.join(filesContentsPath, 'Science', 'shared.json'),
-    JSON.stringify({
-      title: 'Shared Tech',
-      link: 'https://shared.example',
-      xmlUrl: 'https://shared.example/feed.xml',
-      entries: [ITEM_SHARED]
-    })
+async function exists(file: string) {
+  return fs
+    .stat(file)
+    .then(() => true)
+    .catch(() => false)
+}
+
+async function generateFromFiles(tempRoot: string, opmlPath: string) {
+  const publicPath = path.join(tempRoot, 'files-public')
+  const dataPath = path.join(publicPath, 'data')
+  const contentsPath = path.join(tempRoot, 'files-contents')
+  await fs.mkdir(dataPath, { recursive: true })
+  for (const dir of ['Technology', 'Science', 'RemovedCategory']) {
+    await fs.mkdir(path.join(contentsPath, dir), { recursive: true })
+  }
+  const write = (file: string, content: string) =>
+    fs.writeFile(path.join(contentsPath, file), content)
+
+  await write(
+    'Technology/shared.json',
+    siteJson('Shared Tech', 'shared.example', [ITEM_SHARED])
+  )
+  await write(
+    'Technology/tech.json',
+    siteJson('Tech Only', 'tech.example', [ITEM_TECH_UNDATED])
+  )
+  // Subscription removed from the OPML but its JSON is still on disk
+  await write(
+    'Technology/stale.json',
+    siteJson('Removed Site', 'stale.example', [STALE_ENTRY])
+  )
+  await write(
+    'Science/shared.json',
+    siteJson('Shared Tech', 'shared.example', [ITEM_SHARED])
+  )
+  // Category removed from the OPML but its folder is still on disk
+  await write(
+    'RemovedCategory/stale2.json',
+    siteJson('Old Cat Site', 'oldcat.example', [
+      { ...STALE_ENTRY, title: 'Old Entry' }
+    ])
   )
 
-  // Write stale category contents
-  await fs.writeFile(
-    path.join(filesContentsPath, 'RemovedCategory', 'stale2.json'),
-    JSON.stringify({
-      title: 'Old Cat Site',
-      link: 'https://oldcat.example',
-      xmlUrl: 'https://oldcat.example/feed.xml',
-      entries: [
-        {
-          title: 'Old Entry',
-          link: 'https://oldcat.example/1',
-          date: 1700000000000,
-          content: 'Old',
-          author: 'Ghost'
-        }
-      ]
-    })
-  )
-
-  // Run files generation
   await generateFeedsFromFiles({
-    publicPath: filesPublicPath,
-    dataPath: filesDataPath,
-    contentsPath: filesContentsPath,
+    publicPath,
+    dataPath,
+    contentsPath,
     opmlFilePath: opmlPath,
     siteConfig: SITE_CONFIG
   })
+  return publicPath
+}
 
-  // -------------------------------------------------------------
-  // 2. Setup SQLite storage dataset
-  // -------------------------------------------------------------
-  const dbPublicPath = path.join(tempRoot, 'db-public')
-  await fs.mkdir(dbPublicPath, { recursive: true })
-  const dbFile = path.join(tempRoot, 'test.sqlite3')
+async function generateFromDatabase(tempRoot: string, opmlPath: string) {
+  const publicPath = path.join(tempRoot, 'db-public')
+  await fs.mkdir(publicPath, { recursive: true })
   const db = knex({
     client: 'sqlite3',
-    connection: { filename: dbFile },
+    connection: { filename: path.join(tempRoot, 'test.sqlite3') },
     useNullAsDefault: true
   })
-
   try {
     await createTables(db)
-    await insertCategory(db, 'Technology')
-    await insertCategory(db, 'Science')
-    await insertCategory(db, 'EmptyCategory')
-
-    const sharedSiteKey = await insertSite(db, 'Technology', {
-      title: 'Shared Tech',
-      link: 'https://shared.example',
-      xmlUrl: 'https://shared.example/feed.xml',
-      description: 'Shared',
+    for (const category of ['Technology', 'Science', 'EmptyCategory']) {
+      await insertCategory(db, category)
+    }
+    const siteOf = (title: string, host: string) => ({
+      title,
+      link: `https://${host}`,
+      xmlUrl: `https://${host}/feed.xml`,
+      description: title,
       updatedAt: 1700000000000,
       generator: 'test',
       entries: []
     })
-    // Insert same site into Science
-    await insertSite(db, 'Science', {
-      title: 'Shared Tech',
-      link: 'https://shared.example',
-      xmlUrl: 'https://shared.example/feed.xml',
-      description: 'Shared',
-      updatedAt: 1700000000000,
-      generator: 'test',
-      entries: []
-    })
+    const shared = siteOf('Shared Tech', 'shared.example')
+    const sharedKey = await insertSite(db, 'Technology', shared)
+    await insertSite(db, 'Science', shared)
+    const techKey = await insertSite(
+      db,
+      'Technology',
+      siteOf('Tech Only', 'tech.example')
+    )
 
-    const techSiteKey = await insertSite(db, 'Technology', {
-      title: 'Tech Only',
-      link: 'https://tech.example',
-      xmlUrl: 'https://tech.example/feed.xml',
-      description: 'Tech only',
-      updatedAt: 1700000000000,
-      generator: 'test',
-      entries: []
-    })
+    await insertEntry(db, sharedKey!, 'Shared Tech', 'Technology', ITEM_SHARED)
+    await insertEntry(db, sharedKey!, 'Shared Tech', 'Science', ITEM_SHARED)
+    await insertEntry(
+      db,
+      techKey!,
+      'Tech Only',
+      'Technology',
+      ITEM_TECH_UNDATED
+    )
 
-    // Insert entries
-    await insertEntry(db, sharedSiteKey!, 'Shared Tech', 'Technology', {
-      title: ITEM_SHARED.title,
-      link: ITEM_SHARED.link,
-      content: ITEM_SHARED.content,
-      date: ITEM_SHARED.date,
-      author: ITEM_SHARED.author
-    })
-    await insertEntry(db, sharedSiteKey!, 'Shared Tech', 'Science', {
-      title: ITEM_SHARED.title,
-      link: ITEM_SHARED.link,
-      content: ITEM_SHARED.content,
-      date: ITEM_SHARED.date,
-      author: ITEM_SHARED.author
-    })
-
-    await insertEntry(db, techSiteKey!, 'Tech Only', 'Technology', {
-      title: ITEM_TECH_UNDATED.title,
-      link: ITEM_TECH_UNDATED.link,
-      content: ITEM_TECH_UNDATED.content,
-      date: ITEM_TECH_UNDATED.date,
-      author: ITEM_TECH_UNDATED.author
-    })
-
-    // Run database generation
     await generateFeedsFromDatabase({
-      publicPath: dbPublicPath,
+      publicPath,
       database: db,
       opmlFilePath: opmlPath,
       siteConfig: SITE_CONFIG
@@ -235,183 +192,361 @@ test('Both storage adapters produce identical IDs, correct categories, and clean
   } finally {
     await db.destroy()
   }
+  return publicPath
+}
 
-  // -------------------------------------------------------------
-  // 3. Assertions on generated outputs
-  // -------------------------------------------------------------
-  for (const [mode, outPublic] of [
-    ['files', filesPublicPath],
-    ['sqlite', dbPublicPath]
-  ] as const) {
-    const feedsDir = path.join(outPublic, 'feeds')
-    const allXmlPath = path.join(feedsDir, 'all.xml')
-    const manifestPath = path.join(feedsDir, 'manifest.json')
-
-    t.true(
-      await fs
-        .stat(allXmlPath)
-        .then(() => true)
-        .catch(() => false),
-      `${mode}: all.xml exists`
-    )
-    t.true(
-      await fs
-        .stat(manifestPath)
-        .then(() => true)
-        .catch(() => false),
-      `${mode}: manifest.json exists`
-    )
-
-    // Manifest verification
-    const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'))
-    t.is(manifest.all, 'feeds/all.xml')
-    t.is(manifest.categories.length, 3, `${mode}: 3 categories in manifest`)
-
-    const catTitles = manifest.categories.map((c: any) => c.title)
-    t.deepEqual(catTitles, ['EmptyCategory', 'Science', 'Technology'])
-
-    // EmptyCategory exists in manifest and has a valid Atom XML feed
-    const emptyCatId = getCategoryId('EmptyCategory')
-    const emptyCatXmlPath = path.join(
-      feedsDir,
-      'categories',
-      `${emptyCatId}.xml`
-    )
-    t.true(
-      await fs
-        .stat(emptyCatXmlPath)
-        .then(() => true)
-        .catch(() => false)
-    )
-    const emptyCatXml = await fs.readFile(emptyCatXmlPath, 'utf8')
-    const parsedEmptyCat = await parseStringPromise(emptyCatXml)
-    t.is(parsedEmptyCat.feed.title[0], 'EmptyCategory — Feeds')
-    t.is(parsedEmptyCat.feed.updated[0], '1970-01-01T00:00:00Z')
-    t.falsy(parsedEmptyCat.feed.entry)
-
-    // Stale category NOT present in manifest or categories folder
-    const staleCatId = getCategoryId('RemovedCategory')
-    const staleCatXmlPath = path.join(
-      feedsDir,
-      'categories',
-      `${staleCatId}.xml`
-    )
-    t.false(
-      await fs
-        .stat(staleCatXmlPath)
-        .then(() => true)
-        .catch(() => false)
-    )
-
-    // Parse all.xml
-    const allXml = await fs.readFile(allXmlPath, 'utf8')
-    t.false(
-      allXml.includes('Zombie Entry'),
-      `${mode}: Stale intermediate entry must not be resurrected`
-    )
-    t.false(
-      allXml.includes('Old Entry'),
-      `${mode}: Stale category entry must not be resurrected`
-    )
-
-    const parsedAll = await parseStringPromise(allXml)
-    t.is(
-      parsedAll.feed.icon[0],
-      'https://owner.github.io/project/favicon.ico',
-      `${mode}: all.xml declares icon`
-    )
-    t.is(
-      parsedAll.feed.entry.length,
-      2,
-      `${mode}: Exactly 2 distinct entries in all.xml`
-    )
-
-    // Shared entry check
-    const sharedEntry = parsedAll.feed.entry.find(
-      (e: any) => e.title[0] === 'Shared Breakthrough'
-    )
-    t.truthy(sharedEntry, `${mode}: Shared entry present`)
-
-    // Check shared entry category membership union: ['Science', 'Technology']
-    const terms = sharedEntry.category.map((c: any) => c.$.term).sort()
-    t.deepEqual(terms, ['Science', 'Technology'], `${mode}: Unioned categories`)
-
-    // Check localized media URL rewritten to absolute URL with project base path
-    t.true(
-      sharedEntry.content[0]._.includes(
-        'src="https://owner.github.io/project/media/shared.png"'
-      ),
-      `${mode}: Local media rewritten with project base path`
-    )
-    t.false(
-      sharedEntry.content[0]._.includes('src="/media/shared.png"'),
-      `${mode}: Relative local media path replaced`
-    )
-
-    // Undated entry check
-    const undatedEntry = parsedAll.feed.entry.find(
-      (e: any) => e.title[0] === 'Undated Gadget'
-    )
-    t.truthy(undatedEntry, `${mode}: Undated entry present`)
-    t.is(
-      undatedEntry.updated[0],
-      '1970-01-01T00:00:00Z',
-      `${mode}: Undated entry updated fallback`
-    )
-    t.falsy(undatedEntry.published, `${mode}: Undated entry published omitted`)
-
-    // Check category feeds
-    const techCatId = getCategoryId('Technology')
-    const sciCatId = getCategoryId('Science')
-
-    const techCatXml = await fs.readFile(
-      path.join(feedsDir, 'categories', `${techCatId}.xml`),
-      'utf8'
-    )
-    const parsedTech = await parseStringPromise(techCatXml)
-    t.is(
-      parsedTech.feed.icon[0],
-      'https://owner.github.io/project/favicon.ico',
-      `${mode}: category feed declares icon`
-    )
-    t.is(parsedTech.feed.entry.length, 2, `${mode}: Technology has 2 entries`)
-
-    const sciCatXml = await fs.readFile(
-      path.join(feedsDir, 'categories', `${sciCatId}.xml`),
-      'utf8'
-    )
-    const parsedSci = await parseStringPromise(sciCatXml)
-    t.is(parsedSci.feed.entry.length, 1, `${mode}: Science has 1 entry`)
-    t.is(parsedSci.feed.entry[0].title[0], 'Shared Breakthrough')
+test.before(async (t) => {
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'atom-gen-test-'))
+  const opmlPath = path.join(tempRoot, 'feeds.opml')
+  await fs.writeFile(opmlPath, FIXTURE_OPML, 'utf8')
+  t.context = {
+    tempRoot,
+    publicPaths: {
+      files: await generateFromFiles(tempRoot, opmlPath),
+      sqlite: await generateFromDatabase(tempRoot, opmlPath)
+    }
   }
+})
 
-  // Cross-backend check: verify that the shared item has the exact same ID in both files and sqlite mode!
-  const filesAllXml = await fs.readFile(
-    path.join(filesPublicPath, 'feeds', 'all.xml'),
+test.after.always(async (t) => {
+  const { tempRoot } = t.context as { tempRoot?: string }
+  if (tempRoot) await fs.rm(tempRoot, { recursive: true, force: true })
+})
+
+async function readFeed(t: ExecutionContext, mode: Mode, ...rel: string[]) {
+  const { publicPaths } = t.context as { publicPaths: Record<Mode, string> }
+  const xml = await fs.readFile(
+    path.join(publicPaths[mode], 'feeds', ...rel),
     'utf8'
   )
-  const sqliteAllXml = await fs.readFile(
-    path.join(dbPublicPath, 'feeds', 'all.xml'),
+  return {
+    xml,
+    parsed: rel.at(-1)!.endsWith('.xml') ? await parseStringPromise(xml) : null
+  }
+}
+
+async function readAllEntry(t: ExecutionContext, mode: Mode, title: string) {
+  const { parsed } = await readFeed(t, mode, 'all.xml')
+  return parsed.feed.entry.find((e: any) => e.title[0] === title)
+}
+
+function eachMode(
+  title: string,
+  check: (t: ExecutionContext, mode: Mode) => Promise<void>
+) {
+  for (const mode of ['files', 'sqlite'] as const) {
+    test(`${mode}: ${title}`, async (t) => check(t, mode))
+  }
+}
+
+test('files: ignores a stale subscription JSON that is no longer in the OPML', async (t) => {
+  const { xml } = await readFeed(t, 'files', 'all.xml')
+  t.false(xml.includes('Zombie Entry'))
+})
+
+eachMode(
+  'ignores a category folder that is no longer in the OPML',
+  async (t, mode) => {
+    const { publicPaths } = t.context as { publicPaths: Record<Mode, string> }
+    const { xml } = await readFeed(t, mode, 'all.xml')
+    t.false(xml.includes('Old Entry'))
+    t.false(
+      await exists(
+        path.join(
+          publicPaths[mode],
+          'feeds',
+          'categories',
+          `${getCategoryId('RemovedCategory')}.xml`
+        )
+      )
+    )
+  }
+)
+
+eachMode(
+  'lists an entry shared by two categories once, with both categories',
+  async (t, mode) => {
+    const { parsed } = await readFeed(t, mode, 'all.xml')
+    t.is(parsed.feed.entry.length, 2)
+    const shared = await readAllEntry(t, mode, 'Shared Breakthrough')
+    t.deepEqual(shared.category.map((c: any) => c.$.term).sort(), [
+      'Science',
+      'Technology'
+    ])
+  }
+)
+
+eachMode(
+  'puts the shared entry in both category feeds and the other only in its own',
+  async (t, mode) => {
+    const tech = await readFeed(
+      t,
+      mode,
+      'categories',
+      `${getCategoryId('Technology')}.xml`
+    )
+    const sci = await readFeed(
+      t,
+      mode,
+      'categories',
+      `${getCategoryId('Science')}.xml`
+    )
+    t.deepEqual(tech.parsed.feed.entry.map((e: any) => e.title[0]).sort(), [
+      'Shared Breakthrough',
+      'Undated Gadget'
+    ])
+    t.deepEqual(
+      sci.parsed.feed.entry.map((e: any) => e.title[0]),
+      ['Shared Breakthrough']
+    )
+  }
+)
+
+eachMode(
+  'rewrites relative /media URLs to absolute URLs under the base path',
+  async (t, mode) => {
+    const shared = await readAllEntry(t, mode, 'Shared Breakthrough')
+    t.true(
+      shared.content[0]._.includes(
+        'src="https://owner.github.io/project/media/shared.png"'
+      )
+    )
+    t.false(shared.content[0]._.includes('src="/media/shared.png"'))
+  }
+)
+
+eachMode(
+  'gives an undated entry the epoch as updated and no published date',
+  async (t, mode) => {
+    const undated = await readAllEntry(t, mode, 'Undated Gadget')
+    t.is(undated.updated[0], '1970-01-01T00:00:00Z')
+    t.is(undated.published, undefined)
+  }
+)
+
+eachMode(
+  'writes a valid empty feed for an OPML category without entries',
+  async (t, mode) => {
+    const { parsed } = await readFeed(
+      t,
+      mode,
+      'categories',
+      `${getCategoryId('EmptyCategory')}.xml`
+    )
+    t.is(parsed.feed.title[0], 'EmptyCategory — Feeds')
+    t.is(parsed.feed.updated[0], '1970-01-01T00:00:00Z')
+    t.is(parsed.feed.entry, undefined)
+  }
+)
+
+eachMode(
+  'lists every OPML category in the manifest sorted by title',
+  async (t, mode) => {
+    const manifest = JSON.parse((await readFeed(t, mode, 'manifest.json')).xml)
+    t.is(manifest.all, 'feeds/all.xml')
+    t.deepEqual(
+      manifest.categories.map((c: any) => c.title),
+      ['EmptyCategory', 'Science', 'Technology']
+    )
+    t.is(
+      manifest.categories[0].path,
+      `feeds/categories/${getCategoryId('EmptyCategory')}.xml`
+    )
+  }
+)
+
+eachMode(
+  'declares the site favicon as icon on the all and category feeds',
+  async (t, mode) => {
+    const all = await readFeed(t, mode, 'all.xml')
+    const tech = await readFeed(
+      t,
+      mode,
+      'categories',
+      `${getCategoryId('Technology')}.xml`
+    )
+    t.is(all.parsed.feed.icon[0], 'https://owner.github.io/project/favicon.ico')
+    t.is(
+      tech.parsed.feed.icon[0],
+      'https://owner.github.io/project/favicon.ico'
+    )
+  }
+)
+
+test('gives the same entry the same ID in files and sqlite mode', async (t) => {
+  const files = await readAllEntry(t, 'files', 'Shared Breakthrough')
+  const sqlite = await readAllEntry(t, 'sqlite', 'Shared Breakthrough')
+  t.is(files.id[0], sqlite.id[0])
+  t.is(files.id[0], getEntryId(ITEM_SHARED.link))
+})
+
+test('#generateFeedsFromFiles skips malformed site JSON and non-JSON files', async (t) => {
+  const tempRoot = await makeTempDir(t)
+  const opmlPath = path.join(tempRoot, 'feeds.opml')
+  await fs.writeFile(opmlPath, FIXTURE_OPML, 'utf8')
+  const contentsPath = path.join(tempRoot, 'contents')
+  await fs.mkdir(path.join(contentsPath, 'Technology'), { recursive: true })
+  const write = (file: string, content: string) =>
+    fs.writeFile(path.join(contentsPath, 'Technology', file), content)
+  await write('good.json', siteJson('Tech Only', 'tech.example', [ITEM_SHARED]))
+  await write('broken.json', '{ not json')
+  await write(
+    'notes.txt',
+    siteJson('Shared Tech', 'shared.example', [STALE_ENTRY])
+  )
+
+  const publicPath = path.join(tempRoot, 'public')
+  await generateFeedsFromFiles({
+    publicPath,
+    dataPath: path.join(publicPath, 'data'),
+    contentsPath,
+    opmlFilePath: opmlPath,
+    siteConfig: SITE_CONFIG
+  })
+
+  const xml = await fs.readFile(
+    path.join(publicPath, 'feeds', 'all.xml'),
     'utf8'
   )
-
-  const parsedFiles = await parseStringPromise(filesAllXml)
-  const parsedSqlite = await parseStringPromise(sqliteAllXml)
-
-  const filesSharedId = parsedFiles.feed.entry.find(
-    (e: any) => e.title[0] === 'Shared Breakthrough'
-  ).id[0]
-  const sqliteSharedId = parsedSqlite.feed.entry.find(
-    (e: any) => e.title[0] === 'Shared Breakthrough'
-  ).id[0]
-
-  t.is(
-    filesSharedId,
-    sqliteSharedId,
-    'Same item yields identical entry ID across backends'
+  const parsed = await parseStringPromise(xml)
+  t.deepEqual(
+    parsed.feed.entry.map((e: any) => e.title[0]),
+    ['Shared Breakthrough']
   )
-  t.is(filesSharedId, getEntryId(ITEM_SHARED.link))
+})
 
-  // Clean up test temp root
-  await fs.rm(tempRoot, { recursive: true, force: true })
+function entry(overrides: Partial<NormalizedEntry>): NormalizedEntry {
+  return {
+    id: 'urn:uuid:a',
+    title: 'Entry',
+    link: 'https://example.com/a',
+    content: '',
+    updatedMs: 1000,
+    categories: [],
+    ...overrides
+  } as NormalizedEntry
+}
+
+test('#buildNormalizedFeeds keeps the newer duplicate and unions categories', (t) => {
+  const { allFeed } = buildNormalizedFeeds(
+    [
+      entry({ title: 'Old', updatedMs: 1000, categories: ['B'] }),
+      entry({ title: 'New', updatedMs: 2000, categories: ['A'] })
+    ],
+    [{ title: 'A' }, { title: 'B' }],
+    SITE_CONFIG
+  )
+  t.is(allFeed.entries.length, 1)
+  t.is(allFeed.entries[0].title, 'New')
+  t.deepEqual(allFeed.entries[0].categories, ['A', 'B'])
+})
+
+test('#buildNormalizedFeeds keeps the first duplicate when a later one is not newer', (t) => {
+  const { allFeed } = buildNormalizedFeeds(
+    [
+      entry({ title: 'First', updatedMs: 2000, categories: ['A'] }),
+      entry({ title: 'Second', updatedMs: 2000, categories: ['B'] })
+    ],
+    [{ title: 'A' }, { title: 'B' }],
+    SITE_CONFIG
+  )
+  t.is(allFeed.entries[0].title, 'First')
+  t.deepEqual(allFeed.entries[0].categories, ['A', 'B'])
+})
+
+test('#buildNormalizedFeeds orders entries newest first, ties by id, undated last', (t) => {
+  const { allFeed } = buildNormalizedFeeds(
+    [
+      entry({ id: 'urn:uuid:undated', updatedMs: 0 }),
+      entry({ id: 'urn:uuid:b', publishedMs: 5000, updatedMs: 5000 }),
+      entry({ id: 'urn:uuid:old', publishedMs: 1000, updatedMs: 1000 }),
+      entry({ id: 'urn:uuid:a', publishedMs: 5000, updatedMs: 5000 })
+    ],
+    [],
+    SITE_CONFIG
+  )
+  t.deepEqual(
+    allFeed.entries.map((e) => e.id),
+    ['urn:uuid:a', 'urn:uuid:b', 'urn:uuid:old', 'urn:uuid:undated']
+  )
+})
+
+test('#buildNormalizedFeeds sets each feed updated time to its newest entry', (t) => {
+  const { allFeed, categoryFeeds } = buildNormalizedFeeds(
+    [
+      entry({ id: 'urn:uuid:a', updatedMs: 1000, categories: ['A'] }),
+      entry({ id: 'urn:uuid:b', updatedMs: 3000, categories: ['B'] })
+    ],
+    [{ title: 'A' }, { title: 'B' }, { title: 'Empty' }],
+    SITE_CONFIG
+  )
+  const updatedOf = (title: string) =>
+    categoryFeeds.get(getCategoryId(title))!.feed.updatedMs
+  t.is(allFeed.updatedMs, 3000)
+  t.is(updatedOf('A'), 1000)
+  t.is(updatedOf('B'), 3000)
+  t.is(updatedOf('Empty'), 0)
+})
+
+async function writeFixtureFeeds(
+  publicPath: string,
+  categories: string[],
+  allTitle = 'All'
+) {
+  const { allFeed, categoryFeeds, manifest } = buildNormalizedFeeds(
+    [entry({ title: allTitle, categories })],
+    categories.map((title) => ({ title })),
+    SITE_CONFIG
+  )
+  await writeFeedsAtomically(publicPath, allFeed, categoryFeeds, manifest)
+  return { allFeed, categoryFeeds, manifest }
+}
+
+test('#writeFeedsAtomically replaces the previous feeds directory and drops removed categories', async (t) => {
+  const publicPath = await makeTempDir(t)
+  await writeFixtureFeeds(publicPath, ['Keep', 'Gone'], 'First run')
+  const categoriesDir = path.join(publicPath, 'feeds', 'categories')
+  t.true(await exists(path.join(categoriesDir, `${getCategoryId('Gone')}.xml`)))
+
+  await writeFixtureFeeds(publicPath, ['Keep'], 'Second run')
+
+  t.deepEqual(await fs.readdir(categoriesDir), [`${getCategoryId('Keep')}.xml`])
+  const allXml = await fs.readFile(
+    path.join(publicPath, 'feeds', 'all.xml'),
+    'utf8'
+  )
+  t.true(allXml.includes('Second run'))
+  t.false(allXml.includes('First run'))
+})
+
+test('#writeFeedsAtomically leaves no temp or backup directories behind', async (t) => {
+  const publicPath = await makeTempDir(t)
+  await writeFixtureFeeds(publicPath, ['A'])
+  await writeFixtureFeeds(publicPath, ['A'])
+  t.deepEqual(await fs.readdir(publicPath), ['feeds'])
+})
+
+test('#writeFeedsAtomically keeps the previous feeds and cleans up when writing fails', async (t) => {
+  const publicPath = await makeTempDir(t)
+  await writeFixtureFeeds(publicPath, ['A'], 'Previous run')
+  const { allFeed, categoryFeeds, manifest } = await writeFixtureFeeds(
+    await makeTempDir(t),
+    ['A']
+  )
+  // A category id containing a path separator cannot be written under categories/
+  categoryFeeds.set('missing-dir/broken', {
+    ...categoryFeeds.get(getCategoryId('A'))!,
+    categoryId: 'missing-dir/broken'
+  })
+
+  await t.throwsAsync(
+    writeFeedsAtomically(publicPath, allFeed, categoryFeeds, manifest)
+  )
+
+  t.deepEqual(await fs.readdir(publicPath), ['feeds'])
+  const allXml = await fs.readFile(
+    path.join(publicPath, 'feeds', 'all.xml'),
+    'utf8'
+  )
+  t.true(allXml.includes('Previous run'))
 })

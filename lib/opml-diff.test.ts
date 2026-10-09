@@ -1,10 +1,12 @@
 import test from 'ava'
+import sinon from 'sinon'
 import {
   describeOpmlDiff,
   formatOpmlIssueBody,
   buildIssueUrl,
   OPML_ISSUE_TITLE
 } from './opml-diff'
+import { extractOpmlFromIssueBody, handleOpmlIssue } from '../action/issue'
 
 const opmlBase = `<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
@@ -119,7 +121,7 @@ test('#describeOpmlDiff detects simultaneous additions and removals', (t) => {
   )
 })
 
-test('#describeOpmlDiff detects empty categories added or removed', (t) => {
+test('#describeOpmlDiff reports empty categories as added or removed', (t) => {
   const opmlEmptyCat = `<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
   <head><title>Feeds</title></head>
@@ -128,9 +130,17 @@ test('#describeOpmlDiff detects empty categories added or removed', (t) => {
   </body>
 </opml>`
 
-  const result = describeOpmlDiff(opmlBase, opmlEmptyCat)
-  t.true(result.hasChanges)
-  t.true(result.summary.includes('Category *EmptyCategory*'))
+  const added = describeOpmlDiff(opmlBase, opmlEmptyCat)
+  t.true(added.hasChanges)
+  // The new category, and the three feeds that were in the other two.
+  t.is(added.addedCount, 1)
+  t.is(added.removedCount, 3)
+  t.true(added.summary.includes('### Added\n- Category *EmptyCategory*'))
+
+  const removed = describeOpmlDiff(opmlEmptyCat, opmlBase)
+  t.is(removed.addedCount, 3)
+  t.is(removed.removedCount, 1)
+  t.true(removed.summary.includes('### Removed\n- Category *EmptyCategory*'))
 })
 
 test('#formatOpmlIssueBody wraps summary and XML in code fence', (t) => {
@@ -158,4 +168,52 @@ test('#buildIssueUrl constructs valid GitHub issue creation URL', (t) => {
     url,
     'https://github.com/llun/feeds/issues/new?title=Update+OPML+file&body=Test+Body'
   )
+})
+
+test('#formatOpmlIssueBody produces an issue the action accepts once the placeholder is replaced', async (t) => {
+  const newOpml =
+    '<opml version="2.0"><body><outline text="Tech"><outline type="rss" xmlUrl="https://example.com/rss"/></outline></body></opml>'
+  const summary = describeOpmlDiff(opmlBase, newOpml).summary
+  const octokit = {
+    rest: {
+      issues: {
+        createComment: sinon.stub().resolves(),
+        update: sinon.stub().resolves()
+      }
+    }
+  }
+  const handle = (body: string) =>
+    handleOpmlIssue({
+      githubContext: {
+        eventName: 'issues',
+        payload: {
+          issue: {
+            number: 1,
+            title: OPML_ISSUE_TITLE,
+            author_association: 'OWNER',
+            body
+          }
+        },
+        repo: { owner: 'llun', repo: 'feeds' }
+      },
+      token: 'token',
+      octokit
+    })
+
+  // The prefilled issue is picked up by the action's title check, but its
+  // placeholder is not OPML, so the author is asked to paste one.
+  const placeholderBody = formatOpmlIssueBody(summary)
+  t.is(extractOpmlFromIssueBody(placeholderBody), null)
+  const result = await handle(placeholderBody)
+  t.true(result.handled)
+  t.false(result.updated)
+  t.true(
+    octokit.rest.issues.createComment.firstCall.args[0].body.includes(
+      'Could not extract valid OPML'
+    )
+  )
+
+  const filledBody = placeholderBody.replace('PASTE_OPML_HERE', newOpml)
+  t.is(extractOpmlFromIssueBody(filledBody), newOpml)
+  t.is(extractOpmlFromIssueBody(formatOpmlIssueBody(summary, newOpml)), newOpml)
 })

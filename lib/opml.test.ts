@@ -28,7 +28,10 @@ const sampleOpml = `<?xml version="1.0" encoding="UTF-8"?>
 </opml>`
 
 test('#escapeXml escapes special characters', (t) => {
-  t.is(escapeXml('a < b & c > d "quotes" \'single\''), 'a &lt; b &amp; c &gt; d &quot;quotes&quot; &apos;single&apos;')
+  t.is(
+    escapeXml('a < b & c > d "quotes" \'single\''),
+    'a &lt; b &amp; c &gt; d &quot;quotes&quot; &apos;single&apos;'
+  )
 })
 
 test('#unescapeXml single-pass prevents double-unescaping', (t) => {
@@ -37,7 +40,10 @@ test('#unescapeXml single-pass prevents double-unescaping', (t) => {
 })
 
 test('#stripXmlComments removes comments iteratively', (t) => {
-  t.is(stripXmlComments('<!-- hello -->world<!-- <!-- nested --> -->'), 'world -->')
+  t.is(
+    stripXmlComments('<!-- hello -->world<!-- <!-- nested --> -->'),
+    'world -->'
+  )
 })
 
 test('#parseOpml parses categories and feeds correctly', (t) => {
@@ -57,17 +63,26 @@ test('#parseOpml parses categories and feeds correctly', (t) => {
   t.is(def?.items[0].title, 'Standalone')
 })
 
-test('#generateOpml generates valid OPML XML', (t) => {
-  const categories: OpmlCategory[] = [
+test('#generateOpml round-trips through parseOpml, escaping titles and urls', (t) => {
+  const model: OpmlCategory[] = [
     {
-      category: 'Tech',
+      category: 'Tom & "Jerry" <Tech>',
       items: [
         {
           type: 'rss',
-          title: 'Site A',
-          text: 'Site A',
-          xmlUrl: 'https://sitea.com/rss.xml',
-          htmlUrl: 'https://sitea.com'
+          title: 'Q&A <daily> "digest"',
+          text: 'Q&A <daily> "digest"',
+          xmlUrl: 'https://sitea.com/rss.xml?a=1&b=2',
+          htmlUrl: 'https://sitea.com/?q="x"&r=<y>',
+          description: ''
+        },
+        {
+          type: 'rss',
+          title: "Rock 'n' roll",
+          text: "Rock 'n' roll",
+          xmlUrl: 'http://www.macworld.com/index.rss',
+          htmlUrl: 'https://www.macworld.com',
+          description: ''
         }
       ]
     },
@@ -78,42 +93,18 @@ test('#generateOpml generates valid OPML XML', (t) => {
           type: 'rss',
           title: 'Root Feed',
           text: 'Root Feed',
-          xmlUrl: 'https://root.com/rss.xml'
+          xmlUrl: 'https://root.com/rss.xml',
+          htmlUrl: '',
+          description: ''
         }
       ]
     }
   ]
 
-  const xml = generateOpml(categories, 'My Feeds')
+  const xml = generateOpml(model, 'My Feeds')
+
   t.true(xml.includes('<title>My Feeds</title>'))
-  t.true(xml.includes('<outline text="Tech" title="Tech">'))
-  t.true(xml.includes('xmlUrl="https://sitea.com/rss.xml"'))
-  t.true(xml.includes('xmlUrl="https://root.com/rss.xml"'))
-
-  const roundtrip = parseOpml(xml)
-  t.is(roundtrip.length, 2)
-})
-
-test('#generateOpml preserves exact xmlUrl and htmlUrl without dummy templates', (t) => {
-  const categories: OpmlCategory[] = [
-    {
-      category: 'Apple',
-      items: [
-        {
-          type: 'rss',
-          title: 'Macworld',
-          text: 'Macworld',
-          xmlUrl: 'http://www.macworld.com/index.rss',
-          htmlUrl: 'https://www.macworld.com'
-        }
-      ]
-    }
-  ]
-
-  const xml = generateOpml(categories, 'Feeds')
-  t.true(xml.includes('xmlUrl="http://www.macworld.com/index.rss"'))
-  t.true(xml.includes('htmlUrl="https://www.macworld.com"'))
-  t.false(xml.includes('.com/rss.xml'))
+  t.deepEqual(parseOpml(xml), model)
 })
 
 test('#parseOpml preserves newly added empty feed in category', (t) => {
@@ -164,5 +155,3 @@ test('#parseOpml preserves empty category', (t) => {
   t.is(result[0].category, 'Empty Category')
   t.is(result[0].items.length, 0)
 })
-
-
