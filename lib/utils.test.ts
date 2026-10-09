@@ -2,9 +2,18 @@ import test, { ExecutionContext } from 'ava'
 import sinon from 'sinon'
 import {
   PageState,
+  findSiteTitle,
+  formatRelativeTime,
+  getHydrationView,
+  getListKey,
+  parentPath,
   getInitialPageState,
+  getNavSelection,
+  getSelectedEntryKey,
+  isArticlePaneHidden,
   locationController,
-  parseLocation
+  parseLocation,
+  shouldMountOpml
 } from './utils'
 import { Content } from './storage/types'
 
@@ -180,8 +189,97 @@ test.serial(
   }
 )
 
+test('#formatRelativeTime reads like the design', (t) => {
+  const now = Date.UTC(2026, 0, 15, 12, 0, 0)
+  const ago = (seconds: number) => formatRelativeTime(now - seconds * 1000, now)
+  t.is(ago(0), 'now')
+  t.is(ago(30), '30 seconds ago')
+  t.is(ago(5 * 60), '5 minutes ago')
+  t.is(ago(2 * 3600), '2 hours ago')
+  t.is(ago(36 * 3600), 'yesterday')
+  t.is(ago(5 * 86400), '5 days ago')
+  t.is(ago(7 * 86400), 'last week')
+  t.is(ago(60 * 86400), '2 months ago')
+  t.is(ago(400 * 86400), 'last year')
+  t.is(formatRelativeTime(now + 5000, now), 'now')
+})
+
+test('#getNavSelection follows the URL', (t) => {
+  const categories = [
+    { title: 'Tech', sites: [{ key: 'a' }, { key: 'b' }] },
+    { title: 'News', sites: [{ key: 'c' }] }
+  ]
+  t.deepEqual(getNavSelection(parseLocation('/sites/all'), categories), {
+    kind: 'all'
+  })
+  t.deepEqual(
+    getNavSelection(parseLocation('/sites/all/entries/e1'), categories),
+    { kind: 'all' }
+  )
+  t.deepEqual(getNavSelection(parseLocation('/categories/News'), categories), {
+    kind: 'category',
+    expandedCategory: 'News'
+  })
+  t.deepEqual(
+    getNavSelection(parseLocation('/categories/News/entries/e'), categories),
+    { kind: 'category', expandedCategory: 'News' }
+  )
+  t.deepEqual(getNavSelection(parseLocation('/sites/b'), categories), {
+    kind: 'site',
+    siteKey: 'b',
+    expandedCategory: 'Tech'
+  })
+  t.deepEqual(
+    getNavSelection(parseLocation('/sites/b/entries/x'), categories),
+    {
+      kind: 'site',
+      siteKey: 'b',
+      expandedCategory: 'Tech'
+    }
+  )
+  t.deepEqual(getNavSelection(parseLocation('/sites/zzz'), categories), {
+    kind: 'site',
+    siteKey: 'zzz',
+    expandedCategory: undefined
+  })
+  t.deepEqual(getNavSelection(parseLocation('/opml'), categories), {
+    kind: 'opml'
+  })
+  t.deepEqual(getNavSelection(null, categories), { kind: null })
+})
+
+test('#getSelectedEntryKey returns the open entry', (t) => {
+  t.is(getSelectedEntryKey(parseLocation('/sites/all/entries/e1')), 'e1')
+  t.is(getSelectedEntryKey(parseLocation('/sites/all')), '')
+  t.is(getSelectedEntryKey(null), '')
+})
+
 test.serial(
-  '#locationController rejects and leaves state untouched when the entry cannot be loaded',
+  '#locationController flags a missing entry instead of throwing',
+  async (t) => {
+    stubFetch(t).resolves({ status: 404 } as Response)
+    const { state, setContent, setPageState } = createState(
+      SAMPLE_CONTENT,
+      'entries'
+    )
+    const setEntryMissing = sinon.spy()
+
+    await locationController(
+      parseLocation('/sites/all/entries/missing'),
+      '',
+      setContent,
+      setPageState,
+      setEntryMissing
+    )
+
+    t.is(state.content, null)
+    t.true(setEntryMissing.calledOnceWith(true))
+    t.is<PageState, PageState>(state.page, 'article')
+  }
+)
+
+test.serial(
+  '#locationController shows the article pane without content when no missing-entry callback is given',
   async (t) => {
     stubFetch(t).resolves({ status: 404 } as Response)
     const { state, setContent, setPageState } = createState(
@@ -189,18 +287,15 @@ test.serial(
       'entries'
     )
 
-    await t.throwsAsync(
-      locationController(
-        parseLocation('/sites/all/entries/missing'),
-        '',
-        setContent,
-        setPageState
-      ),
-      { message: 'Fail to load content' }
+    await locationController(
+      parseLocation('/sites/all/entries/missing'),
+      '',
+      setContent,
+      setPageState
     )
 
-    t.is(state.content, SAMPLE_CONTENT)
-    t.is<PageState, PageState>(state.page, 'entries')
+    t.is(state.content, null)
+    t.is<PageState, PageState>(state.page, 'article')
   }
 )
 
@@ -214,4 +309,163 @@ test('#locationController leaves state untouched for an unknown location', async
 
   t.is(state.content, SAMPLE_CONTENT)
   t.is<PageState, PageState>(state.page, 'entries')
+})
+
+test('#getListKey is the same for a list and an entry opened from it', (t) => {
+  t.is(
+    getListKey(parseLocation('/categories/Design')),
+    getListKey(parseLocation('/categories/Design/entries/e1'))
+  )
+  t.is(
+    getListKey(parseLocation('/sites/all')),
+    getListKey(parseLocation('/sites/all/entries/entry0'))
+  )
+})
+
+test('#getListKey differs when back/forward moves between lists', (t) => {
+  t.not(
+    getListKey(parseLocation('/sites/all/entries/entry0')),
+    getListKey(parseLocation('/categories/Design/entries/e1'))
+  )
+  t.not(
+    getListKey(parseLocation('/categories/x')),
+    getListKey(parseLocation('/sites/x'))
+  )
+})
+
+test('#findSiteTitle finds a site that has no entries, and reports unknown ones', (t) => {
+  const categories = [
+    { sites: [{ key: 'a', title: 'Site A' }] },
+    { sites: [{ key: 'empty', title: 'Real Empty Site' }] }
+  ]
+  t.is(findSiteTitle(categories, 'empty'), 'Real Empty Site')
+  t.is(findSiteTitle(categories, 'missing'), undefined)
+})
+
+test('#shouldMountOpml waits for the feed set to load', (t) => {
+  t.false(shouldMountOpml(true, true))
+  t.true(shouldMountOpml(true, false))
+  t.false(shouldMountOpml(false, false))
+})
+
+test('#isArticlePaneHidden keeps the article pane up while a deep link loads', (t) => {
+  t.false(isArticlePaneHidden('article', false, false))
+  t.false(isArticlePaneHidden('article', true, false))
+  t.false(isArticlePaneHidden('entries', false, true))
+  t.true(isArticlePaneHidden('entries', false, false))
+})
+
+test.serial(
+  '#locationController ignores an entry the user already left',
+  async (t) => {
+    let release: () => void = () => {}
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    stubFetch(t).callsFake(async () => {
+      await gate
+      return {
+        status: 200,
+        json: async () => ({
+          title: 'Slow',
+          siteTitle: 'Site',
+          siteHash: 'siteKey',
+          link: 'https://example.com/slow',
+          content: '<p>Slow</p>',
+          date: 1000
+        })
+      } as Response
+    })
+    const { state, setContent, setPageState } = createState(
+      SAMPLE_CONTENT,
+      'entries'
+    )
+    const setMissing = sinon.spy()
+    let current = true
+
+    const pending = locationController(
+      parseLocation('/sites/all/entries/slow'),
+      '',
+      setContent,
+      setPageState,
+      setMissing,
+      () => current
+    )
+    current = false
+    release()
+    await pending
+
+    t.is(state.content, SAMPLE_CONTENT)
+    t.is<PageState, PageState>(state.page, 'entries')
+    t.true(setMissing.notCalled)
+  }
+)
+
+test('#getHydrationView shows no URL-dependent state before mount', (t) => {
+  const entry = parseLocation('/sites/all/entries/entry0')
+  const before = getHydrationView(false, undefined, entry, 'article')
+  t.is(before.location, null)
+  t.is<PageState, PageState>(before.pageState, 'entries')
+  const after = getHydrationView(true, undefined, entry, 'article')
+  t.is(after.location, entry)
+  t.is<PageState, PageState>(after.pageState, 'article')
+})
+
+test('#getHydrationView keeps a path the server render knew', (t) => {
+  const before = getHydrationView(false, '/opml', null, 'entries')
+  t.deepEqual(before.location, { type: 'opml' })
+  t.is<PageState, PageState>(before.pageState, 'opml')
+})
+
+test('#parseLocation decodes path segments once', (t) => {
+  t.deepEqual(parseLocation('/categories/Thailand%20Tech'), {
+    type: 'category',
+    category: 'Thailand Tech'
+  })
+  t.deepEqual(parseLocation('/categories/100%2525'), {
+    type: 'category',
+    category: '100%25'
+  })
+  t.deepEqual(parseLocation(`/categories/${encodeURIComponent('50%')}`), {
+    type: 'category',
+    category: '50%'
+  })
+  t.deepEqual(parseLocation('/categories/bad%E0%A4%A'), {
+    type: 'category',
+    category: 'bad%E0%A4%A'
+  })
+  t.deepEqual(parseLocation('/categories/Thailand%20Tech/entries/e1'), {
+    type: 'entry',
+    entryKey: 'e1',
+    parent: { type: 'category', key: 'Thailand Tech' }
+  })
+})
+
+test('#locationController keeps the nav pane when only loading finished', async (t) => {
+  const { state, setContent, setPageState } = createState(null, 'categories')
+  const run = (path: string) =>
+    locationController(
+      parseLocation(path),
+      '',
+      setContent,
+      setPageState,
+      undefined,
+      () => true,
+      true
+    )
+
+  await run('/categories/Design')
+  t.is<PageState, PageState>(state.page, 'categories')
+  await run('/sites/all')
+  t.is<PageState, PageState>(state.page, 'categories')
+  state.page = 'article'
+  await run('/sites/all')
+  t.is<PageState, PageState>(state.page, 'entries')
+})
+
+test('#parentPath encodes the parent key and round-trips', (t) => {
+  const path = parentPath({ type: 'category', key: 'C#?' })
+  t.is(path, '/categories/C%23%3F')
+  t.deepEqual(parseLocation(path), { type: 'category', category: 'C#?' })
+  t.is(parentPath({ type: 'site', key: 'abc' }), '/sites/abc')
 })

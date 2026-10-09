@@ -217,3 +217,13 @@ test.serial(
     t.is(await new FileStorage('').getOpml(), null)
   }
 )
+
+test.serial('#FileStorage encodes category names in fetch URLs', async (t) => {
+  const fetchStub = stubFetch(t, { status: 200, json: async () => [] })
+
+  const storage = new FileStorage('')
+  await storage.getCategoryEntries('C#')
+  await storage.countCategoryEntries('50%')
+  t.is(fetchStub.firstCall.args[0], '/data/categories/C%23.json')
+  t.is(fetchStub.secondCall.args[0], '/data/categories/50%25.json')
+})
