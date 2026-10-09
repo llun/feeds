@@ -13,7 +13,10 @@ import { ENTRY_CONTENT_SANITIZE_OPTIONS } from './sanitize'
 export interface Entry {
   title: string
   link: string
-  date: number
+  // Absent when the feed gives the entry no readable date. The feed loader
+  // (action/feeds/index.ts) dates such an entry by the time it was first
+  // pulled, so everything after it can rely on a date.
+  date?: number
   content: string
   author: string
   // The RSS <comments> URL, when the feed offers one. Hacker News feeds link
@@ -194,12 +197,17 @@ function sanitizeEntryContent(
   )
 }
 
-function parseDate(dateString: string): number {
-  if (!dateString || dateString.trim() === '') {
-    return Date.now()
-  }
+function parseDate(dateString: string): number | undefined {
+  if (!dateString || dateString.trim() === '') return undefined
   const timestamp = new Date(dateString).getTime()
-  return isNaN(timestamp) ? Date.now() : timestamp
+  return isNaN(timestamp) ? undefined : timestamp
+}
+
+// The site's updatedAt is only a display time, so it keeps the time of the run
+// when the feed gives none. An entry date must not: it orders the lists, and a
+// date that changes on every run would move the entry back to the top.
+function parseSiteDate(dateString: string): number {
+  return parseDate(dateString) ?? Date.now()
 }
 
 export async function parseXML(data: string): Promise<any> {
@@ -227,7 +235,7 @@ export function parseRss(feedTitle: string, xml: any): Site {
     title: feedTitle,
     link: siteLink,
     description: joinValuesOrEmptyString(description),
-    updatedAt: parseDate(
+    updatedAt: parseSiteDate(
       joinValuesOrEmptyString(lastBuildDate || channels[0]['dc:date'])
     ),
     generator: joinValuesOrEmptyString(generator || channels[0]['dc:creator']),
@@ -289,7 +297,7 @@ export function parseAtom(feedTitle: string, xml: any): Site {
     title: feedTitle,
     description: joinValuesOrEmptyString(subtitle),
     link: siteUrl,
-    updatedAt: parseDate(joinValuesOrEmptyString(updated)),
+    updatedAt: parseSiteDate(joinValuesOrEmptyString(updated)),
     generator: joinValuesOrEmptyString(generator),
     entries: entry
       ? entry.map((item) => {

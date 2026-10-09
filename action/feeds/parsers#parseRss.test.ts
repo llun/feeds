@@ -59,8 +59,9 @@ test('#parseRss resolves a relative comments url against the site link', async (
   t.is(site?.entries[0].comments, 'https://news.ycombinator.com/item?id=42')
 })
 
-// An unreadable date must not become NaN: parseDate falls back to the time of
-// the run for a date a feed leaves out or cannot be read.
+// An unreadable date must not become NaN: an entry date a feed leaves out or
+// cannot be read stays absent, and the site date falls back to the time of the
+// run.
 function rssWithDates(dates: { channel?: string[]; item?: string[] }) {
   return {
     rss: {
@@ -84,7 +85,7 @@ function rssWithDates(dates: { channel?: string[]; item?: string[] }) {
   }
 }
 
-test('#parseRss still yields finite dates for an empty, invalid or missing date', (t) => {
+test('#parseRss leaves an entry undated for an empty, invalid or missing date but still dates the site', (t) => {
   for (const dates of [
     { channel: [''], item: [''] },
     { channel: ['invalid date'], item: ['not a real date'] },
@@ -92,7 +93,7 @@ test('#parseRss still yields finite dates for an empty, invalid or missing date'
   ]) {
     const site = parseRss('Test Feed', rssWithDates(dates))
     t.true(Number.isFinite(site.updatedAt), JSON.stringify(dates))
-    t.true(Number.isFinite(site.entries[0].date), JSON.stringify(dates))
+    t.is(site.entries[0].date, undefined, JSON.stringify(dates))
   }
 })
 

@@ -121,7 +121,7 @@ function atomWithDates(dates: {
   }
 }
 
-test('#parseAtom still yields finite dates for an empty, invalid or missing date', (t) => {
+test('#parseAtom leaves an entry undated for an empty, invalid or missing date but still dates the site', (t) => {
   for (const dates of [
     { feed: [''], published: [''], updated: [''] },
     { feed: ['not a valid date'], published: ['invalid'] },
@@ -130,7 +130,7 @@ test('#parseAtom still yields finite dates for an empty, invalid or missing date
   ]) {
     const site = parseAtom('Test Feed', atomWithDates(dates))
     t.true(Number.isFinite(site.updatedAt), JSON.stringify(dates))
-    t.true(Number.isFinite(site.entries[0].date), JSON.stringify(dates))
+    t.is(site.entries[0].date, undefined, JSON.stringify(dates))
   }
 })
 

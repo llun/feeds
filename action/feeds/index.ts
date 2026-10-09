@@ -32,6 +32,7 @@ import {
   getMediaDirectory
 } from './media'
 import { closeBrowser } from './browser'
+import { fillMissingEntryDates, readPreviousEntryDates } from './entry-dates'
 import { createHackerNewsEnricher } from './hackernews'
 import { loadFeed, readOpml } from './opml'
 import type { Site } from './parsers'
@@ -40,8 +41,14 @@ function getPublicPath(githubActionPath: string) {
   return githubActionPath ? path.join(githubActionPath, 'public') : 'public'
 }
 
-async function createLocalizingFeedLoader(githubActionPath: string) {
+async function createLocalizingFeedLoader(
+  githubActionPath: string,
+  storageType: string
+) {
   await restorePublishedMedia(getPublicPath(githubActionPath))
+  // Read once for the whole run: an entry the feed gives no date is dated by
+  // when an earlier run first pulled it, which only the published branch knows.
+  const previousDates = await readPreviousEntryDates(storageType)
   const mediaDirectory = getMediaDirectory(githubActionPath)
   const store = createMediaStore({ mediaDirectory })
   // HN entries carry only a "Comments" link, so the discussion is fetched and
@@ -50,8 +57,10 @@ async function createLocalizingFeedLoader(githubActionPath: string) {
   const enricher = createHackerNewsEnricher()
   const feedLoader = async (title: string, url: string) => {
     const site: Site | null = await loadFeed(title, url)
+    const pulledAt = Date.now()
     if (!site) return null
     site.xmlUrl = url
+    fillMissingEntryDates(site, previousDates, pulledAt)
     return store.localizeSite(await enricher(site))
   }
   return { feedLoader, mediaDirectory }
@@ -67,8 +76,10 @@ export async function createFeedDatabase(githubActionPath: string) {
     const opmlContent = (await fs.readFile(opmlFilePath)).toString('utf8')
     const opml = await readOpml(opmlContent)
     const publicPath = getPublicPath(githubActionPath)
-    const { feedLoader, mediaDirectory } =
-      await createLocalizingFeedLoader(githubActionPath)
+    const { feedLoader, mediaDirectory } = await createLocalizingFeedLoader(
+      githubActionPath,
+      storageType
+    )
     await copyExistingDatabase(publicPath)
     const database = getDatabase(publicPath)
     try {
@@ -114,8 +125,10 @@ export async function createFeedFiles(githubActionPath: string) {
     const publicPath = githubActionPath
       ? path.join(githubActionPath, 'contents')
       : path.join('contents')
-    const { feedLoader, mediaDirectory } =
-      await createLocalizingFeedLoader(githubActionPath)
+    const { feedLoader, mediaDirectory } = await createLocalizingFeedLoader(
+      githubActionPath,
+      storageType
+    )
     await loadOPMLAndWriteFiles(publicPath, opmlFilePath, feedLoader)
     const customDomainName = getActionInput('customDomain')
     const githubRootName = process.env['GITHUB_REPOSITORY'] || ''
