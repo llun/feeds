@@ -10,6 +10,7 @@ import {
 
 const SITE_ENV = [
   'INPUT_CUSTOMDOMAIN',
+  'INPUT_SITEURL',
   'INPUT_SITE_URL',
   'SITE_URL',
   'GITHUB_REPOSITORY',
@@ -90,11 +91,34 @@ test.serial('#resolveBasePath reads the deployment environment', (t) => {
   setSiteEnv(t, { NEXT_PUBLIC_BASE_PATH: '/built/' })
   t.is(resolveBasePath({ githubRepository: 'owner/project' }), '/built')
 
+  // The siteUrl action input arrives as INPUT_SITEURL.
+  setSiteEnv(t, { INPUT_SITEURL: 'https://example.org/from-action' })
+  t.is(resolveBasePath(), '/from-action')
+  t.is(getSiteConfig().siteBaseUrl, 'https://example.org/from-action/')
+  t.is(getSiteConfig().basePath, '/from-action')
+
+  setSiteEnv(t, {
+    INPUT_SITEURL: 'https://example.org/from-action',
+    INPUT_SITE_URL: 'https://example.org/from-input',
+    SITE_URL: 'https://example.org/from-site'
+  })
+  t.is(resolveBasePath(), '/from-action')
+
   setSiteEnv(t, { INPUT_SITE_URL: 'https://example.org/from-input' })
   t.is(resolveBasePath(), '/from-input')
 
   setSiteEnv(t, { SITE_URL: 'https://example.org/from-site' })
   t.is(resolveBasePath(), '/from-site')
+
+  // The runner sets INPUT_SITEURL to '' when the input is unset (default: '').
+  setSiteEnv(t, {
+    INPUT_SITEURL: '',
+    INPUT_SITE_URL: '',
+    SITE_URL: 'https://example.org/from-site'
+  })
+  t.is(resolveBasePath(), '/from-site')
+  t.is(getSiteConfig().siteBaseUrl, 'https://example.org/from-site/')
+  t.is(getSiteConfig().basePath, '/from-site')
 
   setSiteEnv(t, { GITHUB_REPOSITORY: 'owner/from-github' })
   t.is(resolveBasePath(), '/from-github')
@@ -107,12 +131,11 @@ test.serial(
     const repo = { githubRepository: 'owner/project' }
     const siteUrl = 'https://example.org/site'
 
-    // customDomain with siteUrl is deliberately not asserted: getSiteConfig and
-    // resolveBasePath disagree on which wins.
     t.is(
       resolveBasePath({ customDomain: 'a.example', basePath: '/x', ...repo }),
       ''
     )
+    t.is(resolveBasePath({ customDomain: 'a.example', siteUrl, ...repo }), '')
     t.is(resolveBasePath({ basePath: '/x', siteUrl, ...repo }), '/x')
     t.is(resolveBasePath({ siteUrl, ...repo }), '/env')
 
@@ -133,6 +156,29 @@ test.serial('#getSiteConfig resolves custom domain', (t) => {
     'https://feeds.example.com/feeds/all.xml'
   )
 })
+
+test.serial(
+  '#getSiteConfig and #resolveBasePath agree that a custom domain wins over siteUrl',
+  (t) => {
+    setSiteEnv(t)
+    const options = {
+      customDomain: 'feeds.example.com',
+      siteUrl: 'https://example.github.io/project'
+    }
+    const config = getSiteConfig(options)
+    t.is(config.basePath, resolveBasePath(options))
+    t.is(config.basePath, '')
+    t.is(config.origin, 'https://feeds.example.com')
+    t.is(config.siteBaseUrl, 'https://feeds.example.com/')
+
+    // The site URL is not validated when it is not used.
+    t.is(
+      getSiteConfig({ customDomain: 'feeds.example.com', siteUrl: 'not a url' })
+        .siteBaseUrl,
+      'https://feeds.example.com/'
+    )
+  }
+)
 
 test.serial('#getSiteConfig resolves normal project repository', (t) => {
   setSiteEnv(t)

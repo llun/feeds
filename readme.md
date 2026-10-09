@@ -59,7 +59,7 @@ The site generates static RFC 4287 Atom 1.0 feeds during each scheduled refresh:
 - **Feed Manifest**: Located at `/feeds/manifest.json`. Maps the global feed and category titles to their respective site-relative feed paths.
 - **Sidebar Integration**: Small feed broadcast icons appear beside "All Items" and each category label in the sidebar. Clicking a feed icon opens the raw Atom XML in a new tab, and right-clicking allows copying the URL. Clicking the feed icon does not select, expand, or collapse the category.
 - **Autodiscovery**: The site includes a `<link rel="alternate" type="application/atom+xml" ...>` autodiscovery tag in the HTML `<head>`.
-- **Timestamps**: Entry and feed timestamps adhere to RFC 3339. Entries without publication dates and empty feeds use a deterministic fallback timestamp (`1970-01-01T00:00:00Z`). Build timestamps are deliberately avoided so unchanged content does not appear newly updated on every build.
+- **Timestamps**: Entry and feed timestamps adhere to RFC 3339. Entries whose source feed gives no date, or an invalid one, are dated by the time the action first pulled them and keep that date on later refreshes (the previous date is read back from the published branch). Empty feeds use a deterministic fallback timestamp (`1970-01-01T00:00:00Z`). Build timestamps are deliberately avoided so unchanged content does not appear newly updated on every build.
 - **Browser Display**: Browsers render raw XML differently (some display a tree view, some show raw text). The URL can be copied directly into any standard feed reader.
 - **Upstream Subscriptions**: Subscriptions in `feeds.opml` continue to support both upstream RSS and Atom feed inputs unchanged.
 
@@ -68,7 +68,7 @@ The site generates static RFC 4287 Atom 1.0 feeds during each scheduled refresh:
 This action can be configured to use a custom domain and different types of storage. Here are the available configuration options:
 
 - `customDomain`: Specifies the custom domain for the feeds site. Required when generating a static site as it's needed to generate the `CNAME` file.
-- `siteUrl`: Explicit site URL override (e.g. `https://example.com/subpath` or via `SITE_URL` environment variable). Useful for local or non-GitHub generation where public URL cannot be inferred from repository configuration.
+- `siteUrl`: Explicit site URL override (e.g. `https://example.com/subpath` or via `SITE_URL` environment variable) that sets the site's public URL and base path. Useful for local or non-GitHub generation where public URL cannot be inferred from repository configuration. If `customDomain` is also set, the custom domain wins.
 - `branch`: Branch where the static site will be generated. The default value is `contents`. This is the branch you'll need to point the repository's GitHub Pages to.
 - `storageType`: **(Default is `files`)** Content storage type, currently supports `files` and `sqlite`.
   - `database`: Legacy alias that behaves like `files`

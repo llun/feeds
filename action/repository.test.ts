@@ -8,6 +8,7 @@ import {
   getActionInput,
   getPreviousPublishedCommits,
   publishLimitedHistory,
+  readPublishedFile,
   resolveSourceBranch,
   restorePublishedMedia,
   validatePublishBranch
@@ -87,6 +88,8 @@ interface SeedCommit {
   // that checks an identity is preserved has to ask for a different one.
   identity?: { name: string; email: string }
   media?: string
+  // Extra files by path from the branch root.
+  files?: Record<string, string | Buffer>
 }
 
 async function seedPublishedBranch(seedPath: string, commits: SeedCommit[]) {
@@ -100,6 +103,12 @@ async function seedPublishedBranch(seedPath: string, commits: SeedCommit[]) {
         path.join(seedPath, 'media', 'image.txt'),
         commit.media
       )
+    }
+    for (const [file, content] of Object.entries(commit.files ?? {})) {
+      await fs.mkdir(path.dirname(path.join(seedPath, file)), {
+        recursive: true
+      })
+      await fs.writeFile(path.join(seedPath, file), content)
     }
     git(seedPath, ['add', '--all'])
 
@@ -278,6 +287,82 @@ test.serial(
       ),
       'image'
     )
+  }
+)
+
+test.serial(
+  '#readPublishedFile returns the contents of a file on the published branch',
+  async (t) => {
+    const { seedPath, workspacePath } = await createPublishFixture(t)
+    // Not valid UTF-8, to show the file comes back byte for byte.
+    const binary = Buffer.from([0x53, 0x51, 0x4c, 0x00, 0xff, 0xfe, 0x80])
+    await seedPublishedBranch(seedPath, [
+      {
+        message: PUBLISH_COMMIT_MESSAGE,
+        content: 'published',
+        files: { 'data/all.json': '[{"title":"a"}]', 'data.sqlite3': binary }
+      }
+    ])
+    setEnv(t, { GITHUB_WORKSPACE: workspacePath, INPUT_BRANCH: 'contents' })
+
+    t.is(
+      readPublishedFile('data/all.json')?.toString('utf8'),
+      '[{"title":"a"}]'
+    )
+    t.deepEqual(readPublishedFile('data.sqlite3'), binary)
+  }
+)
+
+test.serial(
+  '#readPublishedFile returns null when there is nothing to read',
+  async (t) => {
+    const { seedPath, workspacePath } = await createPublishFixture(t)
+    const cases: [string, () => Promise<void>, string][] = [
+      [
+        'no workspace',
+        async () => setEnv(t, { GITHUB_WORKSPACE: undefined }),
+        'index.html'
+      ],
+      [
+        'no published branch',
+        async () =>
+          setEnv(t, {
+            GITHUB_WORKSPACE: workspacePath,
+            INPUT_BRANCH: 'contents'
+          }),
+        'index.html'
+      ],
+      [
+        'missing file',
+        async () => {
+          await seedPublishedBranch(seedPath, [
+            { message: PUBLISH_COMMIT_MESSAGE, content: 'published' }
+          ])
+          setEnv(t, {
+            GITHUB_WORKSPACE: workspacePath,
+            INPUT_BRANCH: 'contents'
+          })
+        },
+        'data/all.json'
+      ]
+    ]
+    for (const [label, arrange, file] of cases) {
+      await arrange()
+      t.is(readPublishedFile(file), null, label)
+    }
+  }
+)
+
+test.serial(
+  '#readPublishedFile rejects an unsafe branch name before running git',
+  (t) => {
+    setEnv(t, {
+      GITHUB_WORKSPACE: '/nonexistent/feeds-repository',
+      INPUT_BRANCH: 'a..b'
+    })
+    t.throws(() => readPublishedFile('index.html'), {
+      message: 'Invalid branch name: a..b'
+    })
   }
 )
 

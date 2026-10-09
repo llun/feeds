@@ -56,9 +56,10 @@ export function resolveBasePath(options?: {
 
   const siteUrl = (
     options?.siteUrl ??
-    process.env['INPUT_SITE_URL'] ??
-    process.env['SITE_URL'] ??
-    ''
+    (process.env['INPUT_SITEURL'] ||
+      process.env['INPUT_SITE_URL'] ||
+      process.env['SITE_URL'] ||
+      '')
   ).trim()
   if (siteUrl) {
     try {
@@ -101,9 +102,10 @@ export function getSiteConfig(options?: SiteConfigOptions): SiteConfig {
 
   const siteUrl = (
     options?.siteUrl ??
-    process.env['INPUT_SITE_URL'] ??
-    process.env['SITE_URL'] ??
-    ''
+    (process.env['INPUT_SITEURL'] ||
+      process.env['INPUT_SITE_URL'] ||
+      process.env['SITE_URL'] ||
+      '')
   ).trim()
 
   const githubRepo = (
@@ -113,7 +115,7 @@ export function getSiteConfig(options?: SiteConfigOptions): SiteConfig {
     ''
   ).trim()
 
-  if (siteUrl) {
+  if (siteUrl && !customDomain) {
     let parsed: URL
     try {
       parsed = new URL(siteUrl)

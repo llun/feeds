@@ -225,6 +225,48 @@ export async function restorePublishedMedia(publicDirectory: string) {
   }
 }
 
+/**
+ * Reads one file from the published branch without touching the workspace, or
+ * returns null when there is nothing to read: no workspace, a branch that is
+ * not published yet, or a branch without that file. A run starts from a fresh
+ * clone of the source branch, so the previous output only exists there.
+ *
+ * Fetches into FETCH_HEAD the same way restorePublishedMedia() does, which
+ * leaves publishLimitedHistory()'s own fetch of the branch nearly free.
+ *
+ * @param relativePath Path of the file from the root of the published branch
+ */
+export function readPublishedFile(relativePath: string): Buffer | null {
+  const workSpace = getWorkspacePath()
+  if (!workSpace) return null
+
+  const branch = getActionInput('branch', { required: true })
+  validateBranchName(branch)
+
+  const fetchResult = runCommand(
+    ['git', 'fetch', '--depth=1', 'origin', `refs/heads/${branch}`],
+    workSpace
+  )
+  if (isCommandFailed(fetchResult)) {
+    console.log(`No published ${branch} branch to read ${relativePath} from`)
+    return null
+  }
+
+  // The output is captured as a buffer, with room for a sqlite database, which
+  // is larger than the default limit and is not text.
+  const showResult = spawnSync('git', ['show', `FETCH_HEAD:${relativePath}`], {
+    cwd: workSpace,
+    stdio: ['ignore', 'pipe', 'ignore'],
+    env: process.env,
+    maxBuffer: 1024 * 1024 * 1024
+  })
+  if (isCommandFailed(showResult)) {
+    console.log(`No ${relativePath} in the published ${branch} branch`)
+    return null
+  }
+  return showResult.stdout
+}
+
 export async function buildSite() {
   const workSpace = getWorkspacePath()
   if (workSpace) {
