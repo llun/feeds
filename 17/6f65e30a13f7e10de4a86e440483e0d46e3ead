@@ -1,0 +1,20 @@
+app/layout.tsx
+  h_580a04e334fef4 5,18
+lib/metadata.test.ts
+  h_580a04e334fef4 1-41
+lib/metadata.ts
+  h_580a04e334fef4 1-43
+package.json
+  h_580a04e334fef4 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "176f65e30a13f7e10de4a86e440483e0d46e3ead",
+  "prompts": {},
+  "humans": {
+    "h_580a04e334fef4": {
+      "author": "Maythee Anegboonlap <contact@llun.dev>"
+    }
+  }
+}
