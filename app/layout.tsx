@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 
-import { resolveBasePath } from '../lib/feed-urls'
-import { getFeedAlternates } from '../lib/feed-alternates'
+import { getSiteMetadata } from '../lib/metadata'
 import './globals.css'
 
 const geistSans = Geist({
@@ -16,23 +15,7 @@ const geistMono = Geist_Mono({
   subsets: ['latin']
 })
 
-const basePath = resolveBasePath()
-const feedAlternates = getFeedAlternates(basePath)
-
-export const metadata: Metadata = {
-  title: 'Feeds',
-  description: 'Static Feeds Aggregator',
-  icons: {
-    icon: `${basePath}/favicon.ico`,
-    apple: `${basePath}/apple-touch-icon.png`
-  },
-  manifest: `${basePath}/site.webmanifest`,
-  alternates: {
-    types: {
-      'application/atom+xml': feedAlternates
-    }
-  }
-}
+export const metadata: Metadata = getSiteMetadata()
 
 export const viewport: Viewport = {
   width: 'device-width',
