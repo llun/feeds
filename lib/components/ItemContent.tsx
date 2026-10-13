@@ -106,10 +106,10 @@ export const ItemContent = ({
   return (
     <article className="flex h-full flex-col bg-background">
       <header className="sticky top-0 z-10 border-b border-border bg-background">
+        <div className="fk-backbar md:hidden">
+          <BackButton onClickBack={selectBack} />
+        </div>
         <div className="px-6.5 pt-5.5 pb-[15px] md:pt-9.5">
-          <div className="fk-backbar mb-4 md:hidden">
-            <BackButton onClickBack={selectBack} />
-          </div>
           <h1 className="break-words text-2xl leading-[1.2] font-bold tracking-tight">
             {content.title}
           </h1>
