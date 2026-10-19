@@ -39,7 +39,7 @@
     "html-react-parser": "^6.1.8",
     "knex": "^3.3.0",
     "lucide-react": "1.58.0",
-    "next": "^16.4.0",
+    "next": "^16.4.2",
     "next-themes": "^0.4.6",
     "node-fetch": "^3.3.2",
     "playwright": "^1.64.0",
