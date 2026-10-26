@@ -979,7 +979,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@modelcontextprotocol/sdk@npm:^1.26.0":
+"@modelcontextprotocol/sdk@npm:^1.32.0":
   version: 1.32.1
   resolution: "@modelcontextprotocol/sdk@npm:1.32.1"
   dependencies:
@@ -1291,9 +1291,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@shadcn/registry@npm:0.1.3":
-  version: 0.1.3
-  resolution: "@shadcn/registry@npm:0.1.3"
+"@shadcn/registry@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@shadcn/registry@npm:0.2.0"
   dependencies:
     "@babel/core": "npm:^7.28.0"
     "@babel/parser": "npm:^7.28.0"
@@ -1316,9 +1316,9 @@ __metadata:
     stringify-object: "npm:^5.0.0"
     tsconfig-paths: "npm:^4.2.0"
     type-fest: "npm:^4.41.0"
-    undici: "npm:^7.29.0"
-    zod: "npm:^3.24.1"
-  checksum: 10c0/aa05f2c4bae7dacf6ac3d7b82098067968d9ca991530156c4a564cc51775de58ba11128d1edbc1d99ab9cfcba96f0789b2b93f7fab45aa825f3a497293a4bb13
+    undici: "npm:^7.29.1"
+    zod: "npm:^4.2.0"
+  checksum: 10c0/82f8c9e7671c8dfae687e92977b6eeeafe7370bb0682855ae531489070719bf2dcd434d5a8f97116f3c1ba116f95e227514cc5a119b9a0f7a415827f557178f2
   languageName: node
   linkType: hard
 
@@ -2097,6 +2097,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"baseline-browser-mapping@npm:^2.11.29":
+  version: 2.11.31
+  resolution: "baseline-browser-mapping@npm:2.11.31"
+  bin:
+    baseline-browser-mapping: dist/cli.cjs
+  checksum: 10c0/5c86b9a1efe9db2411b6f3268ae015ca7cc5229e5e53c20263936e9dbbe9651d2fc19dc46642f7a3db8ad2b4a300c5bbc702d3b79c49e740ff0fcc97e3c55692
+  languageName: node
+  linkType: hard
+
 "before-after-hook@npm:^4.0.0":
   version: 4.0.0
   resolution: "before-after-hook@npm:4.0.0"
@@ -2166,7 +2175,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"browserslist@npm:^4.24.0, browserslist@npm:^4.26.2, browserslist@npm:^4.28.9":
+"browserslist@npm:^4.24.0, browserslist@npm:^4.28.9":
   version: 4.29.0
   resolution: "browserslist@npm:4.29.0"
   dependencies:
@@ -2178,6 +2187,21 @@ __metadata:
   bin:
     browserslist: cli.js
   checksum: 10c0/0490dad3a4b8e9b187fa1ba79fa84f5753dc148020c298026a6af2a3ad279a419d4507a7a42c0754dbae0ff343c2db3dfa4b9a5e9766b3d60029458dc17b66ae
+  languageName: node
+  linkType: hard
+
+"browserslist@npm:^4.29.3":
+  version: 4.29.4
+  resolution: "browserslist@npm:4.29.4"
+  dependencies:
+    baseline-browser-mapping: "npm:^2.11.29"
+    caniuse-lite: "npm:^1.0.30001816"
+    electron-to-chromium: "npm:^1.5.459"
+    node-releases: "npm:^2.0.59"
+    update-browserslist-db: "npm:^1.3.4"
+  bin:
+    browserslist: cli.js
+  checksum: 10c0/e706dfb56f89a78a3b5fef681d9793327779f5d30885606e49c4af788a7f60b92dd8c2ead153d780109e8fcc2529a784491854037b18c8b8700fb464b87f9f93
   languageName: node
   linkType: hard
 
@@ -2238,6 +2262,13 @@ __metadata:
   version: 1.0.30001810
   resolution: "caniuse-lite@npm:1.0.30001810"
   checksum: 10c0/d29bc73f33c888025d54c7ff2984372d3b350b15a6a9e174884fb40976175e9177f202e2a72c2d428dddfc032784bc8ba635a31d168fcab9fac65756d7b3d6b4
+  languageName: node
+  linkType: hard
+
+"caniuse-lite@npm:^1.0.30001816":
+  version: 1.0.30001819
+  resolution: "caniuse-lite@npm:1.0.30001819"
+  checksum: 10c0/6842319cdb9c8ac950ef0910fc3cc7dac3320b96b150de83ac65162c6b4906d2721ca830943a9e5a833c265b186aa0c417402ddd4157108bbf5474d6fabdc843
   languageName: node
   linkType: hard
 
@@ -2640,7 +2671,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"default-browser@npm:^5.4.0":
+"default-browser@npm:^5.5.1":
   version: 5.5.1
   resolution: "default-browser@npm:5.5.1"
   dependencies:
@@ -2771,6 +2802,13 @@ __metadata:
   version: 1.5.431
   resolution: "electron-to-chromium@npm:1.5.431"
   checksum: 10c0/6f8201062190a83c91c102041164c3040c72f617d97f2425c2c25ad0a3ce97dcd59d1fa775facf398b6a8c45e8920919e179b715b1fb7aa9b167684873f59138
+  languageName: node
+  linkType: hard
+
+"electron-to-chromium@npm:^1.5.459":
+  version: 1.5.463
+  resolution: "electron-to-chromium@npm:1.5.463"
+  checksum: 10c0/03b594525895a1a93eb399d632b7193c6f9780c10e35331d23896f5f97b584d6a6983b401ad26db75334c55c912f2b63c82c8ac50747787298263ee84bcec506
   languageName: node
   linkType: hard
 
@@ -3228,7 +3266,7 @@ __metadata:
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     sanitize-html: "npm:^2.18.1"
-    shadcn: "npm:^4.21.4"
+    shadcn: "npm:^4.22.1"
     sinon: "npm:^22.1.0"
     sql.js-httpvfs: "npm:^0.8.12"
     sqlite3: "npm:^6.0.1"
@@ -4659,6 +4697,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"node-releases@npm:^2.0.59":
+  version: 2.0.60
+  resolution: "node-releases@npm:2.0.60"
+  checksum: 10c0/f0c7b37cf83405291c0de87e15b5cef4af167248f8cc91b7c1c2281338c0e7e9aebfb77e0153ba335bb4c6ec5b1563431cfba93e8c83292760856012d93cb93e
+  languageName: node
+  linkType: hard
+
 "nopt@npm:^10.0.0":
   version: 10.0.1
   resolution: "nopt@npm:10.0.1"
@@ -4768,17 +4813,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"open@npm:^11.0.0":
-  version: 11.0.1
-  resolution: "open@npm:11.0.1"
+"open@npm:^11.0.4":
+  version: 11.0.4
+  resolution: "open@npm:11.0.4"
   dependencies:
-    default-browser: "npm:^5.4.0"
+    default-browser: "npm:^5.5.1"
     define-lazy-prop: "npm:^3.0.0"
     is-in-ssh: "npm:^1.0.0"
     is-inside-container: "npm:^1.0.0"
-    powershell-utils: "npm:^0.2.0"
+    powershell-utils: "npm:^0.2.1"
     wsl-utils: "npm:^1.0.0"
-  checksum: 10c0/fd650ac10806a06bfe197af0ef143cd2a3127294721524972f04377fb1144da5e32a2d0507497e214385981ec5b6b4b43210e22d7ef22bc45c390771d80658a5
+  checksum: 10c0/5be0a902323ea9266cf7323edf8d714b516f739519485e98b2508e38e1ffe6f98e3426aeb182fc88239bf98777258b27abbfe5cb1938bff8dbccec2fd603aca5
   languageName: node
   linkType: hard
 
@@ -4953,13 +4998,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-selector-parser@npm:^7.1.3":
-  version: 7.1.6
-  resolution: "postcss-selector-parser@npm:7.1.6"
+"postcss-selector-parser@npm:^7.1.6":
+  version: 7.1.7
+  resolution: "postcss-selector-parser@npm:7.1.7"
   dependencies:
     cssesc: "npm:^3.0.0"
     util-deprecate: "npm:^1.0.2"
-  checksum: 10c0/fc8279859896b96ef25b24d0289b2bfff7bce6647b247aa983939ff872e226663788d1ea57bddf9d1695119c071e5cdcb8b2a364ed4313502efe4b0319879154
+  checksum: 10c0/94db1cfb838957729dd632a229f86cc631cee98f0418026a8460ba3d24feb47da0a28f295a2ae4be37b548ffa6e61eff0f74fbc2ae309c48a6dd3fe1cb25e396
   languageName: node
   linkType: hard
 
@@ -5021,10 +5066,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"powershell-utils@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "powershell-utils@npm:0.2.0"
-  checksum: 10c0/0fa649e933800f33276262646cfb0d2ffcdfdb6a68ff80f5ab66e33c3197d3edf022e774502d5e458aee683702994e6d201fda85958c3cb7ccc413e0746b4373
+"powershell-utils@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "powershell-utils@npm:0.2.1"
+  checksum: 10c0/be60cd95e78aa143256bfa5ce88736caf874f9b4ac1b9bb3a041749bf8eebb49cdbd1a9859ff7462f2c6421e15f96f711c1e60bd323998fe98d978a4a3116376
   languageName: node
   linkType: hard
 
@@ -5438,19 +5483,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shadcn@npm:^4.21.4":
-  version: 4.21.4
-  resolution: "shadcn@npm:4.21.4"
+"shadcn@npm:^4.22.1":
+  version: 4.22.1
+  resolution: "shadcn@npm:4.22.1"
   dependencies:
     "@babel/core": "npm:^7.28.0"
     "@babel/parser": "npm:^7.28.0"
     "@babel/plugin-transform-typescript": "npm:^7.28.0"
     "@babel/preset-typescript": "npm:^7.27.1"
     "@dotenvx/dotenvx": "npm:^1.48.4"
-    "@modelcontextprotocol/sdk": "npm:^1.26.0"
-    "@shadcn/registry": "npm:0.1.3"
+    "@modelcontextprotocol/sdk": "npm:^1.32.0"
+    "@shadcn/registry": "npm:0.2.0"
     "@types/validate-npm-package-name": "npm:^4.0.2"
-    browserslist: "npm:^4.26.2"
+    browserslist: "npm:^4.29.3"
     cn: "npm:^0.2.4"
     commander: "npm:^14.0.0"
     dedent: "npm:^1.6.0"
@@ -5461,23 +5506,22 @@ __metadata:
     fs-extra: "npm:^11.3.1"
     fuzzysort: "npm:^3.1.0"
     kleur: "npm:^4.1.5"
-    open: "npm:^11.0.0"
+    open: "npm:^11.0.4"
     ora: "npm:^8.2.0"
     postcss: "npm:^8.5.23"
-    postcss-selector-parser: "npm:^7.1.3"
+    postcss-selector-parser: "npm:^7.1.6"
     prompts: "npm:^2.4.2"
     recast: "npm:^0.23.11"
     socks: "npm:^2.8.8"
     stringify-object: "npm:^5.0.0"
     ts-morph: "npm:^26.0.0"
     tsconfig-paths: "npm:^4.2.0"
-    undici: "npm:^7.29.0"
+    undici: "npm:^7.29.1"
     validate-npm-package-name: "npm:^7.0.1"
-    zod: "npm:^3.24.1"
-    zod-to-json-schema: "npm:^3.24.6"
+    zod: "npm:^4.2.0"
   bin:
     shadcn: dist/index.js
-  checksum: 10c0/a516b1eeb2a8e526e14dffd129c93926fc9ddd2b178a325ae94135055da9063613695ef204eeb948478cd31b500debbca61bd2d36d16f86488bb8be63ef6f1a0
+  checksum: 10c0/eb3529bb813bfdc6de2d123d83c0cef363c8da0b61a1bc813ec2f2733f29e222743d269f3176d283c8bd1840fa062cbea4f5655d5a77d468979d0f52b1b545d0
   languageName: node
   linkType: hard
 
@@ -6330,10 +6374,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^7.29.0":
-  version: 7.30.0
-  resolution: "undici@npm:7.30.0"
-  checksum: 10c0/011a321a9198532b0f0504740faa43b9ab8fcc0e4f60104e5c9cb808a61faeb03e4be4aec4f0c65f47913d7c7d9d91591793a6cb9ab843f98ca2c3d711c4a34c
+"undici@npm:^7.29.1":
+  version: 7.30.1
+  resolution: "undici@npm:7.30.1"
+  checksum: 10c0/c838089b010e8e28a9a5358d4bf4621e0c8d7bb70058b23e819667349c4c0b6791a7c8bc9bbe94ff0923db132faae0d9d9592b9743eda4f2b49466fa57482213
   languageName: node
   linkType: hard
 
@@ -6390,6 +6434,20 @@ __metadata:
   bin:
     update-browserslist-db: cli.js
   checksum: 10c0/07bab166c18f47ba51f3b755e42f109ef5069d0d7c7224887decbd523d5ccd404f63661ebd5a740099972ed47f41f0e28c04df8be31d76716a346f948ce2aa61
+  languageName: node
+  linkType: hard
+
+"update-browserslist-db@npm:^1.3.4":
+  version: 1.3.4
+  resolution: "update-browserslist-db@npm:1.3.4"
+  dependencies:
+    escalade: "npm:^3.2.0"
+    picocolors: "npm:^1.1.1"
+  peerDependencies:
+    browserslist: ">= 4.21.0"
+  bin:
+    update-browserslist-db: cli.js
+  checksum: 10c0/5c0769472715b57371208c3146cc07a4f0917c1d18cc34f60325bc4234f4a28f332e50b99f675999ff311315231ff19beb22a815dfe04ccc1e798e1d389514d7
   languageName: node
   linkType: hard
 
@@ -6614,7 +6672,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod-to-json-schema@npm:^3.24.6, zod-to-json-schema@npm:^3.25.1":
+"zod-to-json-schema@npm:^3.25.1":
   version: 3.25.2
   resolution: "zod-to-json-schema@npm:3.25.2"
   peerDependencies:
@@ -6623,16 +6681,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.24.1":
-  version: 3.25.76
-  resolution: "zod@npm:3.25.76"
-  checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
-  languageName: node
-  linkType: hard
-
 "zod@npm:^3.25 || ^4.0":
   version: 4.4.3
   resolution: "zod@npm:4.4.3"
   checksum: 10c0/7ea31b558e88f9faf44f31dd185e2e1cbf51fed3081787fb96cc2534749b50c0acfc6da7f0922a7353ed092dd358c7d50c28ea96c94d04af64191bd33152eca3
+  languageName: node
+  linkType: hard
+
+"zod@npm:^4.2.0":
+  version: 4.6.7
+  resolution: "zod@npm:4.6.7"
+  checksum: 10c0/4ce2eb14034317b7254e347ca37b5ad591cf8333147030cf05b9b5d31692d45073f7f2747aa50cf8c6b29012194d2b22978cecc89969cf34a0d18e89d0ee7d7b
   languageName: node
   linkType: hard
