@@ -26,16 +26,25 @@ const LIST_ROWS: [string, string, string][] = [
   ['88%', '60%', '38%']
 ]
 
-// Shaped like the serif index rows: two title lines, then the mono meta
+// Shaped like the serif index rows: two title lines (one on desktop, where
+// the wider list fits most titles on a line), then the mono meta. Each bar
+// sits in the middle of the line it stands for, so a row is as tall as a
+// real one.
 export const ListSkeleton = ({ label = 'Loading items…' }) => (
   <div role="status">
     <LoadingStatus label={label} />
     <ul aria-hidden="true">
       {LIST_ROWS.map(([first, second, meta], index) => (
         <li key={index} className="fk-row">
-          <Skeleton className="mt-[3px] h-3.5" style={{ width: first }} />
-          <Skeleton className="mt-2 h-3.5" style={{ width: second }} />
-          <Skeleton className="mt-[11px] h-2.5" style={{ width: meta }} />
+          <Skeleton className="mt-1 h-3.5" style={{ width: first }} />
+          <Skeleton
+            className="mt-[9px] h-3.5 lg:hidden"
+            style={{ width: second }}
+          />
+          <Skeleton
+            className="mt-[13px] mb-[3px] h-2.5"
+            style={{ width: meta }}
+          />
         </li>
       ))}
     </ul>

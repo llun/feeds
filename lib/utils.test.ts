@@ -208,25 +208,43 @@ test('#formatRelativeTime reads like the design', (t) => {
 })
 
 test('#formatShortTime gives the list rows a short age', (t) => {
-  // Noon UTC, so the dates read the same in any test machine's time zone
+  // Dates are read in UTC, so they are the same in any test machine's zone
   const now = Date.UTC(2026, 10, 9, 12, 0, 0)
-  const ago = (seconds: number) => formatShortTime(now - seconds * 1000, now)
+  const short = (timestampMs: number) =>
+    formatShortTime(timestampMs, now, 'UTC')
+  const ago = (seconds: number) => short(now - seconds * 1000)
   t.is(ago(20), 'now')
   t.is(ago(12 * 60), '12m')
   t.is(ago(2 * 3600), '2h')
   t.is(ago(5 * 3600 + 59 * 60), '5h')
   t.is(ago(30 * 3600), 'yesterday')
   t.is(ago(3 * 86400), '3d')
-  t.is(formatShortTime(Date.UTC(2026, 9, 12, 12), now), '12 Oct')
+  t.is(short(Date.UTC(2026, 9, 12, 12)), '12 Oct')
   // An older year names the year
-  t.is(formatShortTime(Date.UTC(2025, 9, 12, 12), now), '12 Oct 2025')
+  t.is(short(Date.UTC(2025, 9, 12, 12)), '12 Oct 2025')
+  // The year is the one in the given zone: just past midnight UTC on New
+  // Year's Day is still the old year in Los Angeles
+  const newYear = Date.UTC(2027, 0, 1, 0, 30)
+  t.is(
+    formatShortTime(Date.UTC(2026, 9, 12, 12), newYear, 'UTC'),
+    '12 Oct 2026'
+  )
+  t.is(
+    formatShortTime(Date.UTC(2026, 9, 12, 12), newYear, 'America/Los_Angeles'),
+    '12 Oct'
+  )
   // A clock running behind the entry never shows a negative age
-  t.is(formatShortTime(now + 60 * 1000, now), 'now')
+  t.is(short(now + 60 * 1000), 'now')
 })
 
 test('#formatShortDate gives the article kicker a day, month and year', (t) => {
-  t.is(formatShortDate(Date.UTC(2026, 9, 8, 12)), '8 Oct 2026')
-  t.is(formatShortDate(Date.UTC(2025, 0, 31, 12)), '31 Jan 2025')
+  t.is(formatShortDate(Date.UTC(2026, 9, 8, 12), 'UTC'), '8 Oct 2026')
+  t.is(formatShortDate(Date.UTC(2025, 0, 31, 12), 'UTC'), '31 Jan 2025')
+  // The day is the one in the given zone
+  t.is(
+    formatShortDate(Date.UTC(2026, 9, 8, 12), 'Pacific/Auckland'),
+    '9 Oct 2026'
+  )
 })
 
 test('#getNavSelection follows the URL', (t) => {

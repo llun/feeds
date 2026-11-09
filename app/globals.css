@@ -111,7 +111,6 @@
   --seg-track: color-mix(in oklab, var(--page), var(--text-primary) 2%);
   --seg-on-bg: var(--surface);
   --seg-on-border: var(--ctl-border);
-  --menu-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.22);
   --skeleton: hsl(0 0% 90%);
   --skeleton-shine: hsl(0 0% 100% / 0.75);
   --amber: #d9a21a;
@@ -150,9 +149,12 @@
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus);
 }
 
+/* Controls grow to 40px, so every band grows with them: a band holding a
+   control and one holding none stay the same height */
 @media (pointer: coarse) {
   :root {
     --control-h: 40px;
+    --band-h: 49px;
   }
 }
 
@@ -174,14 +176,13 @@
     --seg-track: color-mix(in oklab, var(--page), black 15%);
     --seg-on-bg: color-mix(in oklab, var(--surface), white 9%);
     --seg-on-border: color-mix(in oklab, var(--ctl-border), white 8%);
-    --menu-shadow: 0 14px 32px -10px rgba(0, 0, 0, 0.7);
     --skeleton: hsl(0 0% 20%);
     --skeleton-shine: hsl(0 0% 100% / 0.09);
     --amber: #e3a21a;
     --series-3: #199e70;
     --series-8: #e66767;
     --accent: #c4c4cc;
-    --accent-ink: #c4c4cc;
+    --accent-ink: #ececf0;
     --accent-soft: rgba(255, 255, 255, 0.1);
     --primary: #e4e4ea;
     --primary-hover: #f4f4f7;
@@ -207,32 +208,18 @@
   --seg-track: color-mix(in oklab, var(--page), black 15%);
   --seg-on-bg: color-mix(in oklab, var(--surface), white 9%);
   --seg-on-border: color-mix(in oklab, var(--ctl-border), white 8%);
-  --menu-shadow: 0 14px 32px -10px rgba(0, 0, 0, 0.7);
   --skeleton: hsl(0 0% 20%);
   --skeleton-shine: hsl(0 0% 100% / 0.09);
   --amber: #e3a21a;
   --series-3: #199e70;
   --series-8: #e66767;
   --accent: #c4c4cc;
-  --accent-ink: #c4c4cc;
+  --accent-ink: #ececf0;
   --accent-soft: rgba(255, 255, 255, 0.1);
   --primary: #e4e4ea;
   --primary-hover: #f4f4f7;
   --primary-edge: #9a9aa6;
   --on-primary: #17171a;
-}
-
-/* Keyboard-only focus indicator: the kit's two-tone ring, a surface gap and
-   then the focus colour. */
-@utility focus-ring {
-  &:focus {
-    outline: none;
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-ring);
-  }
 }
 
 /* Invisible 44px minimum touch target on coarse pointers (tablet/phone). */
@@ -348,9 +335,10 @@
     height: 100dvh;
   }
 
+  /* The document never scrolls (the panes do), so the bar is not sticky; it
+     is the busy band's containing block */
   .fk-topbar {
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 20;
     flex: none;
     display: flex;
@@ -454,6 +442,12 @@
     min-height: 0;
   }
 
+  /* The skip link focuses <main>, whose outline the panes would clip */
+  .fk-main:focus,
+  .fk-main:focus-visible {
+    outline: none;
+  }
+
   .fk-col {
     width: 100%;
     height: 100%;
@@ -471,7 +465,7 @@
     background: var(--surface);
   }
 
-  /* A pane: a 41px ruled head band, then its own scrolling body */
+  /* A pane: a ruled head band (--band-h), then its own scrolling body */
   .fk-pane {
     display: flex;
     flex-direction: column;
@@ -498,7 +492,8 @@
     font-family: var(--font-head);
     font-size: 20px;
     font-weight: 400;
-    line-height: 1.2;
+    /* Room for Thai marks above and below; the band stays at --band-h */
+    line-height: 1.5;
     letter-spacing: -0.01em;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -523,6 +518,14 @@
 
   @media (hover: none) {
     .fk-keys {
+      display: none;
+    }
+  }
+
+  /* The list head's hints would squeeze its title; the empty reading pane
+     keeps its own hint */
+  @media (max-width: 1100px) {
+    .fk-band .fk-keys {
       display: none;
     }
   }
@@ -615,6 +618,12 @@
     color: var(--text-muted);
   }
 
+  /* Muted text is too faint on the accent and hover washes */
+  .fk-current .fk-count,
+  .fk-nav-row:hover .fk-count {
+    color: var(--text-secondary);
+  }
+
   .fk-feed-link {
     position: relative;
     z-index: 1;
@@ -685,7 +694,7 @@
     font-family: var(--font-head);
     font-size: 16px;
     font-weight: 400;
-    line-height: 1.35;
+    line-height: 1.4;
     color: var(--text-primary);
     overflow-wrap: break-word;
     -webkit-box-orient: vertical;
@@ -705,11 +714,15 @@
     white-space: nowrap;
   }
 
+  /* The padding, taken back by the margin, keeps Thai marks inside the
+     clipped box */
   .fk-row-site {
     position: relative;
     z-index: 1;
     min-width: 0;
     max-width: 70%;
+    padding-block: 2px;
+    margin-block: -2px;
     overflow: hidden;
     color: var(--text-secondary);
     text-align: left;
@@ -739,10 +752,18 @@
     color: var(--text-muted);
   }
 
+  .fk-current .fk-row-time {
+    color: var(--text-secondary);
+  }
+
+  /* A 44px tall target, taken back by the margin so the row keeps its
+     layout, so a near miss on the site name doesn't open the article */
   @media (pointer: coarse) {
     .fk-row-site {
-      padding: 4px 0;
-      margin: -4px 0;
+      padding: 14px 4px;
+      margin: -14px -4px;
+      padding-block: calc((44px - 1lh) / 2);
+      margin-block: calc((1lh - 44px) / 2);
     }
   }
 
@@ -864,11 +885,21 @@
   }
 
   /* ---- Notices: a kit net-box strip under the top bar ---- */
+  /* The notices strip clips the Dismiss button's 44px touch target, which
+     would otherwise scroll a phone sideways */
+  .fk-notices {
+    overflow-x: clip;
+  }
+
+  /* On the page's 16px gutter: the icon lines up with the logo tile (16px
+     minus the 3px left border) and the last control's edge with the theme
+     button */
   .fk-net-box {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 6px 8px 6px 16px;
+    padding: 6px max(16px, env(safe-area-inset-right)) 6px
+      calc(max(16px, env(safe-area-inset-left)) - 3px);
     font-size: 13px;
     border-bottom: 1px solid
       color-mix(in srgb, var(--accent) 35%, var(--border));
@@ -914,7 +945,6 @@
 
   @media (max-width: 720px) {
     .fk-net-box {
-      padding: 6px 4px 6px 12px;
       gap: 8px;
     }
   }
@@ -992,16 +1022,6 @@
     background: var(--primary-hover);
   }
 
-  .btn-primary.btn-danger {
-    color: #ffffff;
-    background: var(--series-8);
-    --sh-edge: inset 0 -2px 0 color-mix(in srgb, var(--series-8) 60%, black);
-  }
-
-  .btn-primary.btn-danger:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--series-8) 88%, black);
-  }
-
   /* secondary: an outline with accent text */
   .btn-text {
     color: var(--accent-ink);
@@ -1009,7 +1029,7 @@
     --sh-edge: inset 0 -2px 0 var(--sec-edge);
   }
 
-  /* neutral: the page switch, icon buttons, notice actions */
+  /* neutral: icon buttons, Back, notice actions */
   .btn-icon,
   .btn-edge {
     color: var(--text-primary);
@@ -1029,8 +1049,7 @@
 
   .btn-text:hover:not(:disabled),
   .btn-icon:hover:not(:disabled),
-  .btn-edge:hover:not(:disabled),
-  .btn-edge[aria-expanded='true'] {
+  .btn-edge:hover:not(:disabled) {
     background: var(--ctl-hover);
   }
 
@@ -1103,8 +1122,11 @@
     flex: none;
   }
 
+  /* A taller line box keeps Thai tone marks inside the clip; the button's
+     height is fixed, so it doesn't grow */
   .fk-backbtn-label {
     min-width: 0;
+    line-height: 1.7;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1123,6 +1145,33 @@
 
   .btn-block {
     width: 100%;
+  }
+
+  /* Skip link: visually hidden until focused, then a fixed primary button.
+     Its own class, since the sr-only utility zeroes the border width and
+     not-sr-only never restores it. */
+  .fk-skip {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .fk-skip:focus {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 50;
+    width: auto;
+    height: var(--control-h);
+    margin: 0;
+    padding: 0 12px;
+    overflow: visible;
+    clip-path: none;
   }
 
   /* Segmented toggle: a flat track, the picked segment a small raised key */
@@ -1198,13 +1247,6 @@
   .field:disabled {
     color: var(--text-muted);
     background: var(--wash);
-  }
-
-  /* 16px text keeps iOS from zooming in on focus */
-  @media (pointer: coarse) {
-    .field {
-      font-size: 16px;
-    }
   }
 
   /* ---- Article prose. Feed HTML is arbitrary, so every element that can
@@ -1308,6 +1350,11 @@
 
   .feeds-prose li::marker {
     color: var(--axis);
+  }
+
+  /* Numbers are read, so they take the muted text colour */
+  .feeds-prose ol > li::marker {
+    color: var(--text-muted);
   }
 
   .feeds-prose blockquote {
@@ -1416,8 +1463,6 @@
     font-family: var(--mono);
     font-size: 11px;
     font-weight: 400;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
   }
 
   /* Hacker News discussions baked into an entry at build time. The feed's own
@@ -1603,6 +1648,15 @@
     font-family: var(--mono);
   }
 
+  /* 16px text keeps iOS from zooming in on focus. After the OPML rules, so
+     it also wins over their smaller sizes. */
+  @media (pointer: coarse) {
+    .field,
+    .fk-opml-src {
+      font-size: 16px;
+    }
+  }
+
   @media (max-width: 720px) {
     .fk-opml-head .fk-pane-title {
       flex: 1 1 auto;
@@ -1721,13 +1775,6 @@
     }
     .fk-nav-row {
       min-height: 44px;
-    }
-  }
-
-  /* Not sticky on small phones; still the busy band's containing block */
-  @media (max-width: 560px) {
-    .fk-topbar {
-      position: relative;
     }
   }
 }

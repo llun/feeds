@@ -172,18 +172,30 @@ const HOUR_S = 3600
 const DAY_S = 24 * HOUR_S
 
 // "9 Nov 2026": the article kicker's date, in the reader's own time zone
-export const formatShortDate = (timestampMs: number): string =>
+// unless one is given
+export const formatShortDate = (
+  timestampMs: number,
+  timeZone?: string
+): string =>
   new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'short',
-    year: 'numeric'
+    year: 'numeric',
+    timeZone
   }).format(timestampMs)
 
+const yearIn = (timestampMs: number, timeZone?: string): string =>
+  new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone }).format(
+    timestampMs
+  )
+
 // The list rows' short age: "now", "12m", "2h", "yesterday", "3d", then the
-// date ("12 Oct", with the year once it is not the current one).
+// date ("12 Oct", with the year once it is not the current one), in the
+// reader's own time zone unless one is given.
 export const formatShortTime = (
   timestampMs: number,
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
+  timeZone?: string
 ): string => {
   const seconds = Math.floor((nowMs - timestampMs) / 1000)
   if (seconds < 60) return 'now'
@@ -191,11 +203,11 @@ export const formatShortTime = (
   if (seconds < DAY_S) return `${Math.floor(seconds / HOUR_S)}h`
   if (seconds < 2 * DAY_S) return 'yesterday'
   if (seconds < 7 * DAY_S) return `${Math.floor(seconds / DAY_S)}d`
-  const sameYear =
-    new Date(timestampMs).getFullYear() === new Date(nowMs).getFullYear()
+  const sameYear = yearIn(timestampMs, timeZone) === yearIn(nowMs, timeZone)
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'short',
+    timeZone,
     ...(sameYear ? {} : { year: 'numeric' })
   }).format(timestampMs)
 }

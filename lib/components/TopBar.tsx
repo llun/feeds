@@ -34,13 +34,25 @@ export const statusText = (
 
 // A plain left click navigates in the app; anything else (a new tab, a
 // modified click) is left to the browser.
-const inApp = (action?: () => void) => (event: MouseEvent) => {
-  if (!action) return
-  if (event.button !== 0) return
-  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
-  event.preventDefault()
-  action()
-}
+export const inApp =
+  (action?: () => void) =>
+  (
+    event: Pick<
+      MouseEvent,
+      | 'button'
+      | 'metaKey'
+      | 'ctrlKey'
+      | 'shiftKey'
+      | 'altKey'
+      | 'preventDefault'
+    >
+  ) => {
+    if (!action) return
+    if (event.button !== 0) return
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    action()
+  }
 
 // The 48px bar over the panes: the brand, the status note and the theme
 // button. The OPML editor is reached from the sidebar's Edit OPML link.
@@ -56,7 +68,7 @@ export const TopBar = ({
     {/* The page's one h1; the panes' titles are h2 */}
     <h1 className="fk-brand-h">
       <a
-        className="fk-brand"
+        className="fk-brand hit-target-y"
         href={appHref(basePath, '/')}
         onClick={inApp(selectReader)}
       >

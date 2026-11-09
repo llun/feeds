@@ -218,6 +218,8 @@ export const ItemList = ({
   useEffect(() => {
     const handler: EventListener = (event: KeyboardEvent) => {
       if (entries.length === 0) return
+      // Leave shortcuts such as Ctrl/Cmd+S to the browser
+      if (event.ctrlKey || event.metaKey || event.altKey) return
 
       switch (event.code) {
         case 'ArrowUp':
@@ -350,7 +352,12 @@ export const ItemList = ({
                       dateTime={new Date(time).toISOString()}
                       title={formatRelativeTime(time)}
                     >
-                      {formatShortTime(time)}
+                      {/* "2h" reads as an abbreviation; screen readers get
+                          the long form */}
+                      <span aria-hidden="true">{formatShortTime(time)}</span>
+                      <span className="sr-only">
+                        {formatRelativeTime(time)}
+                      </span>
                     </time>
                   </div>
                 </li>
@@ -371,8 +378,9 @@ export const ItemList = ({
   )
 }
 
-// The list pane's 41px head: the serif title, the ↑ ↓ / W S key hints (not on
-// touch screens, and only where the keys move through a list) and the count.
+// The list pane's head (--band-h): the serif title, the ↑ ↓ / W S key hints
+// (not on touch screens or at 1100px and below, and only where the keys move
+// through a list) and the count.
 export const ListHead = ({
   title,
   count,
@@ -383,7 +391,9 @@ export const ListHead = ({
   keys?: boolean
 }) => (
   <div className="fk-band">
-    <h2 className="fk-pane-title">{title || '\u00a0'}</h2>
+    <h2 className="fk-pane-title" title={title || undefined}>
+      {title || '\u00a0'}
+    </h2>
     <div className="fk-band-end">
       {keys && (
         <span className="fk-keys" aria-hidden="true">

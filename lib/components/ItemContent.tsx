@@ -32,7 +32,7 @@ interface ItemContentProps {
   backLabel?: string
 }
 
-// The article's 41px action strip, the only part that stays put: on phones the
+// The article's action strip (--band-h), the only part that stays put: on phones the
 // back button with the list's name, then "View original" on the right.
 const ActionStrip = ({
   selectBack,
@@ -106,10 +106,10 @@ export const ItemContent = ({
 
   if (!content) {
     return (
-      <div className="fk-hatch" role="status">
+      <div className="fk-hatch">
         <div className="fk-hatch-panel">
           <p>Pick a story to read.</p>
-          <span className="fk-keys">
+          <span className="fk-keys" aria-hidden="true">
             <kbd>↑</kbd>
             <kbd>↓</kbd>
             <span className="ml-1">previous and next</span>

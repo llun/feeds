@@ -349,7 +349,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
           e.preventDefault()
           document.getElementById('main-content')?.focus()
         }}
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:h-(--control-h) focus:px-3 btn-primary"
+        className="btn-primary fk-skip"
       >
         Skip to main content
       </button>
@@ -409,7 +409,6 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
               <OpmlView
                 initialOpml={initialOpml}
                 categories={categories}
-                active={true}
                 onBack={() => {
                   setPageState('categories')
                   dispatch(updatePath('/sites/all'))
@@ -418,6 +417,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
             ) : (
               <ListShell
                 title="Subscriptions"
+                ariaLabel="Edit OPML"
                 message="Loading…"
                 keys={false}
                 failed={loadFailed}
@@ -516,16 +516,27 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 // jumps when the real list takes its place.
 const ListShell: FC<{
   title: string
+  // The pane's name: the list's, or the OPML editor's while /opml loads
+  ariaLabel?: string
   message?: string
   // The OPML page has no list for the arrow keys to move through
   keys?: boolean
   failed?: boolean
   onRetry?: () => void
   onBack: () => void
-}> = ({ title, message = 'Loading items…', keys, failed, onRetry, onBack }) => (
-  <section className="fk-pane" aria-label="Feed items">
+}> = ({
+  title,
+  ariaLabel = 'Feed items',
+  message = 'Loading items…',
+  keys,
+  failed,
+  onRetry,
+  onBack
+}) => (
+  <section className="fk-pane" aria-label={ariaLabel}>
     <BackBand onClickBack={onBack} label="Categories" />
-    <ListHead title={title} keys={keys} />
+    {/* A failed load has no list for the keys to move through */}
+    <ListHead title={title} keys={failed ? false : keys} />
     {failed ? (
       <div className="fk-empty" role="status">
         <p>Couldn&apos;t load feeds. Check your connection and try again.</p>

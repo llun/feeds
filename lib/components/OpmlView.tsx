@@ -14,7 +14,6 @@ import { generateOpml, parseOpml, type OpmlCategory } from '../opml'
 import { Category } from '../storage/types'
 
 interface OpmlViewProps {
-  active?: boolean
   onBack?: () => void
   initialOpml?: string
   categories?: Category[]
@@ -106,7 +105,6 @@ const ParseError = ({ children }: { children: React.ReactNode }) => (
 )
 
 export const OpmlView: FC<OpmlViewProps> = ({
-  active = true,
   onBack,
   initialOpml,
   categories
@@ -200,10 +198,7 @@ export const OpmlView: FC<OpmlViewProps> = ({
   }
 
   return (
-    <section
-      className={`fk-pane fk-opml ${active ? 'is-active' : ''}`}
-      aria-label="Edit OPML"
-    >
+    <section className="fk-pane" aria-label="Edit OPML">
       <BackBand onClickBack={onBack} label="Categories" />
 
       <div className="fk-band fk-opml-head">
@@ -213,6 +208,7 @@ export const OpmlView: FC<OpmlViewProps> = ({
           <span className="seg" role="group" aria-label="Editor mode">
             <button
               type="button"
+              className="hit-target-y"
               aria-pressed={mode === 'form'}
               onClick={() => setMode('form')}
             >
@@ -220,6 +216,7 @@ export const OpmlView: FC<OpmlViewProps> = ({
             </button>
             <button
               type="button"
+              className="hit-target-y"
               aria-pressed={mode === 'xml'}
               onClick={() => setMode('xml')}
             >
@@ -240,9 +237,12 @@ export const OpmlView: FC<OpmlViewProps> = ({
           <Button
             variant="outline"
             size="sm"
-            className="fk-opml-save"
+            // Icon-only on phones, so 44px both ways there
+            className="fk-opml-save hit-target"
             iconLeft={<GitPullRequest size={14} {...icon} />}
             disabled={!dirty || Boolean(parsed.error)}
+            // The text is hidden on phones
+            aria-label="Save OPML"
             title="Save OPML — opens a GitHub issue"
             onClick={saveOpml}
           >
@@ -434,7 +434,10 @@ export const OpmlView: FC<OpmlViewProps> = ({
             aria-label="OPML source"
             onChange={(e) => setSrc(e.target.value)}
           />
-          <div className="fk-opml-preview" aria-label="Subscription preview">
+          <section
+            className="fk-opml-preview"
+            aria-label="Subscription preview"
+          >
             <div className="fk-band">
               <span className="fk-label">Preview</span>
               {parsed.cats ? (
@@ -482,7 +485,7 @@ export const OpmlView: FC<OpmlViewProps> = ({
                 </div>
               ))
             )}
-          </div>
+          </section>
         </div>
       )}
     </section>

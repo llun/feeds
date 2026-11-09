@@ -26,7 +26,7 @@ interface BandProps extends Props {
   children?: ReactNode
 }
 
-// The phone's 41px back band: the back button, with room for actions on the
+// The phone's back band (--band-h): the back button, with room for actions on the
 // right.
 export const BackBand = ({ onClickBack, label, children }: BandProps) => (
   <div className="fk-band fk-backband md:hidden">

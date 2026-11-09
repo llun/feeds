@@ -37,7 +37,7 @@ const FeedLink = ({ href, name }: { href: string; name: string }) => (
     type="application/atom+xml"
     aria-label={`Open Atom feed for ${name}`}
     title={`Open Atom feed for ${name}`}
-    className="fk-feed-link"
+    className="fk-feed-link hit-target"
     onClick={(e) => e.stopPropagation()}
   >
     <Rss size={13} strokeWidth={1.5} aria-hidden="true" />
@@ -87,10 +87,11 @@ export const CategoryList = ({
 
         {!categories.length && loading && !failed && <NavSkeleton />}
 
-        {/* On a phone the sidebar is the only pane after Back */}
+        {/* On a phone the sidebar is the only pane after Back; wider, the
+            list pane already says so */}
         {!categories.length && failed && (
           <div
-            className="flex flex-col items-start gap-2 px-2 pt-4 text-muted-foreground"
+            className="flex flex-col items-start gap-2 px-2 pt-4 text-muted-foreground md:hidden"
             role="status"
           >
             <p>Couldn&apos;t load feeds.</p>

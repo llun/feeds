@@ -11,14 +11,7 @@ import {
 } from 'lucide-react'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?:
-    | 'primary'
-    | 'brand'
-    | 'secondary'
-    | 'outline'
-    | 'ghost'
-    | 'link'
-    | 'destructive'
+  variant?: 'primary' | 'brand' | 'secondary' | 'outline' | 'ghost' | 'link'
   size?: 'sm' | 'md' | 'lg'
   iconLeft?: string | ReactNode
   iconRight?: string | ReactNode
@@ -50,16 +43,27 @@ const renderIcon = (icon: string | ReactNode, size: number) => {
 }
 
 // Each variant maps onto a labs kit control: primary (brand, primary), edge
-// outline with accent text (outline, secondary), ghost, link, primary in red
-// (destructive); a button with only an icon is the kit's edge icon button.
+// outline with accent text (outline, secondary), ghost and link; a button
+// with only an icon is the kit's edge icon button.
 const VARIANT_CLASS: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary: 'btn-primary',
   brand: 'btn-primary',
   secondary: 'btn-text',
   outline: 'btn-text',
   ghost: 'btn-ghost',
-  link: 'btn-link',
-  destructive: 'btn-primary btn-danger'
+  link: 'btn-link'
+}
+
+// The 44px touch target: both ways for a square icon button, vertical only
+// for the rest so it never reaches into a neighbour. A caller that passes its
+// own hit-target class keeps it.
+const hitTargetClassName = (
+  variant: ButtonProps['variant'],
+  iconOnly: boolean,
+  className: string
+): string => {
+  if (/(^|\s)hit-target/.test(className)) return ''
+  return iconOnly && variant !== 'link' ? 'hit-target' : 'hit-target-y'
 }
 
 export const buttonClassName = ({
@@ -77,7 +81,7 @@ export const buttonClassName = ({
 }): string =>
   [
     iconOnly && variant !== 'link' ? 'btn-icon' : VARIANT_CLASS[variant],
-    variant === 'link' ? '' : 'hit-target-y',
+    hitTargetClassName(variant, iconOnly, className),
     size === 'lg' ? 'btn-lg' : '',
     block ? 'btn-block' : '',
     className
