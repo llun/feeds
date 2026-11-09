@@ -1,6 +1,5 @@
 import React from 'react'
-import { AlertCircle, Check, Info, RefreshCw } from 'lucide-react'
-import { Button } from './Button'
+import { AlertCircle, Check, Info, X } from 'lucide-react'
 import type { RefreshState } from '../freshness'
 
 interface RefreshNoticeProps {
@@ -9,83 +8,88 @@ interface RefreshNoticeProps {
   onDismiss?: () => void
 }
 
+const NoticeBox = ({
+  tone,
+  icon,
+  text,
+  action,
+  onAction,
+  onDismiss
+}: {
+  tone: 'info' | 'error' | 'success'
+  icon: React.ReactNode
+  text: string
+  action?: string
+  onAction?: () => void
+  onDismiss?: () => void
+}) => (
+  <div className="fk-net-box" data-tone={tone}>
+    {icon}
+    <span className="fk-net-text">{text}</span>
+    {action && (
+      <button
+        type="button"
+        className="btn-edge hit-target-y"
+        onClick={onAction}
+      >
+        {action}
+      </button>
+    )}
+    {onDismiss && (
+      <button
+        type="button"
+        className="btn-ghost hit-target px-2"
+        aria-label="Dismiss"
+        title="Dismiss"
+        onClick={onDismiss}
+      >
+        <X size={16} strokeWidth={1.5} aria-hidden="true" />
+      </button>
+    )}
+  </div>
+)
+
+// A kit net-box strip under the top bar. A refresh in progress shows as the
+// top bar's busy band instead, and is only announced here.
 export const RefreshNotice = ({
   state,
   onLoadLatest,
   onDismiss
 }: RefreshNoticeProps) => {
+  const iconProps = { size: 16, strokeWidth: 1.5, 'aria-hidden': true }
   // The live region stays mounted so screen readers announce each message;
   // one added together with its text is often not read.
   return (
-    <div
-      role="status"
-      className="pointer-events-none fixed inset-x-4 bottom-4 z-40 flex justify-center"
-    >
-      {state && (
-        <div className="pointer-events-auto flex max-w-full items-center gap-2.5 rounded-lg border border-border bg-popover px-3.5 py-2.5 text-sm leading-[1.4] text-popover-foreground shadow-md animate-pop-in">
-          {state === 'refreshing' && (
-            <>
-              <RefreshCw
-                size={16}
-                aria-hidden="true"
-                className="shrink-0 animate-spin text-brand"
-              />
-              <span>Loading the latest feeds…</span>
-            </>
-          )}
-          {state === 'refreshed' && (
-            <>
-              <Check
-                size={16}
-                aria-hidden="true"
-                className="shrink-0 text-success"
-              />
-              <span>Feeds updated.</span>
-            </>
-          )}
-          {state === 'available' && (
-            <>
-              <Info
-                size={16}
-                aria-hidden="true"
-                className="shrink-0 text-link"
-              />
-              <span>New feeds are available.</span>
-              <Button variant="link" size="sm" onClick={onLoadLatest}>
-                Load latest
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                iconLeft="x"
-                aria-label="Dismiss"
-                title="Dismiss"
-                onClick={onDismiss}
-              />
-            </>
-          )}
-          {state === 'failed' && (
-            <>
-              <AlertCircle
-                size={16}
-                aria-hidden="true"
-                className="shrink-0 text-destructive"
-              />
-              <span>Couldn&apos;t load the latest feeds.</span>
-              <Button variant="link" size="sm" onClick={onLoadLatest}>
-                Try again
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                iconLeft="x"
-                aria-label="Dismiss"
-                title="Dismiss"
-                onClick={onDismiss}
-              />
-            </>
-          )}
-        </div>
+    <div role="status" className="fk-notices">
+      {state === 'refreshing' && (
+        <span className="sr-only">Loading the latest feeds…</span>
+      )}
+      {state === 'refreshed' && (
+        <NoticeBox
+          tone="success"
+          icon={<Check {...iconProps} />}
+          text="Feeds updated."
+        />
+      )}
+      {state === 'available' && (
+        <NoticeBox
+          tone="info"
+          icon={<Info {...iconProps} />}
+          text="New feeds are available."
+          action="Load latest"
+          onAction={onLoadLatest}
+          onDismiss={onDismiss}
+        />
+      )}
+      {state === 'failed' && (
+        <NoticeBox
+          tone="error"
+          icon={<AlertCircle {...iconProps} />}
+          text="Couldn't load the latest feeds."
+          action="Try again"
+          onAction={onLoadLatest}
+          onDismiss={onDismiss}
+        />
       )}
     </div>
   )

@@ -3,12 +3,13 @@ import { SiteEntry } from '../storage/types'
 import {
   LocationState,
   formatRelativeTime,
+  formatShortTime,
   getListKey,
   getSelectedEntryKey
 } from '../utils'
 import { getStorage } from '../storage'
 import type { RecoveryResult } from '../freshness'
-import { BackButton } from './BackButton'
+import { BackBand } from './BackButton'
 import { Button } from './Button'
 import { ListSkeleton } from './Skeleton'
 
@@ -276,37 +277,28 @@ export const ItemList = ({
       : "This site doesn't exist."
 
   return (
-    <section
-      className="flex h-full flex-col overflow-hidden border-border bg-background md:border-r"
-      aria-label="Feed items"
-    >
-      <div className="fk-list-head">
-        <div className="fk-backbar md:hidden">
-          <BackButton onClickBack={selectBack} />
-        </div>
-        <div
-          className="fk-list-titlebar"
-          ref={(section) => {
-            element = section
-          }}
-        >
-          <h2 className="fk-list-title">{title}</h2>
-        </div>
-      </div>
+    <section className="fk-pane" aria-label="Feed items">
+      <BackBand onClickBack={selectBack} label="Categories" />
+      <ListHead
+        title={title}
+        count={pageState === 'loaded' ? totalEntry : null}
+      />
 
-      <div className="overflow-y-auto flex-1">
+      <div
+        className="fk-scroll"
+        ref={(section) => {
+          element = section
+        }}
+      >
         {pageState === 'loading' ? (
           <ListSkeleton />
         ) : pageState === 'unreachable' ? (
-          <div
-            className="flex h-full flex-col items-center justify-center gap-3.5 p-8 text-center text-sm text-muted-foreground"
-            role="status"
-          >
-            <p className="max-w-[260px] leading-[1.5]">
+          <div className="fk-empty" role="status">
+            <p>
               Couldn&apos;t load items. Check your connection and try again.
             </p>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => setAttempt((count) => count + 1)}
             >
@@ -314,48 +306,35 @@ export const ItemList = ({
             </Button>
           </div>
         ) : pageState === 'loaded' && entries.length > 0 ? (
-          <ul
-            ref={itemsRef}
-            className="divide-y divide-border p-1.5"
-            role="list"
-          >
-            {entries.map((entry, index) => (
-              <li
-                key={entry.key}
-                id={`entry-${entry.key}`}
-                className={`px-3 py-2.5 transition-colors ${
-                  entry.key === selectedEntryHash
-                    ? 'bg-surface-3'
-                    : 'hover:bg-surface-2'
-                }`}
-                ref={
-                  entries.length - 5 === index && entries.length < totalEntry
-                    ? nextBatchEntry
-                    : null
-                }
-              >
-                <div className="w-full">
+          <ul ref={itemsRef} role="list">
+            {entries.map((entry, index) => {
+              const selected = entry.key === selectedEntryHash
+              const time = entry.timestamp * 1000
+              return (
+                <li
+                  key={entry.key}
+                  id={`entry-${entry.key}`}
+                  className={`fk-row ${selected ? 'fk-current' : ''}`}
+                  ref={
+                    entries.length - 5 === index && entries.length < totalEntry
+                      ? nextBatchEntry
+                      : null
+                  }
+                >
                   <button
                     type="button"
                     onClick={() => {
                       selectEntryHash(entry.key)
                     }}
-                    className="block w-full rounded-sm text-left focus-ring"
+                    className="fk-row-main"
+                    aria-current={selected ? true : undefined}
                   >
-                    <h3
-                      className={`line-clamp-2 break-words text-sm leading-snug ${
-                        entry.key === selectedEntryHash
-                          ? 'font-semibold text-brand-emphasis'
-                          : 'font-medium'
-                      }`}
-                    >
-                      {entry.title}
-                    </h3>
+                    <h3 className="fk-row-title">{entry.title}</h3>
                   </button>
-                  <div className="mt-1 flex min-w-0 items-center gap-1.5 whitespace-nowrap">
+                  <div className="fk-row-meta">
                     <button
                       type="button"
-                      className="max-w-[60%] truncate rounded-sm text-xs font-medium text-muted-foreground transition-colors hover:text-brand focus-ring"
+                      className="fk-row-site"
                       onClick={() => {
                         selectSite?.(entry.site.key)
                       }}
@@ -363,21 +342,24 @@ export const ItemList = ({
                     >
                       {entry.site.title}
                     </button>
-                    <span className="shrink-0 text-xs text-faint">•</span>
-                    <span className="shrink-0 text-nowrap text-xs text-faint">
-                      {formatRelativeTime(entry.timestamp * 1000)}
+                    <span className="fk-dot" aria-hidden="true">
+                      ·
                     </span>
+                    <time
+                      className="fk-row-time"
+                      dateTime={new Date(time).toISOString()}
+                      title={formatRelativeTime(time)}
+                    >
+                      {formatShortTime(time)}
+                    </time>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              )
+            })}
           </ul>
         ) : (
-          <div
-            className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground"
-            role="status"
-          >
-            <p className="max-w-[260px] leading-[1.5]">
+          <div className="fk-empty" role="status">
+            <p>
               {pageState === 'error'
                 ? errorMessage
                 : 'No items to display. Pick a category or site from the left.'}
@@ -388,3 +370,36 @@ export const ItemList = ({
     </section>
   )
 }
+
+// The list pane's 41px head: the serif title, the ↑ ↓ / W S key hints (not on
+// touch screens, and only where the keys move through a list) and the count.
+export const ListHead = ({
+  title,
+  count,
+  keys = true
+}: {
+  title: string
+  count?: number | null
+  keys?: boolean
+}) => (
+  <div className="fk-band">
+    <h2 className="fk-pane-title">{title || '\u00a0'}</h2>
+    <div className="fk-band-end">
+      {keys && (
+        <span className="fk-keys" aria-hidden="true">
+          <kbd>↑</kbd>
+          <kbd>↓</kbd>
+          <span className="px-0.5">/</span>
+          <kbd>W</kbd>
+          <kbd>S</kbd>
+        </span>
+      )}
+      {count != null && (
+        <span className="fk-count">
+          {count}
+          <span className="sr-only"> items</span>
+        </span>
+      )}
+    </div>
+  </div>
+)

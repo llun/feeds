@@ -1,8 +1,9 @@
 'use client'
 
 import React, { FC, useState, useRef, useMemo } from 'react'
-import { Folder, Rss, GitPullRequest, Info } from 'lucide-react'
+import { AlertCircle, Folder, Rss, GitPullRequest, Info } from 'lucide-react'
 import { Button } from './Button'
+import { BackBand } from './BackButton'
 import {
   describeOpmlDiff,
   formatOpmlIssueBody,
@@ -93,6 +94,16 @@ function getRepositoryName(): string {
   }
   return ''
 }
+
+const icon = { strokeWidth: 1.5, 'aria-hidden': true } as const
+
+// A parse error in the kit's red notice box
+const ParseError = ({ children }: { children: React.ReactNode }) => (
+  <div className="fk-net-box is-inline mb-3.5" data-tone="error">
+    <AlertCircle size={16} {...icon} />
+    <span className="fk-net-text">{children}</span>
+  </div>
+)
 
 export const OpmlView: FC<OpmlViewProps> = ({
   active = true,
@@ -193,124 +204,117 @@ export const OpmlView: FC<OpmlViewProps> = ({
       className={`fk-pane fk-opml ${active ? 'is-active' : ''}`}
       aria-label="Edit OPML"
     >
-      <div className="fk-backbar">
-        <Button
-          variant="ghost"
-          size="sm"
-          iconLeft="chevron-left"
-          onClick={onBack}
-        >
-          Feeds
-        </Button>
-      </div>
+      <BackBand onClickBack={onBack} label="Categories" />
 
-      <div className="fk-list-head">
-        <div className="fk-list-titlebar">
-          <h1 className="fk-list-title">feeds.opml</h1>
-          <div className="fk-list-tools" style={{ gap: 6 }}>
-            <span className="fk-opml-seg" role="group" aria-label="Editor mode">
-              <Button
-                variant={mode === 'form' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setMode('form')}
-              >
-                Editor
-              </Button>
-              <Button
-                variant={mode === 'xml' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setMode('xml')}
-              >
-                XML
-              </Button>
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={!dirty}
-              onClick={() => {
-                setSrc(pristine)
-                setShowClipboardNotice(false)
-              }}
+      <div className="fk-band fk-opml-head">
+        <h2 className="fk-pane-title">Subscriptions</h2>
+        <span className="fk-mono fk-opml-file">feeds.opml</span>
+        <div className="fk-band-end">
+          <span className="seg" role="group" aria-label="Editor mode">
+            <button
+              type="button"
+              aria-pressed={mode === 'form'}
+              onClick={() => setMode('form')}
             >
-              Reset
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="fk-opml-save"
-              iconLeft={<GitPullRequest size={16} />}
-              disabled={!dirty || Boolean(parsed.error)}
-              title="Save OPML — opens a GitHub issue"
-              onClick={saveOpml}
+              Form
+            </button>
+            <button
+              type="button"
+              aria-pressed={mode === 'xml'}
+              onClick={() => setMode('xml')}
             >
-              Save OPML
-            </Button>
-            <Button
-              variant="brand"
-              size="sm"
-              className={copied ? 'is-copied' : ''}
-              iconLeft={copied ? 'check' : undefined}
-              onClick={copy}
-            >
-              {copied ? 'Copied' : 'Copy OPML'}
-            </Button>
-          </div>
+              Source
+            </button>
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={!dirty}
+            onClick={() => {
+              setSrc(pristine)
+              setShowClipboardNotice(false)
+            }}
+          >
+            Reset
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="fk-opml-save"
+            iconLeft={<GitPullRequest size={14} {...icon} />}
+            disabled={!dirty || Boolean(parsed.error)}
+            title="Save OPML — opens a GitHub issue"
+            onClick={saveOpml}
+          >
+            Save OPML
+          </Button>
+          <Button
+            variant="brand"
+            size="sm"
+            iconLeft={copied ? 'check' : undefined}
+            onClick={copy}
+          >
+            {copied ? 'Copied' : 'Copy OPML'}
+          </Button>
         </div>
-        {showClipboardNotice ? (
-          <p className="fk-opml-hint fk-opml-notice" role="status">
-            <Info size={14} />
-            <span>OPML copied — paste it into the GitHub issue body.</span>
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => setShowClipboardNotice(false)}
-            >
-              Dismiss
-            </Button>
-          </p>
-        ) : (
-          <p className="fk-opml-hint">
+      </div>
+      {showClipboardNotice ? (
+        <p className="fk-opml-hint" role="status">
+          <Info size={14} {...icon} />
+          <span className="min-w-0 flex-1">
+            OPML copied — paste it into the GitHub issue body.
+          </span>
+          <Button
+            variant="link"
+            size="sm"
+            onClick={() => setShowClipboardNotice(false)}
+          >
+            Dismiss
+          </Button>
+        </p>
+      ) : (
+        <p className="fk-opml-hint">
+          <span>
             Edits are not saved here. Copy the output and commit{' '}
             <code>feeds.opml</code> to your repository yourself, or use Save
             OPML to open a GitHub issue.
-          </p>
-        )}
-      </div>
+          </span>
+        </p>
+      )}
 
       {mode === 'form' ? (
         <div className="fk-opml-form">
           {parsed.error && !parsed.empty ? (
-            <div className="fk-opml-err">
+            <ParseError>
               {parsed.error} Fix it in the{' '}
               <Button variant="link" size="sm" onClick={() => setMode('xml')}>
-                XML tab
+                Source view
               </Button>{' '}
               or reset.
-            </div>
+            </ParseError>
           ) : (
             <>
               {parsed.empty ? (
-                <div className="fk-opml-err" style={{ marginBottom: 14 }}>
+                <ParseError>
                   {parsed.error} Fix it in the{' '}
                   <Button
                     variant="link"
                     size="sm"
                     onClick={() => setMode('xml')}
                   >
-                    XML tab
+                    Source view
                   </Button>{' '}
                   or add a category.
-                </div>
+                </ParseError>
               ) : null}
               {parsed.cats?.map((c, ci) => {
                 const isUncategorized = c.category === 'default'
                 return (
                   <section className="fk-opml-fcat" key={ci}>
                     <div className="fk-opml-frow fk-opml-fcat-head">
-                      <Folder size={15} />
+                      <Folder size={16} {...icon} />
                       <input
-                        className="fk-opml-in fk-opml-in-cat"
+                        className="field fk-opml-in fk-opml-in-cat"
                         value={isUncategorized ? '' : c.category}
                         placeholder={
                           isUncategorized ? 'Uncategorized' : 'Category name'
@@ -340,9 +344,9 @@ export const OpmlView: FC<OpmlViewProps> = ({
 
                     {c.items.map((f, fi) => (
                       <div className="fk-opml-frow" key={fi}>
-                        <Rss size={13} />
+                        <Rss size={14} {...icon} />
                         <input
-                          className="fk-opml-in"
+                          className="field fk-opml-in"
                           value={f.title || f.text}
                           placeholder="Feed title"
                           aria-label="Feed title"
@@ -355,7 +359,7 @@ export const OpmlView: FC<OpmlViewProps> = ({
                           }}
                         />
                         <input
-                          className="fk-opml-in fk-opml-in-url"
+                          className="field fk-opml-in fk-opml-in-url"
                           value={f.xmlUrl}
                           placeholder="https://site.com/rss.xml"
                           aria-label="Feed URL"
@@ -383,7 +387,7 @@ export const OpmlView: FC<OpmlViewProps> = ({
 
                     <div className="fk-opml-addfeed">
                       <Button
-                        variant="link"
+                        variant="ghost"
                         size="sm"
                         iconLeft="plus"
                         onClick={() => {
@@ -431,24 +435,38 @@ export const OpmlView: FC<OpmlViewProps> = ({
             onChange={(e) => setSrc(e.target.value)}
           />
           <div className="fk-opml-preview" aria-label="Subscription preview">
-            <div className="fk-opml-pvhead">Preview</div>
+            <div className="fk-band">
+              <span className="fk-label">Preview</span>
+              {parsed.cats ? (
+                <span className="fk-count">
+                  {parsed.cats.reduce(
+                    (total, c) => total + (c.items?.length ?? 0),
+                    0
+                  )}{' '}
+                  feeds
+                </span>
+              ) : null}
+            </div>
             {parsed.error ? (
-              <div className="fk-opml-err">{parsed.error}</div>
+              <div className="p-4">
+                <ParseError>{parsed.error}</ParseError>
+              </div>
             ) : (
               parsed.cats?.map((c, i) => (
                 <div key={i}>
                   {c.category !== 'default' ? (
                     <div className="fk-opml-cat">
-                      <Folder size={14} /> {c.category}
-                      <span className="fk-opml-n">
+                      <Folder size={14} {...icon} />
+                      <span className="min-w-0 truncate">{c.category}</span>
+                      <span className="fk-count">
                         {c.items ? c.items.length : 0}
                       </span>
                     </div>
                   ) : null}
                   {c.items?.map((f, j) => (
                     <div className="fk-opml-feed" key={j}>
-                      <Rss size={13} />
-                      <div>
+                      <Rss size={13} {...icon} />
+                      <div className="min-w-0">
                         <div className="fk-opml-feed-t">
                           {f.title || f.text || 'Untitled'}
                         </div>

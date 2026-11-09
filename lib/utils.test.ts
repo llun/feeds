@@ -4,6 +4,8 @@ import {
   PageState,
   findSiteTitle,
   formatRelativeTime,
+  formatShortDate,
+  formatShortTime,
   getArticleView,
   getHydrationView,
   getListKey,
@@ -203,6 +205,28 @@ test('#formatRelativeTime reads like the design', (t) => {
   t.is(ago(60 * 86400), '2 months ago')
   t.is(ago(400 * 86400), 'last year')
   t.is(formatRelativeTime(now + 5000, now), 'now')
+})
+
+test('#formatShortTime gives the list rows a short age', (t) => {
+  // Noon UTC, so the dates read the same in any test machine's time zone
+  const now = Date.UTC(2026, 10, 9, 12, 0, 0)
+  const ago = (seconds: number) => formatShortTime(now - seconds * 1000, now)
+  t.is(ago(20), 'now')
+  t.is(ago(12 * 60), '12m')
+  t.is(ago(2 * 3600), '2h')
+  t.is(ago(5 * 3600 + 59 * 60), '5h')
+  t.is(ago(30 * 3600), 'yesterday')
+  t.is(ago(3 * 86400), '3d')
+  t.is(formatShortTime(Date.UTC(2026, 9, 12, 12), now), '12 Oct')
+  // An older year names the year
+  t.is(formatShortTime(Date.UTC(2025, 9, 12, 12), now), '12 Oct 2025')
+  // A clock running behind the entry never shows a negative age
+  t.is(formatShortTime(now + 60 * 1000, now), 'now')
+})
+
+test('#formatShortDate gives the article kicker a day, month and year', (t) => {
+  t.is(formatShortDate(Date.UTC(2026, 9, 8, 12)), '8 Oct 2026')
+  t.is(formatShortDate(Date.UTC(2025, 0, 31, 12)), '31 Jan 2025')
 })
 
 test('#getNavSelection follows the URL', (t) => {

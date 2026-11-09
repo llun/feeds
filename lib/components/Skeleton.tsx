@@ -1,21 +1,14 @@
 import React, { CSSProperties } from 'react'
 
-// Placeholder blocks shaped like the content that is loading. The shimmer is
-// pinned to the viewport (see .feeds-skeleton), so every block on screen shares
-// one sweep, and it stops under reduced motion.
+// Placeholder blocks shaped like the content that is loading: the kit's square
+// .sk blocks, with a shine band that stops under reduced motion.
 export const Skeleton = ({
   className = '',
   style
 }: {
   className?: string
   style?: CSSProperties
-}) => (
-  <span
-    aria-hidden="true"
-    className={`feeds-skeleton ${className}`}
-    style={style}
-  />
-)
+}) => <span aria-hidden="true" className={`sk ${className}`} style={style} />
 
 const LoadingStatus = ({ label }: { label: string }) => (
   <span className="sr-only">{label}</span>
@@ -33,15 +26,16 @@ const LIST_ROWS: [string, string, string][] = [
   ['88%', '60%', '38%']
 ]
 
+// Shaped like the serif index rows: two title lines, then the mono meta
 export const ListSkeleton = ({ label = 'Loading items…' }) => (
-  <div role="status" className="p-1.5">
+  <div role="status">
     <LoadingStatus label={label} />
-    <ul className="divide-y divide-border" aria-hidden="true">
+    <ul aria-hidden="true">
       {LIST_ROWS.map(([first, second, meta], index) => (
-        <li key={index} className="px-3 py-2.5">
-          <Skeleton className="h-3.5" style={{ width: first }} />
-          <Skeleton className="mt-[5px] h-3.5" style={{ width: second }} />
-          <Skeleton className="mt-2 h-3" style={{ width: meta }} />
+        <li key={index} className="fk-row">
+          <Skeleton className="mt-[3px] h-3.5" style={{ width: first }} />
+          <Skeleton className="mt-2 h-3.5" style={{ width: second }} />
+          <Skeleton className="mt-[11px] h-2.5" style={{ width: meta }} />
         </li>
       ))}
     </ul>
@@ -50,28 +44,31 @@ export const ListSkeleton = ({ label = 'Loading items…' }) => (
 
 const ARTICLE_PARAGRAPH = ['100%', '96%', '98%', '70%']
 
+// Shaped like the article's title block (kicker, serif title, rule) and prose
 export const ArticleSkeleton = () => (
-  <div role="status" className="flex min-h-0 flex-1 flex-col">
+  <div role="status" className="fk-scroll">
     <LoadingStatus label="Loading article…" />
-    <div className="border-b border-border px-6.5 pt-5.5 pb-[15px] md:pt-9.5">
-      <Skeleton className="h-6" style={{ width: '85%' }} />
-      <Skeleton className="mt-2 h-6" style={{ width: '55%' }} />
-      <Skeleton className="mt-4 h-3.5" style={{ width: '45%' }} />
-    </div>
-    <div className="max-w-(--measure) overflow-hidden px-6.5 pt-5.5">
-      {[0, 1, 2].map((paragraph) => (
-        <div key={paragraph} className="mb-6 flex flex-col gap-3">
-          {ARTICLE_PARAGRAPH.map((width, line) => (
-            <Skeleton key={line} className="h-3.5" style={{ width }} />
-          ))}
-        </div>
-      ))}
+    <div className="fk-article-body" aria-hidden="true">
+      <div className="fk-article-col">
+        <Skeleton className="h-2.5" style={{ width: '40%' }} />
+        <Skeleton className="mt-5 h-7" style={{ width: '88%' }} />
+        <Skeleton className="mt-2.5 h-7" style={{ width: '56%' }} />
+        <hr className="fk-article-rule" />
+        {[0, 1, 2].map((paragraph) => (
+          <div key={paragraph} className="mb-7 flex flex-col gap-3">
+            {ARTICLE_PARAGRAPH.map((width, line) => (
+              <Skeleton key={line} className="h-3.5" style={{ width }} />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   </div>
 )
 
 const NAV_ROWS = ['62%', '50%', '70%', '56%']
 
+// Shaped like the sidebar's menu rows
 export const NavSkeleton = () => (
   <div role="status">
     <LoadingStatus label="Loading categories…" />
@@ -79,10 +76,10 @@ export const NavSkeleton = () => (
       <div
         key={index}
         aria-hidden="true"
-        className="flex min-h-8 items-center gap-2 px-2 py-1.5"
+        className="fk-nav-row pointer-events-none"
       >
         <Skeleton className="size-4 shrink-0" />
-        <Skeleton className="h-3" style={{ width }} />
+        <Skeleton className="h-2.5" style={{ width }} />
         <Skeleton className="ml-auto h-2.5 w-4 shrink-0" />
       </div>
     ))}

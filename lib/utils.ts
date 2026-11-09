@@ -168,6 +168,38 @@ export const formatRelativeTime = (
     : formatter.format(-seconds, 'second')
 }
 
+const HOUR_S = 3600
+const DAY_S = 24 * HOUR_S
+
+// "9 Nov 2026": the article kicker's date, in the reader's own time zone
+export const formatShortDate = (timestampMs: number): string =>
+  new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  }).format(timestampMs)
+
+// The list rows' short age: "now", "12m", "2h", "yesterday", "3d", then the
+// date ("12 Oct", with the year once it is not the current one).
+export const formatShortTime = (
+  timestampMs: number,
+  nowMs: number = Date.now()
+): string => {
+  const seconds = Math.floor((nowMs - timestampMs) / 1000)
+  if (seconds < 60) return 'now'
+  if (seconds < HOUR_S) return `${Math.floor(seconds / 60)}m`
+  if (seconds < DAY_S) return `${Math.floor(seconds / HOUR_S)}h`
+  if (seconds < 2 * DAY_S) return 'yesterday'
+  if (seconds < 7 * DAY_S) return `${Math.floor(seconds / DAY_S)}d`
+  const sameYear =
+    new Date(timestampMs).getFullYear() === new Date(nowMs).getFullYear()
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' })
+  }).format(timestampMs)
+}
+
 export interface NavSelection {
   kind: 'all' | 'category' | 'site' | 'opml' | null
   // The category whose sites are shown (selected itself, or holding the site)
