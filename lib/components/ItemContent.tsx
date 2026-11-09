@@ -33,7 +33,7 @@ interface ItemContentProps {
 }
 
 // The article's 41px action strip, the only part that stays put: on phones the
-// back button and the list's name, then "View original" on the right.
+// back button with the list's name, then "View original" on the right.
 const ActionStrip = ({
   selectBack,
   backLabel,
@@ -46,11 +46,6 @@ const ActionStrip = ({
   <div className="fk-band fk-strip">
     <div className="flex min-w-0 items-center gap-2.5">
       <BackButton onClickBack={selectBack} label={backLabel} />
-      {backLabel && (
-        <span className="fk-backband-label md:hidden" aria-hidden="true">
-          {backLabel}
-        </span>
-      )}
       <span className="fk-label hidden md:inline">Reading</span>
     </div>
     {children}

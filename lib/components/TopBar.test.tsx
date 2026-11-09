@@ -19,16 +19,14 @@ test('#statusText reads "updated … · v…" and drops what is unknown', (t) =>
   t.is(statusText('not a date', undefined, now), '')
 })
 
-test('#TopBar shows the current page in the switch and links home', (t) => {
+test('#TopBar links the brand home and marks a refresh as busy', (t) => {
   const html = renderToStaticMarkup(
-    <TopBar page="subscriptions" basePath="/feeds" version="4.10.0" />
+    <TopBar basePath="/feeds" version="4.10.0" />
   )
   t.regex(html, /<h1 class="fk-brand-h"><a class="fk-brand" href="\/feeds\/">/)
-  // The menu is not in the page while closed, so nothing points at it
-  t.notRegex(html, /aria-controls/)
-  t.regex(html, /aria-expanded="false"[^>]*><span>Subscriptions<\/span>/)
+  t.true(html.includes('v4.10.0'))
   t.notRegex(html, /data-busy/)
-  const busy = renderToStaticMarkup(<TopBar page="reader" busy />)
+  const busy = renderToStaticMarkup(<TopBar busy />)
   t.true(busy.includes('data-busy'))
   t.true(busy.includes('class="fk-busy"'))
 })

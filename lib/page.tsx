@@ -354,14 +354,12 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         Skip to main content
       </button>
       <TopBar
-        page={isOpml ? 'subscriptions' : 'reader'}
         basePath={BASE_PATH}
         version={version}
         buildTime={dataVersion}
         loading={isLoading}
         busy={refreshState === 'refreshing'}
         selectReader={showReader}
-        selectSubscriptions={openOpml}
       />
       <RefreshNotice
         state={refreshState}

@@ -435,83 +435,6 @@
     flex: none;
   }
 
-  .fk-page-switch {
-    position: relative;
-    flex: none;
-    min-width: 0;
-  }
-
-  .fk-page-switch-btn .chev {
-    width: 14px;
-    height: 14px;
-    flex: none;
-    color: var(--text-secondary);
-    transition: transform 0.15s;
-  }
-
-  .fk-page-switch-btn[aria-expanded='true'] .chev {
-    transform: rotate(180deg);
-  }
-
-  .fk-page-menu {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    z-index: 30;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: max(100%, 176px);
-    max-width: calc(100vw - 32px);
-    padding: 4px;
-    background: var(--surface);
-    border: 1px solid var(--ctl-border);
-    box-shadow: var(--menu-shadow);
-  }
-
-  .fk-page-menu a {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 36px;
-    padding: 0 10px;
-    font-size: 13px;
-    color: var(--text-primary);
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  @media (pointer: coarse) {
-    .fk-page-menu a {
-      min-height: 44px;
-    }
-  }
-
-  .fk-page-menu a:hover,
-  .fk-page-menu a:focus-visible {
-    background: var(--wash);
-  }
-
-  .fk-page-menu a:focus-visible {
-    outline-offset: -2px;
-  }
-
-  .fk-page-menu a[aria-current='page'] {
-    background: var(--accent-soft);
-    box-shadow: inset 2px 0 0 var(--accent);
-  }
-
-  .fk-page-menu a[aria-current='page']::after {
-    content: '';
-    width: 5px;
-    height: 9px;
-    margin: -3px 0 0 auto;
-    color: var(--accent-ink);
-    border: solid currentColor;
-    border-width: 0 1.75px 1.75px 0;
-    transform: rotate(45deg);
-  }
-
   .fk-topbar-status {
     flex: 1 1 0;
     min-width: 0;
@@ -604,19 +527,9 @@
     }
   }
 
-  /* Phone back band: an edge back button and the parent's name */
+  /* Phone back band: the back button and room for actions */
   .fk-backband {
     gap: 10px;
-    padding-left: 12px;
-  }
-
-  .fk-backband-label {
-    min-width: 0;
-    overflow: hidden;
-    font-size: 13px;
-    font-weight: 500;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .fk-scroll {
@@ -1174,6 +1087,27 @@
   ):focus-visible {
     outline: none;
     --sh-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus);
+  }
+
+  /* Back: one edge button holding the chevron and the parent's name */
+  .btn-edge.fk-backbtn {
+    flex: 0 1 auto;
+    gap: 4px;
+    min-width: 0;
+    max-width: min(100%, 220px);
+    padding: 0 10px 0 6px;
+    font-weight: 500;
+  }
+
+  .fk-backbtn svg {
+    flex: none;
+  }
+
+  .fk-backbtn-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .btn-lg {
@@ -1767,10 +1701,14 @@
   }
 
   @media (max-width: 720px) {
+    /* Same 16px gutter as the bands below, so their buttons line up with
+       the logo tile and the theme button */
     .fk-topbar {
       gap: 8px;
-      padding-left: max(12px, env(safe-area-inset-left));
-      padding-right: max(12px, env(safe-area-inset-right));
+    }
+    .fk-band {
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
     }
     .fk-topbar-status {
       display: none;
