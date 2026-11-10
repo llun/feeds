@@ -187,7 +187,13 @@ test('#ItemContent shows a loading state with a back bar while an article loads'
   const html = renderToStaticMarkup(<ItemContent loading />)
   t.regex(html, /Loading/)
   t.regex(html, /aria-label="Go back"/)
-  t.notRegex(html, /Select an item/)
+  t.notRegex(html, /Pick a story/)
+  t.notRegex(html, /fk-hatch/)
+})
+
+test('#ItemContent names the list it goes back to', (t) => {
+  const html = renderToStaticMarkup(<ItemContent loading backLabel="Design" />)
+  t.regex(html, /aria-label="Back to Design"/)
 })
 
 test('#ItemContent offers a retry when the item could not be reached, and a way back when it is gone', (t) => {

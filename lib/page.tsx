@@ -14,11 +14,13 @@ import { usePathname } from 'next/navigation'
 import { ItemList } from './components/ItemList'
 import { ItemContent } from './components/ItemContent'
 import { CategoryList } from '../lib/components/CategoryList'
-import { BackButton } from '../lib/components/BackButton'
+import { BackBand } from '../lib/components/BackButton'
 import { OpmlView } from '../lib/components/OpmlView'
 import { Button } from '../lib/components/Button'
 import { ListSkeleton } from '../lib/components/Skeleton'
 import { RefreshNotice } from '../lib/components/RefreshNotice'
+import { TopBar } from '../lib/components/TopBar'
+import { ListHead } from '../lib/components/ItemList'
 import { createStorage, openStorage, setStorage } from '../lib/storage'
 import { Category, Content, Storage } from '../lib/storage/types'
 import { loadFeedManifest, FeedManifestMap } from './feed-manifest'
@@ -329,33 +331,50 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
   const isLoading = status === 'loading'
   const showOpml = shouldMountOpml(isOpml, isLoading)
 
+  const showReader = () => {
+    setListTitle('All Items')
+    setPageState('entries')
+    dispatch(updatePath('/sites/all'))
+  }
+  const openOpml = () => {
+    setPageState('opml')
+    dispatch(updatePath('/opml'))
+  }
+
   return (
-    <>
+    <div className="fk-app">
       <button
         type="button"
         onClick={(e) => {
           e.preventDefault()
           document.getElementById('main-content')?.focus()
         }}
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-brand focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-brand-foreground focus:shadow-lg focus:outline-none"
+        className="btn-primary fk-skip"
       >
         Skip to main content
       </button>
-      <main
-        className="flex h-dvh flex-col md:flex-row"
-        id="main-content"
-        tabIndex={-1}
-      >
+      <TopBar
+        basePath={BASE_PATH}
+        version={version}
+        buildTime={dataVersion}
+        loading={isLoading}
+        busy={refreshState === 'refreshing'}
+        selectReader={showReader}
+      />
+      <RefreshNotice
+        state={refreshState}
+        onLoadLatest={() => {
+          refresher.loadPending()
+        }}
+        onDismiss={() => refresher.dismiss()}
+      />
+      <main className="fk-main" id="main-content" tabIndex={-1}>
         <div
-          className={`h-full min-h-0 w-full flex-shrink-0 md:w-[26%] xl:w-1/5 ${categoriesClassName(
-            viewPageState
-          )}`}
+          className={`fk-col fk-col-nav ${categoriesClassName(viewPageState)}`}
         >
           <CategoryList
             categories={categories}
             totalEntries={totalEntries}
-            version={version}
-            buildTime={dataVersion}
             locationState={viewLocation}
             loading={isLoading}
             failed={loadFailed}
@@ -376,16 +395,13 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
               setPageState('entries')
               dispatch(updatePath(`/sites/${encodeURIComponent(siteKey)}`))
             }}
-            selectOpml={() => {
-              setPageState('opml')
-              dispatch(updatePath('/opml'))
-            }}
+            selectOpml={openOpml}
           />
         </div>
 
         {isOpml ? (
           <div
-            className={`h-full min-h-0 w-full flex-1 overflow-hidden ${
+            className={`fk-col fk-col-article ${
               viewPageState === 'opml' ? 'block' : 'hidden md:block'
             }`}
           >
@@ -393,7 +409,6 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
               <OpmlView
                 initialOpml={initialOpml}
                 categories={categories}
-                active={true}
                 onBack={() => {
                   setPageState('categories')
                   dispatch(updatePath('/sites/all'))
@@ -401,8 +416,10 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
               />
             ) : (
               <ListShell
-                title="feeds.opml"
+                title="Subscriptions"
+                ariaLabel="Edit OPML"
                 message="Loading…"
+                keys={false}
                 failed={loadFailed}
                 onRetry={retryLoad}
                 onBack={() => {
@@ -415,7 +432,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
         ) : (
           <>
             <div
-              className={`h-full min-h-0 w-full flex-shrink-0 md:w-[36%] xl:w-2/5 ${entriesClassName(
+              className={`fk-col fk-col-list ${entriesClassName(
                 viewPageState
               )}`}
             >
@@ -457,7 +474,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
             </div>
 
             <div
-              className={`h-full min-h-0 w-full flex-1 overflow-hidden ${
+              className={`fk-col fk-col-article ${
                 isArticlePaneHidden(
                   viewPageState,
                   !!articleContent,
@@ -471,6 +488,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
                 content={articleContent}
                 problem={articleProblem}
                 loading={viewEntryKey !== null}
+                backLabel={listTitle || undefined}
                 retry={
                   loadFailed
                     ? retryLoad
@@ -490,14 +508,7 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
           </>
         )}
       </main>
-      <RefreshNotice
-        state={refreshState}
-        onLoadLatest={() => {
-          refresher.loadPending()
-        }}
-        onDismiss={() => refresher.dismiss()}
-      />
-    </>
+    </div>
   )
 }
 
@@ -505,37 +516,36 @@ export const Page: FC<PageProps> = ({ version, buildTime, initialPath }) => {
 // jumps when the real list takes its place.
 const ListShell: FC<{
   title: string
+  // The pane's name: the list's, or the OPML editor's while /opml loads
+  ariaLabel?: string
   message?: string
+  // The OPML page has no list for the arrow keys to move through
+  keys?: boolean
   failed?: boolean
   onRetry?: () => void
   onBack: () => void
-}> = ({ title, message = 'Loading items…', failed, onRetry, onBack }) => (
-  <section
-    className="flex h-full flex-col overflow-hidden border-border bg-background md:border-r"
-    aria-label="Feed items"
-  >
-    <div className="fk-list-head">
-      <div className="fk-backbar md:hidden">
-        <BackButton onClickBack={onBack} />
-      </div>
-      <div className="fk-list-titlebar">
-        <h2 className="fk-list-title">{title || '\u00a0'}</h2>
-      </div>
-    </div>
+}> = ({
+  title,
+  ariaLabel = 'Feed items',
+  message = 'Loading items…',
+  keys,
+  failed,
+  onRetry,
+  onBack
+}) => (
+  <section className="fk-pane" aria-label={ariaLabel}>
+    <BackBand onClickBack={onBack} label="Categories" />
+    {/* A failed load has no list for the keys to move through */}
+    <ListHead title={title} keys={failed ? false : keys} />
     {failed ? (
-      <div
-        className="flex flex-1 flex-col items-center justify-center gap-3.5 p-8 text-center text-sm text-muted-foreground"
-        role="status"
-      >
-        <p className="max-w-[260px] leading-[1.5]">
-          Couldn&apos;t load feeds. Check your connection and try again.
-        </p>
-        <Button variant="ghost" size="sm" onClick={onRetry}>
+      <div className="fk-empty" role="status">
+        <p>Couldn&apos;t load feeds. Check your connection and try again.</p>
+        <Button variant="outline" size="sm" onClick={onRetry}>
           Try again
         </Button>
       </div>
     ) : (
-      <div className="flex-1 overflow-hidden">
+      <div className="fk-scroll">
         <ListSkeleton label={message} />
       </div>
     )}

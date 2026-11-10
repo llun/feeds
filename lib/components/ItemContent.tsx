@@ -4,7 +4,7 @@ import { ExternalLink } from 'lucide-react'
 import { BackButton } from './BackButton'
 import { Button } from './Button'
 import { ArticleSkeleton } from './Skeleton'
-import { EntryProblem, formatRelativeTime } from '../utils'
+import { EntryProblem, formatRelativeTime, formatShortDate } from '../utils'
 import parse from 'html-react-parser'
 import sanitizeHtml from 'sanitize-html'
 import {
@@ -28,14 +28,37 @@ interface ItemContentProps {
   loading?: boolean
   selectBack?: () => void
   retry?: () => void
+  // The list the article was opened from, named in the phone's back band
+  backLabel?: string
 }
+
+// The article's action strip (--band-h), the only part that stays put: on phones the
+// back button with the list's name, then "View original" on the right.
+const ActionStrip = ({
+  selectBack,
+  backLabel,
+  children
+}: {
+  selectBack?: () => void
+  backLabel?: string
+  children?: React.ReactNode
+}) => (
+  <div className="fk-band fk-strip">
+    <div className="flex min-w-0 items-center gap-2.5">
+      <BackButton onClickBack={selectBack} label={backLabel} />
+      <span className="fk-label hidden md:inline">Reading</span>
+    </div>
+    {children}
+  </div>
+)
 
 export const ItemContent = ({
   content,
   problem,
   loading,
   selectBack,
-  retry
+  retry,
+  backLabel
 }: ItemContentProps) => {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
   let element: HTMLElement | null = null
@@ -46,30 +69,23 @@ export const ItemContent = ({
 
   if (!content && problem) {
     return (
-      <div className="flex h-full flex-col bg-background">
-        <div className="fk-backbar md:hidden">
-          <BackButton onClickBack={selectBack} />
-        </div>
-        <div
-          className="flex flex-1 flex-col items-center justify-center gap-3.5 p-8 text-center text-sm text-muted-foreground"
-          role="status"
-        >
+      <div className="fk-pane">
+        <ActionStrip selectBack={selectBack} backLabel={backLabel} />
+        <div className="fk-empty" role="status">
           {problem === 'unreachable' ? (
             <>
-              <p className="max-w-[260px] leading-[1.5]">
+              <p>
                 Couldn&apos;t load this item. Check your connection and try
                 again.
               </p>
-              <Button variant="ghost" size="sm" onClick={retry}>
+              <Button variant="outline" size="sm" onClick={retry}>
                 Try again
               </Button>
             </>
           ) : (
             <>
-              <p className="max-w-[260px] leading-[1.5]">
-                This item is no longer available.
-              </p>
-              <Button variant="ghost" size="sm" onClick={selectBack}>
+              <p>This item is no longer available.</p>
+              <Button variant="outline" size="sm" onClick={selectBack}>
                 Back to list
               </Button>
             </>
@@ -81,10 +97,8 @@ export const ItemContent = ({
 
   if (!content && loading) {
     return (
-      <div className="flex h-full flex-col overflow-hidden bg-background">
-        <div className="fk-backbar md:hidden">
-          <BackButton onClickBack={selectBack} />
-        </div>
+      <div className="fk-pane">
+        <ActionStrip selectBack={selectBack} backLabel={backLabel} />
         <ArticleSkeleton />
       </div>
     )
@@ -92,90 +106,101 @@ export const ItemContent = ({
 
   if (!content) {
     return (
-      <div
-        className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground"
-        role="status"
-      >
-        <p className="max-w-[260px] leading-[1.5]">
-          Select an item from the list to read it here.
-        </p>
+      <div className="fk-hatch">
+        <div className="fk-hatch-panel">
+          <p>Pick a story to read.</p>
+          <span className="fk-keys" aria-hidden="true">
+            <kbd>↑</kbd>
+            <kbd>↓</kbd>
+            <span className="ml-1">previous and next</span>
+          </span>
+        </div>
       </div>
     )
   }
 
+  const time = content.timestamp * 1000
+
   return (
-    <article className="flex h-full flex-col bg-background">
-      <header className="sticky top-0 z-10 border-b border-border bg-background">
-        <div className="fk-backbar md:hidden">
-          <BackButton onClickBack={selectBack} />
-        </div>
-        <div className="px-6.5 pt-5.5 pb-[15px] md:pt-9.5">
-          <h1 className="break-words text-2xl leading-[1.2] font-bold tracking-tight">
-            {content.title}
-          </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm leading-[1.2] text-muted-foreground">
-            {content.siteTitle && <span>{content.siteTitle}</span>}
-            {content.siteTitle && <span className="text-faint">•</span>}
-            <time dateTime={new Date(content.timestamp * 1000).toISOString()}>
-              {formatRelativeTime(content.timestamp * 1000)}
-            </time>
-            <span className="text-faint">•</span>
-            <a
-              href={content.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 break-all rounded-sm transition-colors hover:text-link focus-ring"
-            >
-              View Original
-              <ExternalLink size={14} className="shrink-0" />
-            </a>
-          </div>
-        </div>
-      </header>
+    <article className="fk-pane">
+      <ActionStrip selectBack={selectBack} backLabel={backLabel}>
+        <a
+          href={content.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-text hit-target-y"
+        >
+          View original
+          <ExternalLink size={14} strokeWidth={1.5} aria-hidden="true" />
+        </a>
+      </ActionStrip>
       <div
-        className="flex-1 overflow-x-hidden overflow-y-auto px-6.5 pt-5.5 pb-12"
+        className="fk-scroll"
         ref={(contentPane) => {
           element = contentPane
         }}
       >
-        <div className="feeds-prose">
-          {parse(
-            sanitizeHtml(content.content, ENTRY_CONTENT_SANITIZE_OPTIONS),
-            {
-              replace: (domNode) => {
-                const node = domNode as ReactParserNode
-                if (!node.attribs) return domNode
+        <div className="fk-article-body">
+          <div className="fk-article-col">
+            <header>
+              <p className="fk-kicker">
+                {content.siteTitle && <span>{content.siteTitle}</span>}
+                {content.siteTitle && (
+                  <span className="fk-dot" aria-hidden="true">
+                    ·
+                  </span>
+                )}
+                <time dateTime={new Date(time).toISOString()}>
+                  {formatShortDate(time)}
+                </time>
+                <span className="fk-dot" aria-hidden="true">
+                  ·
+                </span>
+                <span>{formatRelativeTime(time)}</span>
+              </p>
+              <h2 className="fk-article-title">{content.title}</h2>
+            </header>
+            <hr className="fk-article-rule" />
+            <div className="feeds-prose">
+              {parse(
+                sanitizeHtml(content.content, ENTRY_CONTENT_SANITIZE_OPTIONS),
+                {
+                  replace: (domNode) => {
+                    const node = domNode as ReactParserNode
+                    if (!node.attribs) return domNode
 
-                // Downloaded media is served from this site, so it only needs the
-                // base path. Everything else resolves against the entry, which is
-                // what stops a URL stored before the action resolved them from
-                // pointing at the reader's own domain. Links and media both take
-                // the entry as their base here, and so does the action, so a
-                // given relative URL lands on the same absolute one whichever
-                // half of the pipeline handles it.
-                node.attribs = mapUrlAttributes(node.attribs, (url) =>
-                  isLocalMediaPath(url)
-                    ? withBasePath(url, basePath)
-                    : resolveAgainstEntry(url, content.url)
-                )
+                    // Downloaded media is served from this site, so it only needs the
+                    // base path. Everything else resolves against the entry, which is
+                    // what stops a URL stored before the action resolved them from
+                    // pointing at the reader's own domain. Links and media both take
+                    // the entry as their base here, and so does the action, so a
+                    // given relative URL lands on the same absolute one whichever
+                    // half of the pipeline handles it.
+                    node.attribs = mapUrlAttributes(node.attribs, (url) =>
+                      isLocalMediaPath(url)
+                        ? withBasePath(url, basePath)
+                        : resolveAgainstEntry(url, content.url)
+                    )
 
-                if (node.name === 'a') {
-                  node.attribs.target = '_blank'
-                  node.attribs.rel = 'noopener noreferrer'
+                    if (node.name === 'a') {
+                      node.attribs.target = '_blank'
+                      node.attribs.rel = 'noopener noreferrer'
+                    }
+                    if (
+                      node.name === 'img' &&
+                      !node.attribs.src?.startsWith('data:')
+                    ) {
+                      // Images that could not be downloaded still point at their
+                      // origin, where a referrer often triggers hotlink protection.
+                      node.attribs.referrerpolicy = 'no-referrer'
+                      node.attribs.loading = node.attribs.loading || 'lazy'
+                    }
+                    return node
+                  }
                 }
-                if (
-                  node.name === 'img' &&
-                  !node.attribs.src?.startsWith('data:')
-                ) {
-                  // Images that could not be downloaded still point at their
-                  // origin, where a referrer often triggers hotlink protection.
-                  node.attribs.referrerpolicy = 'no-referrer'
-                  node.attribs.loading = node.attribs.loading || 'lazy'
-                }
-                return node
-              }
-            }
-          )}
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </article>

@@ -1,265 +1,225 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:is(.dark *));
+/* next-themes writes the resolved theme to <html data-theme>. */
+@custom-variant dark (&:is([data-theme=dark] *));
 
+/* The shadcn and Feeds token names stay as aliases so the Tailwind utilities
+   keep working; their values come from the labs dashboard kit below. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
+  --color-background: var(--surface);
+  --color-foreground: var(--text-primary);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text-primary);
   --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --color-primary-foreground: var(--on-primary);
+  --color-secondary: var(--wash);
+  --color-secondary-foreground: var(--text-primary);
+  --color-muted: var(--wash);
+  --color-muted-foreground: var(--text-muted);
+  /* The shadcn accent is a hover wash; the kit's --accent is the Graphite
+     accent and keeps its own name. */
+  --color-accent: var(--wash);
+  --color-accent-foreground: var(--text-primary);
+  --color-destructive: var(--series-8);
+  --color-destructive-foreground: var(--on-primary);
+  --color-border: var(--border);
+  --color-input: var(--ctl-border);
+  --color-ring: var(--focus);
+  --color-sidebar: var(--page);
+  --color-sidebar-foreground: var(--text-primary);
+  --color-sidebar-border: var(--border);
 
-  /* Design-system semantic colors. Text tiers are exposed under --color-*
-     because the --text-* namespace generates font-size utilities. */
-  --color-surface-1: var(--surface-1);
-  --color-surface-2: var(--surface-2);
-  --color-surface-3: var(--surface-3);
-  --color-brand: var(--brand);
-  --color-brand-hover: var(--brand-hover);
-  --color-brand-active: var(--brand-active);
-  --color-brand-subtle: var(--brand-subtle);
-  --color-brand-foreground: var(--brand-foreground);
-  --color-brand-emphasis: var(--brand-emphasis);
-  --color-link: var(--link);
-  --color-link-hover: var(--link-hover);
-  --color-border-strong: var(--border-strong);
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-1: var(--surface);
+  --color-surface-2: var(--wash);
+  --color-surface-3: var(--wash);
+  --color-wash: var(--wash);
+  --color-grid: var(--grid);
+  --color-axis: var(--axis);
+  --color-brand: var(--primary);
+  --color-brand-hover: var(--primary-hover);
+  --color-brand-active: var(--primary-edge);
+  --color-brand-subtle: var(--accent-soft);
+  --color-brand-foreground: var(--on-primary);
+  --color-brand-emphasis: var(--accent-ink);
+  --color-brand-subtle-foreground: var(--accent-ink);
+  --color-link: var(--accent-ink);
+  --color-link-hover: var(--text-primary);
+  --color-border-strong: var(--ctl-border);
+  /* Text tiers sit under --color-* because --text-* makes font sizes */
   --color-subtle: var(--text-secondary);
-  --color-faint: var(--text-faint);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-brand-subtle-foreground: var(--brand-subtle-foreground);
-  --shadow-xs: var(--elevation-xs);
-  --shadow-sm: var(--elevation-sm);
-  --shadow-md: var(--elevation-md);
-  --shadow-lg: var(--elevation-lg);
-  --shadow-xl: var(--elevation-xl);
+  --color-faint: var(--axis);
+  --color-success: var(--series-3);
+  --color-warning: var(--amber);
+
+  --font-sans: var(--font);
+  --font-mono: var(--mono);
+  --font-serif: var(--font-head);
+
+  /* Panes, menus, tables and images are square; controls take 2px */
+  --radius-xs: var(--radius-ctl);
+  --radius-sm: var(--radius-ctl);
+  --radius-md: var(--radius-ctl);
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 }
 
 @theme {
-  --tracking-tight: -0.015em;
+  /* Phone up to 720px, tablet 721–1100px, desktop above */
+  --breakpoint-*: initial;
+  --breakpoint-md: 721px;
+  --breakpoint-lg: 1101px;
+  --tracking-tight: -0.01em;
   --default-transition-duration: 120ms;
   --default-transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --leading-snug: 1.35;
   --leading-relaxed: 1.65;
-  --animate-pop-in: feeds-pop-in 120ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 
-@keyframes feeds-spin {
+@keyframes skeleton-shimmer {
   to {
-    transform: rotate(360deg);
+    transform: translateX(100%);
   }
 }
 
-@keyframes feeds-shimmer {
-  from {
-    background-position: -120vw 0;
-  }
+@keyframes busy-band {
   to {
-    background-position: 100vw 0;
+    transform: translateX(200%);
   }
 }
 
-@keyframes feeds-pop-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
+/* ---- Tokens: the labs dashboard kit (web-ui/assets/app.css), with the
+   Graphite accent in place of its blue ---- */
 :root {
   color-scheme: light;
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.623 0.214 259.815);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --page: #f6f6f7;
+  --surface: #ffffff;
+  --text-primary: #17171a;
+  --text-secondary: #45454d;
+  --text-muted: #6b6b76;
+  --grid: #ececef;
+  --axis: #c9c9d0;
+  --border: #dcdce1;
+  --wash: rgba(23, 23, 26, 0.05);
+  --ctl-border: color-mix(in oklab, var(--border), var(--text-primary) 10%);
+  --ctl-edge: rgba(23, 23, 26, 0.12);
+  --ctl-hover: color-mix(in oklab, var(--surface), var(--text-primary) 5%);
+  --seg-track: color-mix(in oklab, var(--page), var(--text-primary) 2%);
+  --seg-on-bg: var(--surface);
+  --seg-on-border: var(--ctl-border);
+  --skeleton: hsl(0 0% 90%);
+  --skeleton-shine: hsl(0 0% 100% / 0.75);
+  --amber: #d9a21a;
+  --series-3: #0f7a55;
+  --series-8: #e34948;
 
-  /* Surfaces: page, hover, selected */
-  --surface-1: oklch(1 0 0);
-  --surface-2: oklch(0.985 0 0);
-  --surface-3: oklch(0.97 0 0);
+  /* Graphite: no hue */
+  --accent: #45454d;
+  --accent-ink: #17171a;
+  --accent-soft: rgba(23, 23, 26, 0.08);
+  --accent-line: color-mix(in srgb, var(--accent) 55%, transparent);
+  --primary: #26262b;
+  --primary-hover: #3a3a41;
+  --primary-edge: #000000;
+  --on-primary: #ffffff;
+  --focus: var(--accent);
+  --sec-edge: color-mix(in srgb, var(--accent) 14%, transparent);
 
-  /* Text tiers. Faint is for decorative marks only (separators, list
-     markers) — it does not meet AA for reading text. */
-  --text-primary: oklch(0.145 0 0);
-  --text-secondary: oklch(0.371 0 0);
-  --text-muted: oklch(0.556 0 0);
-  --text-faint: oklch(0.708 0 0);
+  --font:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Geist,
+    system-ui, sans-serif;
+  --mono:
+    ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Mono', Menlo, Consolas,
+    'DejaVu Sans Mono', monospace;
+  /* The next/font variables are set on <html>, so they resolve here */
+  --font-head:
+    var(--font-plex-serif, 'IBM Plex Serif'),
+    var(--font-noto-serif-thai, 'Noto Serif Thai'), 'Noto Serif Thai', serif;
 
-  /* Brand accent */
-  --brand: oklch(0.546 0.245 262.881);
-  --brand-hover: oklch(0.488 0.243 264.376);
-  --brand-active: oklch(0.424 0.199 265.638);
-  --brand-subtle: oklch(0.97 0.014 254.604);
-  --brand-foreground: oklch(1 0 0);
-  --brand-emphasis: oklch(0.488 0.243 264.376);
-  --brand-subtle-foreground: oklch(0.488 0.243 264.376);
-  --destructive-foreground: oklch(1 0 0);
-  --success: oklch(0.696 0.17 162.48);
-  --warning: oklch(0.769 0.188 70.08);
-  --elevation-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --elevation-sm:
-    0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
-  --elevation-md:
-    0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
-  --elevation-lg:
-    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.08);
-  --elevation-xl:
-    0 20px 25px -5px rgb(0 0 0 / 0.12), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --link: oklch(0.546 0.245 262.881);
-  --link-hover: oklch(0.488 0.243 264.376);
-
-  --border-strong: oklch(0.87 0 0);
-  --skeleton: oklch(0.922 0 0);
-  --shimmer-highlight: oklch(1 0 0 / 70%);
-
-  --measure: 68ch;
-  --focus-ring: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+  --radius: 0px;
+  --radius-ctl: 2px;
+  --control-h: 32px;
+  --topbar-h: 48px;
+  --band-h: 41px;
+  --measure: 66ch;
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus);
 }
 
-.dark {
+/* Controls grow to 40px, so every band grows with them: a band holding a
+   control and one holding none stay the same height */
+@media (pointer: coarse) {
+  :root {
+    --control-h: 40px;
+    --band-h: 49px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --page: #131316;
+    --surface: #1b1b1f;
+    --text-primary: #ececf0;
+    --text-secondary: #c4c4cc;
+    --text-muted: #9a9aa6;
+    --grid: #26262c;
+    --axis: #3a3a42;
+    --border: #2d2d34;
+    --wash: rgba(255, 255, 255, 0.06);
+    --ctl-border: color-mix(in oklab, var(--border), white 8%);
+    --ctl-edge: rgba(0, 0, 0, 0.5);
+    --ctl-hover: color-mix(in oklab, var(--surface), white 6%);
+    --seg-track: color-mix(in oklab, var(--page), black 15%);
+    --seg-on-bg: color-mix(in oklab, var(--surface), white 9%);
+    --seg-on-border: color-mix(in oklab, var(--ctl-border), white 8%);
+    --skeleton: hsl(0 0% 20%);
+    --skeleton-shine: hsl(0 0% 100% / 0.09);
+    --amber: #e3a21a;
+    --series-3: #199e70;
+    --series-8: #e66767;
+    --accent: #c4c4cc;
+    --accent-ink: #ececf0;
+    --accent-soft: rgba(255, 255, 255, 0.1);
+    --primary: #e4e4ea;
+    --primary-hover: #f4f4f7;
+    --primary-edge: #9a9aa6;
+    --on-primary: #17171a;
+  }
+}
+
+:root[data-theme='dark'] {
   color-scheme: dark;
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.623 0.214 259.815);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-
-  --surface-1: oklch(0.145 0 0);
-  --surface-2: oklch(0.205 0 0);
-  --surface-3: oklch(0.269 0 0);
-
-  --text-primary: oklch(0.985 0 0);
-  --text-secondary: oklch(0.87 0 0);
-  --text-muted: oklch(0.708 0 0);
-  --text-faint: oklch(0.556 0 0);
-
-  --brand: oklch(0.623 0.214 259.815);
-  --brand-hover: oklch(0.707 0.165 254.624);
-  --brand-active: oklch(0.809 0.105 251.813);
-  --brand-subtle: oklch(0.282 0.091 267.935 / 45%);
-  --brand-foreground: oklch(0.145 0 0);
-  --brand-emphasis: oklch(0.707 0.165 254.624);
-  --brand-subtle-foreground: oklch(0.809 0.105 251.813);
-  --destructive-foreground: oklch(0.145 0 0);
-  --elevation-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --elevation-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  --elevation-md:
-    0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --elevation-lg:
-    0 10px 15px -3px rgb(0 0 0 / 0.55), 0 4px 6px -4px rgb(0 0 0 / 0.45);
-  --elevation-xl:
-    0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
-  --link: oklch(0.707 0.165 254.624);
-  --link-hover: oklch(0.809 0.105 251.813);
-
-  --border-strong: oklch(1 0 0 / 18%);
-  --skeleton: oklch(0.269 0 0);
-  --shimmer-highlight: oklch(1 0 0 / 6%);
-}
-
-/* Keyboard-only focus indicator: a 2px ring separated from the element by a
-   2px gap in the page background, so it reads on any surface. */
-@utility focus-ring {
-  &:focus {
-    outline: none;
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-ring);
-  }
+  --page: #131316;
+  --surface: #1b1b1f;
+  --text-primary: #ececf0;
+  --text-secondary: #c4c4cc;
+  --text-muted: #9a9aa6;
+  --grid: #26262c;
+  --axis: #3a3a42;
+  --border: #2d2d34;
+  --wash: rgba(255, 255, 255, 0.06);
+  --ctl-border: color-mix(in oklab, var(--border), white 8%);
+  --ctl-edge: rgba(0, 0, 0, 0.5);
+  --ctl-hover: color-mix(in oklab, var(--surface), white 6%);
+  --seg-track: color-mix(in oklab, var(--page), black 15%);
+  --seg-on-bg: color-mix(in oklab, var(--surface), white 9%);
+  --seg-on-border: color-mix(in oklab, var(--ctl-border), white 8%);
+  --skeleton: hsl(0 0% 20%);
+  --skeleton-shine: hsl(0 0% 100% / 0.09);
+  --amber: #e3a21a;
+  --series-3: #199e70;
+  --series-8: #e66767;
+  --accent: #c4c4cc;
+  --accent-ink: #ececf0;
+  --accent-soft: rgba(255, 255, 255, 0.1);
+  --primary: #e4e4ea;
+  --primary-hover: #f4f4f7;
+  --primary-edge: #9a9aa6;
+  --on-primary: #17171a;
 }
 
 /* Invisible 44px minimum touch target on coarse pointers (tablet/phone). */
@@ -299,15 +259,43 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+  }
+
+  html {
+    touch-action: manipulation;
   }
 
   body {
-    @apply bg-background text-foreground;
+    background: var(--page);
+    color: var(--text-primary);
+    font: 13px/1.45 var(--font);
+    -webkit-font-smoothing: antialiased;
   }
 
   button {
     cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: var(--surface);
+    border: 1px solid var(--ctl-border);
+    border-radius: var(--radius-ctl);
+    box-shadow: inset 0 -1px 0 var(--ctl-edge);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -323,50 +311,952 @@
 }
 
 @layer components {
-  .feeds-eyebrow {
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
+  /* ---- Type ---- */
+  .fk-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    line-height: 1.3;
     text-transform: uppercase;
-    line-height: 1.2;
-    color: var(--text-faint);
+    color: var(--text-muted);
   }
 
-  .feeds-spinner {
-    display: inline-block;
-    border: 3px solid var(--border-strong);
-    border-top-color: var(--brand);
-    border-radius: calc(infinity * 1px);
-    animation: feeds-spin 0.7s linear infinite;
+  .fk-mono {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
   }
 
-  /* Loading placeholder. The highlight is sized to and pinned on the
-     viewport, so all blocks on screen show one sweep instead of each block
-     running its own; under reduced motion it parks off-screen. */
-  .feeds-skeleton {
+  /* ---- Shell: the 48px top bar, then the panes ---- */
+  .fk-app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  /* The document never scrolls (the panes do), so the bar is not sticky; it
+     is the busy band's containing block */
+  .fk-topbar {
+    position: relative;
+    z-index: 20;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: var(--topbar-h);
+    padding: 8px max(16px, env(safe-area-inset-right)) 8px
+      max(16px, env(safe-area-inset-left));
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* A refresh in progress: a band runs along the bottom of the bar. The band
+     is moved by transform inside a clipping track. */
+  .fk-busy {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .fk-busy::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 50%;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    transform: translateX(-100%);
+    animation: busy-band 1.6s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fk-busy::after {
+      width: 100%;
+      background: var(--accent);
+      opacity: 0.5;
+      transform: none;
+      animation: none;
+    }
+  }
+
+  .fk-brand-h {
+    display: flex;
+    flex: none;
+    margin: 0;
+    font: inherit;
+  }
+
+  .fk-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    height: var(--control-h);
+    margin-left: -6px;
+    padding: 0 6px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: inherit;
+    text-decoration: none;
+    border-radius: var(--radius-ctl);
+  }
+
+  .fk-brand:hover {
+    background: var(--wash);
+  }
+
+  .fk-brand:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .fk-logo {
+    width: 24px;
+    height: 24px;
+    flex: none;
+  }
+
+  .fk-topbar-status {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .fk-main {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* The skip link focuses <main>, whose outline the panes would clip */
+  .fk-main:focus,
+  .fk-main:focus-visible {
+    outline: none;
+  }
+
+  .fk-col {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .fk-col-nav {
+    background: var(--page);
+  }
+
+  .fk-col-list,
+  .fk-col-article {
+    background: var(--surface);
+  }
+
+  /* A pane: a ruled head band (--band-h), then its own scrolling body */
+  .fk-pane {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .fk-band {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--band-h);
+    padding: 4px 16px;
+    border-bottom: 1px solid var(--grid);
+  }
+
+  .fk-pane-title {
+    flex: 0 1 auto;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 400;
+    /* Room for Thai marks above and below; the band stays at --band-h */
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .fk-band-end {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    margin-left: auto;
+  }
+
+  .fk-keys {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  @media (hover: none) {
+    .fk-keys {
+      display: none;
+    }
+  }
+
+  /* The list head's hints would squeeze its title; the empty reading pane
+     keeps its own hint */
+  @media (max-width: 1100px) {
+    .fk-band .fk-keys {
+      display: none;
+    }
+  }
+
+  /* Phone back band: the back button and room for actions */
+  .fk-backband {
+    gap: 10px;
+  }
+
+  .fk-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* The current or selected row, in the nav and the list */
+  .fk-current {
+    background: var(--accent-soft);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+
+  /* ---- Sidebar: kit menu rows ---- */
+  .fk-nav {
+    padding: 8px;
+  }
+
+  .fk-nav-head {
+    padding: 14px 8px 4px;
+  }
+
+  .fk-nav-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 30px;
+    padding: 0 8px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-primary);
+    text-align: left;
+    transition: background-color 0.1s;
+  }
+
+  .fk-nav-row:not(.fk-current):hover {
+    background: var(--wash);
+  }
+
+  .fk-nav-row.is-site {
+    padding-left: 32px;
+  }
+
+  .fk-nav-row svg.fk-nav-icon {
+    flex: none;
+    color: var(--text-muted);
+  }
+
+  /* The row's main button covers the whole row; the feed link sits above */
+  .fk-nav-hit {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    text-align: left;
+    outline: none;
+  }
+
+  .fk-nav-hit::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .fk-nav-hit:focus-visible::after,
+  button.fk-nav-row:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--focus);
+  }
+
+  .fk-count {
+    flex: none;
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+  }
+
+  /* Muted text is too faint on the accent and hover washes */
+  .fk-current .fk-count,
+  .fk-nav-row:hover .fk-count {
+    color: var(--text-secondary);
+  }
+
+  .fk-feed-link {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin-right: -4px;
+    color: var(--text-muted);
+    border-radius: var(--radius-ctl);
+  }
+
+  .fk-feed-link:hover {
+    color: var(--text-primary);
+    background: var(--wash);
+  }
+
+  .fk-feed-link:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  @media (pointer: coarse) {
+    .fk-nav-row {
+      min-height: 44px;
+    }
+    .fk-feed-link {
+      width: 36px;
+      height: 36px;
+    }
+  }
+
+  /* ---- Item list: serif index rows ---- */
+  .fk-row {
+    position: relative;
+    min-height: 64px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--grid);
+    transition: background-color 0.1s;
+  }
+
+  .fk-row:not(.fk-current):hover {
+    background: var(--wash);
+  }
+
+  .fk-row-main {
     display: block;
-    border-radius: 4px;
-    background-color: var(--skeleton);
-    background-image: linear-gradient(
-      100deg,
-      transparent 40%,
-      var(--shimmer-highlight) 50%,
-      transparent 60%
-    );
-    background-size: 200vw 100%;
-    /* Where the sweep ends, so a stopped animation shows no highlight */
-    background-position: 100vw 0;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    animation: feeds-shimmer 1.6s linear infinite;
+    width: 100%;
+    text-align: left;
+    outline: none;
   }
 
-  /* Article reading surface. Feed HTML is arbitrary, so every element that can
-     overflow a pane is constrained here. */
+  .fk-row-main::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .fk-row-main:focus-visible::after {
+    box-shadow: inset 0 0 0 2px var(--focus);
+  }
+
+  .fk-row-title {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--text-primary);
+    overflow-wrap: break-word;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .fk-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  /* The padding, taken back by the margin, keeps Thai marks inside the
+     clipped box */
+  .fk-row-site {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    max-width: 70%;
+    padding-block: 2px;
+    margin-block: -2px;
+    overflow: hidden;
+    color: var(--text-secondary);
+    text-align: left;
+    text-overflow: ellipsis;
+    text-underline-offset: 3px;
+    border-radius: var(--radius-ctl);
+  }
+
+  .fk-row-site:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--accent-line);
+  }
+
+  .fk-row-site:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .fk-dot {
+    flex: none;
+    color: var(--axis);
+  }
+
+  .fk-row-time {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+  }
+
+  .fk-current .fk-row-time {
+    color: var(--text-secondary);
+  }
+
+  /* A 44px tall target, taken back by the margin so the row keeps its
+     layout, so a near miss on the site name doesn't open the article */
+  @media (pointer: coarse) {
+    .fk-row-site {
+      padding: 14px 4px;
+      margin: -14px -4px;
+      padding-block: calc((44px - 1lh) / 2);
+      margin-block: calc((1lh - 44px) / 2);
+    }
+  }
+
+  /* An empty or failed list or article: muted text and an edge button */
+  .fk-empty {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px 24px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* In a scrolling list it fills the scroll area; directly in a pane it is
+     the flex space under the band */
+  .fk-scroll > .fk-empty {
+    min-height: 100%;
+  }
+
+  .fk-empty > p {
+    max-width: 280px;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* The reading pane before an article is opened */
+  .fk-hatch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 24px;
+    background-color: var(--page);
+    background-image: repeating-linear-gradient(
+      135deg,
+      var(--grid) 0 1px,
+      transparent 1px 7px
+    );
+  }
+
+  .fk-hatch-panel {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 16px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .fk-hatch-panel > p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* ---- Article ---- */
+  .fk-strip {
+    justify-content: space-between;
+    background: var(--surface);
+  }
+
+  .fk-article-body {
+    padding: 40px 40px 56px;
+  }
+
+  .fk-article-col {
+    max-width: var(--measure);
+    font-size: 16px;
+  }
+
+  .fk-kicker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 6px;
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+  }
+
+  .fk-article-title {
+    margin: 12px 0 0;
+    font-family: var(--font-head);
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    overflow-wrap: break-word;
+  }
+
+  .fk-article-rule {
+    height: 1px;
+    margin: 24px 0;
+    border: 0;
+    background: var(--grid);
+  }
+
+  @media (max-width: 1100px) {
+    .fk-article-body {
+      padding: 32px 32px 48px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .fk-article-body {
+      padding: 20px 16px calc(40px + env(safe-area-inset-bottom));
+    }
+    .fk-article-title {
+      font-size: 26px;
+    }
+  }
+
+  /* ---- Notices: a kit net-box strip under the top bar ---- */
+  /* The notices strip clips the Dismiss button's 44px touch target, which
+     would otherwise scroll a phone sideways */
+  .fk-notices {
+    overflow-x: clip;
+  }
+
+  /* On the page's 16px gutter: the icon lines up with the logo tile (16px
+     minus the 3px left border) and the last control's edge with the theme
+     button */
+  .fk-net-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px max(16px, env(safe-area-inset-right)) 6px
+      calc(max(16px, env(safe-area-inset-left)) - 3px);
+    font-size: 13px;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--accent) 35%, var(--border));
+    border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  }
+
+  .fk-net-box > svg {
+    flex: none;
+    color: var(--accent);
+  }
+
+  .fk-net-box[data-tone='error'] {
+    border-color: color-mix(in srgb, var(--series-8) 40%, var(--border));
+    border-left-color: var(--series-8);
+    background: color-mix(in srgb, var(--series-8) 8%, var(--surface));
+  }
+
+  .fk-net-box[data-tone='error'] > svg {
+    color: var(--series-8);
+  }
+
+  .fk-net-box[data-tone='success'] > svg {
+    color: var(--series-3);
+  }
+
+  .fk-net-text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* A box inside a pane (OPML errors) has all four sides */
+  .fk-net-box.is-inline {
+    padding: 10px 12px 10px 16px;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+    border-left: 3px solid var(--accent);
+  }
+
+  .fk-net-box.is-inline[data-tone='error'] {
+    border-color: color-mix(in srgb, var(--series-8) 40%, var(--border));
+    border-left-color: var(--series-8);
+  }
+
+  @media (max-width: 720px) {
+    .fk-net-box {
+      gap: 8px;
+    }
+  }
+
+  /* ---- Skeletons: square blocks with a shine band moved by transform ---- */
+  .sk {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    background-color: var(--skeleton);
+  }
+
+  .sk::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      var(--skeleton-shine) 50%,
+      transparent
+    );
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sk::after {
+      display: none;
+    }
+  }
+
+  /* ---- Controls, edge style: a flat fill, a 1px border and a 2px darker
+     bottom edge. Hover darkens the fill, pressed moves down 1px, focus is a
+     two-tone ring. ---- */
+  .btn-primary,
+  .btn-text,
+  .btn-ghost,
+  .btn-icon,
+  .btn-edge,
+  .btn-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: none;
+    height: var(--control-h);
+    padding: 0 10px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-ctl);
+    background: transparent;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: var(--sh-edge, 0 0 #0000), var(--sh-ring, 0 0 #0000);
+    transition:
+      background-color 0.1s,
+      box-shadow 0.1s,
+      translate 0.05s;
+  }
+
+  .btn-primary {
+    padding: 0 12px;
+    color: var(--on-primary);
+    background: var(--primary);
+    --sh-edge: inset 0 -2px 0 var(--primary-edge);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
+
+  /* secondary: an outline with accent text */
+  .btn-text {
+    color: var(--accent-ink);
+    border-color: var(--ctl-border);
+    --sh-edge: inset 0 -2px 0 var(--sec-edge);
+  }
+
+  /* neutral: icon buttons, Back, notice actions */
+  .btn-icon,
+  .btn-edge {
+    color: var(--text-primary);
+    background: var(--surface);
+    border-color: var(--ctl-border);
+    --sh-edge: inset 0 -2px 0 var(--ctl-edge);
+  }
+
+  .btn-icon {
+    width: var(--control-h);
+    padding: 0;
+  }
+
+  .btn-edge {
+    font-size: 13px;
+  }
+
+  .btn-text:hover:not(:disabled),
+  .btn-icon:hover:not(:disabled),
+  .btn-edge:hover:not(:disabled) {
+    background: var(--ctl-hover);
+  }
+
+  .btn-ghost {
+    color: var(--text-secondary);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    color: var(--text-primary);
+    background: var(--wash);
+  }
+
+  .btn-link {
+    height: auto;
+    padding: 2px 0;
+    color: var(--text-primary);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--accent-line);
+    text-underline-offset: 3px;
+  }
+
+  .btn-link:hover:not(:disabled) {
+    text-decoration-color: currentColor;
+  }
+
+  :is(.btn-primary, .btn-text, .btn-ghost, .btn-icon, .btn-edge):active:not(
+      :disabled
+    ) {
+    translate: 0 1px;
+  }
+
+  :is(.btn-primary, .btn-text, .btn-icon, .btn-edge):disabled {
+    cursor: default;
+    color: var(--text-muted);
+    background: var(--wash);
+    border-color: var(--border);
+    --sh-edge: 0 0 #0000;
+  }
+
+  :is(.btn-ghost, .btn-link):disabled {
+    cursor: default;
+    color: var(--text-muted);
+    opacity: 0.7;
+  }
+
+  :is(
+    .btn-primary,
+    .btn-text,
+    .btn-ghost,
+    .btn-icon,
+    .btn-edge,
+    .btn-link
+  ):focus-visible {
+    outline: none;
+    --sh-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus);
+  }
+
+  /* Back: one edge button holding the chevron and the parent's name */
+  .btn-edge.fk-backbtn {
+    flex: 0 1 auto;
+    gap: 4px;
+    min-width: 0;
+    max-width: min(100%, 220px);
+    padding: 0 10px 0 6px;
+    font-weight: 500;
+  }
+
+  .fk-backbtn svg {
+    flex: none;
+  }
+
+  /* A taller line box keeps Thai tone marks inside the clip; the button's
+     height is fixed, so it doesn't grow */
+  .fk-backbtn-label {
+    min-width: 0;
+    line-height: 1.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .btn-lg {
+    height: max(var(--control-h), 36px);
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .btn-lg.btn-icon {
+    width: max(var(--control-h), 36px);
+    padding: 0;
+  }
+
+  .btn-block {
+    width: 100%;
+  }
+
+  /* Skip link: visually hidden until focused, then a fixed primary button.
+     Its own class, since the sr-only utility zeroes the border width and
+     not-sr-only never restores it. */
+  .fk-skip {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .fk-skip:focus {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 50;
+    width: auto;
+    height: var(--control-h);
+    margin: 0;
+    padding: 0 12px;
+    overflow: visible;
+    clip-path: none;
+  }
+
+  /* Segmented toggle: a flat track, the picked segment a small raised key */
+  .seg {
+    display: inline-flex;
+    flex: none;
+    gap: 2px;
+    min-height: var(--control-h);
+    padding: 2px;
+    background: var(--seg-track);
+    border: 1px solid var(--ctl-border);
+    border-radius: var(--radius-ctl);
+  }
+
+  .seg button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 0 9px;
+    font: inherit;
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 1px;
+  }
+
+  .seg button:hover {
+    color: var(--text-primary);
+    background: var(--wash);
+  }
+
+  .seg button[aria-pressed='true'] {
+    color: var(--text-primary);
+    background: var(--seg-on-bg);
+    border-color: var(--seg-on-border);
+    box-shadow: inset 0 -2px 0 var(--ctl-edge);
+  }
+
+  .seg button:active {
+    translate: 0 1px;
+  }
+
+  .seg button:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+  }
+
+  /* Text inputs: flat, a 1px border, no edge */
+  .field {
+    height: var(--control-h);
+    min-width: 0;
+    padding: 0 10px;
+    font: inherit;
+    font-size: 12px;
+    color: var(--text-primary);
+    background: var(--surface);
+    border: 1px solid var(--ctl-border);
+    border-radius: var(--radius-ctl);
+    transition: box-shadow 0.1s;
+  }
+
+  .field::placeholder {
+    color: var(--text-muted);
+  }
+
+  .field:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .field:disabled {
+    color: var(--text-muted);
+    background: var(--wash);
+  }
+
+  /* ---- Article prose. Feed HTML is arbitrary, so every element that can
+     overflow a pane is constrained here. ---- */
   .feeds-prose {
     max-width: var(--measure);
-    font-size: 1rem;
+    font-family: var(--font);
+    font-size: 16px;
     line-height: 1.65;
+    text-align: left;
     overflow-wrap: break-word;
   }
 
@@ -385,27 +1275,29 @@
   .feeds-prose h5,
   .feeds-prose h6 {
     margin: 1.8em 0 0.6em;
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.015em;
+    font-family: var(--font-head);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
   }
 
   .feeds-prose h1 {
-    font-size: 1.6em;
+    font-size: 26px;
   }
 
   .feeds-prose h2 {
-    font-size: 1.35em;
+    font-size: 22px;
   }
 
   .feeds-prose h3 {
-    font-size: 1.15em;
+    font-size: 18px;
   }
 
   .feeds-prose h4,
   .feeds-prose h5,
   .feeds-prose h6 {
-    font-size: 1em;
+    font-size: 16px;
+    font-style: italic;
   }
 
   .feeds-prose h1:first-child,
@@ -413,20 +1305,23 @@
     margin-top: 0;
   }
 
+  /* Links are the text colour, so they keep a visible underline */
   .feeds-prose a {
-    color: var(--link);
+    color: var(--accent-ink);
     text-decoration: underline;
     text-decoration-thickness: 1px;
-    text-underline-offset: 2px;
+    text-decoration-color: var(--accent-line);
+    text-underline-offset: 3px;
     overflow-wrap: anywhere;
   }
 
   .feeds-prose a:hover {
-    color: var(--link-hover);
+    text-decoration-color: currentColor;
   }
 
-  .feeds-prose strong {
-    font-weight: 600;
+  .feeds-prose strong,
+  .feeds-prose b {
+    font-weight: 500;
     color: var(--text-primary);
   }
 
@@ -454,15 +1349,19 @@
   }
 
   .feeds-prose li::marker {
-    color: var(--text-faint);
+    color: var(--axis);
+  }
+
+  /* Numbers are read, so they take the muted text colour */
+  .feeds-prose ol > li::marker {
+    color: var(--text-muted);
   }
 
   .feeds-prose blockquote {
     margin: 1.3em 0;
     padding: 0.1em 0 0.1em 1em;
-    border-left: 3px solid var(--border-strong);
+    border-left: 2px solid var(--axis);
     color: var(--text-secondary);
-    font-style: italic;
   }
 
   .feeds-prose blockquote > :last-child {
@@ -470,31 +1369,33 @@
   }
 
   .feeds-prose code {
-    padding: 0.15em 0.4em;
-    border-radius: calc(var(--radius) - 4px);
-    background: var(--muted);
+    padding: 0 4px;
+    border-radius: var(--radius-ctl);
+    background: var(--wash);
     color: var(--text-primary);
-    font-family: var(--font-geist-mono);
-    font-size: 0.875em;
+    font-family: var(--mono);
+    font-size: 0.85em;
     overflow-wrap: anywhere;
   }
 
   .feeds-prose pre {
     margin: 1.3em 0;
-    padding: 15px 16px;
+    padding: 16px;
     max-width: 100%;
     overflow-x: auto;
     border: 1px solid var(--border);
-    border-radius: calc(var(--radius) - 2px);
-    background: var(--surface-2);
-    font-size: 0.875em;
-    line-height: 1.5;
+    border-radius: 0;
+    background: var(--page);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
   }
 
   .feeds-prose pre code {
     padding: 0;
     background: none;
     font-size: 1em;
+    overflow-wrap: normal;
   }
 
   .feeds-prose img,
@@ -504,7 +1405,8 @@
     margin: 1.3em 0;
     max-width: 100%;
     height: auto;
-    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--grid);
+    border-radius: 0;
   }
 
   .feeds-prose embed,
@@ -524,14 +1426,13 @@
   .feeds-prose figcaption {
     margin-top: 0.5em;
     color: var(--text-muted);
-    font-size: 0.875rem;
-    text-align: center;
+    font-size: 13px;
   }
 
   .feeds-prose hr {
     margin: 2em 0;
     border: 0;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--grid);
   }
 
   .feeds-prose table {
@@ -541,19 +1442,27 @@
     max-width: 100%;
     overflow-x: auto;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
   }
 
   .feeds-prose th,
   .feeds-prose td {
-    padding: 0.5em 0.75em;
-    border-bottom: 1px solid var(--border);
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--grid);
     text-align: left;
+    vertical-align: top;
   }
 
   .feeds-prose th {
-    color: var(--text-primary);
-    font-weight: 600;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    color: var(--text-muted);
+    background: var(--wash);
+    border-bottom-color: var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
   }
 
   /* Hacker News discussions baked into an entry at build time. The feed's own
@@ -561,7 +1470,7 @@
   .feeds-prose .hn-comments {
     margin-top: 1.6em;
     padding-top: 0.4em;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--grid);
   }
 
   .feeds-prose .hn-comment {
@@ -571,377 +1480,204 @@
   .feeds-prose .hn-comment-meta {
     margin: 0 0 0.35em;
     color: var(--text-muted);
-    font-size: 0.8125rem;
+    font-family: var(--mono);
+    font-size: 11px;
   }
 
   .feeds-prose .hn-comment-children {
     margin-top: 0.6em;
     margin-left: 0.6em;
     padding-left: 0.9em;
-    border-left: 2px solid var(--border);
+    border-left: 1px solid var(--grid);
   }
 
-  /* ---- Design System: Button ---- */
-  .feeds-btn {
-    --_bg: transparent;
-    --_fg: var(--foreground);
-    --_bd: transparent;
-    --_bgh: transparent;
-    --_fgh: var(--foreground);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-family: var(--font-sans);
-    font-weight: 500;
-    line-height: 1;
-    white-space: nowrap;
-    border: 1px solid var(--_bd);
-    border-radius: var(--radius-md);
-    background: var(--_bg);
-    color: var(--_fg);
-    cursor: pointer;
-    user-select: none;
-    transition:
-      color 120ms,
-      background-color 120ms,
-      border-color 120ms,
-      box-shadow 120ms;
-    text-decoration: none;
-    outline: none;
-  }
-  .feeds-btn:hover {
-    background: var(--_bgh);
-    color: var(--_fgh);
-  }
-  .feeds-btn:active {
-    transform: translateY(0.5px);
-  }
-  .feeds-btn:focus-visible {
-    box-shadow: var(--focus-ring);
-  }
-  .feeds-btn[disabled],
-  .feeds-btn[aria-disabled='true'] {
-    opacity: 0.5;
-    pointer-events: none;
-  }
-  .feeds-btn--sm {
-    height: 2rem;
-    padding: 0 0.625rem;
-    font-size: 0.875rem;
-  }
-  .feeds-btn--md {
-    height: 2.25rem;
-    padding: 0 0.875rem;
-    font-size: 0.875rem;
-  }
-  .feeds-btn--lg {
-    height: 2.5rem;
-    padding: 0 1.125rem;
-    font-size: 1rem;
-  }
-  .feeds-btn--icononly.feeds-btn--sm {
-    width: 2rem;
-    padding: 0;
-  }
-  .feeds-btn--icononly.feeds-btn--md {
-    width: 2.25rem;
-    padding: 0;
-  }
-  .feeds-btn--icononly.feeds-btn--lg {
-    width: 2.5rem;
-    padding: 0;
-  }
-  .feeds-btn--block {
-    width: 100%;
-  }
-  .feeds-btn--primary {
-    --_bg: var(--primary);
-    --_fg: var(--primary-foreground);
-    --_bgh: color-mix(in oklch, var(--primary) 88%, var(--background));
-    --_fgh: var(--primary-foreground);
-  }
-  .feeds-btn--brand {
-    --_bg: var(--brand);
-    --_fg: var(--brand-foreground);
-    --_bgh: var(--brand-hover);
-    --_fgh: var(--brand-foreground);
-  }
-  .feeds-btn--brand.is-copied {
-    --_bg: var(--brand-hover);
-  }
-  .feeds-btn--secondary {
-    --_bg: var(--secondary);
-    --_fg: var(--secondary-foreground);
-    --_bgh: var(--surface-3);
-    --_fgh: var(--secondary-foreground);
-  }
-  .feeds-btn--outline {
-    --_bg: transparent;
-    --_bd: var(--border-strong);
-    --_fg: var(--foreground);
-    --_bgh: var(--accent);
-    --_fgh: var(--foreground);
-  }
-  .feeds-btn--ghost {
-    --_bg: transparent;
-    --_fg: var(--text-secondary);
-    --_bgh: var(--accent);
-    --_fgh: var(--foreground);
-  }
-  .feeds-btn--link {
-    --_bg: transparent;
-    --_fg: var(--text-secondary);
-    --_bgh: transparent;
-    --_fgh: var(--brand);
-    height: auto;
-    padding: 0.125rem 0.25rem;
-  }
-  .feeds-btn--destructive {
-    --_bg: var(--destructive);
-    --_fg: var(--destructive-foreground);
-    --_bgh: color-mix(in oklch, var(--destructive) 88%, black);
-    --_fgh: var(--destructive-foreground);
+  /* ---- OPML editor (Subscriptions) ---- */
+  .fk-opml-head {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding-top: 4px;
+    padding-bottom: 4px;
   }
 
-  /* ---- Design System: OPML View & Panes ---- */
-  .fk-pane {
-    flex: 1 1 auto;
-    min-width: 0;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  .fk-opml-file {
+    color: var(--text-muted);
   }
-  .fk-backbar {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 9px 10px;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .fk-list-head {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: var(--background);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .fk-list-titlebar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 13px 12px 11px 16px;
-  }
-  .fk-list-title {
-    flex: 1 1 auto;
-    min-width: 0;
-    font-size: var(--text-lg, 1.125rem);
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    line-height: 1.35;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .fk-list-tools {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-  .fk-opml .fk-list-title {
-    margin: 12px 0;
-  }
-  .fk-opml-notice {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .fk-opml-notice > svg {
-    flex-shrink: 0;
-    color: var(--link);
-  }
+
   .fk-opml-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin: 0;
-    padding: 0 16px 11px;
+    padding: 8px 16px;
     font-size: 12px;
     line-height: 1.5;
     color: var(--text-muted);
+    border-bottom: 1px solid var(--grid);
   }
+
+  .fk-opml-hint > svg {
+    flex: none;
+    color: var(--accent);
+  }
+
   .fk-opml-hint code {
-    font-family: var(--font-mono, ui-monospace, monospace);
+    font-family: var(--mono);
   }
-  .fk-opml-src {
-    flex: 1;
-    border: 0;
-    outline: 0;
-    resize: none;
-    padding: 16px;
-    background: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 13px;
-    line-height: 1.7;
-    tab-size: 2;
-    min-width: 0;
-    min-height: 0;
-  }
+
   .fk-opml-body {
-    flex: 1;
     display: flex;
+    flex: 1;
     flex-direction: column;
     min-height: 0;
   }
+
+  .fk-opml-src {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    padding: 16px;
+    resize: none;
+    border: 0;
+    border-radius: 0;
+    outline: 0;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    tab-size: 2;
+  }
+
+  .fk-opml-src:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--focus);
+  }
+
   .fk-opml-preview {
     flex: 0 0 45%;
-    overflow-y: auto;
-    border-top: 1px solid var(--border);
-    background: var(--sidebar);
-    padding: 12px 16px 20px;
     min-height: 0;
+    overflow-y: auto;
+    padding: 0 0 20px;
+    background: var(--page);
+    border-top: 1px solid var(--border);
   }
-  .fk-opml-pvhead {
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-    font-weight: 600;
-    margin: 2px 0 8px;
+
+  .fk-opml-preview > .fk-band {
+    background: var(--surface);
   }
+
   .fk-opml-cat {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
+    margin: 14px 16px 4px;
     font-size: 13px;
-    font-weight: 600;
-    margin: 14px 0 3px;
-    color: var(--foreground);
+    font-weight: 500;
   }
-  .fk-opml-cat svg {
-    color: var(--text-faint);
+
+  .fk-opml-cat svg,
+  .fk-opml-feed svg,
+  .fk-opml-frow > svg {
+    flex: none;
+    color: var(--text-muted);
   }
-  .fk-opml-n {
-    margin-left: auto;
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--text-faint);
-  }
+
   .fk-opml-feed {
     display: flex;
-    gap: 7px;
-    padding: 5px 0 4px 21px;
+    gap: 8px;
     min-width: 0;
+    padding: 4px 16px 4px 40px;
   }
+
   .fk-opml-feed svg {
-    flex-shrink: 0;
     margin-top: 3px;
-    color: var(--text-faint);
   }
+
   .fk-opml-feed-t {
     font-size: 13px;
     line-height: 1.35;
   }
+
   .fk-opml-feed-u {
+    font-family: var(--mono);
     font-size: 11px;
-    color: var(--text-faint);
-    font-family: var(--font-mono, ui-monospace, monospace);
+    color: var(--text-muted);
     overflow-wrap: anywhere;
   }
-  .fk-opml-err {
-    font-size: 13px;
-    color: var(--destructive, #b91c1c);
-    line-height: 1.5;
-  }
-  .fk-opml-seg {
-    display: inline-flex;
-    gap: 2px;
-    padding-right: 6px;
-    margin-right: 2px;
-    border-right: 1px solid var(--border);
-  }
+
   .fk-opml-form {
     flex: 1;
     overflow-y: auto;
-    padding: 14px 16px 24px;
+    padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
   }
+
   .fk-opml-fcat {
     margin: 0 0 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--grid);
   }
+
   .fk-opml-frow {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 7px;
-    margin: 0 0 6px;
+    gap: 8px;
     min-width: 0;
+    margin: 0 0 6px;
   }
-  .fk-opml-frow > svg {
-    flex-shrink: 0;
-    color: var(--text-faint);
-  }
+
   .fk-opml-fcat-head {
     margin-bottom: 8px;
   }
+
   .fk-opml-addfeed {
-    padding-left: 20px;
-  }
-  .fk-opml-in {
-    flex: 1 1 130px;
-    min-width: 0;
-    font: inherit;
-    font-size: 13px;
-    line-height: 17px;
-    padding: 6px 9px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm, 6px);
-    background: var(--background);
-    color: var(--foreground);
-  }
-  .fk-opml-in::placeholder {
-    color: var(--text-faint);
-  }
-  .fk-opml-in:focus {
-    outline: 2px solid var(--ring, var(--link));
-    outline-offset: -1px;
-  }
-  .fk-opml-in:disabled {
-    background: var(--sidebar);
-    color: var(--text-muted);
-  }
-  .fk-opml-in-cat {
-    font-weight: 600;
-    flex: 0 1 240px;
-  }
-  .fk-opml-in-url {
-    flex: 1.4 1 170px;
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 12px;
-    line-height: 16px;
+    padding: 4px 0 0 24px;
   }
 
-  @media (max-width: 767px) {
-    .fk-opml .fk-list-titlebar {
-      flex-wrap: wrap;
-      row-gap: 8px;
+  .fk-opml-in {
+    flex: 1 1 130px;
+  }
+
+  .fk-opml-in-cat {
+    flex: 0 1 260px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .fk-opml-in-url {
+    flex: 1.4 1 170px;
+    font-family: var(--mono);
+  }
+
+  /* 16px text keeps iOS from zooming in on focus. After the OPML rules, so
+     it also wins over their smaller sizes. */
+  @media (pointer: coarse) {
+    .field,
+    .fk-opml-src {
+      font-size: 16px;
     }
-    .fk-opml .fk-list-title {
-      flex-basis: 100%;
+  }
+
+  @media (max-width: 720px) {
+    .fk-opml-head .fk-pane-title {
+      flex: 1 1 auto;
     }
-    .fk-opml .fk-list-tools {
+    .fk-opml-file {
+      display: none;
+    }
+    .fk-opml-head .fk-band-end {
+      flex: 1 1 100%;
       flex-wrap: wrap;
-      row-gap: 6px;
-      flex-shrink: 1;
-      min-width: 0;
+      justify-content: flex-end;
+      margin-left: 0;
+    }
+    .fk-opml-head .seg {
+      margin-right: auto;
     }
     .fk-opml-save > span {
       display: none;
     }
     .fk-opml-save {
-      --_fg: var(--text-secondary);
-      width: 2rem;
+      width: var(--control-h);
       padding: 0;
     }
     .fk-opml-frow {
@@ -959,10 +1695,7 @@
     }
   }
 
-  @media (min-width: 768px) {
-    .fk-backbar {
-      display: none !important;
-    }
+  @media (min-width: 721px) {
     .fk-opml-body {
       flex-direction: row;
     }
@@ -971,6 +1704,77 @@
       max-width: 26rem;
       border-top: 0;
       border-left: 1px solid var(--border);
+    }
+  }
+
+  /* ---- Pane widths: phone one pane at a time, tablet 220 + 340, desktop
+     264 + clamp(340px, 30vw, 420px) ---- */
+  @media (min-width: 721px) {
+    .fk-main {
+      flex-direction: row;
+    }
+    .fk-col-nav {
+      flex: none;
+      width: 220px;
+      border-right: 1px solid var(--border);
+    }
+    .fk-col-list {
+      flex: none;
+      width: 340px;
+      border-right: 1px solid var(--border);
+    }
+    .fk-col-article {
+      flex: 1 1 auto;
+    }
+  }
+
+  /* Narrow tablets: a slimmer sidebar and list keep the article readable,
+     with the phone's title size and a 24px gutter */
+  @media (min-width: 721px) and (max-width: 899px) {
+    .fk-col-nav {
+      width: 200px;
+    }
+    .fk-col-list {
+      width: clamp(240px, 33vw, 340px);
+    }
+    .fk-article-body {
+      padding: 24px 24px 48px;
+    }
+    .fk-article-title {
+      font-size: 26px;
+    }
+  }
+
+  @media (min-width: 1101px) {
+    .fk-col-nav {
+      width: 264px;
+    }
+    .fk-col-list {
+      width: clamp(340px, 30vw, 420px);
+    }
+  }
+
+  @media (max-width: 720px) {
+    /* Same 16px gutter as the bands below, so their buttons line up with
+       the logo tile and the theme button */
+    .fk-topbar {
+      gap: 8px;
+    }
+    .fk-band {
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+    }
+    .fk-topbar-status {
+      display: none;
+    }
+    .fk-topbar .fk-theme {
+      margin-left: auto;
+    }
+    .fk-nav {
+      padding: 8px 8px calc(16px + env(safe-area-inset-bottom));
+    }
+    .fk-nav-row {
+      min-height: 44px;
     }
   }
 }
