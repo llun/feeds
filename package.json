@@ -45,7 +45,7 @@
     "playwright": "^1.64.1",
     "postcss": "^8.5.32",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0",
+    "react-dom": "^19.3.1",
     "sanitize-html": "^2.18.1",
     "shadcn": "^4.22.1",
     "sql.js-httpvfs": "^0.8.12",
